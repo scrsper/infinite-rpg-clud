@@ -11,6 +11,6 @@ parentPort!.on('message', (bytes: Uint8Array) => {
     const table = stringifyEventTable(snapshot.events);
     snapshot.eventEncoding = { format: table.format, appearances: table.appearances };
     const result = new TextEncoder().encode(stringifySnapshot(snapshot, { events: table.rows }));
-    parentPort!.postMessage({ bytes: result, encodeMs: performance.now() - start }, [result.buffer]);
-  } catch (error) { parentPort!.postMessage({ error: String(error) }); }
+    parentPort!.postMessage({ bytes: result, encodeMs: performance.now() - start, inputBuffer: bytes.buffer }, [result.buffer, bytes.buffer]);
+  } catch (error) { parentPort!.postMessage({ error: String(error), inputBuffer: bytes.buffer }, [bytes.buffer]); }
 });

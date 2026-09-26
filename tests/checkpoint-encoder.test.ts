@@ -1,9 +1,30 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { CheckpointEncoder } from '../src/server/checkpointEncoder';
 import { decodeEventTable } from '../src/sim/persist/eventTable';
 import { newWorld, serializeParts } from '../src/sim/persist/save';
 
 describe('checkpoint storage worker', () => {
+  it('reuses owned input capacity across smaller and rejected captures without changing prior output', async () => {
+    const allocate = vi.spyOn(Buffer, 'allocUnsafeSlow'), encoder = new CheckpointEncoder();
+    try {
+      const payload = '🙂漢字'.repeat(65536);
+      const first = await encoder.encode(JSON.stringify({ events: [], payload }));
+      const original = first.bytes.toString(), allocations = allocate.mock.calls.length;
+      expect(allocations).toBeGreaterThan(0);
+      const small = JSON.parse((await encoder.encode(['{"events":[],"payload":', '"短"', '}'])).bytes.toString());
+      expect(small.payload).toBe('短');
+      await expect(encoder.encode('{"events":[')).rejects.toThrow();
+      const recovered = JSON.parse((await encoder.encode('{"events":[],"payload":"after error"}')).bytes.toString());
+      expect(recovered.payload).toBe('after error');
+      expect(allocate.mock.calls.length).toBe(allocations);
+      const larger = 'long'.repeat(500000);
+      expect(JSON.parse((await encoder.encode(JSON.stringify({ events: [], payload: larger }))).bytes.toString()).payload).toBe(larger);
+      expect(allocate.mock.calls.length).toBe(allocations + 1);
+      expect(first.bytes.toString()).toBe(original);
+      expect(JSON.parse(original).payload).toBe(payload);
+    } finally { await encoder.close(); allocate.mockRestore(); }
+  });
+
   it('packs only the captured snapshot while subsequent canonical mutations remain independent', async () => {
     const encoder = new CheckpointEncoder();
     try {

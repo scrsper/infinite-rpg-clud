@@ -6,6 +6,7 @@ export class CheckpointEncoder {
   private worker?: Worker;
   private failure?: Error;
   private closed = false;
+  private recycledInput?: ArrayBuffer;
   private timer?: ReturnType<typeof setTimeout>;
   private pending?: { resolve: (value: { bytes: Buffer; encodeMs: number }) => void; reject: (error: Error) => void };
   encode(snapshot: string | readonly string[]): Promise<{ bytes: Buffer; encodeMs: number }> {
@@ -20,10 +21,13 @@ export class CheckpointEncoder {
         clearTimeout(this.timer);
         const pending = this.pending; this.pending = undefined;
         if (!pending) return;
+        // The worker returns ownership only after parsing/packing has finished. Keep one
+        // allocation for the next capture; neither the live world nor stored output shares it.
+        if (!this.closed && value.inputBuffer instanceof ArrayBuffer) this.recycledInput = value.inputBuffer;
         if (value.error) pending.reject(new Error(value.error));
         else pending.resolve({ bytes: Buffer.from(value.bytes.buffer, value.bytes.byteOffset, value.bytes.byteLength), encodeMs: value.encodeMs });
       });
-      const fail = (error: Error) => { clearTimeout(this.timer); this.failure = error; const pending = this.pending; this.pending = undefined; pending?.reject(error); };
+      const fail = (error: Error) => { clearTimeout(this.timer); this.failure = error; this.recycledInput = undefined; const pending = this.pending; this.pending = undefined; pending?.reject(error); };
       this.worker.on('error', fail);
       this.worker.on('exit', code => { this.worker = undefined; fail(new Error(`Checkpoint encoder exited (${code})`)); });
     }
@@ -31,7 +35,14 @@ export class CheckpointEncoder {
     // UTF-16 string, per-part ArrayBuffer transfers, and pooled/untransferable small buffers.
     // Include all UTF-8 capture/copy work in the caller's blocking serialization metric.
     const parts = typeof snapshot === 'string' ? [snapshot] : snapshot;
-    const bytes = Buffer.allocUnsafeSlow(parts.reduce((n, part) => n + Buffer.byteLength(part), 0));
+    const length = parts.reduce((n, part) => n + Buffer.byteLength(part), 0);
+    const recycled = this.recycledInput; this.recycledInput = undefined;
+    // Reserve one-eighth growth room, rounded to a MiB, so small history changes do not
+    // allocate another large buffer every minute. Transfer only the exact-length view.
+    const capacity = Math.max(1, Math.ceil(length * 1.125 / 1048576)) * 1048576;
+    const bytes = recycled && recycled.byteLength >= length
+      ? Buffer.from(recycled, 0, length)
+      : Buffer.allocUnsafeSlow(capacity).subarray(0, length);
     let offset = 0;
     for (const part of parts) offset += bytes.write(part, offset);
     if (offset !== bytes.length) throw new Error('Incomplete checkpoint UTF-8 capture');
@@ -42,8 +53,12 @@ export class CheckpointEncoder {
         this.pending = undefined; reject(this.failure); void this.worker?.terminate();
       }, 60_000);
       try { this.worker!.postMessage(bytes, [bytes.buffer]); }
-      catch (error) { clearTimeout(this.timer); this.pending = undefined; reject(error as Error); }
+      catch (error) {
+        clearTimeout(this.timer); this.pending = undefined;
+        if (bytes.buffer.byteLength) this.recycledInput = bytes.buffer as ArrayBuffer;
+        reject(error as Error);
+      }
     });
   }
-  async close(): Promise<void> { this.closed = true; await this.worker?.terminate(); }
+  async close(): Promise<void> { this.closed = true; this.recycledInput = undefined; await this.worker?.terminate(); }
 }

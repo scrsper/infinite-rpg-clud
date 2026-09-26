@@ -8,10 +8,11 @@ staging world. Do not recreate staging from live or run a second state writer.
 The three original seven-day worlds (918271/918272/918273), ordinary hunt adventure,
 Hush alternative and shared-world multiplayer remain accepted. Later bounded continuations
 identified and corrected actual retry loops; see `docs/LIVING_ALPHA_PERSISTENCE.md`.
-The full alpha.25 regression passed 1,244 tests and exposed three production-chain failures
-caused by moving every haul endpoint to the interior. The narrowed unreachable-anchor fallback
-passes all 36 unchanged production/logistics tests and typecheck, and the preserved stranded
-hauler still delivers all twelve grain. Replacement integrated validation remains required.
+The narrowed unreachable-anchor fallback preserves healthy production routes and delivers
+the stranded hauler's twelve grain. Integrated revision e9a1f53 passes all 1,247 tests.
+The genuine generated trainee reached Iron after 12.1167986 world days with exact reload
+continuity; see the progression report. Fresh e9a1f53 packaging and all three automated
+keyboard/gamepad/device-switch probes pass. Physical input remains unverified.
 
 Progression calibration and the same generated person's earned journey are documented in
 `docs/LIVING_ALPHA_PROGRESSION.md`; no synthetic promotion is accepted. Final two-hour isolated
@@ -23,8 +24,10 @@ external until performed. Injected-input checks do not certify physical-device a
 
 Private evidence, live saves, credentials, packages and the current handoff record are outside
 tracked source (`.debug/finish50/CURRENT.md` and `C:/Users/green/TornVeilAlpha`). Recovery14/14
-on alpha.19 and schema24→25 update13/13 remain valid while those persistence boundaries are
-unchanged. Consult fresh environment manifests and the handoff record before deployment.
+on alpha.19 and schema24→25 update13/13 are recorded. The alpha.26 soak failed after 28 minutes
+at 259.772 ms against the unchanged 250 ms capture budget. Buffer reuse and phase telemetry
+are the next candidate, with focused persistence integration passing; fresh bundled recovery
+and a complete isolated soak remain required. Consult fresh manifests before deployment.
 
 # Historical: autonomous agency, social inference and capability evolution v0.1, 2026-09-19
 

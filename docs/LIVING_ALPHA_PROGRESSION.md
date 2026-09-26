@@ -171,3 +171,30 @@ This is two hours of active player control per world day at the live time scale.
 sleep and earning provisions consume that window, and ordinary autonomy runs overnight. These
 are recorded harness policy options, not extra development awards. The original generated
 person and its exact checkpoint continue across the policy change.
+
+## Completed ordinary journey (e9a1f53, 2026-09-26)
+
+Generated seed 918271 traveler p128 reached Iron through the ordinary advancement
+intent after 1,046,891.3993500043 world seconds (12.116798603588013 days).
+Cumulative accelerated execution took 16,446.7602108 seconds; at the live 6× clock,
+the elapsed world time represents 48.46719441435205 real hours.
+
+Foundations (strength/dexterity/endurance/vitality/intelligence/perception/will)
+rose from 7/7/8/7/7/7/9 to 12/13/14/12/13/15/16. Natural potentials stayed
+9/9/10/12/10/11/12. The traveler paid teacher p5 ten silver for Hush; event e4658
+and told provenance remain present. Practice included 167 Hush attempts (135 calmed),
+57 meditations, 19 spars and 26 drills. Final veilcraft was .8448044 and unarmed .4930155.
+
+The final policy used 08:00–20:00 activity with physical training starting at 19:00.
+At day 11.446, the bot's low-energy guard incorrectly prevented selling already-carried
+wood as well as gathering more. A recorded harness-only correction allowed ordinary
+sales before considering new gathering. Five conserved sales funded food and recovery;
+no attributes, needs, money, history or promotion were edited.
+
+Final wealth was .5 silver, physiological energy .4627778, hydration .6775758,
+fatigue .40075 and sleep debt 1.7229167. The .1741963 head injury remained.
+Eligibility had no blockers before the ordinary breakthrough; all 17 causal references
+and every canonical saved field survived independent reload. Daily foundations, needs,
+strain, earnings and blockers are retained in the private journey report under
+`.debug/finish50/iron-complete-e9a1f53`. Its final save SHA-256 is
+`c8f09057e648fb63fb3198a1f89d829e7b98122d236458ce213929579c369522`.

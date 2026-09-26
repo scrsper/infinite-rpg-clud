@@ -233,3 +233,23 @@ as sampled debt. Ten-second observations alone can miss a checkpoint stall. Save
 growth is reported for each quarter and half of the observation, with normal checkpoint and
 backup counts and an unchanged-release check. A short preflight remains diagnostic; it does
 not substitute for the final two-hour run.
+
+## Capture buffer reuse (2026-09-26)
+
+The isolated alpha.26 run exceeded the unchanged 250 ms budget after 28 minutes
+(259.772 ms). Its save remained approximately 67 MB; process survival and this short
+size plateau do not establish acceptance. The failed evidence is preserved.
+
+The worker now returns ownership of its input allocation after encoding, including a
+rejected malformed snapshot. The next synchronous capture reuses that capacity with an
+exact-length UTF-8 view. Stored output owns separate memory. This removes a large
+allocation each minute without changing the snapshot instant, schema, references or
+canonical behavior. Capture, metadata and transfer timings are reported separately;
+their complete blocking sum still defines the original serialization budget.
+
+Thirty-two mature-world churn samples reduced peak RSS from 1.536 to 1.439 GB, but
+worst capture only improved from 237.547 to 234.211 ms. This is a diagnostic improvement,
+not evidence that the live latency tail is solved. All 36 focused persistence/server
+checks and typecheck pass, including Unicode, shrinking/growing captures, malformed
+input recovery and previous-output immutability. Fresh bundled recovery and isolated
+two-hour performance validation are still required.

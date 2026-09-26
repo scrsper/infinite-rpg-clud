@@ -75,7 +75,7 @@ export class LiveServer {
   private readonly checkpointEncoder = new CheckpointEncoder();
   private lastCheckpoint: CheckpointMeta | null = null;
   private readonly startedAt = Date.now();
-  readonly metrics = { checkpoints: 0, lastSerializeMs: 0, maxSerializeMs: 0, lastEncodeMs: 0, maxEncodeMs: 0, lastCheckpointMs: 0, lastCommitMs: 0, lastBytes: 0, backups: 0, lastBackupIso: '', authFailures: 0, rejectedConnections: 0, connectionsServed: 0, recoveredFrom: [] as { generation: number; why: string }[] };
+  readonly metrics = { checkpoints: 0, lastSerializeMs: 0, maxSerializeMs: 0, lastCaptureMs: 0, lastMetadataMs: 0, lastTransferMs: 0, lastEncodeMs: 0, maxEncodeMs: 0, lastCheckpointMs: 0, lastCommitMs: 0, lastBytes: 0, backups: 0, lastBackupIso: '', authFailures: 0, rejectedConnections: 0, connectionsServed: 0, recoveredFrom: [] as { generation: number; why: string }[] };
   private adminToken = '';
 
   constructor(readonly config: AlphaConfig, readonly release: ReleaseIdentity, private readonly log: Log) {
@@ -141,12 +141,17 @@ export class LiveServer {
     if (this.inFlight) return this.inFlight.then(() => this.checkpoint(reason));
     const w = this.session.world, t0 = performance.now();
     const world = serializeParts(w);
+    const capturedAt = performance.now();
     const metadata = {
       worldId: this.worldId, savedAtIso: new Date().toISOString(), reason, physicalTime: w.physicalTime, worldNow: w.now, saveSchema: SAVE_VERSION,
       generator: this.store.identity()!.generator, release: { version: this.release.version, revision: this.release.revision }, ownership: structuredClone(this.ownership),
     };
+    const metadataAt = performance.now();
     const encoding = this.checkpointEncoder.encode(world);
-    const serializeMs = performance.now() - t0;
+    const transferredAt = performance.now(), serializeMs = transferredAt - t0;
+    this.metrics.lastCaptureMs = capturedAt - t0;
+    this.metrics.lastMetadataMs = metadataAt - capturedAt;
+    this.metrics.lastTransferMs = transferredAt - metadataAt;
     this.metrics.lastSerializeMs = serializeMs; this.metrics.maxSerializeMs = Math.max(this.metrics.maxSerializeMs, serializeMs);
     this.inFlight = encoding.then(async ({ bytes, encodeMs }) => {
       this.metrics.lastEncodeMs = encodeMs; this.metrics.maxEncodeMs = Math.max(this.metrics.maxEncodeMs, encodeMs);
@@ -154,7 +159,7 @@ export class LiveServer {
       const meta = await this.store.commit(bytes, metadata, this.lock);
       this.lastCheckpoint = meta; this.metrics.checkpoints++; this.metrics.lastCommitMs = performance.now() - t1; this.metrics.lastBytes = meta.worldBytes;
       this.metrics.lastCheckpointMs = performance.now() - t0;
-      this.log('info', 'checkpoint', { generation: meta.generation, reason, serializeMs: Math.round(serializeMs), encodeMs: Math.round(encodeMs), checkpointMs: Math.round(this.metrics.lastCheckpointMs), commitMs: Math.round(this.metrics.lastCommitMs), bytes: meta.worldBytes, physicalTime: meta.physicalTime });
+      this.log('info', 'checkpoint', { generation: meta.generation, reason, serializeMs: Math.round(serializeMs), captureMs: Math.round(capturedAt - t0), metadataMs: Math.round(metadataAt - capturedAt), transferMs: Math.round(transferredAt - metadataAt), encodeMs: Math.round(encodeMs), checkpointMs: Math.round(this.metrics.lastCheckpointMs), commitMs: Math.round(this.metrics.lastCommitMs), bytes: meta.worldBytes, physicalTime: meta.physicalTime });
       return meta;
     }).finally(() => { this.inFlight = null; });
     return this.inFlight;
