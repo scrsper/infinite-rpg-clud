@@ -192,14 +192,20 @@ A mature saved-world continuation and final performance acceptance remain requir
 
 The final bounded continuation found one resident with 955 repeated path failures while
 carrying twelve grain to a tavern. The normal interior was reachable; the selected work
-fixture was not. Hauling transfers place stock, so its load and deposit plans now use the
-place's ordinary interior access point instead of a production fixture. This changes no
-inventory, ownership, navigation or delivery rules.
+fixture was not. Hauling transfers place stock, so its load and deposit plans now fall
+back to the place's ordinary interior access point when the work anchor is unreachable.
+Reachable work anchors retain their established routes. Applying the interior route
+unconditionally changed healthy production timing and broke the mechanical grain-to-bread
+integration scenario; the conditional fallback restores its original assertions and output.
+This changes no inventory, ownership, navigation or delivery rules.
 
 The regression failed before the correction and passes afterward, including conserved
 cargo and physical travel. The same affected saved resident resumed ordinary autonomy and
 delivered all twelve grain within the next world hour without editing their plan or body.
 The 25 logistics checks, 92 navigation/economy integration checks and typecheck pass.
+The narrowed fallback also passes all 36 unchanged production/logistics checks. Replaying
+the original stranded checkpoint still delivers twelve grain after 299.1 world seconds,
+with no new failed route and exact canonical save/reload continuity.
 Historical failed-route events remain evidence; bounded verification distinguishes those
 from newly generated failures rather than deleting the old history.
 
@@ -219,3 +225,11 @@ allows ordinary social recovery, then completes a real purchase and conserved fo
 within three world hours without the alternating routes. The 107 economy/logistics integration
 checks, 46 physiological/commitment checks and typecheck pass. Fresh bounded continuations also
 record semantic anomalies, rather than treating structural checks alone as complete acceptance.
+
+## Soak measurement
+
+The observer records cumulative service maxima for tick debt and event-loop stalls as well
+as sampled debt. Ten-second observations alone can miss a checkpoint stall. Save/event/knowledge
+growth is reported for each quarter and half of the observation, with normal checkpoint and
+backup counts and an unchanged-release check. A short preflight remains diagnostic; it does
+not substitute for the final two-hour run.

@@ -1,4 +1,32 @@
-# Autonomous agency, social inference and capability evolution v0.1, 2026-09-19
+# Living Alpha gate completion, 2026-09-26
+
+Current implementation branch: `codex/living-alpha-50-gates`, PR #54 stacked on
+`claude/living-alpha-client` (#53). Human merge order remains #51 → #52 → #53 → #54.
+Live remains alpha.12 (`1c8b317f6075`); candidate releases run against the preserved
+staging world. Do not recreate staging from live or run a second state writer.
+
+The three original seven-day worlds (918271/918272/918273), ordinary hunt adventure,
+Hush alternative and shared-world multiplayer remain accepted. Later bounded continuations
+identified and corrected actual retry loops; see `docs/LIVING_ALPHA_PERSISTENCE.md`.
+The full alpha.25 regression passed 1,244 tests and exposed three production-chain failures
+caused by moving every haul endpoint to the interior. The narrowed unreachable-anchor fallback
+passes all 36 unchanged production/logistics tests and typecheck, and the preserved stranded
+hauler still delivers all twelve grain. Replacement integrated validation remains required.
+
+Progression calibration and the same generated person's earned journey are documented in
+`docs/LIVING_ALPHA_PROGRESSION.md`; no synthetic promotion is accepted. Final two-hour isolated
+soak and exact-revision packaging must pass before marking internal acceptance complete.
+Native semantic controls and packaged automation are described in `docs/LIVING_ALPHA_CONTROLS.md`.
+User requested the 45–60-minute ordinary human session be prepared for later. DualSense is
+available; physical controller play, glyphs, rumble and Xbox hardware verification remain
+external until performed. Injected-input checks do not certify physical-device acceptance.
+
+Private evidence, live saves, credentials, packages and the current handoff record are outside
+tracked source (`.debug/finish50/CURRENT.md` and `C:/Users/green/TornVeilAlpha`). Recovery14/14
+on alpha.19 and schema24→25 update13/13 remain valid while those persistence boundaries are
+unchanged. Consult fresh environment manifests and the handoff record before deployment.
+
+# Historical: autonomous agency, social inference and capability evolution v0.1, 2026-09-19
 
 Branch `codex/autonomous-agency-social-inference-v0-1` is temporarily stacked on PR #48's
 remote head (initially `7eb6b66`, updated documentation-only base `709e6b5`). Main remained
