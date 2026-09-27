@@ -524,6 +524,18 @@ void UTVBridgeSubsystem::Receive(const FString& Message) {
     ServerTick = M->GetNumberField(TEXT("tick")); SinceSnapshot = 0; LastSnapshotReceived=FPlatformTime::Seconds(); ++SnapshotCount; M->TryGetStringField(TEXT("playerId"), PlayerId);
     NearbyInteraction.Empty(); ConsumeInteraction.Empty(); DropInteraction.Empty(); NearbyPrompt.Empty(); ConsumePrompt.Empty(); DropPrompt.Empty(); TalkTargetBody.Empty();
     InventoryItemIds.Empty();InventoryItemLabels.Empty();ContainerItemIds.Empty();ContainerItemLabels.Empty();
+    CarriedRows.Empty();AbilityRows.Empty();
+    const TArray<TSharedPtr<FJsonValue>>* CarriedJson=nullptr;
+    if(M->TryGetArrayField(TEXT("carried"),CarriedJson))for(const auto& V:*CarriedJson){
+        const auto I=V->AsObject();if(!I)continue;FTVUIItemRow Row;if(!I->TryGetStringField(TEXT("id"),Row.Id))continue;
+        FString Name;I->TryGetStringField(TEXT("name"),Name);I->TryGetNumberField(TEXT("quantity"),Row.Quantity);
+        Row.Label=Row.Quantity>1?FString::Printf(TEXT("%s  x%.0f"),*Name,Row.Quantity):Name;
+        const TArray<TSharedPtr<FJsonValue>>* Lines=nullptr;if(I->TryGetArrayField(TEXT("description"),Lines))for(const auto& L:*Lines)Row.Description.Add(L->AsString());
+        const TArray<TSharedPtr<FJsonValue>>* Acts=nullptr;if(I->TryGetArrayField(TEXT("actions"),Acts))for(const auto& A:*Acts){FTVUIActionRow Action;if(ParseActionRow(A->AsObject(),Row.Id,Action))Row.Actions.Add(Action);}
+        CarriedRows.Add(Row);
+    }
+    const TArray<TSharedPtr<FJsonValue>>* AbilityJson=nullptr;
+    if(M->TryGetArrayField(TEXT("abilities"),AbilityJson))for(const auto& V:*AbilityJson){FTVUIActionRow Action;if(ParseActionRow(V->AsObject(),FString(),Action))AbilityRows.Add(Action);}
     const bool HadContainer=!OpenContainerId.IsEmpty();OpenContainerId.Empty();OpenContainerName.Empty();
     const TSharedPtr<FJsonObject>* Container;
     if(M->TryGetObjectField(TEXT("container"),Container)&&Container&&Container->IsValid()) {

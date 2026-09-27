@@ -27,6 +27,27 @@ enum class ETVUICommand : uint8
     Rebind,
     SignOut,
     Quit,
+    /** A projected carried-item or ability row: Primary = row action id, Secondary = item id. */
+    ItemAction,
+};
+
+/** One thing the player may do, as the server projected it. Availability is advisory: the server
+ *  revalidates on execution. An unavailable row carries a reason the character can know. */
+USTRUCT(BlueprintType)
+struct TORNVEILONLINE_API FTVUIActionRow
+{
+    GENERATED_BODY()
+
+    UPROPERTY(BlueprintReadOnly) FString Id;
+    UPROPERTY(BlueprintReadOnly) FString Kind;
+    UPROPERTY(BlueprintReadOnly) FString Label;
+    UPROPERTY(BlueprintReadOnly) FString Detail;
+    UPROPERTY(BlueprintReadOnly) bool bAvailable = false;
+    UPROPERTY(BlueprintReadOnly) FString Reason;
+    /** "interact" (RequestKey = interaction id), "person_action" (RequestKey = intent kind) or empty. */
+    UPROPERTY(BlueprintReadOnly) FString RequestType;
+    UPROPERTY(BlueprintReadOnly) FString RequestKey;
+    UPROPERTY(BlueprintReadOnly) FString ItemId;
 };
 
 USTRUCT(BlueprintType)
@@ -37,6 +58,8 @@ struct TORNVEILONLINE_API FTVUIItemRow
     UPROPERTY(BlueprintReadOnly) FString Id;
     UPROPERTY(BlueprintReadOnly) FString Label;
     UPROPERTY(BlueprintReadOnly) double Quantity = 0.0;
+    UPROPERTY(BlueprintReadOnly) TArray<FString> Description;
+    UPROPERTY(BlueprintReadOnly) TArray<FTVUIActionRow> Actions;
 };
 
 USTRUCT(BlueprintType)
@@ -61,6 +84,7 @@ struct TORNVEILONLINE_API FTVUISnapshot
     UPROPERTY(BlueprintReadOnly) FString Restriction;
     UPROPERTY(BlueprintReadOnly) FString Journal;
     UPROPERTY(BlueprintReadOnly) TArray<FTVUIItemRow> Inventory;
+    UPROPERTY(BlueprintReadOnly) TArray<FTVUIActionRow> Abilities;
     UPROPERTY(BlueprintReadOnly) FString ContainerId;
     UPROPERTY(BlueprintReadOnly) FString ContainerName;
     UPROPERTY(BlueprintReadOnly) TArray<FTVUIItemRow> Container;
@@ -169,11 +193,11 @@ protected:
     UPROPERTY() class UVerticalBox* Body = nullptr;
     FTVUISnapshot Snapshot;
     void Rebuild();
-    void AddItem(int32 Index, const FTVUIItemRow& Item);
     TArray<UTVUICommandButton*> ItemButtons;
-    TArray<UTVUICommandButton*> EatButtons;
     UTVUICommandButton* BackButton = nullptr;
-    bool bBuilt = false;
+    /** Rebuilt only when rows, actions or availability change, so focus survives snapshots. */
+    FString BuiltSignature;
+    UPROPERTY() class UTextBlock* VitalsLine = nullptr;
 };
 
 UCLASS(Blueprintable)
@@ -217,12 +241,14 @@ public:
     virtual FReply NativeOnPreviewMouseButtonDown(const FGeometry&,const FPointerEvent&) override;
     void BeginRebind(const FString& Action) { AwaitingBinding=Action; }
     void UpdateJournal(const FString& Value);
+    void UpdateAbilities(const TArray<FTVUIActionRow>& Rows);
 protected:
     virtual TSharedRef<SWidget> RebuildWidget() override;
     virtual UWidget* NativeGetDesiredFocusTarget() const override;
     virtual void NativeTick(const FGeometry&,float) override;
     void BuildPanel();
-    FString Kind,Text,AwaitingBinding;
+    FString Kind,Text,AwaitingBinding,AbilitySignature;
+    TArray<FTVUIActionRow> Abilities;
     UPROPERTY() class UVerticalBox* Body=nullptr;
     UPROPERTY() class UTextBlock* Description=nullptr;
     UPROPERTY() UTVUICommandButton* FirstButton=nullptr;

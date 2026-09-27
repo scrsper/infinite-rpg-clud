@@ -63,7 +63,15 @@ void UTVBridgeSubsystem::UpdatePlayerShell() {
     FTVUISnapshot S;S.Revision=SnapshotCount;S.FocusedLabel=NearbyPrompt;S.FocusedTargetId=FocusedTargetId;S.FocusedActionId=FocusedActionId;
     S.FocusedBounds.bHasFocusBounds=FocusedBounds.bIsValid;S.FocusedBounds.BoundsPixels=FocusedBounds;
     S.Vitals=PlayerVitals+TEXT("\n")+MobilitySummary;S.Journal=JournalSummary+TEXT("\n")+KnowledgeSummary;S.Restriction=MovementRestriction+(LastResult.IsEmpty()?TEXT(""):TEXT("   ")+LastResult);
-    for(int32 I=0;I<InventoryItemIds.Num();++I){FTVUIItemRow Row;Row.Id=InventoryItemIds[I];Row.Label=InventoryItemLabels[I];S.Inventory.Add(Row);}
+    if(CarriedRows.Num()||InventoryItemIds.IsEmpty())S.Inventory=CarriedRows;
+    else for(int32 I=0;I<InventoryItemIds.Num();++I){
+        // An older server sends no projected actions: offer only what it always accepted, and let it refuse.
+        FTVUIItemRow Row;Row.Id=InventoryItemIds[I];Row.Label=InventoryItemLabels[I];
+        for(const FString& K:TArray<FString>{TEXT("consume"),TEXT("drop")}){FTVUIActionRow A;A.Id=K+TEXT(":")+Row.Id;A.Kind=K;A.Label=K==TEXT("drop")?TEXT("Drop"):TEXT("Eat or drink");A.bAvailable=true;A.RequestType=TEXT("interact");A.RequestKey=A.Id;A.ItemId=Row.Id;Row.Actions.Add(A);}
+        S.Inventory.Add(Row);
+    }
+    S.Abilities=AbilityRows;
+    if(AbilityRows.IsEmpty())for(const FString& K:TArray<FString>{TEXT("hush"),TEXT("train"),TEXT("meditate"),TEXT("advance"),TEXT("rest")}){FTVUIActionRow A;A.Id=K;A.Kind=K;A.Label=K==TEXT("advance")?TEXT("Attempt Iron breakthrough"):K==TEXT("rest")?TEXT("Rest / wake"):FName::NameToDisplayString(K,false);A.bAvailable=true;A.RequestType=TEXT("person_action");A.RequestKey=K;S.Abilities.Add(A);}
     for(int32 I=0;I<ContainerItemIds.Num();++I){FTVUIItemRow Row;Row.Id=ContainerItemIds[I];Row.Label=ContainerItemLabels[I];S.Container.Add(Row);}
     S.ContainerId=OpenContainerId;S.ContainerName=OpenContainerName;S.bDialogueOpen=bDialogueOpen;S.DialogueSpeaker=DialogueSpeaker;S.DialogueOccupation=DialogueOccupation;S.DialogueLines=DialogueLines;S.DialogueOptionIds=DialogueOptionIds;S.DialogueOptionLabels=DialogueOptionLabels;
     PlayerShell->SetSnapshot(S);
@@ -92,13 +100,14 @@ void UTVBridgeSubsystem::UICommand(ETVUICommand Command,const FString& Primary,c
 
     if(Command==ETVUICommand::PersonAction){
         if(PlayerShell)PlayerShell->CloseTop();
-        if(Primary==TEXT("rest"))ToggleRest();else if(Primary==TEXT("crouch"))SetCrouch(!bCrouchHeld);else if(Primary==TEXT("hush"))Hush();else PersonAction(Primary,Primary+TEXT(" requested"));return;
+        if(Primary==TEXT("rest")||Primary==TEXT("wake"))ToggleRest();else if(Primary==TEXT("crouch"))SetCrouch(!bCrouchHeld);else if(Primary==TEXT("hush"))Hush();else PersonAction(Primary,Primary+TEXT(" requested"));return;
     }
     if(Command==ETVUICommand::Back){if(bDialogueOpen)CloseDialogue();if(PlayerShell&&PlayerShell->HasModalScreen())PlayerShell->CloseTop();return;}
     if(Command==ETVUICommand::Pause){TogglePause();return;}
     if(!IsLive())return;
     if(Command==ETVUICommand::SaveWorld){SaveWorld();return;}
     if(Command==ETVUICommand::Interact){if(Primary==FocusedTargetId&&Secondary==FocusedActionId)Interact();return;}
+    if(Command==ETVUICommand::ItemAction){RunProjectedAction(Primary);return;}
     auto M=MakeShared<FJsonObject>();
     if(Command==ETVUICommand::DialogueChoice){if(!DialogueOptionIds.Contains(Primary))return;M->SetStringField(TEXT("type"),TEXT("dialogue_option"));M->SetStringField(TEXT("optionId"),Primary);}
     else if(Command==ETVUICommand::DropItem||Command==ETVUICommand::EatItem){M->SetStringField(TEXT("type"),TEXT("interact"));M->SetStringField(TEXT("interactionId"),(Command==ETVUICommand::DropItem?TEXT("drop:"):TEXT("consume:"))+Primary);}
@@ -106,3 +115,34 @@ void UTVBridgeSubsystem::UICommand(ETVUICommand Command,const FString& Primary,c
     Send(M);
 }
 void UTVBridgeSubsystem::OpenActionPanel(const FString& Kind){if(PlayerShell)PlayerShell->OpenActionPanel(Kind);}
+bool UTVBridgeSubsystem::ParseActionRow(const TSharedPtr<FJsonObject>& J,const FString& ItemId,FTVUIActionRow& Out){
+    if(!J||!J->TryGetStringField(TEXT("id"),Out.Id)||Out.Id.IsEmpty())return false;
+    J->TryGetStringField(TEXT("kind"),Out.Kind);J->TryGetStringField(TEXT("label"),Out.Label);J->TryGetStringField(TEXT("detail"),Out.Detail);
+    J->TryGetBoolField(TEXT("available"),Out.bAvailable);J->TryGetStringField(TEXT("reason"),Out.Reason);Out.ItemId=ItemId;
+    const TSharedPtr<FJsonObject>* Request=nullptr;
+    if(J->TryGetObjectField(TEXT("request"),Request)&&Request&&Request->IsValid()){
+        (*Request)->TryGetStringField(TEXT("type"),Out.RequestType);
+        if(Out.RequestType==TEXT("interact"))(*Request)->TryGetStringField(TEXT("interactionId"),Out.RequestKey);
+        else if(Out.RequestType==TEXT("person_action")){const TSharedPtr<FJsonObject>* Intent=nullptr;if((*Request)->TryGetObjectField(TEXT("intent"),Intent)&&Intent)(*Intent)->TryGetStringField(TEXT("kind"),Out.RequestKey);}
+    }
+    return true;
+}
+void UTVBridgeSubsystem::RunProjectedAction(const FString& ActionId){
+    if(!IsLive())return;
+    const FTVUIActionRow* Row=nullptr;
+    for(const auto& Item:CarriedRows)for(const auto& A:Item.Actions)if(A.Id==ActionId)Row=&A;
+    if(!Row)for(const auto& A:AbilityRows)if(A.Id==ActionId)Row=&A;
+    if(!Row){LastResult=TEXT("That is no longer possible.");ResultClock=0;return;}
+    // Availability is advisory; the server decides. A row it already says is unavailable is not sent.
+    if(!Row->bAvailable){LastResult=Row->Reason.IsEmpty()?TEXT("You cannot do that right now."):Row->Reason;ResultClock=0;return;}
+    auto M=MakeShared<FJsonObject>();
+    if(Row->RequestType==TEXT("interact")&&!Row->RequestKey.IsEmpty()){M->SetStringField(TEXT("type"),TEXT("interact"));M->SetStringField(TEXT("interactionId"),Row->RequestKey);}
+    else if(Row->RequestType==TEXT("person_action")&&!Row->RequestKey.IsEmpty()){
+        auto Intent=MakeShared<FJsonObject>();Intent->SetStringField(TEXT("kind"),Row->RequestKey);if(!Row->ItemId.IsEmpty())Intent->SetStringField(TEXT("itemId"),Row->ItemId);
+        M->SetStringField(TEXT("type"),TEXT("person_action"));M->SetObjectField(TEXT("intent"),Intent);
+    } else {LastResult=TEXT("That cannot be done from here.");ResultClock=0;return;}
+    // Item actions keep the inventory open so the result (the loaf gone, hunger eased) is seen there;
+    // a bodily action (meditate, train) returns to the world where it happens.
+    if(Row->RequestType==TEXT("person_action")&&PlayerShell)PlayerShell->CloseTop();
+    Send(M);LastResult=Row->Label+TEXT("...");ResultClock=0;
+}

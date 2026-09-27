@@ -14,7 +14,8 @@ export interface HandInteraction { id: string; kind: string; label: string; slot
 export interface OpenContainerProjection { id: string; name: string; capacity: number; used: number; items: { id: string; name: string; type: string; quantity: number }[]; }
 function canAct(sim: Simulation, p: Person): boolean {
   const b = sim.world.primaryBody(p.id);
-  return !!b && b.present && !b.dead && p.alive && b.pose !== 'downed' && b.subduedUntil <= sim.world.physicalTime && !p.surrender && !p.custody?.active;
+  // A sleeping body does not buy, butcher or open doors: waking is its own action (rest/wake).
+  return !!b && b.present && !b.dead && p.alive && b.pose !== 'downed' && b.pose !== 'sleep' && b.subduedUntil <= sim.world.physicalTime && !p.surrender && !p.custody?.active;
 }
 function reachable(sim: Simulation, p: Person, pos: Vec3, range: number, height: number): boolean {
   const b = sim.world.primaryBody(p.id);

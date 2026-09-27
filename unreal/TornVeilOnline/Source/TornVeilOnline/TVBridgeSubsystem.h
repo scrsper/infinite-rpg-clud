@@ -67,6 +67,12 @@ public:
     int32 UISelection=0;
     FString OpenContainerId,OpenContainerName;
     TArray<FString> InventoryItemIds,InventoryItemLabels,ContainerItemIds,ContainerItemLabels;
+    /** Server-projected carried items (with their canonical actions) and the player's own capacities.
+     *  Empty CarriedRows with a non-empty inventory means an older server: legacy rows are built. */
+    TArray<FTVUIItemRow> CarriedRows;
+    TArray<FTVUIActionRow> AbilityRows;
+    static bool ParseActionRow(const TSharedPtr<FJsonObject>& J,const FString& ItemId,FTVUIActionRow& Out);
+    void RunProjectedAction(const FString& ActionId);
     FString TalkTargetBody;
     bool bDialogueOpen = false;
     FString DialogueSpeaker, DialogueOccupation;
