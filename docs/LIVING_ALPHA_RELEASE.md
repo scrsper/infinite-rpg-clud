@@ -9,7 +9,8 @@ This section supersedes the historical status tables below. Runtime source is fr
 at **450b7e5cbc80646e6c5a143f58214831d85445b6**, branch
 `codex/living-alpha-50-gates`. Subsequent release-record commits are documentation
 only; they do not change the packaged source or server bundle. PR #54 is stacked
-above #51 → #52 → #53, all still open; human review/merge is required.
+above #51 → #52 → #53, all still open. PR #54 is ready for review; the earlier
+PRs remain drafts. Human review/merge is required.
 Disposition: **IMPLEMENTED — HUMAN / HARDWARE VALIDATION REQUIRED**.
 
 Authoritative checkout:
@@ -832,5 +833,3 @@ Controls are under integration. Windows detects USB DualSense VID_054C/PID_0CE6.
 No physical controller pass or human session is claimed. Native presentation slice:
 15 passed, two warnings, zero failures (17 tests). Rendered/packaged checks remain.
 Canonical slice: 61 integration tests plus 11 guard/wildlife contact tests passed.
-
-
