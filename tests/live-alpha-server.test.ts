@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -33,6 +33,16 @@ describe.sequential('Living Alpha authoritative service', () => {
     server = await boot();
   }, 120_000);
   afterAll(async () => { await server?.stopInProcess('test end').catch(() => {}); rmSync(root, { recursive: true, force: true }); });
+
+  it('uses the validated immutable generator identity without rereading it at capture time', async () => {
+    const generator = server.store.identity()!.generator;
+    const reads = vi.spyOn(server.store, 'identity');
+    try {
+      const checkpoint = await server.checkpoint('identity capture regression');
+      expect(checkpoint.generator).toEqual(generator);
+      expect(reads).not.toHaveBeenCalled();
+    } finally { reads.mockRestore(); }
+  }, 60_000);
 
   it('distinguishes a live process, a ready world and maintenance; only ready answers 200', async () => {
     const get = async (path: string) => { const r = await fetch(`http://127.0.0.1:${port}${path}`); return { status: r.status, body: await r.json() as any }; };

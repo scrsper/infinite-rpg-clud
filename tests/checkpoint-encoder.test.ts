@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { CheckpointEncoder } from '../src/server/checkpointEncoder';
 import { decodeEventTable } from '../src/sim/persist/eventTable';
-import { newWorld, serializeParts } from '../src/sim/persist/save';
+import { newWorld, serializeChunks, serializeParts } from '../src/sim/persist/save';
 
 describe('checkpoint storage worker', () => {
   it('reuses owned input capacity across smaller and rejected captures without changing prior output', async () => {
@@ -29,17 +29,36 @@ describe('checkpoint storage worker', () => {
     const encoder = new CheckpointEncoder();
     try {
       const { world } = newWorld(731), parts = serializeParts(world), original = JSON.parse(parts.join(''));
-      const captured = encoder.encode(parts);
+      let drained = false;
+      const captured = encoder.encode((function* () { yield* serializeChunks(world); drained = true; })());
+      expect(drained).toBe(true);
       world.persons()[0].wealth += 7;
       world.emit('perceived', { summary: 'After snapshot — 林', data: { encounter: true } });
       const result = await captured, stored = JSON.parse(result.bytes.toString());
       expect(result.encodeMs).toBeGreaterThan(0);
       stored.events = decodeEventTable({ ...stored.eventEncoding, rows: stored.events });
       delete stored.eventEncoding;
-      expect(stored).toEqual(original);
+      expect(stored).toEqual({ ...original, savedAt: stored.savedAt });
       const next = JSON.parse((await encoder.encode(serializeParts(world))).bytes.toString());
       expect(next.persons[0].wealth).toBe(original.persons[0].wealth + 7);
       expect(next.events.length).toBe(original.events.length + 1);
+    } finally { await encoder.close(); }
+  });
+
+  it('grows while synchronously draining chunks and recovers from a throwing producer', async () => {
+    const encoder = new CheckpointEncoder();
+    try {
+      const chunk = '🙂漢字'.repeat(65536);
+      const result = await encoder.encode((function* () {
+        yield '{"events":[],"payload":"';
+        for (let i = 0; i < 5; i++) yield chunk;
+        yield '"}';
+      })(), 1);
+      expect(JSON.parse(result.bytes.toString()).payload).toBe(chunk.repeat(5));
+      expect(encoder.lastCaptureMs).toBeGreaterThan(0);
+      expect(() => encoder.encode((function* () { yield '{"events":['; throw new Error('producer failed'); })())).toThrow('producer failed');
+      expect(JSON.parse((await encoder.encode('{"events":[],"payload":"recovered"}')).bytes.toString()).payload).toBe('recovered');
+      expect(JSON.parse(result.bytes.toString()).payload).toBe(chunk.repeat(5));
     } finally { await encoder.close(); }
   });
 

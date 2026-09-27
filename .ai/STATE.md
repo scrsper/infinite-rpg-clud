@@ -25,9 +25,12 @@ external until performed. Injected-input checks do not certify physical-device a
 Private evidence, live saves, credentials, packages and the current handoff record are outside
 tracked source (`.debug/finish50/CURRENT.md` and `C:/Users/green/TornVeilAlpha`). Recovery14/14
 on alpha.19 and schema24→25 update13/13 are recorded. The alpha.26 soak failed after 28 minutes
-at 259.772 ms against the unchanged 250 ms capture budget. Buffer reuse and phase telemetry
-are the next candidate, with focused persistence integration passing; fresh bundled recovery
-and a complete isolated soak remain required. Consult fresh manifests before deployment.
+at 259.772 ms against the unchanged 250 ms capture budget. Alpha.27 buffer reuse also failed
+at 274.925 ms, despite fresh recovery14/14 and exact Iron reload. Streamed synchronous capture
+and removal of a redundant identity-file read are the next diagnostic candidate. All 38
+persistence/server integration checks and typecheck pass; offline latency remains variable.
+A connected preflight and complete isolated soak remain required. Consult fresh manifests
+before deployment.
 
 # Historical: autonomous agency, social inference and capability evolution v0.1, 2026-09-19
 

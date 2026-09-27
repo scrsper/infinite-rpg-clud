@@ -11,7 +11,7 @@ import { FixedScheduler } from '../bridge/scheduler';
 import { FixedRateWindow } from '../bridge/rateWindow';
 import { CoalescedInteractionWake } from '../bridge/interactionWake';
 import { loadCatalogue } from '../foundry/load';
-import { SAVE_VERSION, readableSaveVersion, serializeParts } from '../sim/persist/save';
+import { SAVE_VERSION, readableSaveVersion, serializeChunks } from '../sim/persist/save';
 import { isExternallyControlled, setExternalControl } from '../sim/runtime/controllers';
 import { AccountRegistry, type AccountRecord } from './accounts';
 import { CheckpointEncoder } from './checkpointEncoder';
@@ -19,7 +19,7 @@ import type { AlphaConfig, ReleaseIdentity } from './config';
 import { GENERATOR_VERSION, playableBaselineFingerprint } from './fingerprint';
 import { ALPHA_PROTOCOL, CLOSE, H, parseCharacterRequest } from './protocol';
 import type { Lifecycle } from './readiness';
-import { BackupSet, RefuseToStartError, WorldStore, WriterLock, type CheckpointMeta } from './store';
+import { BackupSet, RefuseToStartError, WorldStore, WriterLock, type CheckpointMeta, type GeneratorIdentity } from './store';
 
 type Log = (level: 'info' | 'warn' | 'error', event: string, data?: Record<string, unknown>) => void;
 interface Connection {
@@ -50,6 +50,7 @@ export class LiveServer {
   private readonly lock: WriterLock;
   session!: BridgeSession;
   private worldId = '';
+  private generator!: GeneratorIdentity;
   private ownership: Record<string, string[]> = {};
   private readonly http: Server[] = [];
   private readonly wss = new WebSocketServer({ noServer: true, maxPayload: 4096 });
@@ -104,14 +105,18 @@ export class LiveServer {
       if (this.store.generations().length) throw new RefuseToStartError('Checkpoints exist without a world identity; refusing to guess. Restore WORLD.json from a backup.');
       if (!this.config.createWorldIfMissing) throw new RefuseToStartError('No world in this state directory and createWorldIfMissing is false');
       this.worldId = `tvo-${this.config.env}-${randomUUID()}`;
+      this.generator = { kind: 'playable', seed: this.config.seed, version: GENERATOR_VERSION, fingerprint };
       this.session = new BridgeSession(this.config.seed, { playable: true, defaultPlayer: false, characterCatalogue: catalogue.catalogue });
-      this.store.createIdentity({ format: 1, worldId: this.worldId, env: this.config.env, createdAtIso: new Date().toISOString(), generator: { kind: 'playable', seed: this.config.seed, version: GENERATOR_VERSION, fingerprint }, createdByRelease: this.release.version });
+      this.store.createIdentity({ format: 1, worldId: this.worldId, env: this.config.env, createdAtIso: new Date().toISOString(), generator: this.generator, createdByRelease: this.release.version });
       this.log('info', 'world_created', { worldId: this.worldId, seed: this.config.seed });
       await this.checkpoint('world created');
     } else {
       if (identity.generator.fingerprint !== fingerprint)
         throw new RefuseToStartError(`Generator fingerprint changed (${identity.generator.fingerprint.slice(0, 12)} → ${fingerprint.slice(0, 12)}); this release would rebuild a different seeded base under world ${identity.worldId}. A migration is required.`);
       this.worldId = identity.worldId;
+      // WORLD.json is written once. Keep its validated generator identity with worldId
+      // instead of performing another synchronous disk read at every capture boundary.
+      this.generator = identity.generator;
       let loaded = false;
       for (const candidate of this.store.candidates((generation, why) => { this.metrics.recoveredFrom.push({ generation, why }); this.log('error', 'checkpoint_rejected', { generation, why }); })) {
         if (!readableSaveVersion(candidate.meta.saveSchema)) { this.metrics.recoveredFrom.push({ generation: candidate.meta.generation, why: `save schema ${candidate.meta.saveSchema} ≠ ${SAVE_VERSION}` }); this.log('error', 'checkpoint_rejected', { generation: candidate.meta.generation, why: 'schema' }); continue; }
@@ -140,18 +145,19 @@ export class LiveServer {
   checkpoint(reason: string): Promise<CheckpointMeta> {
     if (this.inFlight) return this.inFlight.then(() => this.checkpoint(reason));
     const w = this.session.world, t0 = performance.now();
-    const world = serializeParts(w);
-    const capturedAt = performance.now();
     const metadata = {
       worldId: this.worldId, savedAtIso: new Date().toISOString(), reason, physicalTime: w.physicalTime, worldNow: w.now, saveSchema: SAVE_VERSION,
-      generator: this.store.identity()!.generator, release: { version: this.release.version, revision: this.release.revision }, ownership: structuredClone(this.ownership),
+      generator: this.generator, release: { version: this.release.version, revision: this.release.revision }, ownership: structuredClone(this.ownership),
     };
     const metadataAt = performance.now();
-    const encoding = this.checkpointEncoder.encode(world);
+    // The encoder drains this iterator synchronously: neither metadata nor the payload
+    // can observe another simulation tick. Last committed size is only an allocation hint.
+    const encoding = this.checkpointEncoder.encode(serializeChunks(w), (this.lastCheckpoint?.worldBytes ?? 0) * 1.5);
     const transferredAt = performance.now(), serializeMs = transferredAt - t0;
-    this.metrics.lastCaptureMs = capturedAt - t0;
-    this.metrics.lastMetadataMs = metadataAt - capturedAt;
-    this.metrics.lastTransferMs = transferredAt - metadataAt;
+    const captureMs = this.checkpointEncoder.lastCaptureMs, transferMs = this.checkpointEncoder.lastTransferMs;
+    this.metrics.lastCaptureMs = captureMs;
+    this.metrics.lastMetadataMs = metadataAt - t0;
+    this.metrics.lastTransferMs = transferMs;
     this.metrics.lastSerializeMs = serializeMs; this.metrics.maxSerializeMs = Math.max(this.metrics.maxSerializeMs, serializeMs);
     this.inFlight = encoding.then(async ({ bytes, encodeMs }) => {
       this.metrics.lastEncodeMs = encodeMs; this.metrics.maxEncodeMs = Math.max(this.metrics.maxEncodeMs, encodeMs);
@@ -159,7 +165,7 @@ export class LiveServer {
       const meta = await this.store.commit(bytes, metadata, this.lock);
       this.lastCheckpoint = meta; this.metrics.checkpoints++; this.metrics.lastCommitMs = performance.now() - t1; this.metrics.lastBytes = meta.worldBytes;
       this.metrics.lastCheckpointMs = performance.now() - t0;
-      this.log('info', 'checkpoint', { generation: meta.generation, reason, serializeMs: Math.round(serializeMs), captureMs: Math.round(capturedAt - t0), metadataMs: Math.round(metadataAt - capturedAt), transferMs: Math.round(transferredAt - metadataAt), encodeMs: Math.round(encodeMs), checkpointMs: Math.round(this.metrics.lastCheckpointMs), commitMs: Math.round(this.metrics.lastCommitMs), bytes: meta.worldBytes, physicalTime: meta.physicalTime });
+      this.log('info', 'checkpoint', { generation: meta.generation, reason, serializeMs: Math.round(serializeMs), captureMs: Math.round(captureMs), metadataMs: Math.round(metadataAt - t0), transferMs: Math.round(transferMs), encodeMs: Math.round(encodeMs), checkpointMs: Math.round(this.metrics.lastCheckpointMs), commitMs: Math.round(this.metrics.lastCommitMs), bytes: meta.worldBytes, physicalTime: meta.physicalTime });
       return meta;
     }).finally(() => { this.inFlight = null; });
     return this.inFlight;

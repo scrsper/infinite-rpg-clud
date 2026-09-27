@@ -170,8 +170,14 @@ export function serialize(world: World, compactEvents = false): string {
 
 /** Complete immutable JSON at one canonical instant; no live references escape this call. */
 export function serializeParts(world: World): string[] {
+  return [...serializeChunks(world)];
+}
+
+/** Consume synchronously to capture one canonical instant. Unlike serializeParts, this
+ * iterator retains only the current JSON chunk; callers must never yield between chunks. */
+export function* serializeChunks(world: World): Generator<string> {
   const { snapshot } = checkpointData(world, false);
-  return [...snapshotParts(snapshot)];
+  yield* snapshotParts(snapshot);
 }
 
 function checkpointData(world: World, compactEvents: boolean): { snapshot: Record<string, unknown>; encodedFields: Readonly<Record<string, string>> } {

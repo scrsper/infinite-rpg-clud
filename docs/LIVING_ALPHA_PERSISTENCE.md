@@ -253,3 +253,31 @@ not evidence that the live latency tail is solved. All 36 focused persistence/se
 checks and typecheck pass, including Unicode, shrinking/growing captures, malformed
 input recovery and previous-output immutability. Fresh bundled recovery and isolated
 two-hour performance validation are still required.
+
+## Streamed synchronous capture diagnostic (2026-09-27)
+
+Alpha.27 failed its second normal checkpoint at 274.925 ms: JSON capture took
+263.245 ms, metadata .708 ms and transfer 10.972 ms. A later metadata read took
+20.137 ms. Buffer reuse alone did not close the gate. The early five-minute
+rendered connection completed, but the failed observation is not a soak pass.
+
+The next candidate drains snapshot chunks directly into the owned UTF-8 allocation.
+It completes synchronously before returning or posting work, retaining one transient
+JSON chunk instead of another complete 88 MB string representation. Capacity grows
+safely when the previous committed size estimate is insufficient. A failed producer
+cannot commit partial state, and returned output never aliases the reusable input.
+The validated, write-once generator identity is retained alongside the already cached
+world ID, removing a redundant synchronous disk read at capture time.
+
+On the same mature backup with ordinary simulation between 32 captures, retaining all
+strings averaged 246.668 ms (maximum 289.151; 13 over 250; peak RSS 1.579 GB).
+Streaming averaged 234.855 ms (maximum 306.431; 3 over 250; peak RSS 1.528 GB).
+Every saved value round-tripped exactly. These profiles ran alongside the existing
+live and staging services and are diagnostic comparisons, not isolated service proof.
+They show fewer budget breaches, but do not establish an acceptable latency tail.
+The complete blocking budget remains 250 ms. Capture phase timing now includes JSON
+generation and UTF-8 copying; transfer phase measures the owned-buffer handoff.
+All 38 persistence/server integration checks and typecheck pass, including synchronous
+drain-before-mutation, Unicode/growth, failed-producer recovery, old-output independence
+and avoiding identity-file reads at capture time. A connected service preflight and
+fresh bundled recovery precede any final acceptance run.

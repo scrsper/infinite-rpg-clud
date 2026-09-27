@@ -1,15 +1,18 @@
 import { Worker } from 'node:worker_threads';
 
-/** One bounded worker per service. The caller captures JSON synchronously; only lossless storage
+/** One bounded worker per service. Input chunks are drained synchronously; only lossless storage
  * packing runs concurrently. A failed worker rejects the checkpoint, leaving CURRENT untouched. */
 export class CheckpointEncoder {
   private worker?: Worker;
   private failure?: Error;
   private closed = false;
   private recycledInput?: ArrayBuffer;
+  lastCaptureMs = 0;
+  lastTransferMs = 0;
   private timer?: ReturnType<typeof setTimeout>;
   private pending?: { resolve: (value: { bytes: Buffer; encodeMs: number }) => void; reject: (error: Error) => void };
-  encode(snapshot: string | readonly string[]): Promise<{ bytes: Buffer; encodeMs: number }> {
+  encode(snapshot: string | Iterable<string>, sizeHint = 0): Promise<{ bytes: Buffer; encodeMs: number }> {
+    const start = performance.now();
     if (this.closed || this.failure) throw this.failure ?? new Error('Checkpoint encoder closed');
     if (this.pending) throw new Error('Checkpoint encoding already in flight');
     if (!this.worker) {
@@ -31,28 +34,37 @@ export class CheckpointEncoder {
       this.worker.on('error', fail);
       this.worker.on('exit', code => { this.worker = undefined; fail(new Error(`Checkpoint encoder exited (${code})`)); });
     }
-    // Fill one owned allocation from bounded JSON parts. This avoids flattening a giant
-    // UTF-16 string, per-part ArrayBuffer transfers, and pooled/untransferable small buffers.
-    // Include all UTF-8 capture/copy work in the caller's blocking serialization metric.
+    // Consume every chunk synchronously before posting or returning. Only the current JSON
+    // chunk stays live, rather than retaining an entire second string copy of world history.
     const parts = typeof snapshot === 'string' ? [snapshot] : snapshot;
-    const length = parts.reduce((n, part) => n + Buffer.byteLength(part), 0);
     const recycled = this.recycledInput; this.recycledInput = undefined;
-    // Reserve one-eighth growth room, rounded to a MiB, so small history changes do not
-    // allocate another large buffer every minute. Transfer only the exact-length view.
-    const capacity = Math.max(1, Math.ceil(length * 1.125 / 1048576)) * 1048576;
-    const bytes = recycled && recycled.byteLength >= length
-      ? Buffer.from(recycled, 0, length)
-      : Buffer.allocUnsafeSlow(capacity).subarray(0, length);
+    const initial = typeof snapshot === 'string' ? Buffer.byteLength(snapshot) : Math.max(0, Number.isFinite(sizeHint) ? sizeHint : 0);
+    const capacity = Math.max(1, Math.ceil(initial * 1.125 / 1048576)) * 1048576;
+    let buffer = recycled ? Buffer.from(recycled) : Buffer.allocUnsafeSlow(capacity);
     let offset = 0;
-    for (const part of parts) offset += bytes.write(part, offset);
-    if (offset !== bytes.length) throw new Error('Incomplete checkpoint UTF-8 capture');
+    try {
+      for (const part of parts) {
+        const length = Buffer.byteLength(part), required = offset + length;
+        if (required > buffer.length) {
+          const grown = Buffer.allocUnsafeSlow(Math.max(buffer.length * 2, Math.ceil(required * 1.125 / 1048576) * 1048576));
+          buffer.copy(grown, 0, 0, offset); buffer = grown;
+        }
+        if (buffer.write(part, offset, length) !== length) throw new Error('Incomplete checkpoint UTF-8 capture');
+        offset += length;
+      }
+    } catch (error) {
+      this.recycledInput = buffer.buffer as ArrayBuffer;
+      throw error;
+    }
+    const bytes = buffer.subarray(0, offset), capturedAt = performance.now();
+    this.lastCaptureMs = capturedAt - start;
     return new Promise((resolve, reject) => {
       this.pending = { resolve, reject };
       this.timer = setTimeout(() => {
         this.failure = new Error('Checkpoint encoding exceeded 60 seconds');
         this.pending = undefined; reject(this.failure); void this.worker?.terminate();
       }, 60_000);
-      try { this.worker!.postMessage(bytes, [bytes.buffer]); }
+      try { this.worker!.postMessage(bytes, [bytes.buffer]); this.lastTransferMs = performance.now() - capturedAt; }
       catch (error) {
         clearTimeout(this.timer); this.pending = undefined;
         if (bytes.buffer.byteLength) this.recycledInput = bytes.buffer as ArrayBuffer;
