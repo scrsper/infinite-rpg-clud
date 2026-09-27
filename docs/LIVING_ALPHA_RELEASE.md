@@ -6,17 +6,18 @@ Update in place; do not fork planning documents.
 ## Current 50/100 candidate — 2026-09-27
 
 This section supersedes the historical status tables below. Runtime source is frozen
-at **450b7e5cbc80646e6c5a143f58214831d85445b6**, branch
-`codex/living-alpha-50-gates`. Subsequent release-record commits are documentation
-only; they do not change the packaged source or server bundle. PR #54 is stacked
-above #51 → #52 → #53, all still open. PR #54 is ready for review; the earlier
-PRs remain drafts. Human review/merge is required.
+at **450b7e5cbc80646e6c5a143f58214831d85445b6**, now included in GitHub `main`.
+PRs #51 → #52 → #53 → #54 merged on 2026-09-27, ending at `1205973`.
+Subsequent release-record and repository-cleanup changes do not change the packaged
+runtime or server bundle. The old implementation branches have been retired.
 Disposition: **IMPLEMENTED — HUMAN / HARDWARE VALIDATION REQUIRED**.
 
 Authoritative checkout:
-`C:/Users/green/Documents/Codex/2026-09-23/please-wake-up-the-claude-desktop/torn-veil-online`.
-Other checkouts and their edits remain untouched. No reset, clean, world replacement
-or second authoritative writer was used.
+`C:/Users/green/Documents/ChatGPT/TornVeilOnline`, tracking GitHub `main`.
+The Desktop and previous release checkouts are synchronized copies of main. Local
+edits and historical worktrees are preserved in `C:/Users/green/TornVeilRepoArchive/2026-09-27-consolidation`.
+Worlds, credentials, licensed assets and the accepted package remain intact.
+Use the root **Play Torn Veil.cmd** launcher; see [Running the game](RUNNING_THE_GAME.md).
 
 | Acceptance | Current evidence |
 |---|---|
@@ -149,7 +150,7 @@ and before/after consequence report, reproduce any reported control/UI defects a
 close only the checks actually demonstrated. The user must play 45–60 minutes with
 DualSense alone first, then KB/M, then switch back and verify reconnect consequences.
 Physical Xbox validation also remains required when hardware is available.
-Review and merge #51 → #52 → #53 → #54 in order. Do not rebuild or rerun
+PRs #51 → #52 → #53 → #54 are merged. Do not rebuild or rerun
 Iron, seven-day worlds, full regression or preserved adventure/multiplayer evidence.
 Do not run `ops update --env staging` (the update command targets live), and do
 not rehearse over the current staging fork. Never auto-merge or deploy live.

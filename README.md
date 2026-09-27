@@ -1,5 +1,31 @@
 # Torn Veil Online — Infinite RPG
 
+Torn Veil is a persistent simulated world with an Unreal Living Alpha client.
+`src/sim/` owns the canonical world; Unreal and the browser present it.
+GitHub **`main`** is the current integrated source baseline.
+
+## Play the installed Windows game
+
+Double-click **Play Torn Veil.cmd** in this repository or **Play Torn Veil** on the
+prepared desktop. The launcher checks the packaged client and private profile,
+starts the preserved staging service if needed, and opens the game. Select or
+create a character. Quit through **Escape → Quit**, then let the launcher finish
+its backup.
+
+Use **WASD/mouse** to move/look, **E** to interact, **I** for inventory, **Tab** for
+abilities, **J** for the journal and **Escape** for settings and quit.
+
+[Running the game, installation details and repository recovery](docs/RUNNING_THE_GAME.md)
+· [Full controls](docs/LIVING_ALPHA_CONTROLS.md)
+· [Release evidence and limitations](docs/LIVING_ALPHA_RELEASE.md)
+
+The launcher requires the prepared Windows installation; a fresh clone does not
+include the private sign-in profile, licensed local assets or packaged executable.
+The following browser-prototype notes are historical and do not describe the
+current Unreal package, controls or save format.
+
+## Historical browser prototype reference
+
 A prototype of a *living* voxel RPG village: not Minecraft-with-chatbots, and not a normal
 RPG where NPCs stand around waiting for the player. Ashford Vale is a small village of ~32
 named people, each with a home, a job, possessions, relationships, memories, and a daily
@@ -12,7 +38,7 @@ alley and only the people who could actually perceive it will know. A witness ma
 a guard, and that guard will investigate — because the information physically travelled
 between two minds, not because the game broadcast an event.
 
-## Starting the game
+### Starting the historical browser prototype
 
 Requirements: Node.js 18+ and npm.
 

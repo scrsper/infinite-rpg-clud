@@ -1,4 +1,23 @@
-# Living Alpha gate completion, 2026-09-26
+# Current: consolidated GitHub main, 2026-09-27
+
+GitHub `scrsper/torn-veil-online` / `main` is the source baseline. PRs #51, #52, #53
+and #54 merged on 2026-09-27 (integration commit `1205973`). Active local development
+uses `C:/Users/green/Documents/ChatGPT/TornVeilOnline`. The Desktop and previous
+release checkouts are synchronized copies of main. Historical branch tips and local
+edits are archived; see `docs/RUNNING_THE_GAME.md` for disposition and recovery.
+
+Living Alpha runtime `450b7e5cbc80` is included in main. Package
+`client-450b7e5cbc80` and staging server `0.1.0-alpha.30+450b7e5cbc80` retain their
+accepted runtime and saved world. Final two-hour soak, Iron, regression and packaged
+automation evidence is recorded in `docs/LIVING_ALPHA_RELEASE.md`; the failed-candidate
+notes below are historical. Human play and physical-device acceptance remain external.
+The older live alpha.12 deployment is separate and was not replaced.
+
+Run **Play Torn Veil.cmd** at the repository root or the **Play Torn Veil** desktop
+shortcut. `-CheckOnly` checks package, profile and staging readiness without launching
+the game. Player instructions: `docs/RUNNING_THE_GAME.md`.
+
+# Historical: Living Alpha gate completion, 2026-09-26
 
 Current implementation branch: `codex/living-alpha-50-gates`, PR #54 stacked on
 `claude/living-alpha-client` (#53). Human merge order remains #51 → #52 → #53 → #54.
