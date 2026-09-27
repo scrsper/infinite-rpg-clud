@@ -281,3 +281,32 @@ All 38 persistence/server integration checks and typecheck pass, including synch
 drain-before-mutation, Unicode/growth, failed-producer recovery, old-output independence
 and avoiding identity-file reads at capture time. A connected service preflight and
 fresh bundled recovery precede any final acceptance run.
+
+## Smaller transient batches (2026-09-27)
+
+Alpha.28 exceeded the unchanged 250 ms budget at one hour: 251.516 ms, of which
+251.399 ms was JSON capture. Metadata and worker transfer together took 0.113 ms.
+The failed run retained its evidence: 60 normal checkpoints, one scheduled backup,
+zero-player and rendered-client periods, no restart, final tick debt zero, and
+68.179 → 68.657 MB saved state across 3,650.788 seconds. This is not a two-hour pass.
+
+Knowledge dictionary transport and UTF-16 transport experiments did not improve
+capture time and were rejected. Smaller transient JSON batches preserve exactly
+the existing bytes, snapshot boundary and schema. A mature-world diagnostic with
+ordinary simulation between captures and rotated comparison order measured:
+
+| Persons / other array entries per batch | Median capture | Maximum capture |
+|---|---:|---:|
+| 8 / 512 (previous) | 170.961 ms | 225.570 ms |
+| 4 / 128 | 171.149 ms | 182.641 ms |
+| 1 / 64 | 173.467 ms | 184.808 ms |
+
+The candidate uses 4 / 128. This bounds transient allocations more tightly without
+changing stored information or introducing another transport format. These profiles
+are diagnostic evidence only; exact-package and isolated two-hour acceptance remain
+required. The earlier full regression and continuation evidence remain valid because
+no canonical mechanics, knowledge or retention rule changed.
+All 38 focused persistence/server integration tests pass in 85.55 seconds, and
+typecheck is clean. Existing byte-equivalence tests cover segmented arrays, Unicode,
+omissions and numeric edge cases; worker tests preserve the synchronous snapshot,
+prior output and recovery from rejected or interrupted captures.

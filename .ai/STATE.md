@@ -5,6 +5,11 @@ Current implementation branch: `codex/living-alpha-50-gates`, PR #54 stacked on
 Live remains alpha.12 (`1c8b317f6075`); candidate releases run against the preserved
 staging world. Do not recreate staging from live or run a second state writer.
 
+Latest performance result: alpha.28 failed the unchanged 250 ms serialization
+budget at one hour (251.516 ms). Its normal backup, rendered connection and bounded
+save growth are preserved evidence, not a completed soak. The next candidate reduces
+transient JSON batch sizes with byte-identical output; see the persistence document.
+
 The three original seven-day worlds (918271/918272/918273), ordinary hunt adventure,
 Hush alternative and shared-world multiplayer remain accepted. Later bounded continuations
 identified and corrected actual retry loops; see `docs/LIVING_ALPHA_PERSISTENCE.md`.

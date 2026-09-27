@@ -13,7 +13,9 @@ export function* snapshotParts(snapshot: Record<string, unknown>, encodedFields:
   for (const [key, value] of Object.entries(snapshot)) {
     // Smaller homogeneous array segments also contain slow-path fallbacks and temporary
     // encoder buffers. Joining their JSON interiors is lossless for these plain arrays.
-    const size = key === 'persons' ? 8 : 512;
+    // Bound transient strings more tightly on mature worlds. Large batches produced
+    // checkpoint latency spikes despite streaming into a reused destination buffer.
+    const size = key === 'persons' ? 4 : 128;
     const supplied = Object.hasOwn(encodedFields, key);
     const segmented = !supplied && Array.isArray(value) && value.length > size;
     const encoded = supplied ? encodedFields[key] : segmented ? null : JSON.stringify(value);
