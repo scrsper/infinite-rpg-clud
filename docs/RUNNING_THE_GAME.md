@@ -59,10 +59,24 @@ and `unreal/scripts/Package-Client.ps1` / `Start-AlphaClient.ps1`.
 ## Source of truth and recovery
 
 GitHub **`scrsper/torn-veil-online`, branch `main`**, is the source baseline. On this
-machine, use `C:\Users\green\Documents\ChatGPT\TornVeilOnline` for current development.
-The Desktop and prior release checkouts are synchronized copies of `main`; their
-ignored assets/evidence remain available. Start future work from freshly fetched
-`main` and integrate completed work back through review.
+machine, **every Torn Veil edit uses
+`C:\Users\green\Desktop\projects\torn-veil-online`**, as explicitly designated by
+the user. This includes code, documentation, configuration and imported Unreal assets.
+The permanent instruction is in `AGENTS.md` section 0, also referenced by `CLAUDE.md`.
+Documents and prior release checkouts are reference/recovery copies. Start future
+work from freshly fetched `main` in the Desktop checkout and integrate completed
+work back through review.
+
+For Unreal editing, use Engine 5.8 and open:
+
+```text
+C:\Users\green\Desktop\projects\torn-veil-online\unreal\TornVeilOnline\TornVeilOnline.uproject
+```
+
+After source updates, run `unreal/scripts/Build.ps1` from that repository to build
+the current editor module. Import and save assets in this project's Content Browser.
+The packaged play client remains a separate build; editor changes require integration
+and repackaging before appearing in the desktop game.
 
 The 2026-09-27 cleanup retired 21 remote feature branches and 47 local branch refs
 across three clones. Fourteen remote branches were already contained in `main`;

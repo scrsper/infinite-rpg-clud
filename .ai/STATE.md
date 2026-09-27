@@ -2,9 +2,11 @@
 
 GitHub `scrsper/torn-veil-online` / `main` is the source baseline. PRs #51, #52, #53
 and #54 merged on 2026-09-27 (integration commit `1205973`). Active local development
-uses `C:/Users/green/Documents/ChatGPT/TornVeilOnline`. The Desktop and previous
-release checkouts are synchronized copies of main. Historical branch tips and local
-edits are archived; see `docs/RUNNING_THE_GAME.md` for disposition and recovery.
+uses **`C:/Users/green/Desktop/projects/torn-veil-online`**, explicitly designated
+by the user for every Torn Veil edit, including Unreal assets. `AGENTS.md` section 0
+is the permanent path rule. Documents and previous release checkouts are reference
+copies. Historical branch tips and local edits are archived; see
+`docs/RUNNING_THE_GAME.md` for disposition and recovery.
 
 Living Alpha runtime `450b7e5cbc80` is included in main. Package
 `client-450b7e5cbc80` and staging server `0.1.0-alpha.30+450b7e5cbc80` retain their

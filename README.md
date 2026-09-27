@@ -4,6 +4,11 @@ Torn Veil is a persistent simulated world with an Unreal Living Alpha client.
 `src/sim/` owns the canonical world; Unreal and the browser present it.
 GitHub **`main`** is the current integrated source baseline.
 
+On this machine, all Torn Veil edits use
+**`C:\Users\green\Desktop\projects\torn-veil-online`**, including Unreal assets.
+Open `unreal/TornVeilOnline/TornVeilOnline.uproject` inside that checkout with UE 5.8.
+See `AGENTS.md` section 0 for the permanent working-location rule.
+
 ## Play the installed Windows game
 
 Double-click **Play Torn Veil.cmd** in this repository or **Play Torn Veil** on the

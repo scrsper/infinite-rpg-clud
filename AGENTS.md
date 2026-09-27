@@ -6,6 +6,29 @@ It is intentionally concise. Detailed subsystem knowledge belongs in `.ai/REPO_M
 
 ---
 
+## 0. Authoritative working location
+
+The user-designated working repository on this machine is:
+
+`C:\Users\green\Desktop\projects\torn-veil-online`
+
+Use this checkout for every Torn Veil source, documentation, configuration, asset,
+and Unreal Editor change. The Unreal project is:
+
+`C:\Users\green\Desktop\projects\torn-veil-online\unreal\TornVeilOnline\TornVeilOnline.uproject`
+
+Before editing, verify the Git root is this directory and the remote is
+`https://github.com/scrsper/torn-veil-online.git`. GitHub `main` remains the integrated
+source baseline. Set an explicit working directory when a chat starts elsewhere.
+
+Other Documents, release, and archived checkouts are reference/recovery copies.
+Do not author changes in them or create an alternative working clone/worktree unless
+the user explicitly requests a different location. If this path is unavailable,
+report that instead of silently choosing another checkout. Historical documents
+that identify another authoritative path are superseded by this rule.
+
+---
+
 ## 1. Constitutional authority
 
 `docs/TORN_VEIL_CONSTITUTION.md` is the highest-level canonical design authority for Torn Veil Online.

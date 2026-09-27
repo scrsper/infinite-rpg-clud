@@ -13,8 +13,9 @@ runtime or server bundle. The old implementation branches have been retired.
 Disposition: **IMPLEMENTED — HUMAN / HARDWARE VALIDATION REQUIRED**.
 
 Authoritative checkout:
-`C:/Users/green/Documents/ChatGPT/TornVeilOnline`, tracking GitHub `main`.
-The Desktop and previous release checkouts are synchronized copies of main. Local
+`C:/Users/green/Desktop/projects/torn-veil-online`, tracking GitHub `main`.
+This user-designated path is required for all edits, including Unreal assets.
+The Documents and previous release checkouts are reference copies. Local
 edits and historical worktrees are preserved in `C:/Users/green/TornVeilRepoArchive/2026-09-27-consolidation`.
 Worlds, credentials, licensed assets and the accepted package remain intact.
 Use the root **Play Torn Veil.cmd** launcher; see [Running the game](RUNNING_THE_GAME.md).
