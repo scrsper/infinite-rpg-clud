@@ -56,6 +56,20 @@ or second authoritative writer was used.
   evidence. The launcher records 50 minutes without sending gameplay input,
   waits for the user to quit, and takes normal before/after backups.
 
+Launcher follow-up (2026-09-27): the first desktop launch exposed Windows AppData
+virtualization. The agent-visible profile was actually under the Codex package's
+`LocalCache/Local/TornVeil/Client`, so Explorer's launcher could not see it.
+The private kit now installs a missing profile from
+`C:/Users/green/TornVeilAlpha/client-profiles/finish50-human-alpha17.json`
+into the launching user's `LOCALAPPDATA/TornVeil/Client`. The prepared source is
+restricted to the user, SYSTEM and administrators; credentials remain outside git
+and command arguments. Existing profiles are preserved. Package/profile errors are
+reported separately. `Play.ps1 -CheckOnly` verifies readiness without opening the
+game or starting a play-session capture. Syntax, existing-profile preflight, exact
+installation into an empty namespace and preservation on repeat all passed; see
+`.debug/finish50/launcher-profile-fix-verification.json`. The packaged client,
+server, world and previously completed acceptance runs are unchanged.
+
 ### Evidence and limitations
 
 The earned Iron report/save is `.debug/finish50/iron-complete-e9a1f53/`;
