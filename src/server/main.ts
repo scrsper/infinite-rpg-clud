@@ -1,4 +1,5 @@
-import { loadConfig, loadRelease } from './config';
+import { loadConfig, loadRelease, type AlphaConfig } from './config';
+import { applyCpuAllocation } from './cpuAllocation';
 import { LiveServer } from './live';
 import { RefuseToStartError, WriterFenceError } from './store';
 
@@ -19,7 +20,9 @@ function log(level: 'info' | 'warn' | 'error', event: string, data: Record<strin
 }
 if (!configPath) { log('error', 'usage', { message: 'missing --config <path>' }); process.exit(78); }
 
-const config = loadConfig(configPath);
+let config: AlphaConfig;
+try { config = loadConfig(configPath); }
+catch (e) { log('error', 'refused_to_start', { error: String(e) }); process.exit(78); }
 const release = loadRelease(process.argv[1]);
 log('info', 'starting', { env: config.env, release: release.version, revision: release.revision, pid: process.pid, node: process.version, port: config.port, bind: config.bind });
 const server = new LiveServer(config, release, log);
@@ -35,6 +38,10 @@ process.on('uncaughtException', e => { log('error', 'uncaught_exception', { erro
 process.on('unhandledRejection', e => { log('error', 'unhandled_rejection', { error: String((e as Error)?.stack ?? e) }); process.exit(70); });
 
 try {
+  try {
+    const allocation = applyCpuAllocation(config.cpuAllocation);
+    if (allocation) log('info', 'cpu_allocation_applied', allocation);
+  } catch (e) { throw new RefuseToStartError(`CPU allocation unavailable: ${String(e)}`); }
   await server.open();
   await server.listen();
   process.send?.({ type: 'ready', port: config.port });

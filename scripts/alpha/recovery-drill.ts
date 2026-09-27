@@ -7,6 +7,8 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { ProbeClient } from '../../src/server/probeClient';
 import { WorldStore } from '../../src/server/store';
+import { validateCpuAllocation } from '../../src/server/cpuAllocation';
+import { constants } from 'node:os';
 
 const arg = (name: string) => process.argv[process.argv.indexOf(`--${name}`) + 1];
 for (const name of ['home', 'release', 'port']) assert(process.argv.includes(`--${name}`), `--${name} required`);
@@ -19,6 +21,9 @@ const root = join(home, 'staging'), reportFile = join(home, 'recovery-report.jso
 const run = promisify(execFile), started = Date.now();
 const evidence: Record<string, unknown> = { kind: 'isolated real-process operator/protocol drill; no UI acceptance', home, release, port, startedAt: new Date().toISOString(), checks: {} };
 const checks = evidence.checks as Record<string, boolean>;
+const cpuAllocation = process.argv.includes('--cpu-allocation')
+  ? validateCpuAllocation(JSON.parse(readFileSync(resolve(arg('cpu-allocation')), 'utf8'))) : undefined;
+if (cpuAllocation) evidence.cpuAllocation = cpuAllocation;
 const record = () => writeFileSync(reportFile, JSON.stringify(evidence, null, 2));
 let client: ProbeClient | undefined, running = false;
 async function ops(...args: string[]): Promise<string> {
@@ -32,6 +37,11 @@ const check = (name: string, value: boolean) => { checks[name] = value; record()
 const connect = (token: string, create = false) => ProbeClient.connect({ port, account: 'recovery-player', token, realtime: true, ...(create ? { character: 'new', name: 'Recovery Wayfarer' } : {}) });
 try {
   await ops('init', '--port', String(port), '--seed', '918271', '--checkpoint-seconds', '60');
+  if (cpuAllocation) {
+    const configPath = join(root, 'config.json');
+    const config = JSON.parse(readFileSync(configPath, 'utf8'));
+    writeFileSync(configPath, JSON.stringify({ ...config, cpuAllocation }, null, 2));
+  }
   await ops('install', '--release', release);
   const account = JSON.parse(await ops('account', 'add', 'recovery-player', '--name', 'Recovery acceptance'));
   await ops('start'); running = true;
@@ -46,6 +56,9 @@ try {
   const save = await client.intent({ type: 'save' });
   check('playerSaveAcknowledged', save.result === 'saved' && Number.isInteger(save.generation));
   const beforeCrash = (await status()).service;
+  if (cpuAllocation) check('cpuAllocationAppliedBeforeAdmission',
+    beforeCrash.runtime.availableParallelism === cpuAllocation.affinity.toString(2).replace(/0/g, '').length
+    && beforeCrash.runtime.priority === constants.priority.PRIORITY_ABOVE_NORMAL);
   const savedMeta = JSON.parse(readFileSync(join(root, 'state', 'world', `gen-${String(save.generation).padStart(8, '0')}`, 'meta.json'), 'utf8'));
   evidence.beforeCrash = beforeCrash;
   const owner = JSON.parse(readFileSync(join(root, 'supervisor.json'), 'utf8'));
@@ -61,6 +74,9 @@ try {
   }
   evidence.crashRecoveryMs = Date.now() - crashAt;
   check('supervisorRestarted', !!recovered && recovered.supervisor.restarts > 0);
+  if (cpuAllocation) check('cpuAllocationReappliedAfterCrash',
+    recovered.service.runtime.availableParallelism === beforeCrash.runtime.availableParallelism
+    && recovered.service.runtime.priority === beforeCrash.runtime.priority);
   check('durableClockAndOwnershipSurvived', recovered.service.worldId === worldId && recovered.service.world.physicalTime >= savedMeta.physicalTime && JSON.stringify(recovered.service.characters) === JSON.stringify(savedMeta.ownership));
   client = await connect(account.token);
   check('reconnectsSamePersonAfterCrash', client.personId === person);

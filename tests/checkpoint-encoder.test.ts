@@ -4,6 +4,21 @@ import { decodeEventTable } from '../src/sim/persist/eventTable';
 import { newWorld, serializeChunks, serializeParts } from '../src/sim/persist/save';
 
 describe('checkpoint storage worker', () => {
+  it('prepares owned capacity before the first capture without moving snapshot work out of encode', async () => {
+    const allocate = vi.spyOn(Buffer, 'allocUnsafeSlow'), encoder = new CheckpointEncoder();
+    try {
+      encoder.prepare(2 * 1048576);
+      const preparedAllocations = allocate.mock.calls.length;
+      let captured = false;
+      const pending = encoder.encode((function* () { captured = true; yield '{"events":[],"text":"早い🙂"}'; })());
+      expect(captured).toBe(true);
+      expect(() => encoder.prepare(2 * 1048576)).toThrow('already in flight');
+      expect(JSON.parse((await pending).bytes.toString()).text).toBe('早い🙂');
+      expect(allocate.mock.calls.length).toBe(preparedAllocations);
+      expect(encoder.lastCaptureMs).toBeGreaterThan(0);
+    } finally { await encoder.close(); allocate.mockRestore(); }
+  });
+
   it('reuses owned input capacity across smaller and rejected captures without changing prior output', async () => {
     const allocate = vi.spyOn(Buffer, 'allocUnsafeSlow'), encoder = new CheckpointEncoder();
     try {

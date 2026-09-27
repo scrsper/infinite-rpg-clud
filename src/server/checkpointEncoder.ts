@@ -11,10 +11,22 @@ export class CheckpointEncoder {
   lastTransferMs = 0;
   private timer?: ReturnType<typeof setTimeout>;
   private pending?: { resolve: (value: { bytes: Buffer; encodeMs: number }) => void; reject: (error: Error) => void };
-  encode(snapshot: string | Iterable<string>, sizeHint = 0): Promise<{ bytes: Buffer; encodeMs: number }> {
-    const start = performance.now();
+  /** Reserve and touch owned storage while the service is loading, before it accepts
+   * players. No world is captured here; all serialization remains inside encode's timer. */
+  prepare(sizeHint: number): number {
     if (this.closed || this.failure) throw this.failure ?? new Error('Checkpoint encoder closed');
     if (this.pending) throw new Error('Checkpoint encoding already in flight');
+    this.startWorker();
+    const capacity = this.capacityFor(sizeHint);
+    if (!this.recycledInput || this.recycledInput.byteLength < capacity)
+      this.recycledInput = Buffer.allocUnsafeSlow(capacity).buffer as ArrayBuffer;
+    Buffer.from(this.recycledInput).fill(0);
+    return this.recycledInput.byteLength;
+  }
+  private capacityFor(hint: number): number {
+    return Math.max(1, Math.ceil(Math.max(0, Number.isFinite(hint) ? hint : 0) * 1.125 / 1048576)) * 1048576;
+  }
+  private startWorker(): void {
     if (!this.worker) {
       const source = import.meta.url.endsWith('.ts');
       this.worker = new Worker(new URL(source ? './checkpointWorker.ts' : './checkpointWorker.mjs', import.meta.url), {
@@ -34,12 +46,18 @@ export class CheckpointEncoder {
       this.worker.on('error', fail);
       this.worker.on('exit', code => { this.worker = undefined; fail(new Error(`Checkpoint encoder exited (${code})`)); });
     }
+  }
+  encode(snapshot: string | Iterable<string>, sizeHint = 0): Promise<{ bytes: Buffer; encodeMs: number }> {
+    const start = performance.now();
+    if (this.closed || this.failure) throw this.failure ?? new Error('Checkpoint encoder closed');
+    if (this.pending) throw new Error('Checkpoint encoding already in flight');
+    this.startWorker();
     // Consume every chunk synchronously before posting or returning. Only the current JSON
     // chunk stays live, rather than retaining an entire second string copy of world history.
     const parts = typeof snapshot === 'string' ? [snapshot] : snapshot;
     const recycled = this.recycledInput; this.recycledInput = undefined;
     const initial = typeof snapshot === 'string' ? Buffer.byteLength(snapshot) : Math.max(0, Number.isFinite(sizeHint) ? sizeHint : 0);
-    const capacity = Math.max(1, Math.ceil(initial * 1.125 / 1048576)) * 1048576;
+    const capacity = this.capacityFor(initial);
     let buffer = recycled ? Buffer.from(recycled) : Buffer.allocUnsafeSlow(capacity);
     let offset = 0;
     try {

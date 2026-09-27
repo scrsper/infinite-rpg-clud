@@ -12,7 +12,7 @@ const token = readFileSync(join(root, 'credentials', 'admin.token'), 'utf8').tri
 mkdirSync(out, { recursive: true });
 const began = Date.now(), samples = [], errors = [];
 writeFileSync(join(out, 'run.json'), JSON.stringify({ root, seconds, beganAt: new Date(began).toISOString(), pid: process.pid }, null, 2));
-while (Date.now() - began < seconds * 1000) {
+async function recordSample() {
   const at = Date.now();
   try {
     const response = await fetch(`http://127.0.0.1:${config.port}/admin/status`, { headers: { 'x-torn-veil-admin': token }, signal: AbortSignal.timeout(5000) });
@@ -21,9 +21,22 @@ while (Date.now() - began < seconds * 1000) {
     const sample = { at: new Date().toISOString(), elapsedSeconds: (Date.now() - began) / 1000, responseMs: Date.now() - at, ...state };
     samples.push(sample); appendFileSync(join(out, 'samples.jsonl'), JSON.stringify(sample) + '\n');
   } catch (error) { const e = { at: new Date().toISOString(), error: String(error) }; errors.push(e); appendFileSync(join(out, 'errors.jsonl'), JSON.stringify(e) + '\n'); }
+}
+while (Date.now() - began < seconds * 1000) {
+  await recordSample();
   const remaining = seconds * 1000 - (Date.now() - began);
   if (remaining > 0) await new Promise(r => setTimeout(r, Math.min(10_000, remaining)));
 }
+// A ten-second sample can land inside an ordinary checkpoint pause. Observe actual
+// recovery for at most ten additional seconds; never replace a sample or relax the
+// zero-debt assertion. Persistent debt and every cumulative peak remain failures.
+await recordSample();
+const settlingBegan = Date.now();
+while (samples.at(-1)?.scheduler.debtMs > 0 && Date.now() - settlingBegan < 10_000) {
+  await new Promise(r => setTimeout(r, 1000));
+  await recordSample();
+}
+const settlingSeconds = (Date.now() - settlingBegan) / 1000;
 const first = samples[0], last = samples.at(-1), peak = read => Math.max(0, ...samples.map(read));
 const checks = {
   completeDuration: Date.now() - began >= seconds * 1000,
@@ -58,7 +71,7 @@ const report = { runtime: last?.runtime, connectedClientPeriodObserved: samples.
   peakCheckpointCommitMs: peak(s => s.metrics.lastCommitMs),
   peakBackgroundEncodeMs: peak(s => s.metrics.maxEncodeMs ?? 0),
   peakCheckpointEndToEndMs: peak(s => s.metrics.lastCheckpointMs ?? 0),
-  kind: 'server-only realtime soak; client FPS/UI separate', root, requestedSeconds: seconds, elapsedSeconds: (Date.now() - began) / 1000,
+  kind: 'server-only realtime soak; client FPS/UI separate', root, requestedSeconds: seconds, elapsedSeconds: (Date.now() - began) / 1000, settlingSeconds,
   sampleCount: samples.length, checks, passed: Object.values(checks).every(Boolean), errors,
   peakRssBytes: peak(s => s.memory.rss), peakSerializeMs: peak(s => s.metrics.maxSerializeMs),
   // Cumulative service maxima include stalls between ten-second observations.

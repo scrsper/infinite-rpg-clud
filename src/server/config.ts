@@ -4,6 +4,7 @@ import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { ALPHA_PROTOCOL } from './protocol';
 import { SAVE_VERSION } from '../sim/persist/save';
 import { GENERATOR_VERSION } from './fingerprint';
+import { validateCpuAllocation, type CpuAllocation } from './cpuAllocation';
 
 export type AlphaEnv = 'dev' | 'staging' | 'live';
 /**
@@ -26,6 +27,7 @@ export interface AlphaConfig {
   disconnectGraceSeconds: number;
   maxConnections: number;
   characterCatalogue: string | null;
+  cpuAllocation?: CpuAllocation;
 }
 
 export function loadConfig(path: string): AlphaConfig {
@@ -33,6 +35,7 @@ export function loadConfig(path: string): AlphaConfig {
   const root = raw.root ? resolve(raw.root) : dirname(resolve(path));
   const at = (p: string | undefined, fallback: string) => p ? (isAbsolute(p) ? p : join(root, p)) : join(root, fallback);
   const env = raw.env;
+  const cpuAllocation = validateCpuAllocation(raw.cpuAllocation);
   if (env !== 'dev' && env !== 'staging' && env !== 'live') throw new Error(`config.env must be dev, staging or live`);
   const bind = raw.bind ?? ['127.0.0.1'];
   if (!bind.length || bind.some(a => a === '0.0.0.0' || a === '::' || a === '')) throw new Error('Refusing to bind a wildcard address; list explicit interfaces');
@@ -47,6 +50,7 @@ export function loadConfig(path: string): AlphaConfig {
     disconnectGraceSeconds: Math.max(0, raw.disconnectGraceSeconds ?? 120),
     maxConnections: Math.max(1, Math.min(64, raw.maxConnections ?? 8)),
     characterCatalogue: raw.characterCatalogue ? at(raw.characterCatalogue, '') : null,
+    ...(cpuAllocation ? { cpuAllocation: { ...cpuAllocation, powerShell: at(cpuAllocation.powerShell, '') } } : {}),
   };
 }
 

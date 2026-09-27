@@ -310,3 +310,44 @@ All 38 focused persistence/server integration tests pass in 85.55 seconds, and
 typecheck is clean. Existing byte-equivalence tests cover segmented arrays, Unicode,
 omissions and numeric edge cases; worker tests preserve the synchronous snapshot,
 prior output and recovery from rejected or interrupted captures.
+
+## Prepared capacity and explicit desktop CPU allocation (2026-09-27)
+
+Alpha.29 failed during its late rendered-client period at 279.853 ms. The retained
+6,339-second observation includes 105 normal checkpoints and one scheduled backup.
+Saved state moved from 68.632 to 69.143 MB, with repeated compaction drops (including
+71.13 to 68.95 MB); peak RSS was 1.088 GB. These bounded-growth observations do not
+excuse the latency failure or constitute a two-hour acceptance pass.
+
+Native binary transport, record encoding and generic deep-equality caches were
+slower on this mature world and were rejected. Existing knowledge claims are mutable;
+an identity-only cache would be incorrect and has not been introduced.
+
+A ten-minute diagnostic allocated logical CPUs 0–1 to the staging service at
+AboveNormal priority and CPUs 2–11 to Unreal on the observed 12-thread desktop.
+The first cold checkpoint still failed at 269.904 ms; subsequent connected captures
+were 202.442–238.425 ms. The new encoder prepares and touches owned input capacity
+while loading, before admission. No snapshot is captured during preparation: the
+entire synchronous JSON capture remains inside the original 250 ms measurement.
+Worker output, schema, knowledge, provenance and canonical mechanics are unchanged.
+
+An optional Windows environment policy makes that diagnostic allocation reproducible:
+`cpuAllocation: { affinity: 3, powerShell: "<absolute PowerShell 7 executable>" }`.
+It applies only to the starting service process, before opening its world, and is
+verified on every supervisor restart. Failure refuses startup; absent configuration
+preserves existing environments. Status reports actual available parallelism and
+OS priority. These masks are specific to this desktop, not portable defaults.
+Capture and human-session launchers accept an optional `-CpuAffinity 4092` and
+record the actual allocation. Live remains unchanged.
+
+The observer retains an explicit end-of-duration sample and observes up to ten more
+seconds if debt remains. Every sample and cumulative peak is retained; the final
+debt must actually reach zero. This avoids treating one sample inside a checkpoint
+as persistent debt without weakening the zero-debt or 250 ms assertions.
+
+Fresh bundled crash/recovery checks with the policy enabled, a connected diagnostic,
+and the complete isolated two-hour run are required before acceptance.
+
+Focused validation: 25 CPU-policy, checkpoint-worker and live-server tests passed
+in 64.16 seconds; typecheck and both launcher syntax checks passed. The preceding
+39-test persistence integration run also passed. Runtime acceptance is still pending.

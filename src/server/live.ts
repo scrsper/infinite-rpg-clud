@@ -4,6 +4,7 @@ import { randomUUID, timingSafeEqual } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { monitorEventLoopDelay } from 'node:perf_hooks';
+import { availableParallelism, getPriority } from 'node:os';
 import type { Duplex } from 'node:stream';
 import { BridgeSession } from '../bridge/session';
 import { RegionalTransport, REGION_PROTOCOL, MAX_PRESENTATION_MESSAGE_BYTES } from '../bridge/streaming';
@@ -137,6 +138,9 @@ export class LiveServer {
       // until its owner reconnects (the same policy as an expired disconnect grace).
       for (const ids of Object.values(this.ownership)) for (const id of ids) { const p = this.session.world.person(id); if (p && isExternallyControlled(p)) setExternalControl(p, false); }
     }
+    const preparationStart = performance.now();
+    const capacityBytes = this.checkpointEncoder.prepare((this.lastCheckpoint?.worldBytes ?? 0) * 1.5);
+    this.log('info', 'checkpoint_capacity_prepared', { capacityBytes, ms: performance.now() - preparationStart });
   }
 
   /** Capture canonical JSON and transfer owned bytes synchronously. Storage packing and commit
@@ -257,7 +261,7 @@ export class LiveServer {
     const w = this.session.world;
     return {
       env: this.config.env, worldId: this.worldId, release: this.release, protocol: ALPHA_PROTOCOL, state: this.lifecycle(), ready: this.ready, admissions: this.admissions,
-      runtime: { node: process.version, v8: process.versions.v8, pid: process.pid }, cpuMicroseconds: process.cpuUsage(),
+      runtime: { node: process.version, v8: process.versions.v8, pid: process.pid, availableParallelism: availableParallelism(), priority: getPriority() }, cpuMicroseconds: process.cpuUsage(),
       maintenance: this.maintenance, uptimeSeconds: Math.round((Date.now() - this.startedAt) / 1000),
       world: { physicalTime: w.physicalTime, worldNow: w.now, day: Math.floor(w.now / 86400), livingPersons: w.livingPersons().length, events: w.events.length, knowledge: w.persons().reduce((n, p) => n + Object.keys(p.knowledge).length, 0), creatures: w.creatures().length },
       connections: [...this.connections.values()].map(c => ({ account: c.account.id, personId: c.personId, remote: c.remote, since: new Date(c.connectedAt).toISOString() })),
