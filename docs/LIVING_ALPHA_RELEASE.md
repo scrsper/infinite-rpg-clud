@@ -3,6 +3,157 @@
 One record for the Living Alpha release: baseline, gates, plan, budgets, blockers and evidence.
 Update in place; do not fork planning documents.
 
+## Current 50/100 candidate — 2026-09-27
+
+This section supersedes the historical status tables below. Runtime source is frozen
+at **450b7e5cbc80646e6c5a143f58214831d85445b6**, branch
+`codex/living-alpha-50-gates`. Subsequent release-record commits are documentation
+only; they do not change the packaged source or server bundle. PR #54 is stacked
+above #51 → #52 → #53, all still open. PR #54 is ready for review; the earlier
+PRs remain drafts. Human review/merge is required.
+Disposition: **IMPLEMENTED — HUMAN / HARDWARE VALIDATION REQUIRED**.
+
+Authoritative checkout:
+`C:/Users/green/Documents/Codex/2026-09-23/please-wake-up-the-claude-desktop/torn-veil-online`.
+Other checkouts and their edits remain untouched. No reset, clean, world replacement
+or second authoritative writer was used.
+
+| Acceptance | Current evidence |
+|---|---|
+| Genuine Normal → Iron | PASS. Generated seed 918271 person p_128 completed a real veil path in 12.116798604 world days (1,046,891.399350 world seconds); 16,446.760211 accelerated execution seconds, equivalent to 48.467194 hours at live 6×. |
+| Three seven-day worlds | Preserved PASS for seeds 918271/918272/918273. Final bounded one-hour checks have exact reload and no new integrity, semantic or path findings; populations 127/129/122 remain Normal. |
+| Persistence / final soak | PASS. Alpha.30 completed 7,201.015 real seconds, 119 normal checkpoints and two scheduled backups. Maximum serialization 215.626 ms; no restart/status failures, actual final debt zero. Growth and final backup reviewed below. |
+| KB/M / controller input architecture | Packaged keyboard, injected gamepad and device-switch probes each PASS 11/11. Native presentation and targeting checks remain valid. Physical device/UI acceptance is separate. |
+| Packaged candidate | Fresh Development Windows package built from 450b7e5cbc80 outside Unreal Editor. BuildCookRun 419.42 seconds; clean manifest, protocol 1. |
+| Ordinary 45–60-minute play | EXTERNAL. User requested a prepared session for later; no human session launched or claimed. |
+| DualSense / Xbox physical validation | EXTERNAL. USB DualSense detected; controller-only play, glyphs, rumble and switching require actual testing. Xbox hardware unavailable. |
+| Multiplayer / adventure | Preserved packaged two-character shared-world proof, conserved hunt reward/trust/reload and intentional unwitnessed-Hush payment refusal. |
+| Recovery | Alpha.30 real-process drill PASS 16/16 in 44.609 seconds, including CPU policy before admission and after crash, corrupt-newest fallback, interrupted writes and backup restore. |
+| Update continuity | Preserved 13/13 alpha.12 → alpha.18 drill; subsequent staging updates preserved world ID, time and character ownership. Live remains alpha.12. |
+
+### Exact candidate, services and state
+
+- Server: `C:/Users/green/TornVeilAlpha/releases/0.1.0-alpha.30+450b7e5cbc80`,
+  Node 26.10.0. Staging port 7410, supervisor PID 9288 / writer PID 5624 at this
+  observation. Verify current PIDs from `staging/supervisor.json` before acting.
+- Package: `C:/Users/green/TornVeilAlpha/clients/client-450b7e5cbc80/Windows/TornVeilOnline/Binaries/Win64/TornVeilOnline.exe`.
+- Live: `0.1.0-alpha.12+1c8b317f6075`, Node 22, port 7400, supervisor PID 30216 /
+  writer PID 17920 at inspection. Live was not deployed or replaced.
+- World identity: `tvo-live-6bcacf14-e6d5-46f9-9914-8c9c0eda5017`, seed 918271,
+  generator `playable-2`. Staging is the preserved fork of that world.
+- State: `C:/Users/green/TornVeilAlpha/{live,staging}/state/world/gen-*/`;
+  current-generation pointers and writer fences remain under each environment's
+  `state`. Backups: `D:/TornVeilAlpha/backups/{live,staging}`. Checkpoints every
+  60 seconds; backups every 60 minutes. Credentials remain outside git.
+- Optional desktop allocation: staging uses logical CPUs 0–1 at AboveNormal
+  priority; the rendered client uses CPUs 2–11 at normal priority on this
+  12-thread machine. Status verifies available parallelism 2 and priority -7.
+  These are explicit host-specific conditions, not portable defaults.
+- Human kit: `C:/Users/green/TornVeilAlpha/playtests/alpha30-450b7e5`.
+  Private profile `finish50-human-alpha17`, staging 7410, no pre-created human
+  character. Ordinary character creation/selection is part of the session.
+  `Play.cmd` requires the final readiness receipt produced from the verified
+  evidence. The launcher records 50 minutes without sending gameplay input,
+  waits for the user to quit, and takes normal before/after backups.
+
+Launcher follow-up (2026-09-27): the first desktop launch exposed Windows AppData
+virtualization. The agent-visible profile was actually under the Codex package's
+`LocalCache/Local/TornVeil/Client`, so Explorer's launcher could not see it.
+The private kit now installs a missing profile from
+`C:/Users/green/TornVeilAlpha/client-profiles/finish50-human-alpha17.json`
+into the launching user's `LOCALAPPDATA/TornVeil/Client`. The prepared source is
+restricted to the user, SYSTEM and administrators; credentials remain outside git
+and command arguments. Existing profiles are preserved. Package/profile errors are
+reported separately. `Play.ps1 -CheckOnly` verifies readiness without opening the
+game or starting a play-session capture. Syntax, existing-profile preflight, exact
+installation into an empty namespace and preservation on repeat all passed; see
+`.debug/finish50/launcher-profile-fix-verification.json`. The packaged client,
+server, world and previously completed acceptance runs are unchanged.
+
+### Evidence and limitations
+
+The earned Iron report/save is `.debug/finish50/iron-complete-e9a1f53/`;
+`iron-alpha30-verification.json` independently verifies complete canonical reload,
+unchanged mechanics and all 17 breakthrough causes. Foundations rose from
+7/7/8/7/7/7/9 to 12/13/14/12/13/15/16; natural potentials remain
+9/9/10/12/10/11/12. The real ten-silver Hush lesson from p_5 and event e_4658
+remain known. Practice includes 167 Hush attempts, 57 meditations, 19 spars and
+26 drills. Final wealth is 0.5 silver; needs, fatigue and a real head injury remain.
+Full daily needs, strain, finances, blockers and final breakthrough evidence are
+in that report. The attributed driver correction permits ordinary sales of already
+carried goods when exhausted; it does not inject canonical state or bypass gathering
+and recovery constraints. Martial training remains a separate coherent direction.
+
+Alpha.29's failed 6,339-second soak is retained: maximum serialization 279.853 ms,
+105 checkpoints, one backup, save 68.632 → 69.143 MB, repeated compaction drops,
+peak RSS 1.088 GB. Alpha.30 prepares owned checkpoint capacity before admission and
+reapplies the explicit service CPU policy on restart. Snapshot capture remains wholly
+inside the unchanged 250 ms measurement; no schema, canonical mechanics or knowledge
+rule changed. The ten-minute alpha.30 diagnostic passed at 218.277 ms maximum and
+1.137 GB peak RSS, with connected/zero-player periods and debt actually clearing.
+It is not the two-hour acceptance run.
+
+The final alpha.30 observation ran from 2026-09-27T04:47:13.628Z through
+06:47:14.643Z, with 720 samples, 658 zero-player and 62 connected samples.
+State moved from 69.364784 to 69.531432 MB (+0.083313 MB/hour); last-hour growth
+was -0.316734 MB/hour. Repeated compaction supports convergence of routine history
+for this fixed population, not a universal bound on meaningful new history or
+larger populations. Events changed 78,028 → 78,347, knowledge 54,226 → 54,538;
+last-hour knowledge growth slowed to approximately 16 entries/hour.
+The sampled living population stayed at 131. CPU averaged 0.145 cores, peaking at 0.569 cores.
+
+Maximum synchronous serialization was 215.626 ms; peak RSS 1,136,025,600 bytes.
+Background encoding reached 1,067.081 ms, asynchronous commit 466.304 ms and complete
+checkpoint latency 1,712.206 ms; simulation continues after the atomic capture.
+Maximum event-loop delay was 314.573 ms (maximum sampled p99 30.654 ms), recorded
+tick debt 308.834 ms, final debt zero after 1.007 seconds of explicit settling
+observation. No samples or maxima were discarded. The disclosed Node/CPU allocation
+is part of the accepted configuration; no further persistence redesign is required
+for this measured alpha workload.
+
+Fresh early/late five-minute packaged observations averaged 59.85/60.00 FPS, with
+p99 18.64/17.67 ms and zero stale-snapshot or async-loading frames. Both rendered
+images were reviewed. Final ordinary backup:
+`D:/TornVeilAlpha/backups/staging/20260927T064809Z-gen-00000835`.
+Its 69,541,275 bytes match the checkpoint SHA-256 and metadata; full canonical
+save/reload is exact, with no structural findings. Evidence:
+`.debug/finish50/soak-alpha30-450b7e5/`,
+`soak-alpha30-reviewed.json`, `captures-alpha30-summary.json` and
+`final-backup-alpha30-verification.json`.
+
+Validation: full 1,247/1,247 across 141 files passed at e9a1f53; canonical mechanics
+have not changed since. The 39-test persistence integration and latest 25-test
+CPU/encoder/live-server slice pass, as does typecheck. Packaged input probes average
+59.82–60.00 FPS, p99 17.88–17.93 ms; keyboard recorded one 84.44 ms frame, the other
+two probes recorded none over 50 ms. The five-minute diagnostic rendering averaged
+59.95 FPS, p99 18.51 ms and zero stale snapshots; its image was reviewed.
+
+Jump/vault is unimplemented. Clothing deformation/clipping is visible. Placeholder
+body, sash, crate overlap and spawn-spacing limitations remain for human review.
+No physical-controller or human-play pass is inferred from injected input.
+
+### Resume without repeating completed gates
+
+Read `.debug/finish50/CURRENT.md` for the most recent process/evidence state.
+The observer, cook, probes and capture helpers completed. Only the live and staging
+services remain active. Internal acceptance is complete; do not rerun the soak.
+The exact next manual command is:
+
+```powershell
+& 'C:/Users/green/TornVeilAlpha/playtests/alpha30-450b7e5/Play.ps1'
+```
+
+The user requested this session for later: an agent must not launch it autonomously.
+First next-agent task is to inspect the user's actual session notes, frame telemetry
+and before/after consequence report, reproduce any reported control/UI defects and
+close only the checks actually demonstrated. The user must play 45–60 minutes with
+DualSense alone first, then KB/M, then switch back and verify reconnect consequences.
+Physical Xbox validation also remains required when hardware is available.
+Review and merge #51 → #52 → #53 → #54 in order. Do not rebuild or rerun
+Iron, seven-day worlds, full regression or preserved adventure/multiplayer evidence.
+Do not run `ops update --env staging` (the update command targets live), and do
+not rehearse over the current staging fork. Never auto-merge or deploy live.
+
 ## Baseline (established 2026-09-23)
 
 | Item | Observed |
@@ -656,3 +807,43 @@ Autostart at logon needs no administrator rights, but you must register it yours
 
 Boot-time start (`-Trigger Boot`) needs an elevated shell and a real reboot to prove. Off-host
 backup needs a destination you choose; `D:` protects only against losing `C:`.
+
+## Active 50/100 completion — reconciled 2026-09-25
+
+Authoritative checkout:
+C:/Users/green/Documents/Codex/2026-09-23/please-wake-up-the-claude-desktop/torn-veil-online.
+Branch codex/living-alpha-50-gates starts at 5c8b3319b4fa4ddd2948139e3c523f12d9c3b102.
+A fresh fetch after the user's live handoff confirmed the remote client branch is
+identical. PRs #51 → #52 → #53 remain open. No merge, reset or clean occurred.
+
+Source preservation: C:/Users/green/TornVeilAlpha/source-checkpoints/finish50-20260925T115539,
+including unrelated dirty Desktop/Documents checkouts, and git recovery ref
+refs/checkpoints/finish50-20260925T115539. Current edits additionally preserved
+under source-checkpoints/finish50-reconciled-20260925T1745.
+
+Live remains alpha.12 (1c8b317f6075), world
+tvo-live-6bcacf14-e6d5-46f9-9914-8c9c0eda5017, seed 918271. Normal service backups:
+D:/TornVeilAlpha/backups/live/20260925T165540Z-gen-00000572 and
+20260925T174046Z-gen-00000619. Staging was stopped; no second live writer started.
+Existing packaged client remains clients/client-1c8b317.
+
+The three seven-day worlds, hunt/hush outcomes, packaged multiplayer, 14-check recovery
+drill and alpha.12 update continuity above are retained. New behavior needs proportional
+bounded regression. The genuine Iron journey is still running; see the progression doc.
+
+Persistence: in 45.1 real minutes the live save changed from 71,036,006 to 71,555,715
+bytes; events decreased 59,640 → 59,168; knowledge increased 49,776 → 50,312.
+Living knowledge pins most detail. The existing 400+40 per-person limit is approaching
+saturation; this interval alone is not a convergence pass. No causal evidence was removed.
+A lossless segmented JSON encoder preserves the existing schema and byte representation.
+Profiling the newer preserved save with portable Node 26.10.0 gave
+206.7/204.1/220.9 ms serialization; Node 22.23.2 gave 399.1/371.5/483.3 ms.
+These are offline measurements during other work, not final service evidence.
+Node 26.10.0 is in the private alpha runtime directory and was verified against
+nodejs.org SHASUMS256.txt; global Node and live runtime remain unchanged.
+The final release/runtime still needs an isolated soak.
+
+Controls are under integration. Windows detects USB DualSense VID_054C/PID_0CE6.
+No physical controller pass or human session is claimed. Native presentation slice:
+15 passed, two warnings, zero failures (17 tests). Rendered/packaged checks remain.
+Canonical slice: 61 integration tests plus 11 guard/wildlife contact tests passed.

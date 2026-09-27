@@ -6,7 +6,8 @@ param(
     [ValidateRange(640,3840)][int]$Width = 1920,
     [ValidateRange(480,2160)][int]$Height = 1080,
     [ValidateRange(0,300)][int]$ObserveSeconds = 0,
-    [ValidateRange(30,600)][int]$TimeoutSeconds = 150
+    [ValidateRange(30,600)][int]$TimeoutSeconds = 150,
+    [ValidateRange(1,9007199254740991)][long]$CpuAffinity
 )
 # Engine-native rendering only. Credentials are in an isolated client profile, not the command line.
 $ErrorActionPreference = 'Stop'
@@ -28,6 +29,14 @@ $arguments += @('-RenderOffscreen','-unattended','-nosplash','-nosound','-window
     '-ExecCmds="t.MaxFPS 60,t.IdleWhenNotForeground 0,TV.AlphaCapture"')
 $start = [DateTime]::UtcNow
 $job = Start-Process -FilePath $Executable -ArgumentList $arguments -WorkingDirectory $repo -WindowStyle Hidden -PassThru
+if ($PSBoundParameters.ContainsKey('CpuAffinity')) {
+    try {
+        $job.ProcessorAffinity = [IntPtr]$CpuAffinity
+        if ($job.ProcessorAffinity.ToInt64() -ne $CpuAffinity) { throw 'Client CPU allocation was not applied.' }
+        @{pid=$job.Id; affinity=$job.ProcessorAffinity.ToInt64(); priority=$job.PriorityClass.ToString()} |
+            ConvertTo-Json | Set-Content (Join-Path $Out 'cpu-allocation.json')
+    } catch { Stop-Process -Id $job.Id -ErrorAction SilentlyContinue; throw }
+}
 Write-Output "Capture PID=$($job.Id) output=$Out timeout=${TimeoutSeconds}s"
 if (!$job.WaitForExit($TimeoutSeconds * 1000)) {
     Stop-Process -Id $job.Id -ErrorAction SilentlyContinue

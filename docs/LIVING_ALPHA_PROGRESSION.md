@@ -93,3 +93,108 @@ every NPC, so it is recorded here rather than retuned to produce a demonstration
 levers: a higher rate only for challenge above routine (NPC routine labour, which stops at about
 11–12, would be unchanged), lower Iron thresholds, or more credited stimulus per real high-
 challenge session (a spar round is credited as one minute).
+
+## Deliberate-stimulus calibration under validation (2026-09-25)
+
+The 50/100 handoff explicitly authorizes retuning first-rank pace. The candidate
+keeps core/support thresholds at 15/11, potential resistance, challenge plateaus,
+physiological gates and per-foundation eight-hour daily exposure limits.
+It multiplies adaptation only above challenge 12:
+`1 + 3 * clamp(challenge - 12, 0, 11/3)` (at most 12).
+Ordinary labor and unspecified legacy hooks retain their previous response.
+Recorded activity and capability hours are not multiplied or granted.
+
+This addresses the measured 140–280-day deliberate-training tail without promoting
+ordinary labor into elite development. NPCs and players use the same operator.
+Synthetic estimates are calibration tools, not acceptance: the generated-person
+journey must still reach Iron through ordinary intents.
+
+The harness now buys food, drinks at wells, leaves mornings/nights for work and
+recovery, and compares the full person/body/clock at each daily save/reload.
+It no longer clears the mind's plan on connection. Play is 13:00–19:00; lack of
+money, fatigue or unavailable necessities returns control to ordinary life.
+No attributes, practice credits, wealth or advancement are injected.
+
+Preliminary evidence: .debug/finish50/iron-calibrated, seed 918271.
+Starting foundations 7/7/8/7/7/7/9; potentials 9/9/10/12/10/11/12
+(str/dex/end/vit/int/per/will). Day 2: 9/10/11/9/11/12/13; wealth 12,
+energy .92, hydration .77, zero veil strain. Daily reload equality passed.
+127 NPCs remained Normal; highest NPC foundation was 11. Ordinary strength
+and intellect means were nearly unchanged. This is **not yet an Iron pass**.
+
+
+## First-rank evidence calibration (2026-09-25)
+
+The real three-day trainee had only 0.60 effective hours of veil practice despite 17 attempts,
+12 meditation sessions and real recovery. Novelty reduction means even an ideal, all-success
+series of repeated person hushes needs 438 casts to accumulate eight effective hours. Retuning
+foundations alone therefore leaves a separate, long repetition gate.
+
+Normal→Iron now requires two effective practice hours instead of eight. This is a readiness
+threshold, not a multiplier or award: every recorded second still comes from the same canonical
+act, with unchanged quality, repetition penalties, provenance and daily caps. Skilled proficiency
+(.55), evidence spanning three days, actual technique knowledge, core foundations 15, support 11
+and recovery remain required. Meditation alone still cannot supply capability evidence or push
+core foundations beyond its ceiling. An ideal repeated hush series needs at least 52 successes;
+real failures and needs lengthen it. The generated journey remains the acceptance proof.
+
+The journal now exposes meaningful-practice hours, proficiency, dated evidence, all current
+blockers, and both trade-shaped and martial-family technique provenance. The journey policy
+allows free training while fed even without a cash reserve, and asks other nearby willing
+partners before falling back to solo drills. Necessities, fatigue and ordinary work remain real.
+
+## Martial practice correction (2026-09-26)
+
+Tracing the first trainee exposed a second family-proficiency award in the capability adapter,
+after martial practice had already applied its mastery and solo-family ceilings. A completed
+solo session raised a test subject's .65 family skill to .6672256 despite the .35 solo ceiling.
+The martial learning operator now owns proficiency and mastery alone. The completed-session
+adapter owns the associated foundation conditioning and provenance ledger, without duplicating
+either proficiency or conditioning. Solo practice cannot raise existing skill above its ceiling;
+skilled bodies still receive conditioning from real completed sessions.
+
+Deliberate solo form practice now demands foundation level 13 (previously 11.5 in the adapter),
+above incidental labor but below Iron's core level 15. Sparring retains demand 15.5. Effective
+practice time, repetition penalties, daily limits, physiological gates and potential resistance
+are unchanged. This permits healthy balanced conditioning of supporting foundations without
+making solo drills a complete martial Iron path. NPCs use the same rules; routine work is unchanged.
+
+The earlier generated trainee is preserved through day 6.642 as diagnostic history. Its skill
+was affected by the duplicate award, so final acceptance begins with a newly generated person
+on the corrected rules rather than editing that person's skill or retroactively claiming a pass.
+The focused martial/development/capability integration passed 38 tests, including the reproduced
+solo-ceiling defect, and typecheck passed. The genuine completed journey remains required.
+
+The clean journey's first day used the original six-hour daytime play window. Its continued
+exceptional-training policy uses 08:00–20:00 world time, shifting to physical training at 14:00.
+This is two hours of active player control per world day at the live time scale. Food, drinking,
+sleep and earning provisions consume that window, and ordinary autonomy runs overnight. These
+are recorded harness policy options, not extra development awards. The original generated
+person and its exact checkpoint continue across the policy change.
+
+## Completed ordinary journey (e9a1f53, 2026-09-26)
+
+Generated seed 918271 traveler p128 reached Iron through the ordinary advancement
+intent after 1,046,891.3993500043 world seconds (12.116798603588013 days).
+Cumulative accelerated execution took 16,446.7602108 seconds; at the live 6× clock,
+the elapsed world time represents 48.46719441435205 real hours.
+
+Foundations (strength/dexterity/endurance/vitality/intelligence/perception/will)
+rose from 7/7/8/7/7/7/9 to 12/13/14/12/13/15/16. Natural potentials stayed
+9/9/10/12/10/11/12. The traveler paid teacher p5 ten silver for Hush; event e4658
+and told provenance remain present. Practice included 167 Hush attempts (135 calmed),
+57 meditations, 19 spars and 26 drills. Final veilcraft was .8448044 and unarmed .4930155.
+
+The final policy used 08:00–20:00 activity with physical training starting at 19:00.
+At day 11.446, the bot's low-energy guard incorrectly prevented selling already-carried
+wood as well as gathering more. A recorded harness-only correction allowed ordinary
+sales before considering new gathering. Five conserved sales funded food and recovery;
+no attributes, needs, money, history or promotion were edited.
+
+Final wealth was .5 silver, physiological energy .4627778, hydration .6775758,
+fatigue .40075 and sleep debt 1.7229167. The .1741963 head injury remained.
+Eligibility had no blockers before the ordinary breakthrough; all 17 causal references
+and every canonical saved field survived independent reload. Daily foundations, needs,
+strain, earnings and blockers are retained in the private journey report under
+`.debug/finish50/iron-complete-e9a1f53`. Its final save SHA-256 is
+`c8f09057e648fb63fb3198a1f89d829e7b98122d236458ce213929579c369522`.

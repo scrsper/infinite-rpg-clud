@@ -4,6 +4,7 @@ import { randomUUID, timingSafeEqual } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { monitorEventLoopDelay } from 'node:perf_hooks';
+import { availableParallelism, getPriority } from 'node:os';
 import type { Duplex } from 'node:stream';
 import { BridgeSession } from '../bridge/session';
 import { RegionalTransport, REGION_PROTOCOL, MAX_PRESENTATION_MESSAGE_BYTES } from '../bridge/streaming';
@@ -11,14 +12,15 @@ import { FixedScheduler } from '../bridge/scheduler';
 import { FixedRateWindow } from '../bridge/rateWindow';
 import { CoalescedInteractionWake } from '../bridge/interactionWake';
 import { loadCatalogue } from '../foundry/load';
-import { SAVE_VERSION } from '../sim/persist/save';
+import { SAVE_VERSION, readableSaveVersion, serializeChunks } from '../sim/persist/save';
 import { isExternallyControlled, setExternalControl } from '../sim/runtime/controllers';
 import { AccountRegistry, type AccountRecord } from './accounts';
+import { CheckpointEncoder } from './checkpointEncoder';
 import type { AlphaConfig, ReleaseIdentity } from './config';
 import { GENERATOR_VERSION, playableBaselineFingerprint } from './fingerprint';
 import { ALPHA_PROTOCOL, CLOSE, H, parseCharacterRequest } from './protocol';
 import type { Lifecycle } from './readiness';
-import { BackupSet, RefuseToStartError, WorldStore, WriterLock, type CheckpointMeta } from './store';
+import { BackupSet, RefuseToStartError, WorldStore, WriterLock, type CheckpointMeta, type GeneratorIdentity } from './store';
 
 type Log = (level: 'info' | 'warn' | 'error', event: string, data?: Record<string, unknown>) => void;
 interface Connection {
@@ -49,6 +51,7 @@ export class LiveServer {
   private readonly lock: WriterLock;
   session!: BridgeSession;
   private worldId = '';
+  private generator!: GeneratorIdentity;
   private ownership: Record<string, string[]> = {};
   private readonly http: Server[] = [];
   private readonly wss = new WebSocketServer({ noServer: true, maxPayload: 4096 });
@@ -71,9 +74,10 @@ export class LiveServer {
   private failed = false;
   private maintenance: { message: string; at: number } | null = null;
   private inFlight: Promise<CheckpointMeta> | null = null;
+  private readonly checkpointEncoder = new CheckpointEncoder();
   private lastCheckpoint: CheckpointMeta | null = null;
   private readonly startedAt = Date.now();
-  readonly metrics = { checkpoints: 0, lastSerializeMs: 0, maxSerializeMs: 0, lastCommitMs: 0, lastBytes: 0, backups: 0, lastBackupIso: '', authFailures: 0, rejectedConnections: 0, connectionsServed: 0, recoveredFrom: [] as { generation: number; why: string }[] };
+  readonly metrics = { checkpoints: 0, lastSerializeMs: 0, maxSerializeMs: 0, lastCaptureMs: 0, lastMetadataMs: 0, lastTransferMs: 0, lastEncodeMs: 0, maxEncodeMs: 0, lastCheckpointMs: 0, lastCommitMs: 0, lastBytes: 0, backups: 0, lastBackupIso: '', authFailures: 0, rejectedConnections: 0, connectionsServed: 0, recoveredFrom: [] as { generation: number; why: string }[] };
   private adminToken = '';
 
   constructor(readonly config: AlphaConfig, readonly release: ReleaseIdentity, private readonly log: Log) {
@@ -102,17 +106,21 @@ export class LiveServer {
       if (this.store.generations().length) throw new RefuseToStartError('Checkpoints exist without a world identity; refusing to guess. Restore WORLD.json from a backup.');
       if (!this.config.createWorldIfMissing) throw new RefuseToStartError('No world in this state directory and createWorldIfMissing is false');
       this.worldId = `tvo-${this.config.env}-${randomUUID()}`;
+      this.generator = { kind: 'playable', seed: this.config.seed, version: GENERATOR_VERSION, fingerprint };
       this.session = new BridgeSession(this.config.seed, { playable: true, defaultPlayer: false, characterCatalogue: catalogue.catalogue });
-      this.store.createIdentity({ format: 1, worldId: this.worldId, env: this.config.env, createdAtIso: new Date().toISOString(), generator: { kind: 'playable', seed: this.config.seed, version: GENERATOR_VERSION, fingerprint }, createdByRelease: this.release.version });
+      this.store.createIdentity({ format: 1, worldId: this.worldId, env: this.config.env, createdAtIso: new Date().toISOString(), generator: this.generator, createdByRelease: this.release.version });
       this.log('info', 'world_created', { worldId: this.worldId, seed: this.config.seed });
       await this.checkpoint('world created');
     } else {
       if (identity.generator.fingerprint !== fingerprint)
         throw new RefuseToStartError(`Generator fingerprint changed (${identity.generator.fingerprint.slice(0, 12)} → ${fingerprint.slice(0, 12)}); this release would rebuild a different seeded base under world ${identity.worldId}. A migration is required.`);
       this.worldId = identity.worldId;
+      // WORLD.json is written once. Keep its validated generator identity with worldId
+      // instead of performing another synchronous disk read at every capture boundary.
+      this.generator = identity.generator;
       let loaded = false;
       for (const candidate of this.store.candidates((generation, why) => { this.metrics.recoveredFrom.push({ generation, why }); this.log('error', 'checkpoint_rejected', { generation, why }); })) {
-        if (candidate.meta.saveSchema !== SAVE_VERSION) { this.metrics.recoveredFrom.push({ generation: candidate.meta.generation, why: `save schema ${candidate.meta.saveSchema} ≠ ${SAVE_VERSION}` }); this.log('error', 'checkpoint_rejected', { generation: candidate.meta.generation, why: 'schema' }); continue; }
+        if (!readableSaveVersion(candidate.meta.saveSchema)) { this.metrics.recoveredFrom.push({ generation: candidate.meta.generation, why: `save schema ${candidate.meta.saveSchema} ≠ ${SAVE_VERSION}` }); this.log('error', 'checkpoint_rejected', { generation: candidate.meta.generation, why: 'schema' }); continue; }
         try {
           const t1 = performance.now();
           this.session = new BridgeSession(identity.generator.seed, { playable: true, defaultPlayer: false, save: candidate.world, characterCatalogue: catalogue.catalogue });
@@ -130,22 +138,38 @@ export class LiveServer {
       // until its owner reconnects (the same policy as an expired disconnect grace).
       for (const ids of Object.values(this.ownership)) for (const id of ids) { const p = this.session.world.person(id); if (p && isExternallyControlled(p)) setExternalControl(p, false); }
     }
+    const preparationStart = performance.now();
+    const capacityBytes = this.checkpointEncoder.prepare((this.lastCheckpoint?.worldBytes ?? 0) * 1.5);
+    this.log('info', 'checkpoint_capacity_prepared', { capacityBytes, ms: performance.now() - preparationStart });
   }
 
-  /** Serialize synchronously (a consistent snapshot) then commit durably off the tick path. */
+  /** Capture canonical JSON and transfer owned bytes synchronously. Storage packing and commit
+   * operate on that fixed snapshot while the world continues. Clocks and ownership must be
+   * captured before yielding, so metadata can never describe a later world than the payload. */
   checkpoint(reason: string): Promise<CheckpointMeta> {
     if (this.inFlight) return this.inFlight.then(() => this.checkpoint(reason));
     const w = this.session.world, t0 = performance.now();
-    const world = this.session.save();
-    const serializeMs = performance.now() - t0;
-    this.metrics.lastSerializeMs = serializeMs; this.metrics.maxSerializeMs = Math.max(this.metrics.maxSerializeMs, serializeMs);
-    const t1 = performance.now();
-    this.inFlight = this.store.commit(world, {
+    const metadata = {
       worldId: this.worldId, savedAtIso: new Date().toISOString(), reason, physicalTime: w.physicalTime, worldNow: w.now, saveSchema: SAVE_VERSION,
-      generator: this.store.identity()!.generator, release: { version: this.release.version, revision: this.release.revision }, ownership: structuredClone(this.ownership),
-    }, this.lock).then(meta => {
+      generator: this.generator, release: { version: this.release.version, revision: this.release.revision }, ownership: structuredClone(this.ownership),
+    };
+    const metadataAt = performance.now();
+    // The encoder drains this iterator synchronously: neither metadata nor the payload
+    // can observe another simulation tick. Last committed size is only an allocation hint.
+    const encoding = this.checkpointEncoder.encode(serializeChunks(w), (this.lastCheckpoint?.worldBytes ?? 0) * 1.5);
+    const transferredAt = performance.now(), serializeMs = transferredAt - t0;
+    const captureMs = this.checkpointEncoder.lastCaptureMs, transferMs = this.checkpointEncoder.lastTransferMs;
+    this.metrics.lastCaptureMs = captureMs;
+    this.metrics.lastMetadataMs = metadataAt - t0;
+    this.metrics.lastTransferMs = transferMs;
+    this.metrics.lastSerializeMs = serializeMs; this.metrics.maxSerializeMs = Math.max(this.metrics.maxSerializeMs, serializeMs);
+    this.inFlight = encoding.then(async ({ bytes, encodeMs }) => {
+      this.metrics.lastEncodeMs = encodeMs; this.metrics.maxEncodeMs = Math.max(this.metrics.maxEncodeMs, encodeMs);
+      const t1 = performance.now();
+      const meta = await this.store.commit(bytes, metadata, this.lock);
       this.lastCheckpoint = meta; this.metrics.checkpoints++; this.metrics.lastCommitMs = performance.now() - t1; this.metrics.lastBytes = meta.worldBytes;
-      this.log('info', 'checkpoint', { generation: meta.generation, reason, serializeMs: Math.round(serializeMs), commitMs: Math.round(this.metrics.lastCommitMs), bytes: meta.worldBytes, physicalTime: meta.physicalTime });
+      this.metrics.lastCheckpointMs = performance.now() - t0;
+      this.log('info', 'checkpoint', { generation: meta.generation, reason, serializeMs: Math.round(serializeMs), captureMs: Math.round(captureMs), metadataMs: Math.round(metadataAt - t0), transferMs: Math.round(transferMs), encodeMs: Math.round(encodeMs), checkpointMs: Math.round(this.metrics.lastCheckpointMs), commitMs: Math.round(this.metrics.lastCommitMs), bytes: meta.worldBytes, physicalTime: meta.physicalTime });
       return meta;
     }).finally(() => { this.inFlight = null; });
     return this.inFlight;
@@ -237,8 +261,9 @@ export class LiveServer {
     const w = this.session.world;
     return {
       env: this.config.env, worldId: this.worldId, release: this.release, protocol: ALPHA_PROTOCOL, state: this.lifecycle(), ready: this.ready, admissions: this.admissions,
+      runtime: { node: process.version, v8: process.versions.v8, pid: process.pid, availableParallelism: availableParallelism(), priority: getPriority() }, cpuMicroseconds: process.cpuUsage(),
       maintenance: this.maintenance, uptimeSeconds: Math.round((Date.now() - this.startedAt) / 1000),
-      world: { physicalTime: w.physicalTime, worldNow: w.now, day: Math.floor(w.now / 86400), livingPersons: w.livingPersons().length, events: w.events.length, creatures: w.creatures().length },
+      world: { physicalTime: w.physicalTime, worldNow: w.now, day: Math.floor(w.now / 86400), livingPersons: w.livingPersons().length, events: w.events.length, knowledge: w.persons().reduce((n, p) => n + Object.keys(p.knowledge).length, 0), creatures: w.creatures().length },
       connections: [...this.connections.values()].map(c => ({ account: c.account.id, personId: c.personId, remote: c.remote, since: new Date(c.connectedAt).toISOString() })),
       graceRunning: [...this.graceTimers.keys()],
       characters: this.ownership,
@@ -285,12 +310,15 @@ export class LiveServer {
     this.log('info', 'shutdown_started', { reason });
     this.admissions = false; this.ready = false;
     for (const c of [...this.connections.values()]) this.close(c, CLOSE.maintenance, 'Server shutting down');
-    let ok = true;
-    try { if (this.session) await this.checkpoint(`shutdown: ${reason}`); } catch (e) { ok = false; this.log('error', 'final_checkpoint_failed', { error: String(e) }); }
+    // The final snapshot is the stopped world's state. Do not generate unsaved NPC history
+    // while its immutable bytes are being packed and committed in the background.
     this.stopping = true;
     clearTimeout(this.timer); clearInterval(this.checkpointTimer); clearInterval(this.backupTimer); this.wake?.stop(); this.loopDelay.disable();
+    let ok = true;
+    try { if (this.session) await this.checkpoint(`shutdown: ${reason}`); } catch (e) { ok = false; this.log('error', 'final_checkpoint_failed', { error: String(e) }); }
     for (const t of this.graceTimers.values()) clearTimeout(t);
     this.wss.close(); for (const s of this.http) s.close();
+    await this.checkpointEncoder.close();
     this.lock.release();
     writeFileSync(join(this.config.stateDir, 'last-shutdown.json'), JSON.stringify({ reason, atIso: new Date().toISOString(), ok, generation: this.lastCheckpoint?.generation ?? null, release: this.release.version }));
     this.log('info', 'shutdown_complete', { ok, generation: this.lastCheckpoint?.generation });

@@ -1,4 +1,43 @@
-# Autonomous agency, social inference and capability evolution v0.1, 2026-09-19
+# Living Alpha gate completion, 2026-09-26
+
+Current implementation branch: `codex/living-alpha-50-gates`, PR #54 stacked on
+`claude/living-alpha-client` (#53). Human merge order remains #51 → #52 → #53 → #54.
+Live remains alpha.12 (`1c8b317f6075`); candidate releases run against the preserved
+staging world. Do not recreate staging from live or run a second state writer.
+
+Latest performance result: alpha.28 failed the unchanged 250 ms serialization
+budget at one hour (251.516 ms). Its normal backup, rendered connection and bounded
+save growth are preserved evidence, not a completed soak. The next candidate reduces
+transient JSON batch sizes with byte-identical output; see the persistence document.
+
+The three original seven-day worlds (918271/918272/918273), ordinary hunt adventure,
+Hush alternative and shared-world multiplayer remain accepted. Later bounded continuations
+identified and corrected actual retry loops; see `docs/LIVING_ALPHA_PERSISTENCE.md`.
+The narrowed unreachable-anchor fallback preserves healthy production routes and delivers
+the stranded hauler's twelve grain. Integrated revision e9a1f53 passes all 1,247 tests.
+The genuine generated trainee reached Iron after 12.1167986 world days with exact reload
+continuity; see the progression report. Fresh e9a1f53 packaging and all three automated
+keyboard/gamepad/device-switch probes pass. Physical input remains unverified.
+
+Progression calibration and the same generated person's earned journey are documented in
+`docs/LIVING_ALPHA_PROGRESSION.md`; no synthetic promotion is accepted. Final two-hour isolated
+soak and exact-revision packaging must pass before marking internal acceptance complete.
+Native semantic controls and packaged automation are described in `docs/LIVING_ALPHA_CONTROLS.md`.
+User requested the 45–60-minute ordinary human session be prepared for later. DualSense is
+available; physical controller play, glyphs, rumble and Xbox hardware verification remain
+external until performed. Injected-input checks do not certify physical-device acceptance.
+
+Private evidence, live saves, credentials, packages and the current handoff record are outside
+tracked source (`.debug/finish50/CURRENT.md` and `C:/Users/green/TornVeilAlpha`). Recovery14/14
+on alpha.19 and schema24→25 update13/13 are recorded. The alpha.26 soak failed after 28 minutes
+at 259.772 ms against the unchanged 250 ms capture budget. Alpha.27 buffer reuse also failed
+at 274.925 ms, despite fresh recovery14/14 and exact Iron reload. Streamed synchronous capture
+and removal of a redundant identity-file read are the next diagnostic candidate. All 38
+persistence/server integration checks and typecheck pass; offline latency remains variable.
+A connected preflight and complete isolated soak remain required. Consult fresh manifests
+before deployment.
+
+# Historical: autonomous agency, social inference and capability evolution v0.1, 2026-09-19
 
 Branch `codex/autonomous-agency-social-inference-v0-1` is temporarily stacked on PR #48's
 remote head (initially `7eb6b66`, updated documentation-only base `709e6b5`). Main remained
