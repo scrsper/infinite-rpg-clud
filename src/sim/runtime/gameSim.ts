@@ -22,6 +22,12 @@ export type PersonIntent = { kind: 'yield' } | { kind: 'advance' } | { kind: 're
   | { kind: 'teach'; target: string; key: string };
 
 export interface SpawnOptions { gender?: 'f' | 'm'; age?: number; look?: Partial<AppearanceDescription> }
+/** A player's full-stick pace: a steady run (4.5 m/s), with sprint (x1.55) near 7 m/s. The old
+ * 3.4 m/s sat between a walk and a run, so no captured gait fitted it and the body half-walked,
+ * half-ran with sliding feet. A walk is chosen by the client (stick part-way, or the walk toggle)
+ * as a share of this, which the movement intent already carries. */
+export const PLAYER_RUN_SPEED = 4.5;
+
 /**
  * A new player's default look, as canonical appearance tokens (never asset paths): a grown man,
  * fair-skinned, hair kept short, ordinary build. Chosen, not rolled, because it is the face the
@@ -56,7 +62,9 @@ export class GameSim {
     const p = makePerson(w, { name, age, gender, occupation: 'traveler', traits: {}, appearance: {}, bio: '' });
     const look = { ...(gender === 'm' ? PLAYER_DEFAULT_LOOK : {}), ...(options.look ?? {}) };
     if (Object.keys(look).length) p.appearance = restyleAppearance(p.appearance, look, p.occupation, p.age);
-    p.bodies.push(makeBody(w, p.id, pos).id); this.attach(connection, p.id); return p.id;
+    const body = makeBody(w, p.id, pos);
+    body.speed = PLAYER_RUN_SPEED;
+    p.bodies.push(body.id); this.attach(connection, p.id); return p.id;
   }
   private person(connection: string): Person | undefined { return this.simulation.world.person(this.connections.get(connection)); }
   controlsBody(connection: string, bodyId: string): boolean {

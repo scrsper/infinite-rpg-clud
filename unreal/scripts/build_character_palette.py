@@ -22,6 +22,37 @@ ACTIVITY_KEYS = [
 ]
 
 
+# Captured motion chosen by eye for what each activity looks like, preferred over the keyword match
+# below whenever the clip is installed. The keyword match is how trading came to play a single-bone
+# hand pose; a person trading should look like a person bargaining. Each is a retargeted local
+# derivative made by retarget_everyday_motion.py from an installed pack (Motifect Emotes & Social,
+# the Free Sample Animation Set); absent clips fall through to the automatic choice.
+MOCAP = '/Game/Characters/TornVeilActivities/Mocap/'
+CURATED = {
+    'socialize': MOCAP + 'RT_talk_animate_hands_Anim',
+    'socialize/converse': MOCAP + 'RT_talk_animate_hands_Anim',
+    'trade': MOCAP + 'RT_explain_wide_gesture_Anim',
+    'trade/barter': MOCAP + 'RT_explain_wide_gesture_Anim',
+    'work/serve': MOCAP + 'RT_explain_wide_gesture_Anim',
+    'work/inspect': MOCAP + 'RT_think_chin_stroke_Anim',
+    'work/chop': MOCAP + 'RT_A_Mining_PickAxe_2H_01_Loop_01',
+    'work/tend': MOCAP + 'RT_A_Mining_PickAxe_2H_01_Loop_01',
+    'work/repair': MOCAP + 'RT_A_Mining_PickAxe_2H_01_Loop_01',
+    'work/gather': MOCAP + 'RT_A_Lift_Light_PickUp_0cm_02_R',
+    'work/harvest': MOCAP + 'RT_A_Lift_Light_PickUp_0cm_02_R',
+    'work/plant': MOCAP + 'RT_A_Lift_Light_PickUp_0cm_02_R',
+    'flee': MOCAP + 'RT_shrink_away_scared_Anim',
+}
+
+
+def curated(key, content_dir):
+    path = CURATED.get(key)
+    if not path:
+        return None
+    on_disk = os.path.join(content_dir, path[len('/Game/'):].replace('/', os.sep) + '.uasset')
+    return path + '.' + path.rsplit('/', 1)[1] if os.path.exists(on_disk) else None
+
+
 def object_path(entry):
     return entry['package'] + '.' + entry['name']
 
@@ -99,7 +130,12 @@ def main():
         'unresolved': {'activities': []},
     }
 
+    content_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'TornVeilOnline', 'Content')
     for key in ACTIVITY_KEYS:
+        chosen = curated(key, content_dir)
+        if chosen:
+            palette['activities'][key] = chosen
+            continue
         picked = choose(animations, key, target, set(retargets))
         if picked:
             palette['activities'][key] = object_path(picked)

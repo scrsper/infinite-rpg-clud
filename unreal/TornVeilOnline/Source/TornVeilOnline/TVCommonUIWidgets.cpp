@@ -174,7 +174,7 @@ void UTVActionPanelWidget::BuildPanel(){
     if(Kind==TEXT("Settings")){
         for(const FString& K:TArray<FString>{TEXT("Mouse"),TEXT("ControllerX"),TEXT("ControllerY"),TEXT("MoveDeadZone"),TEXT("LookDeadZone"),TEXT("InvertY"),TEXT("Vibration"),TEXT("SprintToggle"),TEXT("FocusToggle")})Add(ETVUICommand::Setting,K,TEXT("Adjust ")+FName::NameToDisplayString(K,false));
         Body->AddChildToVerticalBox(MakeText(WidgetTree,TEXT("Select an action, then press its new key or controller button. Conflicts swap. Escape cancels.")));
-        for(const FString& K:TArray<FString>{TEXT("MoveForward"),TEXT("MoveBack"),TEXT("MoveLeft"),TEXT("MoveRight"),TEXT("Interact"),TEXT("Sprint"),TEXT("Crouch"),TEXT("LightAttack"),TEXT("HeavyAttack"),TEXT("Guard"),TEXT("Focus"),TEXT("Dodge"),TEXT("LockTarget"),TEXT("SwitchTarget"),TEXT("PrimaryAbility"),TEXT("QuickItem"),TEXT("AbilityWheel"),TEXT("Inventory"),TEXT("Journal")})Add(ETVUICommand::Rebind,K,TEXT("Rebind ")+FName::NameToDisplayString(K,false));
+        for(const FString& K:TArray<FString>{TEXT("MoveForward"),TEXT("MoveBack"),TEXT("MoveLeft"),TEXT("MoveRight"),TEXT("Interact"),TEXT("Sprint"),TEXT("WalkToggle"),TEXT("Crouch"),TEXT("LightAttack"),TEXT("HeavyAttack"),TEXT("Guard"),TEXT("Focus"),TEXT("Dodge"),TEXT("LockTarget"),TEXT("SwitchTarget"),TEXT("PrimaryAbility"),TEXT("QuickItem"),TEXT("AbilityWheel"),TEXT("Inventory"),TEXT("Journal")})Add(ETVUICommand::Rebind,K,TEXT("Rebind ")+FName::NameToDisplayString(K,false));
     }else{
         // Only what this person has actually learned and can attempt, as the server projects it.
         for(const auto& A:Abilities){if(A.bAvailable)Add(ETVUICommand::PersonAction,A.Kind,ActionText(A));else Body->AddChildToVerticalBox(MakeRefusal(WidgetTree,A));}

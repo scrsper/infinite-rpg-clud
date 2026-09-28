@@ -1822,7 +1822,10 @@ export class Simulation {
         const withinArrival = !a.targetEntity && dist2(body.pos, dest) < 1.2
           && Math.abs(body.pos.y - dest.y) <= 1 && w.nav.clearWalk(body.pos, dest);
         if (!body.path && !withinArrival) { this.pathTo(body, dest, a); if (!body.path) { failGoto('no path found'); break; } }
-        body.speed = a.run ? 5.6 : (p.occupation === 'child' ? 3.6 : 3.2 + (p.age > 60 ? -0.8 : 0));
+        // Errands are walked briskly; urgency (flight, alarm, a fight, help) runs. The old 3.2 m/s
+        // "walk" was a jog, so every routine trip across the village looked like running. 2.05 m/s
+        // is a purposeful walk, and the natural pace of the walk cycle people are drawn with.
+        body.speed = a.run ? 5.6 : (p.age > 60 ? 1.5 : 2.05);
         // v0.8 "The Legible World" §B: a hauler physically carrying real cargo (a claimed,
         // in-transit HaulTask with units actually loaded) is visually distinct from an ordinary
         // walk — previously indistinguishable, so the player could never tell "moving supplies"
