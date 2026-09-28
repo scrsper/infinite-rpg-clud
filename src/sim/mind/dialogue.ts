@@ -329,9 +329,18 @@ export class DialogueSystem {
   /** Open straight into the Trade menu — the client's "Trade" prompt on a selected person. Same
    * state the `Trade` option produces; the shortcut skips the greeting, not any of the rules. */
   startTrade(npc: Person, player: Person): DialogueState { return this.trade(npc, player); }
-  private trade(npc: Person, player: Person): DialogueState {
+  private trade(npc: Person, player: Person, page = 0): DialogueState {
     const w = this.world;
-    const offers = this.sim.tradeOffers(npc, player);
+    // One row per good and price, whatever number of stacks it sits in, and whole units only:
+    // a buyer sees "bread, 1s each, 55 to be had", not three identical rows or "9.375 planks".
+    const grouped = new Map<string, ReturnType<typeof this.sim.tradeOffers>[number] & { total: number }>();
+    for (const o of this.sim.tradeOffers(npc, player)) {
+      if (o.item.quantity > 1 && Math.floor(o.available) < 1) continue;
+      const single = o.item.quantity <= 1, key = single ? `${o.item.name}@${o.unitPrice}` : `${o.item.type}@${o.unitPrice}`;
+      const units = single ? 1 : Math.floor(o.available), seen = grouped.get(key);
+      if (seen) seen.total += units; else grouped.set(key, { ...o, total: units });
+    }
+    const PAGE = 7, all = [...grouped.values()], offers = all.slice(page * PAGE, page * PAGE + PAGE);
     if (!offers.length) {
       const refusals = this.sim.tradeRefusals(npc, player);
       const hostile = refusals.find(r => r.reason === 'hostile');
@@ -339,11 +348,11 @@ export class DialogueSystem {
       const first = refusals[0];
       return { speaker: npc, lines: [first ? `Nothing for sale — ${first.note}.` : `I've nothing to sell just now.`], options: this.options(npc, player) };
     }
-    const opts: DialogueOption[] = offers.slice(0, 8).map(o => {
+    const opts: DialogueOption[] = offers.map(o => {
       const stack = o.item.quantity > 1;
       const label = stack
-        ? `Buy ${o.item.type} (${o.unitPrice}s each, ${o.available} to be had)`
-        : `Buy ${o.item.name} (${o.unitPrice}s)`;
+        ? `Buy ${o.item.type} (${o.unitPrice}s each, ${o.total} to be had)`
+        : `Buy ${o.item.name} (${o.unitPrice}s${o.total > 1 ? `, ${o.total} to be had` : ''})`;
       return {
         label,
         next: () => {
@@ -360,6 +369,10 @@ export class DialogueSystem {
         },
       };
     });
+    if (all.length > PAGE) {
+      const next = (page + 1) * PAGE < all.length ? page + 1 : 0;
+      opts.push({ label: next ? 'More goods…' : 'Back to the first goods', next: () => this.trade(npc, player, next) });
+    }
     // Selling TO them: the mirror of the same rules. They will not knowingly buy what someone
     // else owns, and `sellItem` conserves the money and the object.
     const markup = 1 + npc.traits.greed * 0.5 - Math.max(0, disposition(npc, player.id)) * 0.3;
