@@ -37,6 +37,9 @@ export const PLAYER_RUN_SPEED = 4.5;
 export const PLAYER_DEFAULT_LOOK: Partial<AppearanceDescription> = {
   presentation: 'masculine', skinTone: 'fair', hairStyle: 'side_fringe', hairColor: 'brown',
   eyeColor: 'blue', frame: 'average', stature: 'above_average', faceShape: 'square',
+  // The working kosode and hakama: a traveller's random draw could be the wide-sleeved open coat,
+  // the least convincing piece in the wardrobe, and the one the player would look at all game.
+  garmentSilhouette: 'work_kimono',
 };
 
 /** Connection routing is outside the world-facing Person. No account, human personality,
