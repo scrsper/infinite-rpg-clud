@@ -110,6 +110,7 @@ public:
     bool bMechanismsOpen = false;
     TArray<FString> MechanismLabels;
     TArray<TSharedPtr<FJsonObject>> MechanismIntents;
+    TArray<int32> MechanismOf; // which visible mechanism (0-based) each projected action belongs to
     FString KnowledgeSummary, ProjectionMetrics;
     UPROPERTY() TObjectPtr<ATVWorldProjection> WorldProjection;
     UPROPERTY() TObjectPtr<class UInstancedStaticMeshComponent> ArenaBlocks;

@@ -72,6 +72,8 @@ void UTVBridgeSubsystem::UpdatePlayerShell() {
     }
     S.Abilities=AbilityRows;
     if(AbilityRows.IsEmpty())for(const FString& K:TArray<FString>{TEXT("hush"),TEXT("train"),TEXT("meditate"),TEXT("advance"),TEXT("rest")}){FTVUIActionRow A;A.Id=K;A.Kind=K;A.Label=K==TEXT("advance")?TEXT("Attempt Iron breakthrough"):K==TEXT("rest")?TEXT("Rest / wake"):FName::NameToDisplayString(K,false);A.bAvailable=true;A.RequestType=TEXT("person_action");A.RequestKey=K;S.Abilities.Add(A);}
+    for(int32 I=0;I<MechanismLabels.Num();++I){FTVUIActionRow A;A.Id=FString::Printf(TEXT("mechanism:%d"),I);A.Kind=TEXT("mechanism");
+        A.Label=FString::Printf(TEXT("Mechanism %d — %s"),MechanismOf.IsValidIndex(I)?MechanismOf[I]+1:1,*MechanismLabels[I]);A.bAvailable=true;S.Abilities.Add(A);}
     for(int32 I=0;I<ContainerItemIds.Num();++I){FTVUIItemRow Row;Row.Id=ContainerItemIds[I];Row.Label=ContainerItemLabels[I];S.Container.Add(Row);}
     S.ContainerId=OpenContainerId;S.ContainerName=OpenContainerName;S.bDialogueOpen=bDialogueOpen;S.DialogueSpeaker=DialogueSpeaker;S.DialogueOccupation=DialogueOccupation;S.DialogueLines=DialogueLines;S.DialogueOptionIds=DialogueOptionIds;S.DialogueOptionLabels=DialogueOptionLabels;
     PlayerShell->SetSnapshot(S);
@@ -129,6 +131,9 @@ bool UTVBridgeSubsystem::ParseActionRow(const TSharedPtr<FJsonObject>& J,const F
 }
 void UTVBridgeSubsystem::RunProjectedAction(const FString& ActionId){
     if(!IsLive())return;
+    // A mechanism in reach: the canonical panel's own action, sent as the same person intent the
+    // inspector sends (ChooseMechanism). Ordinary players reach it from the action panel.
+    if(ActionId.StartsWith(TEXT("mechanism:"))){ChooseMechanism(FCString::Atoi(*ActionId.Mid(10)));return;}
     const FTVUIActionRow* Row=nullptr;
     for(const auto& Item:CarriedRows)for(const auto& A:Item.Actions)if(A.Id==ActionId)Row=&A;
     if(!Row)for(const auto& A:AbilityRows)if(A.Id==ActionId)Row=&A;

@@ -611,11 +611,11 @@ void UTVBridgeSubsystem::Receive(const FString& Message) {
     } else {
         bDialogueOpen = false; DialogueSpeaker.Empty(); DialogueOccupation.Empty(); DialogueSpeakerBody.Empty(); DialogueLines.Empty(); DialogueOptionIds.Empty(); DialogueOptionLabels.Empty();
     }
-    MechanismLabels.Empty(); MechanismIntents.Empty();
+    MechanismLabels.Empty(); MechanismIntents.Empty(); MechanismOf.Empty();
     const TArray<TSharedPtr<FJsonValue>>* Mechanisms;
-    if(M->TryGetArrayField(TEXT("mechanisms"),Mechanisms)) for(const auto& V:*Mechanisms) {
-        const auto A=V->AsObject(); const TArray<TSharedPtr<FJsonValue>>* Actions;
-        if(A->TryGetArrayField(TEXT("actions"),Actions)) for(const auto& Action:*Actions) { const auto O=Action->AsObject(); MechanismLabels.Add(O->GetStringField(TEXT("label"))); MechanismIntents.Add(O->GetObjectField(TEXT("intent"))); }
+    if(M->TryGetArrayField(TEXT("mechanisms"),Mechanisms)) for(int32 Index=0;Index<Mechanisms->Num();++Index) {
+        const auto A=(*Mechanisms)[Index]->AsObject(); const TArray<TSharedPtr<FJsonValue>>* Actions;
+        if(A&&A->TryGetArrayField(TEXT("actions"),Actions)) for(const auto& Action:*Actions) { const auto O=Action->AsObject(); MechanismLabels.Add(O->GetStringField(TEXT("label"))); MechanismIntents.Add(O->GetObjectField(TEXT("intent"))); MechanismOf.Add(Index); }
     }
     KnowledgeSummary.Empty(); const TSharedPtr<FJsonObject>* Knowledge;
     if(M->TryGetObjectField(TEXT("knowledge"),Knowledge)) {
