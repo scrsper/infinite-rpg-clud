@@ -281,6 +281,9 @@ export function eventClaim(world: World, e: WorldEvent, saw: boolean): Record<st
     for (const key of ['assemblyId', 'output', 'outcome', 'operation']) if (e.data[key] !== undefined) claim[key] = e.data[key];
   }
   if (e.type === 'introduction') claim.claimedName = e.data.claimedName;
+  // Striking or killing a wild animal is hunting, not violence against a victim: a hunter who saw
+  // a stranger bring down a boar menacing the village used to come to hate them blow by blow.
+  if (huntsWildGame(world, e.type, e.target)) claim.intent = 'hunt';
   // Whether a hushed animal or person went quiet is plainly visible; hearing a gesture is not.
   if (saw && e.type === 'veil_hush') claim.success = e.data.success === true;
   // Causal Society: a stoppage is ABOUT a material, and the material is the whole content of the
@@ -483,8 +486,17 @@ export function locationKnowledge(world: World, p: Person, entityId: EntityId, p
 const LAWFUL_INTENTS = new Set(['subdue', 'arrest', 'defend', 'avoid', 'drive_off']);
 export function isCrime(type: string, intent?: string): boolean {
   if (type !== 'attack' && type !== 'kill' && type !== 'theft') return false;
+  // Hunting or driving off a wild animal harms no one's person or property.
+  if ((type === 'attack' || type === 'kill') && intent === 'hunt') return false;
   if (type === 'attack' && intent && LAWFUL_INTENTS.has(intent)) return false;
   return true;
+}
+/** An attack on, or killing of, a wild animal (no one's person, no one's beast). What the target
+ * was is plain to anyone who saw it or was told of it, unlike a person's private intent. */
+export function huntsWildGame(world: World, type: string, targetId: string | null | undefined): boolean {
+  if (type !== 'attack' && type !== 'kill') return false;
+  const target = targetId ? world.get(targetId) as { kind?: string; wildlife?: unknown } | undefined : undefined;
+  return target?.kind === 'creature' && !!target.wildlife;
 }
 export function crimeSeverity(type: string): number { return type === 'kill' ? 1 : type === 'attack' ? 0.6 : type === 'theft' ? 0.35 : 0; }
 

@@ -1,6 +1,6 @@
 import type { EntityId, EventId, Person, Situation, SituationKind, WorldEvent } from '../core/types';
 import type { World } from '../core/world';
-import { crimeSeverity, isCrime } from '../mind/knowledge';
+import { crimeSeverity, isCrime, huntsWildGame } from '../mind/knowledge';
 
 /**
  * SITUATIONS — the canonical "this matter is still going on" layer (v0.9 §G).
@@ -153,6 +153,8 @@ export function noteEventForSituations(world: World, e: WorldEvent): Situation |
   // `isCrime` already draws this line for beliefs — situations must draw it in the same place,
   // or every arrest would open its own "harm" matter and the village would investigate the watch).
   if (e.type === 'attack' && !isCrime(e.type, e.data?.intent)) return null;
+  // Nor is hunting a wild animal a matter of harm to anyone (knowledge.ts `huntsWildGame`).
+  if (huntsWildGame(world, e.type, e.target)) return null;
 
   const existing = world.situations.find(s =>
     s.status === 'active' && s.kind === spec.kind && s.subjectId === subjectId
