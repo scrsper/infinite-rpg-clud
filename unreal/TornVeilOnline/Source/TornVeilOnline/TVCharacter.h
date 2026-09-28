@@ -30,7 +30,7 @@ public:
     bool bCanonicalGuard=false;
     bool bGuardHeld=false,bFocusHeld=false,bTargetLocked=false;
     double LastManualLook=-100;
-    bool bConversationFraming=false;
+    bool bConversationFraming=false; float ConversationDistance=1000.f;
     FVector LastStepAt=FVector::ZeroVector; // presentation footsteps: ground covered since the last one
     float GuardRefresh=0;
     UPROPERTY() TMap<FString, TObjectPtr<UAnimationAsset>> ActivityAnimations;
