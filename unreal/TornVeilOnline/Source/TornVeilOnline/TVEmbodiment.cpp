@@ -79,16 +79,32 @@ namespace {
      */
     /** The CitySampleCrowd head material cannot compile for SM6 (its Nanite permutation exceeds the
      *  64-SRV limit), so a cooked game draws every crowd head with the default material. Its
-     *  project-owned copy (create_local_crowd_head_material.py, Nanite usage off) takes its place,
-     *  carrying the character's resolved parameter values. Vendor assets are not edited. */
+     *  project-owned copy (create_local_crowd_head_material.py, Nanite usage off) takes its place.
+     *  Each vendor head instance has a mirror on that copy (same chain, same static switches, which
+     *  select the face's skin atlas); a dynamic copy of the resolved parameters is only the fallback,
+     *  since it cannot carry static switches and draws placeholder skin. Vendor assets are not edited. */
     void RepairUncompilableMaterials(USkeletalMeshComponent* Component) {
         if (!Component) return;
         static const FString Broken = TEXT("/Game/CitySampleCrowd/Character/Shared/Materials/MetaHuman/M_Crowd_Head_v2.M_Crowd_Head_v2");
-        static TWeakObjectPtr<UMaterial> Fixed; static bool bLoaded = false;
+        static const FString MirrorRoot = TEXT("/Game/TornVeil/Materials/LocalPalette/Crowd");
+        static TWeakObjectPtr<UMaterial> Fixed; static bool bLoaded = false, bWarnedMirror = false;
         for (int32 Index = 0; Index < Component->GetNumMaterials(); ++Index) {
             UMaterialInterface* Material = Component->GetMaterial(Index);
             UMaterial* Base = Material ? Material->GetBaseMaterial() : nullptr;
             if (!Base || Base->GetPathName() != Broken) continue;
+            UMaterialInterface* Authored = Material;
+            while (const UMaterialInstanceDynamic* Dynamic = Cast<UMaterialInstanceDynamic>(Authored)) Authored = Dynamic->Parent;
+            if (Authored && Authored->GetPathName().StartsWith(TEXT("/Game/CitySampleCrowd/"))) {
+                const FString MirrorPath = MirrorRoot + Authored->GetPathName().Mid(5); // drop "/Game"
+                if (UMaterialInterface* Mirror = LoadObject<UMaterialInterface>(nullptr, *MirrorPath, nullptr, LOAD_NoWarn | LOAD_Quiet)) {
+                    if (Material == Authored) { Component->SetMaterial(Index, Mirror); continue; }
+                    UMaterialInstanceDynamic* Repaired = UMaterialInstanceDynamic::Create(Mirror, Component);
+                    Repaired->CopyMaterialUniformParameters(Material);
+                    Component->SetMaterial(Index, Repaired);
+                    continue;
+                }
+                if (!bWarnedMirror) { bWarnedMirror = true; UE_LOG(LogTemp, Warning, TEXT("TV_EMBODIMENT crowd head mirror missing (%s); run create_local_crowd_head_material.py"), *MirrorPath); }
+            }
             if (!bLoaded) {
                 bLoaded = true;
                 Fixed = LoadObject<UMaterial>(nullptr, TEXT("/Game/TornVeil/Materials/LocalPalette/Crowd/M_TV_Crowd_Head.M_TV_Crowd_Head"));
@@ -96,7 +112,15 @@ namespace {
             }
             if (!Fixed.IsValid()) return;
             UMaterialInstanceDynamic* Repaired = UMaterialInstanceDynamic::Create(Fixed.Get(), Component);
-            Repaired->CopyMaterialUniformParameters(Material);
+            Repaired->CopyMaterialUniformParameters(Material); // scalars and vectors only
+            // Textures carry the face itself (albedo, normals, cavity); without them the copy shows
+            // its own defaults, which read as green-grey skin.
+            TArray<FMaterialParameterInfo> Infos; TArray<FGuid> Ids;
+            Material->GetAllTextureParameterInfo(Infos, Ids);
+            for (const FMaterialParameterInfo& Info : Infos) {
+                UTexture* Texture = nullptr;
+                if (Material->GetTextureParameterValue(Info, Texture) && Texture) Repaired->SetTextureParameterValueByInfo(Info, Texture);
+            }
             Component->SetMaterial(Index, Repaired);
         }
     }
