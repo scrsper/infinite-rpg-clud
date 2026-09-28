@@ -1756,6 +1756,13 @@ export class Simulation {
     // entries, which never triggers a replan (the pending tail action isn't done/failed). Compact
     // spent entries once the plan is clearly not a normal 2–14 step plan any more.
     if (m.plan.length > 28) m.plan = m.plan.filter(x => x.status === 'pending' || x.status === 'active');
+    // Spoken to while standing, sitting or working in place: turn to the speaker. (Someone walking
+    // an errand stops first, in 'goto'; urgent goals are excluded by attendingTo.)
+    const addressedBy = attendingTo(w, p);
+    if (addressedBy && Math.hypot(body.vel.x, body.vel.z) < 0.05) {
+      const speaker = w.primaryBody(addressedBy);
+      if (speaker) body.yaw = Math.atan2(-(speaker.pos.x - body.pos.x), -(speaker.pos.z - body.pos.z));
+    }
     const a = m.plan.find(x => x.status === 'pending' || x.status === 'active'); if (!a) { if (body.pose !== 'stand' && body.pose !== 'walk' && body.poseUntil < w.physicalTime) body.pose = 'stand'; return; }
     if (a.status === 'pending') { a.status = 'active'; a.startedAt = w.now; this.beginAction(p, body, a); }
     switch (a.type) {

@@ -50,6 +50,34 @@ describe('talking to someone', () => {
     expect(resumed, 'the trip resumes once nobody is talking to them').toBe(true);
   }, 120000);
 
+  it('a villager busy in place (working, resting) turns to face the player who speaks to them', () => {
+    const s = new BridgeSession(918271, { playable: true }), w = s.world;
+    const player = w.person(w.playerId!)!, pb = w.primaryBody(player.id)!;
+    // Where to stand to be behind someone: 1.4 m from them along their back, on open ground.
+    const behind = (b: Body) => {
+      const x = Math.floor(b.pos.x + Math.sin(b.yaw) * 1.4) + .5, z = Math.floor(b.pos.z + Math.cos(b.yaw) * 1.4) + .5;
+      const y = w.nav.floorY(Math.floor(x), Math.floor(z));
+      return y >= 0 && Math.abs(y - b.pos.y) <= 0.6 && w.nav.clearWalk(b.pos, { x, y, z }) ? { x, y, z } : null;
+    };
+    let still: Person | undefined;
+    for (let t = 0; t < 180 && !still; t++) {
+      stepFor(s, 1);
+      // Someone in the middle of a task in place: a reply of their own would not turn them.
+      still = w.livingPersons().find(p => p.id !== player.id && p.age > 12 && speed(w.primaryBody(p.id)!) < 0.05
+        && p.mind.plan.some(x => x.status === 'active' && ['work', 'rest', 'eat', 'chop', 'gather'].includes(x.type))
+        && !['flee', 'report', 'attack', 'confront', 'help'].includes(p.mind.goal?.type ?? '') && !!behind(w.primaryBody(p.id)!));
+    }
+    expect(still, 'someone busy in place, with open ground behind them').toBeDefined();
+    const sb = w.primaryBody(still!.id)!;
+    pb.pos = behind(sb)!;
+    pb.yaw = Math.atan2(-(sb.pos.x - pb.pos.x), -(sb.pos.z - pb.pos.z)); // the player looks at them
+    for (let i = 0; i < 40 && !(s.snapshot(false) as any).talkTargets.some((t: { bodyId: string }) => t.bodyId === sb.id); i++) s.step(0.05);
+    expect(facingError(sb, pb), 'their back is to the player before being spoken to').toBeGreaterThan(1.2);
+    expect(say(s, { type: 'talk', targetBodyId: sb.id }).result).toBe('accepted');
+    stepFor(s, 1);
+    expect(facingError(sb, pb)).toBeLessThan(0.2);
+  }, 120000);
+
   it('a sleeping villager cannot be spoken to, and the player is told why', () => {
     const s = new BridgeSession(918271, { playable: true }), w = s.world;
     const player = w.person(w.playerId!)!, pb = w.primaryBody(player.id)!;
