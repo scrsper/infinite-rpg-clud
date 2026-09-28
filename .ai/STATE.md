@@ -49,8 +49,11 @@ oversized foot blocks; probe does not enter buildings; multi-seed review not yet
 contention/trade not exercised; sounds are synthesized placeholders, unheard by a human.
 Done since: mechanism actions in the action panel; camera never inside a body; probe hold + shared-world
 record; packaged two-client pair passed (client-f5227fd); soundscape (`1aef56f`, native + editor evidence).
-Next action: package client-1aef56f (in progress) → packaged evening journey (tavern food), dusk frame
-and -WithSound run at the natural hour → native journeys for haul/protection/butchery → player invention.
+Then: probe route-first mode; packaged evening journey passed at natural 18:32 (tavern food restored by
+the nap fix) and packaged dusk at 20:17 reads as twilight; multi-seed run found and fixed an animal-
+defence crash (`6729ffa`; full suite 1277/1277). Dev world on server `0.2.0-inhabit.6+4d70f2206c99`;
+latest client `client-5730546`. Dev world holds ~15 offline probe characters (journey-a…o).
+Next action: native journeys for haul and protection/butchery → player employment → player invention.
 
 # Previous: consolidated GitHub main, 2026-09-27
 

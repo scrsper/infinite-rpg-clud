@@ -11,7 +11,8 @@ complete implementation and not an accepted alpha: coverage is incomplete
 | Branch | `claude/inhabitable-alpha` (pushed; no PR yet; nothing merged) |
 | Milestone 1 packaged checkpoint | client `%USERPROFILE%\TornVeilAlpha\clients\client-4333a46` (Development, `dirty: false`, revision `4333a462c5c3`) with server release `0.2.0-inhabit.4+4333a462c5c3` |
 | Later packages (evidence only) | `.debug/packages/client-02903b1` (faces), `.debug/packages/client-9502128` (conversation framing, frame timing), `%USERPROFILE%\TornVeilAlpha\clients\client-6468fc5` (twilight, naps, names) — all clean; `client-f5227fd` packaging |
-| Dev server now | `0.2.0-inhabit.5+6468fc59b54e` (generator `playable-3`; switched with backup; the world's recorded `playable-2` fingerprint was accepted) |
+| Dev server now | `0.2.0-inhabit.6+4d70f2206c99` (generator `playable-3`; switched with backup from inhabit.5; the world's recorded `playable-2` fingerprint was accepted both times) |
+| Latest client | `%USERPROFILE%\TornVeilAlpha\clients\client-5730546` (Development, clean) — sound, twilight, camera fixes, route-first probe |
 | World | isolated dev world (`TORN_VEIL_ALPHA_HOME=%USERPROFILE%\TornVeilAlpha\dev-inhabit`, `--env dev`), seed 918271, generator `playable-2`, 127.0.0.1:7430, loopback only |
 | Launch | start the dev service (`node <release>\ops.mjs start --env dev`), then run `<client>\Windows\TornVeilOnline.exe` with a dev profile from `ops account add … --env dev` |
 
@@ -35,6 +36,7 @@ here writes to live or staging.
 | `journey-package-09` | 729fb27 | **Passed** at 12:00 with sound: fresh arrival, route toward the tavern, bought bread 2s from Thora Stone (baker) and ate — hunger 20→0, silver 20→18; one coin and one eating cue; p95 31.2 ms. |
 | `journey-package-10-evening` | 729fb27 | **Failed** at 16:30 in rain: a crowd in the square (mostly idle probe characters) took all eight asks before the probe walked to the tavern — a probe limit, fixed. Sound mix followed the rain (rain 1.0, day 0.4). |
 | `journey-editor-evening` | editor, native | **Passed** at natural 17:58: newcomer walked into the tavern, bought a meal (meat 5s) from the staff and ate — the evening the nap fix restored. |
+| `journey-package-10-dusk` | 729fb27 | **Passed** (observe + 30 s hold) at natural 20:17: warm twilight, violet sky, readable — where 20:23 was black before the twilight fix; sound crossfading day 0.58 / night 0.42. |
 | `journey-package-11-evening` | 5730546 | **Passed** at natural 18:32 with sound: newcomer walked into the tavern, bought bread 4s from the staff, ate — hunger 20→0, silver 20→16; p95 28.4 ms. |
 | `pair-A-oren` + `pair-B-sela` | editor, native | **Passed.** Two clients at once on the dev world: each saw the other's body; B's sightings of A lie on A's own path within 0.5–1.6 m. Dawn twilight frame at 04:58. |
 
@@ -63,7 +65,8 @@ Frames reviewed by eye. Fixed from what they showed: green-grey faces (`02903b1`
   no ordinary player mechanism panel.
 - Blocky pale footwear, some pieces floating detached from bodies (cause not found); sack props
   fail to compile; canonical `skinTone` not mapped to faces.
-- Conversation framing crowds the partner under the panel when they stand very close.
+- Idle people tilt their heads sharply sideways (seen in several packaged frames).
+- Tavern staffing at 18:00 drops on the second evening in all three seeds (unexplained).
 - The dev world now holds a dozen offline probe characters (journey accounts a–l) who idle in the
   square — a testing artifact that inflates crowds there.
 - The journey probe does not enter buildings, so "nobody new at the tavern" is partly a probe limit.
@@ -74,5 +77,6 @@ Frames reviewed by eye. Fixed from what they showed: green-grey faces (`02903b1`
 
 ## Next executable task
 
-When `client-f5227fd` is packaged and the dev world reaches its natural evening (16:00–20:00), run
-the packaged journey for tavern food and a dusk frame; then the packaged two-client pair.
+Native journeys, ordinary input, for paid hauling ("Any work going?" → carry → paid) and for the
+protection/butchery loop, extending TV.JourneyProbe with the route-first mode. Then player
+employment (a work-shift entry at a workplace), which unblocks player invention (MECH-ALL).
