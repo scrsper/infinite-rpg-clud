@@ -14,6 +14,10 @@ param(
     # recording our own path and every body shown to us, for two-client cross-checks.
     [ValidateRange(0,900)][int]$HoldSeconds = 0,
     [switch]$HoldWalk,
+    # Press the walk toggle on entering: go about at a walk instead of the default run.
+    [switch]$Walk,
+    # With -ObserveOnly: a JSON list of locomotion showcase segments {label,seconds,hold[],tap[],axes{}}.
+    [string]$ShowcaseFile = '',
     # Run with the audio device (the report then says what the soundscape actually played).
     [switch]$WithSound,
     # Walk the route's named places before asking anyone; there ask only people this close.
@@ -31,10 +35,11 @@ $repo = (Resolve-Path "$PSScriptRoot/../..").Path
 $Out = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Out)
 if (Test-Path -LiteralPath $Out) { throw "Refusing to reuse journey evidence: $Out" }
 New-Item -ItemType Directory -Path $Out | Out-Null
-$config = [ordered]@{ out = $Out; targetBody = $TargetBody; dialogue = $Dialogue; eat = !$ObserveOnly; observeOnly = [bool]$ObserveOnly; quit = $true; timeoutSeconds = $TimeoutSeconds - 60; holdSeconds = $HoldSeconds; holdWalk = [bool]$HoldWalk; routeFirst = [bool]$RouteFirst; nearRadiusMetres = $NearRadiusMetres; recordFps = $RecordFps; lineup = $Lineup }
+$config = [ordered]@{ out = $Out; targetBody = $TargetBody; dialogue = $Dialogue; eat = !$ObserveOnly; observeOnly = [bool]$ObserveOnly; quit = $true; timeoutSeconds = $TimeoutSeconds - 60; holdSeconds = $HoldSeconds; holdWalk = [bool]$HoldWalk; walk = [bool]$Walk; routeFirst = [bool]$RouteFirst; nearRadiusMetres = $NearRadiusMetres; recordFps = $RecordFps; lineup = $Lineup }
+if ($ShowcaseFile) { $config.showcase = @(Get-Content -LiteralPath $ShowcaseFile -Raw | ConvertFrom-Json) }
 if ($RouteFile) { $config.explore = @(Get-Content -LiteralPath $RouteFile -Raw | ConvertFrom-Json) }
 $configFile = Join-Path $Out 'config.json'
-$config | ConvertTo-Json | Set-Content -LiteralPath $configFile -Encoding utf8
+$config | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $configFile -Encoding utf8
 $arguments = @()
 if ([IO.Path]::GetFileName($Executable) -like 'UnrealEditor*') {
     $arguments += '"' + (Join-Path $repo 'unreal/TornVeilOnline/TornVeilOnline.uproject') + '"'

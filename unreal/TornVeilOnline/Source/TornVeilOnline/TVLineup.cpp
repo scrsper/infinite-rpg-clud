@@ -19,6 +19,7 @@
 #include "TVCharacter.h"
 #include "TVEmbodiment.h"
 #include "UnrealClient.h"
+#include "ShaderCompiler.h"
 
 /**
  * TV.Lineup <file.png> [count] — a character lineup from the running game, for judging looks.
@@ -29,7 +30,7 @@
  * resolved parts, then puts everything back. Presentation only: canonical state is untouched.
  */
 namespace TVLineup {
-struct FState { TWeakObjectPtr<UWorld> World; TArray<TWeakObjectPtr<AActor>> Spawned, Hidden; TWeakObjectPtr<AActor> OldView; double StartedAt = 0; FString File; bool bShot = false; };
+struct FState { TWeakObjectPtr<UWorld> World; TArray<TWeakObjectPtr<AActor>> Spawned, Hidden; TWeakObjectPtr<AActor> OldView; double StartedAt = 0, ShotAt = 0; FString File; bool bShot = false; };
 static FState S;
 
 static UWorld* GameWorld() { for (const FWorldContext& C : GEngine->GetWorldContexts()) if ((C.WorldType == EWorldType::Game || C.WorldType == EWorldType::PIE) && C.World()) return C.World(); return nullptr; }
@@ -44,15 +45,18 @@ static void Restore() {
 
 static bool Tick(float) {
     const double Age = FPlatformTime::Seconds() - S.StartedAt;
-    // Give streaming textures, hair and the idle pose time to settle before the picture.
+    // Give streaming textures, hair and the idle pose time to settle before the picture, and wait
+    // out on-demand shader compilation (an editor run otherwise photographs the default grid
+    // material on everything that has not compiled yet).
     if (!S.bShot && Age > 4.0) {
-        S.bShot = true; FScreenshotRequest::RequestScreenshot(S.File, false, false);
+        if (GShaderCompilingManager && GShaderCompilingManager->GetNumRemainingJobs() > 0 && Age < 180.0) return true;
+        S.bShot = true; S.ShotAt = Age; FScreenshotRequest::RequestScreenshot(S.File, false, false);
         FString Lines; // what each clone is actually playing when the picture is taken
         for (const auto& A : S.Spawned) if (const ATVCharacter* C = Cast<ATVCharacter>(A.Get())) Lines += C->PresentationDiagnostics() + LINE_TERMINATOR;
         FFileHelper::SaveStringToFile(Lines, *(FPaths::GetPath(S.File) / TEXT("lineup-diagnostics.jsonl")));
         return true;
     }
-    if (S.bShot && Age > 6.0) { Restore(); UE_LOG(LogTemp, Display, TEXT("TV_LINEUP done %s"), *S.File); return false; }
+    if (S.bShot && Age > S.ShotAt + 2.0) { Restore(); UE_LOG(LogTemp, Display, TEXT("TV_LINEUP done %s"), *S.File); return false; }
     return true;
 }
 

@@ -37,6 +37,8 @@
 namespace TVVideoCapture { void Start(const FString& Dir, double Fps, int32 Width); void StopRecording(); }
 namespace TVLineup { void Start(const FString& File, int32 Count, bool bActivities); }
 namespace TVJourneyProbe {
+/** One showcase segment: keys held for its length, keys tapped at its start, axis values sent every frame. */
+struct FShowcase { FString Label; TArray<FKey> Hold, Tap; TArray<TPair<FKey,float>> Axes; double Seconds=3; };
 struct FState {
     bool bRunning=false; int32 Phase=0; double Started=0,PhaseAt=0,BlockedSince=-1,SideStepUntil=0; int32 Choice=0,Shot=0;
     FString Out,TargetBody; TArray<FString> Picks; bool bEat=true,bQuit=true,bObserveOnly=false; double Timeout=300;
@@ -47,6 +49,8 @@ struct FState {
     // Shared-world record: our own body and path, and every other body this client was shown
     // (first/last position, when first seen). Two clients' reports can then be cross-checked.
     double HoldSeconds=0; bool bHoldWalk=false,bHeldShot=false;
+    bool bWalk=false,bWalkSet=false;
+    TArray<FShowcase> Showcase; int32 Segment=-1; // locomotion showcase: ordinary keys and stick values, in order // press the walk toggle once in the world: go about at a walk, not a run
     // Route first: walk to the named places before asking anyone, and there ask only people within
     // NearRadius (cm) â€” as a player who knows where the tavern is goes in and asks inside.
     bool bRouteFirst=false,bReachedStop=false; double NearRadius=0; // route first: nobody is asked before the first named stop
@@ -71,6 +75,7 @@ static double Number(const FString& Text,const TCHAR* After){ // "Hunger 20%" â†
 }
 static double Silver(const FString& Vitals){const int32 At=Vitals.Find(TEXT(" silver"),ESearchCase::IgnoreCase,ESearchDir::FromEnd);if(At==INDEX_NONE)return -1;int32 B=At;while(B>0&&(FChar::IsDigit(Vitals[B-1])||Vitals[B-1]=='.'))--B;return FCString::Atod(*Vitals.Mid(B,At-B));}
 static void Step(const FString& Name,UTVBridgeSubsystem* B,TSharedPtr<FJsonObject> Extra=nullptr){
+    if(S.bWalk&&!S.bWalkSet&&(Name==TEXT("entered")||Name==TEXT("reconnected"))){S.bWalkSet=true;Tap(EKeys::CapsLock);}
     if(S.RecordFps>0&&!S.bRecording&&(Name==TEXT("entered")||Name==TEXT("reconnected"))){S.bRecording=true;TVVideoCapture::Start(FPaths::Combine(S.Out,TEXT("video")),S.RecordFps,1280);}
     auto J=Extra.IsValid()?Extra:MakeShared<FJsonObject>();J->SetStringField(TEXT("step"),Name);J->SetNumberField(TEXT("atSeconds"),FPlatformTime::Seconds()-S.Started);
     if(B){J->SetStringField(TEXT("vitals"),B->PlayerVitals);J->SetStringField(TEXT("status"),B->MovementRestriction);J->SetStringField(TEXT("lastResult"),B->LastResult);J->SetStringField(TEXT("prompt"),B->NearbyPrompt);}
@@ -157,6 +162,7 @@ static bool Tick(float){
         if(!B->IsLive()||!B->bCanonicalReady||!Pawn||InPhase<3)return true;
         if(B->ProjectedRegions<9&&InPhase<45)return true; // let the surroundings stream in, as a player waits
         // Observing with a hold is for watching the world: no inventory over the view.
+        if(S.bObserveOnly&&S.Showcase.Num()){Step(TEXT("reconnected"),B);Next(11);return true;}
         if(S.bObserveOnly){Step(TEXT("reconnected"),B);if(S.LineupCount!=0)TVLineup::Start(FPaths::Combine(S.Out,TEXT("lineup.png")),FMath::Abs(S.LineupCount),S.LineupCount<0);if(S.HoldSeconds>0){Next(7);return true;}Tap(EKeys::I);Next(5);return true;}
         if(S.bRouteFirst&&S.Explore.Num()){
             S.HungerBefore=Number(B->PlayerVitals,TEXT("Hunger"));S.WealthBefore=Silver(B->PlayerVitals);Step(TEXT("entered"),B);
@@ -237,12 +243,22 @@ static bool Tick(float){
         if(S.bHoldWalk&&S.Waypoint<S.Explore.Num()){
             const FVector Goal=B->ToUnreal(FVector(S.Explore[S.Waypoint].X,0,S.Explore[S.Waypoint].Y)),To=Goal-Pawn->GetActorLocation();
             const float Error=FMath::FindDeltaAngleDegrees(PC->GetControlRotation().Yaw,To.Rotation().Yaw);
-            if(FMath::Abs(Error)>1.5f)Key(EKeys::MouseX,IE_Axis,FMath::Clamp(Error*2.f,-60.f,60.f));
+            // Steer gently: a hard turn swings the camera, and the hold is what a viewer watches.
+            if(FMath::Abs(Error)>1.5f)Key(EKeys::MouseX,IE_Axis,FMath::Clamp(Error*.8f,-18.f,18.f));
             if(!S.bForward){Key(EKeys::W,IE_Pressed);S.bForward=true;}
             Unstick(Pawn,Now);
             if(To.Size2D()<140)++S.Waypoint;
         } else Release();
         return true;
+    case 11: { // locomotion showcase: each segment presses what a player would, for its length
+        const bool bNew=S.Segment<0||InPhase>=S.Showcase[S.Segment].Seconds;
+        if(bNew){
+            if(S.Segment>=0)for(const FKey& K:S.Showcase[S.Segment].Hold)Key(K,IE_Released,0.f);
+            if(++S.Segment>=S.Showcase.Num()){Step(TEXT("done"),B);Finish(TEXT("passed"));return false;}
+            const FShowcase& G=S.Showcase[S.Segment];for(const FKey& K:G.Tap)Tap(K);for(const FKey& K:G.Hold)Key(K,IE_Pressed);
+            S.PhaseAt=Now;Step(TEXT("show-")+G.Label.Replace(TEXT(" "),TEXT("-")),B);return true;}
+        for(const auto& A:S.Showcase[S.Segment].Axes)Key(A.Key,IE_Axis,A.Value);
+        return true; }
     case 8: // closed a conversation that offered nothing we wanted; choose the next person
         if(InPhase<.8)return true;if(B->bDialogueOpen){if(InPhase>3){Goodbye(B);S.PhaseAt=Now;}return true;}
         if((S.bRouteFirst&&!S.bReachedStop)||!ChooseTarget(B,Pawn)){if(S.Waypoint<S.Explore.Num()){Next(9);return true;}Finish(TEXT("failed"),TEXT("nobody nearby offered what we wanted"));return false;}
@@ -268,11 +284,17 @@ static bool Tick(float){
 static void Start(const TArray<FString>& Args){
     if(S.bRunning||Args.Num()<1)return;FString Text;if(!FFileHelper::LoadFileToString(Text,*Args[0])){UE_LOG(LogTemp,Error,TEXT("TV_JOURNEY missing config %s"),*Args[0]);return;}
     TSharedPtr<FJsonObject> C;if(!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text),C)||!C){UE_LOG(LogTemp,Error,TEXT("TV_JOURNEY bad config"));return;}
-    S=FState();C->TryGetStringField(TEXT("out"),S.Out);C->TryGetStringField(TEXT("targetBody"),S.TargetBody);C->TryGetBoolField(TEXT("eat"),S.bEat);C->TryGetBoolField(TEXT("quit"),S.bQuit);C->TryGetBoolField(TEXT("observeOnly"),S.bObserveOnly);C->TryGetNumberField(TEXT("timeoutSeconds"),S.Timeout);C->TryGetNumberField(TEXT("holdSeconds"),S.HoldSeconds);C->TryGetBoolField(TEXT("holdWalk"),S.bHoldWalk);
+    S=FState();C->TryGetStringField(TEXT("out"),S.Out);C->TryGetStringField(TEXT("targetBody"),S.TargetBody);C->TryGetBoolField(TEXT("eat"),S.bEat);C->TryGetBoolField(TEXT("quit"),S.bQuit);C->TryGetBoolField(TEXT("observeOnly"),S.bObserveOnly);C->TryGetNumberField(TEXT("timeoutSeconds"),S.Timeout);C->TryGetNumberField(TEXT("holdSeconds"),S.HoldSeconds);C->TryGetBoolField(TEXT("holdWalk"),S.bHoldWalk);C->TryGetBoolField(TEXT("walk"),S.bWalk);
     C->TryGetBoolField(TEXT("routeFirst"),S.bRouteFirst);C->TryGetNumberField(TEXT("recordFps"),S.RecordFps);C->TryGetNumberField(TEXT("lineup"),S.LineupCount);double NearMetres=0;if(C->TryGetNumberField(TEXT("nearRadiusMetres"),NearMetres))S.NearRadius=NearMetres*100.;
     const TArray<TSharedPtr<FJsonValue>>* Picks=nullptr;if(C->TryGetArrayField(TEXT("dialogue"),Picks))for(const auto& P:*Picks)S.Picks.Add(P->AsString());
     const TArray<TSharedPtr<FJsonValue>>* Route=nullptr;
     if(C->TryGetArrayField(TEXT("explore"),Route))for(const auto& V:*Route){const auto P=V->AsObject();if(!P)continue;S.Explore.Add(FVector2D(P->GetNumberField(TEXT("x")),P->GetNumberField(TEXT("z"))));FString L;P->TryGetStringField(TEXT("label"),L);S.ExploreLabels.Add(L);}
+    const TArray<TSharedPtr<FJsonValue>>* Show=nullptr;
+    if(C->TryGetArrayField(TEXT("showcase"),Show))for(const auto& V:*Show){const auto O=V->AsObject();if(!O)continue;FShowcase G;O->TryGetStringField(TEXT("label"),G.Label);O->TryGetNumberField(TEXT("seconds"),G.Seconds);
+        const TArray<TSharedPtr<FJsonValue>>* L=nullptr;if(O->TryGetArrayField(TEXT("hold"),L))for(const auto& K:*L)G.Hold.Add(FKey(*K->AsString()));
+        if(O->TryGetArrayField(TEXT("tap"),L))for(const auto& K:*L)G.Tap.Add(FKey(*K->AsString()));
+        const TSharedPtr<FJsonObject>* Ax=nullptr;if(O->TryGetObjectField(TEXT("axes"),Ax))for(const auto& Pair:(*Ax)->Values)G.Axes.Add({FKey(*Pair.Key),(float)Pair.Value->AsNumber()});
+        S.Showcase.Add(G);}
     S.bNearest=S.TargetBody==TEXT("nearest");IFileManager::Get().MakeDirectory(*S.Out,true);S.bRunning=true;S.Started=FPlatformTime::Seconds();Next(0);
     S.Ticker=FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateStatic(&Tick));UE_LOG(LogTemp,Display,TEXT("TV_JOURNEY start target=%s picks=%d"),*S.TargetBody,S.Picks.Num());
 }
