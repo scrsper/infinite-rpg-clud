@@ -19,6 +19,7 @@
 #include "TVEnvironmentGrammar.h"
 #include "TVFixturePresentation.h"
 #include "TVPlayableLighting.h"
+#include "TVSoundscape.h"
 
 static const FString Kit = TEXT("/Game/ThirdParty/Quaternius/Meshes/");
 static const FString Mat = TEXT("/Game/TornVeil/Materials/");
@@ -380,6 +381,7 @@ void ATVWorldProjection::Apply(const TSharedPtr<FJsonObject>& Frame,const FVecto
             if((*Dynamic)->TryGetObjectField(TEXT("environment"),Weather)){Kind=S(*Weather,TEXT("kind"));(*Weather)->TryGetNumberField(TEXT("intensity"),Intensity);}
             const FString Error=UTVPlayableLighting::ApplyCanonicalSky(GetWorld(),WorldTime,Kind,Intensity);
             if(!Error.IsEmpty())UE_LOG(LogTemp,Warning,TEXT("TV_SKY %s"),*Error);
+            if(auto* Sound=GetWorld()->GetSubsystem<UTVSoundscape>())Sound->SetCanonicalAmbience(WorldTime,Kind,Intensity); // same clock and weather as the sky
         }
     }
     LastFrameMilliseconds=(FPlatformTime::Seconds()-Start)*1000;

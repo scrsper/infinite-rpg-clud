@@ -31,6 +31,7 @@ public:
     bool bGuardHeld=false,bFocusHeld=false,bTargetLocked=false;
     double LastManualLook=-100;
     bool bConversationFraming=false;
+    FVector LastStepAt=FVector::ZeroVector; // presentation footsteps: ground covered since the last one
     float GuardRefresh=0;
     UPROPERTY() TMap<FString, TObjectPtr<UAnimationAsset>> ActivityAnimations;
     void RebasePresentation(const FVector& Delta);

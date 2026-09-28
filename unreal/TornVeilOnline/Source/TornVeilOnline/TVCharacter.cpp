@@ -31,6 +31,7 @@
 #include "GameFramework/PlayerController.h"
 #include "UObject/ConstructorHelpers.h"
 #include "TVHumanoidVisualState.h"
+#include "TVSoundscape.h"
 
 ATVCharacter::ATVCharacter() {
     PrimaryActorTick.bCanEverTick = true;
@@ -199,6 +200,17 @@ void ATVCharacter::Tick(float Dt) {
         if (bWasChoreography) CurrentAnimation=nullptr;
         if(CanonicalCrouch>.001&&!bIncapacitated)AnimateCrouch(CanonicalCrouch,Dt);
         else Animate(Live ? CanonicalVelocity.Size2D() : 0);
+        // A footfall per stride actually covered on the ground, heard only near the camera.
+        const float Moved=FVector::Dist2D(GetActorLocation(),LastStepAt);
+        if(bIncapacitated||bDead||CanonicalPose==TEXT("sleep")||Moved>400.f)LastStepAt=GetActorLocation(); // lying, or projected across a gap: no steps
+        else {
+            const bool bRunning=CanonicalVelocity.Size2D()>320.f;
+            if(Moved>=(bRunning?140.f:75.f)){
+                LastStepAt=GetActorLocation();
+                if(auto* PC=GetWorld()->GetFirstPlayerController();PC&&PC->PlayerCameraManager&&FVector::Dist(PC->PlayerCameraManager->GetCameraLocation(),GetActorLocation())<3000.f)
+                    if(auto* Sound=GetWorld()->GetSubsystem<UTVSoundscape>())Sound->Footstep(GetActorLocation()-FVector(0,0,GetCapsuleComponent()->GetScaledCapsuleHalfHeight()),bRunning);
+            }
+        }
     }
     bWasChoreography=bChoreography;
 }

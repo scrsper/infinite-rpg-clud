@@ -9,6 +9,7 @@
 #include "TVWorldProjection.h"
 #include "Dom/JsonObject.h"
 #include "TVRenderedFrameCheck.h"
+#include "TVSoundscape.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTVPlayableDaylight,
     "TornVeil.Presentation.DaylightInfrastructure", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -79,6 +80,18 @@ bool FTVRenderedReadability::RunTest(const FString&) {
     TestFalse(TEXT("flat blank frame fails"),Measure().bPassed);
     for(int32 Y=0;Y<360;++Y) for(int32 X=0;X<640;++X) { uint8 V=45+X%140; Pixels[Y*640+X]=FColor(V,V,V); }
     TestTrue(TEXT("readable shaded daylight passes"),Measure().bPassed);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTVSoundscapeFollowsCanonicalWorld,
+    "TornVeil.Presentation.SoundscapeFollowsCanonicalWorld", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FTVSoundscapeFollowsCanonicalWorld::RunTest(const FString&) {
+    const FVector3f Noon=UTVSoundscape::AmbienceWeights(12*3600,TEXT("clear"),0),Late=UTVSoundscape::AmbienceWeights(23*3600,TEXT("clear"),0);
+    const FVector3f Dusk=UTVSoundscape::AmbienceWeights(20.4*3600,TEXT("clear"),0),Wet=UTVSoundscape::AmbienceWeights(12*3600,TEXT("rain"),.8);
+    TestTrue(TEXT("noon: birds and wind, no crickets, no rain"),FMath::IsNearlyEqual(Noon.X,1.f)&&Noon.Y<.01f&&Noon.Z==0.f);
+    TestTrue(TEXT("late night: crickets, no birds"),Late.X<.01f&&Late.Y>.99f);
+    TestTrue(TEXT("dusk: birds fade with the light while crickets begin"),Dusk.X>.1f&&Dusk.X<.95f&&Dusk.Y>.05f);
+    TestTrue(TEXT("rain is heard and covers the rest"),FMath::IsNearlyEqual(Wet.Z,.8f)&&Wet.X<Noon.X);
     return true;
 }
 #endif

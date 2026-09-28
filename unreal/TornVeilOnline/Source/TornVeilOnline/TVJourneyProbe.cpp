@@ -4,6 +4,7 @@
 #include "TVBridgeSubsystem.h"
 #include "TVCharacter.h"
 #include "TVSignInWidget.h"
+#include "TVSoundscape.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "UnrealClient.h"
@@ -87,6 +88,8 @@ static void Finish(const FString& Status,const FString& Error=FString()){
       R->SetStringField(TEXT("selfBodyId"),S.SelfBody);TArray<TSharedPtr<FJsonValue>> Path;for(const FVector& P:S.SelfPath)Path.Add(MakeShared<FJsonValueArray>(Vec(P)));R->SetArrayField(TEXT("selfPath"),Path);
       TArray<TSharedPtr<FJsonValue>> Seen;for(const auto& Pair:S.Seen){auto J=MakeShared<FJsonObject>();J->SetStringField(TEXT("bodyId"),Pair.Key);J->SetArrayField(TEXT("first"),Vec(Pair.Value.First));J->SetArrayField(TEXT("last"),Vec(Pair.Value.Last));J->SetNumberField(TEXT("firstSeenAt"),Pair.Value.FirstAt);Seen.Add(MakeShared<FJsonValueObject>(J));}
       R->SetArrayField(TEXT("seenBodies"),Seen); }
+    if(W)if(const auto* Sound=W->GetSubsystem<UTVSoundscape>()){TSharedPtr<FJsonObject> J;
+        if(FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Sound->Diagnostics()),J)&&J)R->SetObjectField(TEXT("sound"),J);}
     FString Json;auto Writer=TJsonWriterFactory<>::Create(&Json);FJsonSerializer::Serialize(R,Writer);Writer->Close();
     FFileHelper::SaveStringToFile(Json,*FPaths::Combine(S.Out,TEXT("journey.json")),FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM);
     UE_LOG(LogTemp,Display,TEXT("TV_JOURNEY finished status=%s error=%s"),*Status,*Error);

@@ -13,7 +13,9 @@ param(
     # Stay in the shared world this long after the journey (walking the route with -HoldWalk),
     # recording our own path and every body shown to us, for two-client cross-checks.
     [ValidateRange(0,900)][int]$HoldSeconds = 0,
-    [switch]$HoldWalk
+    [switch]$HoldWalk,
+    # Run with the audio device (the report then says what the soundscape actually played).
+    [switch]$WithSound
 )
 # Automated ordinary-input journey (TV.JourneyProbe). Real rendering; credentials stay in the
 # client profile. The config names who to walk to, so a pass is not a discoverability claim.
@@ -31,7 +33,8 @@ if ([IO.Path]::GetFileName($Executable) -like 'UnrealEditor*') {
     $arguments += '"' + (Join-Path $repo 'unreal/TornVeilOnline/TornVeilOnline.uproject') + '"'
     $arguments += @('/Game/TornVeil/Maps/TornVeilWorld','-game')
 }
-$arguments += @('-RenderOffscreen','-unattended','-nosplash','-nosound','-windowed','-ForceRes', ('-ResX='+$Width), ('-ResY='+$Height),
+if (!$WithSound) { $arguments += '-nosound' }
+$arguments += @('-RenderOffscreen','-unattended','-nosplash','-windowed','-ForceRes', ('-ResX='+$Width), ('-ResY='+$Height),
     ('-TVProfile='+$Profile), ('-abslog="'+(Join-Path $Out 'unreal.log')+'"'),
     ('-ExecCmds="t.MaxFPS 60,t.IdleWhenNotForeground 0,TV.JourneyProbe '+$configFile+'"'))
 $start = [DateTime]::UtcNow
