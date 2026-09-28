@@ -42,6 +42,13 @@ CURATED = {
     'work/harvest': MOCAP + 'RT_A_Lift_Light_PickUp_0cm_02_R',
     'work/plant': MOCAP + 'RT_A_Lift_Light_PickUp_0cm_02_R',
     'flee': MOCAP + 'RT_shrink_away_scared_Anim',
+    # Nothing installed sits or lies down. Sleepers lie on their back (A_TV_lie, make_rest_poses.py);
+    # people seated on the ground squat on their haunches. Both were drawn standing and bent over.
+    'rest': MOCAP + 'RT_crouch_idle_Anim',
+    'rest/seated': MOCAP + 'RT_crouch_idle_Anim',
+    'socialize/sit_and_talk': MOCAP + 'RT_crouch_idle_Anim',
+    'eat/sit_and_eat': MOCAP + 'RT_crouch_idle_Anim',
+    'rest/sleep': '/Game/Characters/TornVeilActivities/A_TV_lie',
 }
 
 
