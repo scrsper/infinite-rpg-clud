@@ -30,12 +30,12 @@ export const PLAYER_RUN_SPEED = 4.5;
 
 /**
  * A new player's default look, as canonical appearance tokens (never asset paths): a grown man,
- * fair-skinned, hair kept short, ordinary build. Chosen, not rolled, because it is the face the
+ * fair-skinned, hair in a side-swept fringe, ordinary build. Chosen, not rolled, because it is the face the
  * player spends the game looking at; `SpawnOptions.look` overrides any of it. NPCs keep their own
  * generated diversity.
  */
 export const PLAYER_DEFAULT_LOOK: Partial<AppearanceDescription> = {
-  presentation: 'masculine', skinTone: 'fair', hairStyle: 'short_swept', hairColor: 'brown',
+  presentation: 'masculine', skinTone: 'fair', hairStyle: 'side_fringe', hairColor: 'brown',
   eyeColor: 'blue', frame: 'average', stature: 'above_average', faceShape: 'square',
 };
 

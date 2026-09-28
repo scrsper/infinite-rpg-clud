@@ -98,7 +98,7 @@ const DEFAULT_GARMENT: GarmentShape = { upper: ['tunic'], lower: ['trousers'] };
 
 /** Canonical hair style -> the shape vocabulary a hair pack ships. */
 const HAIR_SHAPE: Record<string, string[]> = {
-  shaved: [], cropped: ['cropped', 'short'], short_swept: ['swept', 'short'], topknot: ['bound', 'topknot'],
+  shaved: [], cropped: ['cropped', 'short'], short_swept: ['swept', 'short'], side_fringe: ['swept', 'medium'], topknot: ['bound', 'topknot'],
   warrior_bun: ['bound', 'bun'], tied_back: ['bound', 'medium'], ponytail: ['bound', 'ponytail'],
   loose_long: ['long', 'loose'], wavy_long: ['long', 'loose', 'wavy'], braided: ['bound', 'braid'],
   twin_braid: ['bound', 'braid'], updo_ornamented: ['bound', 'updo'], bob: ['short', 'loose'],

@@ -39,7 +39,7 @@ export type PresentationId = 'feminine' | 'masculine' | 'androgynous';
 export type AgePresentationId = 'child' | 'adolescent' | 'young_adult' | 'adult' | 'middle_aged' | 'elder';
 export type HairStyleId =
   | 'shaved' | 'cropped' | 'short_swept' | 'topknot' | 'warrior_bun' | 'tied_back'
-  | 'loose_long' | 'wavy_long' | 'braided' | 'twin_braid' | 'updo_ornamented' | 'ponytail' | 'bob' | 'unkempt';
+  | 'loose_long' | 'wavy_long' | 'braided' | 'twin_braid' | 'updo_ornamented' | 'ponytail' | 'bob' | 'unkempt' | 'side_fringe';
 export type GarmentSilhouetteId =
   | 'work_kimono' | 'layered_kimono' | 'formal_kimono' | 'hakama_set' | 'dancer_wrap' | 'travel_coat'
   | 'lamellar_armour' | 'ceremonial_robe' | 'apron_over_tunic' | 'tunic_trousers' | 'ragged_layers' | 'fur_mantle' | 'ascetic_wrap';
