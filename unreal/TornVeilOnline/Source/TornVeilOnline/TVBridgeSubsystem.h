@@ -52,7 +52,7 @@ public:
     bool HasModalScreen() const { return (PlayerShell&&PlayerShell->HasModalScreen()) || (bInspector&&bMechanismsOpen); }
     UPROPERTY() TObjectPtr<UTVPlayerShellWidget> PlayerShell;
     FString FocusedTargetId,FocusedActionId,FocusedKind,MovementRestriction,MobilitySummary;
-    FBox2D FocusedBounds;
+    FBox2D FocusedBounds; FVector2D FocusedAnchor = FVector2D::ZeroVector; bool bFocusedAnchor = false;
     void UpdatePlayerShell();
     void UpdateInteractionFocus();
     void UICommand(ETVUICommand Command,const FString& Primary,const FString& Secondary,int32 Index);

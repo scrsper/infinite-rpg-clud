@@ -123,6 +123,8 @@ public:
     bool bHasEmbodiment = false;
     /** Presentation only (TV.Lineup): wear another character's resolved appearance, standing idle. */
     void CopyPresentationFrom(const ATVCharacter& Source);
+    /** Where the head is drawn: the visible body's head when there is one (scaled, posed), else the driver's. */
+    FVector PresentedHeadLocation() const;
 private:
     int64 PlayedAttackEvents = 0, PlayedHitEvents = 0;
     int64 SkippedAttackEvents = 0, SkippedHitEvents = 0;

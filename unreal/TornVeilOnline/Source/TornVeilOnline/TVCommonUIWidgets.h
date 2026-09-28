@@ -68,6 +68,9 @@ struct TORNVEILONLINE_API FTVUIFocusBounds
     GENERATED_BODY()
     UPROPERTY(BlueprintReadOnly) bool bHasFocusBounds = false;
     UPROPERTY(BlueprintReadOnly) FBox2D BoundsPixels = FBox2D(ForceInit);
+    /** A person: the screen point just above their drawn head, where the name plate sits. */
+    UPROPERTY(BlueprintReadOnly) bool bHasAnchor = false;
+    UPROPERTY(BlueprintReadOnly) FVector2D AnchorPixels = FVector2D::ZeroVector;
 };
 
 USTRUCT(BlueprintType)

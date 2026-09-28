@@ -235,6 +235,10 @@ void ATVCharacter::Tick(float Dt) {
     }
     bWasChoreography=bChoreography;
 }
+FVector ATVCharacter::PresentedHeadLocation() const {
+    if (VisibleCharacter && VisibleCharacter->HasVisibleCharacter() && VisibleCharacter->GetBoneIndex(TEXT("head")) != INDEX_NONE) return VisibleCharacter->GetBoneLocation(TEXT("head"));
+    return GetMesh()->GetBoneLocation(TEXT("head"));
+}
 void ATVCharacter::CopyPresentationFrom(const ATVCharacter& Source) {
     Embodiment = Source.Embodiment; bHasEmbodiment = Source.bHasEmbodiment; DisplayName = Source.DisplayName;
     Activity.Empty(); CanonicalPose = TEXT("stand"); CanonicalVelocity = FVector::ZeroVector;
