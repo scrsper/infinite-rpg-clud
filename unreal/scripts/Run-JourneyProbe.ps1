@@ -18,7 +18,9 @@ param(
     [switch]$WithSound,
     # Walk the route's named places before asking anyone; there ask only people this close.
     [switch]$RouteFirst,
-    [ValidateRange(0,100)][double]$NearRadiusMetres = 0
+    [ValidateRange(0,100)][double]$NearRadiusMetres = 0,
+    # Record evidence video (TV.Record) from entering the world; encoded to <Out>/journey.mp4.
+    [ValidateRange(0,60)][int]$RecordFps = 0
 )
 # Automated ordinary-input journey (TV.JourneyProbe). Real rendering; credentials stay in the
 # client profile. The config names who to walk to, so a pass is not a discoverability claim.
@@ -27,7 +29,7 @@ $repo = (Resolve-Path "$PSScriptRoot/../..").Path
 $Out = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Out)
 if (Test-Path -LiteralPath $Out) { throw "Refusing to reuse journey evidence: $Out" }
 New-Item -ItemType Directory -Path $Out | Out-Null
-$config = [ordered]@{ out = $Out; targetBody = $TargetBody; dialogue = $Dialogue; eat = !$ObserveOnly; observeOnly = [bool]$ObserveOnly; quit = $true; timeoutSeconds = $TimeoutSeconds - 60; holdSeconds = $HoldSeconds; holdWalk = [bool]$HoldWalk; routeFirst = [bool]$RouteFirst; nearRadiusMetres = $NearRadiusMetres }
+$config = [ordered]@{ out = $Out; targetBody = $TargetBody; dialogue = $Dialogue; eat = !$ObserveOnly; observeOnly = [bool]$ObserveOnly; quit = $true; timeoutSeconds = $TimeoutSeconds - 60; holdSeconds = $HoldSeconds; holdWalk = [bool]$HoldWalk; routeFirst = [bool]$RouteFirst; nearRadiusMetres = $NearRadiusMetres; recordFps = $RecordFps }
 if ($RouteFile) { $config.explore = @(Get-Content -LiteralPath $RouteFile -Raw | ConvertFrom-Json) }
 $configFile = Join-Path $Out 'config.json'
 $config | ConvertTo-Json | Set-Content -LiteralPath $configFile -Encoding utf8
@@ -47,5 +49,11 @@ if (!$job.WaitForExit($TimeoutSeconds * 1000)) { Stop-Process -Id $job.Id -Error
 $report = Join-Path $Out 'journey.json'
 if (!(Test-Path -LiteralPath $report) -or (Get-Item -LiteralPath $report).LastWriteTimeUtc -lt $start) { throw "No fresh journey report: $Out" }
 $result = Get-Content -LiteralPath $report -Raw | ConvertFrom-Json
+$frames = Join-Path $Out 'video'
+if ($RecordFps -gt 0 -and (Test-Path (Join-Path $frames 'frame_00000.jpg'))) {
+    Start-Sleep 2 # the last JPEGs are written on worker threads as the game quits
+    & ffmpeg -loglevel error -y -framerate $RecordFps -i (Join-Path $frames 'frame_%05d.jpg') -vf 'scale=1280:-2' -c:v libx264 -pix_fmt yuv420p -crf 20 (Join-Path $Out 'journey.mp4')
+    Write-Output "Video: $(Join-Path $Out 'journey.mp4') ($((Get-ChildItem $frames -Filter *.jpg).Count) frames at $RecordFps fps)"
+}
 Write-Output "Journey $($result.status) in $([Math]::Round($result.elapsedSeconds,1)) s ($($result.steps.Count) steps; frames still require review): $report"
 if ($result.status -ne 'passed') { throw "Journey failed: $($result.error)" }
