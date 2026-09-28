@@ -208,7 +208,7 @@ static bool Tick(float) {
     Report->SetStringField(TEXT("worldId"), Bridge->WorldId);
     Report->SetStringField(TEXT("serverRelease"), Bridge->ServerRelease);
     Report->SetNumberField(TEXT("regions"), Bridge->ProjectedRegions);
-    Report->SetStringField(TEXT("lightingError"), UTVPlayableLighting::ValidateDaylight(World, true));
+    Report->SetStringField(TEXT("lightingError"), UTVPlayableLighting::ValidateLightingStructure(World, true, false)); // any canonical hour
     if (Shot > 0) {
         auto* Subject = Characters[(Shot - 1) % Characters.Num()];
         const FVector Target = Subject->GetActorLocation() + FVector(0, 0, 20);

@@ -37,10 +37,23 @@ bool FTVPlayableDaylight::RunTest(const FString&) {
             Dynamic->SetObjectField(TEXT("environment"),Weather);
             auto Frame=MakeShared<FJsonObject>(); Frame->SetObjectField(TEXT("dynamic"),Dynamic);
             Projection->Apply(Frame,FVector::ZeroVector);
-            TestEqual(TEXT("saved time and weather cannot black out fixed daylight"),UTVPlayableLighting::ValidateDaylight(World),FString());
+            // The sky follows the canonical clock and weather, and what it shows is checkable.
+            TestEqual(TEXT("sky matches canonical time and weather"),UTVPlayableLighting::ValidateSky(World,Hour*3600,Kind,0),FString());
             TestEqual(TEXT("projection never rewrites canonical clock DTO"),Dynamic->GetNumberField(TEXT("worldTime")),Hour*3600);
         }
     }
+    const auto Noon=UTVPlayableLighting::SkyFor(12*3600,TEXT("clear"),0),Storm=UTVPlayableLighting::SkyFor(12*3600,TEXT("storm"),0);
+    const auto Dawn=UTVPlayableLighting::SkyFor(5.72425*3600,TEXT("clear"),0),Late=UTVPlayableLighting::SkyFor(22*3600,TEXT("clear"),0);
+    TestTrue(TEXT("noon is full daylight"),!Noon.bNight&&FMath::IsNearlyEqual(Noon.SunLux,12000.f));
+    TestTrue(TEXT("a storm dims the noon sun"),Storm.SunLux<Noon.SunLux*.5f);
+    TestTrue(TEXT("before dawn and at 22:00 it is night"),Dawn.bNight&&Late.bNight);
+    // The earlier black frames: a dim night under a fixed EV100 12. Night exposure may now adapt.
+    TestTrue(TEXT("night exposure can adapt down"),Late.MinEV100<=0.f&&Late.SunLux>0.f&&Late.SkyIntensity>0.f);
+    TestEqual(TEXT("evening sun is warm and low"),UTVPlayableLighting::SkyFor(19.5*3600,TEXT("clear"),0).Color.B<.9f,true);
+    UTVPlayableLighting::ApplyCanonicalSky(World,12*3600,TEXT("clear"),0);
+    (*TActorIterator<ADirectionalLight>(World))->GetLightComponent()->SetIntensity(100);
+    TestFalse(TEXT("a noon black-out is still refused"),UTVPlayableLighting::ValidateSky(World,12*3600,TEXT("clear"),0).IsEmpty());
+    UTVPlayableLighting::EnsureDaylight(World);
     World->SpawnActor<ADirectionalLight>();
     TestFalse(TEXT("duplicates rejected, not silently accumulated"),UTVPlayableLighting::EnsureDaylight(World).IsEmpty());
     World->DestroyWorld(false);

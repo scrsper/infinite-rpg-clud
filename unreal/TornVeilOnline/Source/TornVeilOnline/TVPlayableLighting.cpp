@@ -102,7 +102,58 @@ FString UTVPlayableLighting::EnsureDaylight(UWorld* World) {
     return ValidateDaylight(World);
 }
 
-FString UTVPlayableLighting::ValidateDaylight(UWorld* World, bool RequireLitViewport) {
+UTVPlayableLighting::FSky UTVPlayableLighting::SkyFor(double WorldTimeSeconds, const FString& Kind, double Intensity) {
+    // The simulation's day: people rise about six and are abed by nine; the sun keeps those hours.
+    const double Hour=FMath::Fmod(FMath::Fmod(WorldTimeSeconds,86400.)+86400.,86400.)/3600.;
+    const double DayT=(Hour-6.)/14.; // 0 at sunrise, 1 at sunset
+    const bool bDay=DayT>0&&DayT<1;
+    const double Elevation=bDay?FMath::Sin(PI*DayT)*58.:0.;
+    const double Weather=Kind==TEXT("storm")?.2:Kind==TEXT("rain")?.35:Kind==TEXT("cloudy")?.55:Kind==TEXT("fog")?.6:1.;
+    const double Cover=FMath::Lerp(1.,Weather,FMath::Clamp(Intensity<=0?1.:Intensity,0.,1.));
+    FSky S;
+    if(Elevation>1.5){
+        const double Rise=FMath::SmoothStep(0.,18.,Elevation); // low sun is weaker and warmer
+        S.SunLux=float(SunLux*FMath::Lerp(.08,1.,Rise)*Cover);
+        S.Direction=FRotator(-float(Elevation),float(-100.+DayT*200.),0.f);
+        S.Color=FLinearColor::LerpUsingHSV(FLinearColor(1.f,.62f,.38f),FLinearColor::White,float(Rise));
+        S.SkyIntensity=1.f;S.MinEV100=InteriorEV100;S.bNight=false;
+    } else {
+        // Moonlight: dim and cool, from high in the south; exposure may adapt so night is dark, not black.
+        S.SunLux=float(.35*Cover);S.Direction=FRotator(-40.f,160.f,0.f);S.Color=FLinearColor(.62f,.72f,1.f);
+        S.SkyIntensity=.8f;S.MinEV100=-2.f;S.bNight=true;
+    }
+    S.FogDensity=Kind==TEXT("fog")?.05f:(Kind==TEXT("rain")||Kind==TEXT("storm"))?.03f:.014f;
+    return S;
+}
+
+FString UTVPlayableLighting::ApplyCanonicalSky(UWorld* World, double WorldTimeSeconds, const FString& Kind, double Intensity) {
+    if (!World) return TEXT("No presentation world");
+    const auto Suns=Find<ADirectionalLight>(World);const auto Skies=Find<ASkyLight>(World);const auto Posts=Find<APostProcessVolume>(World);
+    if (Suns.Num()!=1||Skies.Num()!=1||Posts.Num()!=1) return TEXT("Expected exactly one sun, skylight and post-process volume");
+    const FSky S=SkyFor(WorldTimeSeconds,Kind,Intensity);
+    auto* Light=CastChecked<UDirectionalLightComponent>(Suns[0]->GetLightComponent());
+    Light->SetIntensity(S.SunLux);Light->SetLightColor(S.Color);Suns[0]->SetActorRotation(S.Direction);
+    Skies[0]->GetLightComponent()->SetIntensity(S.SkyIntensity);
+    Posts[0]->Settings.AutoExposureMinBrightness=S.MinEV100;
+    for (TActorIterator<AExponentialHeightFog> It(World); It; ++It) It->GetComponent()->SetFogDensity(S.FogDensity);
+    return FString();
+}
+
+FString UTVPlayableLighting::ValidateSky(UWorld* World, double WorldTimeSeconds, const FString& Kind, double Intensity) {
+    const FString Structure=ValidateLightingStructure(World,false,false);if(!Structure.IsEmpty())return Structure;
+    const FSky S=SkyFor(WorldTimeSeconds,Kind,Intensity);
+    const auto* Sun=CastChecked<UDirectionalLightComponent>(Find<ADirectionalLight>(World)[0]->GetLightComponent());
+    if(!FMath::IsNearlyEqual(Sun->Intensity,S.SunLux,.01f)||!Find<ADirectionalLight>(World)[0]->GetActorRotation().Equals(S.Direction,.1f))
+        return TEXT("Sun does not match the canonical time and weather");
+    if(!FMath::IsNearlyEqual(Find<APostProcessVolume>(World)[0]->Settings.AutoExposureMinBrightness,S.MinEV100))
+        return TEXT("Exposure range does not match the canonical time");
+    return FString();
+}
+
+FString UTVPlayableLighting::ValidateDaylight(UWorld* World, bool RequireLitViewport) { return ValidateLightingStructure(World,RequireLitViewport,true); }
+/** The lighting rig is whole and sane. With RequireNoonBaseline it must also be the noon default
+ *  EnsureDaylight installs; without it, time-of-day values are checked by ValidateSky instead. */
+FString UTVPlayableLighting::ValidateLightingStructure(UWorld* World, bool RequireLitViewport, bool RequireNoonBaseline) {
     if (!World) return TEXT("No presentation world");
     const auto Suns=Find<ADirectionalLight>(World);
     const auto Skies=Find<ASkyLight>(World);
@@ -112,13 +163,13 @@ FString UTVPlayableLighting::ValidateDaylight(UWorld* World, bool RequireLitView
         return TEXT("Expected exactly one directional light, skylight, sky atmosphere and post-process volume");
     const auto* Sun=CastChecked<UDirectionalLightComponent>(Suns[0]->GetLightComponent());
     if (Sun->Mobility!=EComponentMobility::Movable || !Sun->bAffectsWorld || !Sun->IsVisible() ||
-        Suns[0]->IsHidden() || !Sun->bAtmosphereSunLight || !FMath::IsNearlyEqual(Sun->Intensity,SunLux) ||
-        !Suns[0]->GetActorRotation().Equals(SunRotation,.1f))
+        Suns[0]->IsHidden() || !Sun->bAtmosphereSunLight || Sun->Intensity<=0.f ||
+        (RequireNoonBaseline && (!FMath::IsNearlyEqual(Sun->Intensity,SunLux) || !Suns[0]->GetActorRotation().Equals(SunRotation,.1f))))
         return TEXT("Directional light is not the 12000-lux movable daylight baseline");
     const auto* Sky=Skies[0]->GetLightComponent();
     if (Sky->Mobility!=EComponentMobility::Movable || !Sky->bAffectsWorld || !Sky->IsVisible() ||
         Skies[0]->IsHidden() || !Sky->bRealTimeCapture || Sky->SourceType!=SLS_CapturedScene ||
-        !FMath::IsNearlyEqual(Sky->Intensity,1.f))
+        Sky->Intensity<=0.f || (RequireNoonBaseline && !FMath::IsNearlyEqual(Sky->Intensity,1.f)))
         return TEXT("Skylight must be visible, movable and capture the live atmosphere at intensity 1");
     if (Atmospheres[0]->IsHidden() || !Atmospheres[0]->GetRootComponent()->IsVisible())
         return TEXT("Sky atmosphere is hidden");
@@ -127,7 +178,7 @@ FString UTVPlayableLighting::ValidateDaylight(UWorld* World, bool RequireLitView
     if (!Post->bEnabled || !Post->bUnbound || !FMath::IsNearlyEqual(Post->BlendWeight,1.f) ||
         !S.bOverride_AutoExposureMethod || S.AutoExposureMethod!=AEM_Histogram ||
         !S.bOverride_AutoExposureMinBrightness || !S.bOverride_AutoExposureMaxBrightness ||
-        !FMath::IsNearlyEqual(S.AutoExposureMinBrightness,InteriorEV100) ||
+        (RequireNoonBaseline ? !FMath::IsNearlyEqual(S.AutoExposureMinBrightness,InteriorEV100) : (S.AutoExposureMinBrightness<-2.f||S.AutoExposureMinBrightness>InteriorEV100)) ||
         !FMath::IsNearlyEqual(S.AutoExposureMaxBrightness,DaylightEV100) ||
         !S.bOverride_AutoExposureBias || !FMath::IsNearlyEqual(S.AutoExposureBias,1.f))
         return TEXT("Post-process exposure must be unbound, enabled, EV100 7-12 with compensation +1");

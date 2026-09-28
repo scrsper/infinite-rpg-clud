@@ -18,6 +18,7 @@
 #include "TVItemPresentationCatalog.h"
 #include "TVEnvironmentGrammar.h"
 #include "TVFixturePresentation.h"
+#include "TVPlayableLighting.h"
 
 static const FString Kit = TEXT("/Game/ThirdParty/Quaternius/Meshes/");
 static const FString Mat = TEXT("/Game/TornVeil/Materials/");
@@ -370,10 +371,17 @@ void ATVWorldProjection::Apply(const TSharedPtr<FJsonObject>& Frame,const FVecto
     if(Vista) Vista->SetActorLocation(FVector(Vista->CanonicalBase.X-Origin.X,Vista->CanonicalBase.Y-Origin.Z,-Origin.Y)*100);
     const FString DynamicRegion=S(Frame,TEXT("dynamicRegion"));
     const TSharedPtr<FJsonObject>* Dynamic=nullptr; if(Frame->TryGetObjectField(TEXT("dynamic"),Dynamic)) for(auto& Pair:Regions) if(DynamicRegion.IsEmpty() || Pair.Key==DynamicRegion) Pair.Value->UpdateDynamic(*Dynamic);
-    // v0.1 deliberately uses neutral daylight at every saved clock value. The previous
-    // 100-lux night switch combined with fixed EV100 12 made ordinary resumed PIE black.
-    // Canonical time/weather remain untouched; a complete day/night exposure rig is deferred.
-    if(Dynamic && Dynamic->IsValid()) { const TSharedPtr<FJsonObject>* Weather; if((*Dynamic)->TryGetObjectField(TEXT("environment"),Weather)) { const FString Kind=S(*Weather,TEXT("kind")); const bool Wet=Kind==TEXT("rain")||Kind==TEXT("storm"); for(TActorIterator<AExponentialHeightFog> It(GetWorld());It;++It) It->GetComponent()->SetFogDensity(Wet?.03f:.014f); } }
+    // The sky shows the world's own clock and weather. The earlier black frames came from a 100-lux
+    // night under a fixed EV100 12; night is now moonlight with exposure free to adapt down, and a
+    // noon black-out is still refused by ValidateSky. The canonical DTO is only read.
+    if(Dynamic && Dynamic->IsValid()) {
+        double WorldTime=0;FString Kind=TEXT("clear");double Intensity=0;const TSharedPtr<FJsonObject>* Weather;
+        if((*Dynamic)->TryGetNumberField(TEXT("worldTime"),WorldTime)){
+            if((*Dynamic)->TryGetObjectField(TEXT("environment"),Weather)){Kind=S(*Weather,TEXT("kind"));(*Weather)->TryGetNumberField(TEXT("intensity"),Intensity);}
+            const FString Error=UTVPlayableLighting::ApplyCanonicalSky(GetWorld(),WorldTime,Kind,Intensity);
+            if(!Error.IsEmpty())UE_LOG(LogTemp,Warning,TEXT("TV_SKY %s"),*Error);
+        }
+    }
     LastFrameMilliseconds=(FPlatformTime::Seconds()-Start)*1000;
     UE_LOG(LogTemp,Display,TEXT("TV_STREAM %s"),*Metrics());
 }
