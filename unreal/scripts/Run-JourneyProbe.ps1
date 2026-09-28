@@ -20,7 +20,9 @@ param(
     [switch]$RouteFirst,
     [ValidateRange(0,100)][double]$NearRadiusMetres = 0,
     # Record evidence video (TV.Record) from entering the world; encoded to <Out>/journey.mp4.
-    [ValidateRange(0,60)][int]$RecordFps = 0
+    [ValidateRange(0,60)][int]$RecordFps = 0,
+    # With -ObserveOnly: TV.Lineup of the player and this many people in all (<Out>/lineup.png).
+    [ValidateRange(-1,12)][int]$Lineup = 0 # -1: one clone of the player per activity clip
 )
 # Automated ordinary-input journey (TV.JourneyProbe). Real rendering; credentials stay in the
 # client profile. The config names who to walk to, so a pass is not a discoverability claim.
@@ -29,7 +31,7 @@ $repo = (Resolve-Path "$PSScriptRoot/../..").Path
 $Out = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Out)
 if (Test-Path -LiteralPath $Out) { throw "Refusing to reuse journey evidence: $Out" }
 New-Item -ItemType Directory -Path $Out | Out-Null
-$config = [ordered]@{ out = $Out; targetBody = $TargetBody; dialogue = $Dialogue; eat = !$ObserveOnly; observeOnly = [bool]$ObserveOnly; quit = $true; timeoutSeconds = $TimeoutSeconds - 60; holdSeconds = $HoldSeconds; holdWalk = [bool]$HoldWalk; routeFirst = [bool]$RouteFirst; nearRadiusMetres = $NearRadiusMetres; recordFps = $RecordFps }
+$config = [ordered]@{ out = $Out; targetBody = $TargetBody; dialogue = $Dialogue; eat = !$ObserveOnly; observeOnly = [bool]$ObserveOnly; quit = $true; timeoutSeconds = $TimeoutSeconds - 60; holdSeconds = $HoldSeconds; holdWalk = [bool]$HoldWalk; routeFirst = [bool]$RouteFirst; nearRadiusMetres = $NearRadiusMetres; recordFps = $RecordFps; lineup = $Lineup }
 if ($RouteFile) { $config.explore = @(Get-Content -LiteralPath $RouteFile -Raw | ConvertFrom-Json) }
 $configFile = Join-Path $Out 'config.json'
 $config | ConvertTo-Json | Set-Content -LiteralPath $configFile -Encoding utf8

@@ -35,6 +35,7 @@
  * is test setup, so a pass proves the loop works end to end, not that a player can discover it.
  */
 namespace TVVideoCapture { void Start(const FString& Dir, double Fps, int32 Width); void StopRecording(); }
+namespace TVLineup { void Start(const FString& File, int32 Count, bool bActivities); }
 namespace TVJourneyProbe {
 struct FState {
     bool bRunning=false; int32 Phase=0; double Started=0,PhaseAt=0,BlockedSince=-1,SideStepUntil=0; int32 Choice=0,Shot=0;
@@ -49,7 +50,8 @@ struct FState {
     // Route first: walk to the named places before asking anyone, and there ask only people within
     // NearRadius (cm) — as a player who knows where the tavern is goes in and asks inside.
     bool bRouteFirst=false,bReachedStop=false; double NearRadius=0; // route first: nobody is asked before the first named stop
-    double RecordFps=0; bool bRecording=false; // evidence video from entering the world to the end
+    double RecordFps=0; bool bRecording=false; int32 LineupCount=0; // TV.Lineup of the player and nearby people after reconnecting
+    // evidence video from entering the world to the end
     FVector ProgressAt=FVector::ZeroVector; double ProgressCheckedAt=0; int32 Unsticks=0; bool bStrafeLeft=false; FString SelfBody; TArray<FVector> SelfPath; double LastPathAt=0;
     struct FSeen{FVector First,Last;double FirstAt=0;}; TMap<FString,FSeen> Seen;
 };
@@ -155,7 +157,7 @@ static bool Tick(float){
         if(!B->IsLive()||!B->bCanonicalReady||!Pawn||InPhase<3)return true;
         if(B->ProjectedRegions<9&&InPhase<45)return true; // let the surroundings stream in, as a player waits
         // Observing with a hold is for watching the world: no inventory over the view.
-        if(S.bObserveOnly){Step(TEXT("reconnected"),B);if(S.HoldSeconds>0){Next(7);return true;}Tap(EKeys::I);Next(5);return true;}
+        if(S.bObserveOnly){Step(TEXT("reconnected"),B);if(S.LineupCount!=0)TVLineup::Start(FPaths::Combine(S.Out,TEXT("lineup.png")),FMath::Abs(S.LineupCount),S.LineupCount<0);if(S.HoldSeconds>0){Next(7);return true;}Tap(EKeys::I);Next(5);return true;}
         if(S.bRouteFirst&&S.Explore.Num()){
             S.HungerBefore=Number(B->PlayerVitals,TEXT("Hunger"));S.WealthBefore=Silver(B->PlayerVitals);Step(TEXT("entered"),B);
             // Begin the route where we stand (a returning person may already be indoors): the nearest
@@ -267,7 +269,7 @@ static void Start(const TArray<FString>& Args){
     if(S.bRunning||Args.Num()<1)return;FString Text;if(!FFileHelper::LoadFileToString(Text,*Args[0])){UE_LOG(LogTemp,Error,TEXT("TV_JOURNEY missing config %s"),*Args[0]);return;}
     TSharedPtr<FJsonObject> C;if(!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text),C)||!C){UE_LOG(LogTemp,Error,TEXT("TV_JOURNEY bad config"));return;}
     S=FState();C->TryGetStringField(TEXT("out"),S.Out);C->TryGetStringField(TEXT("targetBody"),S.TargetBody);C->TryGetBoolField(TEXT("eat"),S.bEat);C->TryGetBoolField(TEXT("quit"),S.bQuit);C->TryGetBoolField(TEXT("observeOnly"),S.bObserveOnly);C->TryGetNumberField(TEXT("timeoutSeconds"),S.Timeout);C->TryGetNumberField(TEXT("holdSeconds"),S.HoldSeconds);C->TryGetBoolField(TEXT("holdWalk"),S.bHoldWalk);
-    C->TryGetBoolField(TEXT("routeFirst"),S.bRouteFirst);C->TryGetNumberField(TEXT("recordFps"),S.RecordFps);double NearMetres=0;if(C->TryGetNumberField(TEXT("nearRadiusMetres"),NearMetres))S.NearRadius=NearMetres*100.;
+    C->TryGetBoolField(TEXT("routeFirst"),S.bRouteFirst);C->TryGetNumberField(TEXT("recordFps"),S.RecordFps);C->TryGetNumberField(TEXT("lineup"),S.LineupCount);double NearMetres=0;if(C->TryGetNumberField(TEXT("nearRadiusMetres"),NearMetres))S.NearRadius=NearMetres*100.;
     const TArray<TSharedPtr<FJsonValue>>* Picks=nullptr;if(C->TryGetArrayField(TEXT("dialogue"),Picks))for(const auto& P:*Picks)S.Picks.Add(P->AsString());
     const TArray<TSharedPtr<FJsonValue>>* Route=nullptr;
     if(C->TryGetArrayField(TEXT("explore"),Route))for(const auto& V:*Route){const auto P=V->AsObject();if(!P)continue;S.Explore.Add(FVector2D(P->GetNumberField(TEXT("x")),P->GetNumberField(TEXT("z"))));FString L;P->TryGetStringField(TEXT("label"),L);S.ExploreLabels.Add(L);}

@@ -13,7 +13,7 @@
 #include "UnrealClient.h"
 
 /**
- * TV.Record start <dir> [fps] [width] / TV.Record stop — evidence video from the running game.
+ * TV.RecordVideo start <dir> [fps] [width] / TV.RecordVideo stop — evidence video from the running game.
  *
  * Uses the engine's own screenshot capture (read inside the viewport draw, world and UI as the
  * player sees them): at each wall-clock slot a capture is requested and the viewport's
@@ -73,7 +73,8 @@ static void OnCaptured(int32 Width, int32 Height, const TArray<FColor>& Colors) 
 static bool Tick(float) {
     if (!S.bOn) return false;
     if (FPlatformTime::Seconds() >= S.NextAt && !FScreenshotRequest::IsScreenshotRequested())
-        FScreenshotRequest::RequestScreenshot(FPaths::Combine(S.Dir, FString(Marker) + TEXT(".png")), false, false);
+        // With the UI: the prompt, the name plate and the conversation are what the evidence is of.
+        FScreenshotRequest::RequestScreenshot(FPaths::Combine(S.Dir, FString(Marker) + TEXT(".png")), true, false);
     return true;
 }
 
@@ -100,7 +101,7 @@ void Start(const FString& Dir, double Fps, int32 Width) {
 }
 void StopRecording() { Stop(); }
 
-static FAutoConsoleCommand Command(TEXT("TV.Record"), TEXT("TV.Record start <dir> [fps] [width] | TV.Record stop — evidence video frames from the game viewport"),
+static FAutoConsoleCommand Command(TEXT("TV.RecordVideo"), TEXT("TV.RecordVideo start <dir> [fps] [width] | TV.RecordVideo stop — evidence video frames from the game viewport"),
     FConsoleCommandWithArgsDelegate::CreateLambda([](const TArray<FString>& Args) {
         if (Args.Num() >= 2 && Args[0] == TEXT("start")) Start(Args[1], Args.Num() > 2 ? FCString::Atod(*Args[2]) : 15., Args.Num() > 3 ? FCString::Atoi(*Args[3]) : 1280);
         else Stop();
