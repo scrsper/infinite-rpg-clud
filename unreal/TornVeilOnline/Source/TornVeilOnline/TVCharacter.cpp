@@ -187,7 +187,7 @@ void ATVCharacter::Tick(float Dt) {
     if(bCanonicalPlayer) {
         if(LocomotionCameraSignal.Transition==ETVPresentationTransition::Pivot)CameraShoulderSign=LocomotionCameraSignal.CameraShoulderSign;
         const float ArmTarget=LocomotionCameraSignal.CameraMode==ETVPresentationCameraMode::Combat?FMath::Min(ZoomTarget,300.f)
-            :LocomotionCameraSignal.CameraMode==ETVPresentationCameraMode::Incapacitated?FMath::Max(ZoomTarget,390.f)
+            :(LocomotionCameraSignal.CameraMode==ETVPresentationCameraMode::Incapacitated||CanonicalPose==TEXT("sleep"))?FMath::Max(ZoomTarget,390.f) // lying down: stand back from the body
             :bConversationFraming?FMath::Clamp(ZoomTarget,240.f,300.f):ZoomTarget;
         CameraBoom->TargetArmLength=FMath::FInterpTo(CameraBoom->TargetArmLength,ArmTarget,Dt,8);
         const float Shoulder=FMath::GetMappedRangeValueClamped(FVector2D(160,700),FVector2D(55,0),ArmTarget)*(bConversationFraming?-1.f:CameraShoulderSign); // conversation: left shoulder, the player's own back falls behind the panel
@@ -576,12 +576,16 @@ FString ATVCharacter::PresentationAnimation() const { if (!CombatPresentation->A
 void ATVCharacter::HideCameraIntruders() {
     const FVector Eye = Camera->GetComponentLocation();
     for (TActorIterator<ATVCharacter> It(GetWorld()); It; ++It) {
-        ATVCharacter* Other = *It; if (Other == this) continue;
+        // Our own body too: indoors the boom collides with the walls and pulls the camera into us.
+        ATVCharacter* Other = *It;
         const UCapsuleComponent* Capsule = Other->GetCapsuleComponent();
         const FVector Center = Capsule->GetComponentLocation(), Up = Capsule->GetUpVector();
         const float Half = Capsule->GetScaledCapsuleHalfHeight(), Radius = Capsule->GetScaledCapsuleRadius();
         const float Along = FMath::Clamp(FVector::DotProduct(Eye - Center, Up), -Half, Half);
-        const bool bIntrudes = FVector::Dist(Eye, Center + Up * Along) < Radius + 30.f;
+        // A body lying down (asleep, downed) spreads far beyond its upright capsule: test the mesh.
+        const bool bLying = Other->bIncapacitated || Other->CanonicalPose == TEXT("sleep");
+        const bool bIntrudes = FVector::Dist(Eye, Center + Up * Along) < Radius + 30.f
+            || (bLying && Other->GetMesh() && Other->GetMesh()->Bounds.GetBox().ExpandBy(30.f).IsInside(Eye));
         if (Other->bCameraIntrusionHidden != bIntrudes) { Other->bCameraIntrusionHidden = bIntrudes; Other->SetActorHiddenInGame(bIntrudes); }
     }
 }
