@@ -12,9 +12,19 @@ const legacy = {
   918272: 'ad7bf58bebd90e230201f5abce57000bf1e74f5d53bf4f385fc0e12fca1dfd21',
   918273: 'a4be493066fc069f6ad923296f3f5bd8289fe6dc487c7b5f4f64f8022c855e21',
 };
+// playable-2 (household locality), captured before naming revision 1; the dev, staging and live
+// worlds were created under it and regenerate this exact base at every start.
+const household = {
+  918271: '5cb875018883bf8a42f753532289d4982b68d4411d16ce39bf64f16b64397ede',
+  918272: '31a4ac159743143cac8b37544de2877cef26480c1ce7349e21289609d193ae93',
+  918273: 'c70445beb8164b7e8837921f7a2f8a619d51417686d7d8c54ac619ec5f1eacb2',
+};
 for (const seed of [918271, 918272, 918273] as const) {
   it(`preserves the exact playable-1 baseline for seed ${seed}`, () => {
     expect(playableBaselineFingerprint(seed, 'playable-1')).toBe(legacy[seed]);
+  }, 30000);
+  it(`preserves the exact playable-2 baseline for seed ${seed}`, () => {
+    expect(playableBaselineFingerprint(seed, 'playable-2')).toBe(household[seed]);
   }, 30000);
   it(`places new homes within the unchanged work and routine range for seed ${seed}`, () => {
     const w = new World(seed); generatePlayableWorld(w);

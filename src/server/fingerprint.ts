@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { World } from '../sim/core/world';
 import { generatePlayableWorld } from '../sim/world/playable';
-import { LEGACY_PLAYABLE_WORLD, PLAYABLE_WORLD } from '../sim/world/geography';
+import { HOUSEHOLD_PLAYABLE_WORLD, LEGACY_PLAYABLE_WORLD, PLAYABLE_WORLD, type PlayableWorldSpec } from '../sim/world/geography';
 // Baseline semantics remain those of schema 24. Schema 25 only packs event JSON;
 // changing its storage version must not manufacture a different generated world.
 const BASELINE_SAVE_SEMANTICS = 24;
@@ -17,12 +17,15 @@ const BASELINE_SAVE_SEMANTICS = 24;
  * digests settlement sites, roads, the initial population's identities, places, resource nodes in
  * the settlement regions, and a coarse terrain lattice across the whole map.
  */
-export const GENERATOR_VERSION = 'playable-2';
+export const GENERATOR_VERSION = 'playable-3';
+// Every revision a recorded world may carry; a world keeps the revision it was created with.
+const GENERATOR_SPECS: Record<string, PlayableWorldSpec> = { 'playable-1': LEGACY_PLAYABLE_WORLD, 'playable-2': HOUSEHOLD_PLAYABLE_WORLD, 'playable-3': PLAYABLE_WORLD };
 
 export function playableBaselineFingerprint(seed: number, version: string = GENERATOR_VERSION): string {
-  if (version !== 'playable-1' && version !== GENERATOR_VERSION) throw new Error(`Unsupported playable generator ${version}`);
+  const spec = GENERATOR_SPECS[version];
+  if (!spec) throw new Error(`Unsupported playable generator ${version}`);
   const w = new World(seed);
-  generatePlayableWorld(w, version === 'playable-1' ? LEGACY_PLAYABLE_WORLD : PLAYABLE_WORLD);
+  generatePlayableWorld(w, spec);
   const h = createHash('sha256');
   const put = (label: string, value: unknown) => { h.update(label); h.update('\u0000'); h.update(JSON.stringify(value)); h.update('\u0001'); };
   const g = w.geography!;

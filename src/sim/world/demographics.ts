@@ -11,6 +11,7 @@ import { dailyScheduleFor, stepLivelihoods } from '../mind/livelihood';
 import { inheritPotential } from '../core/lineage';
 import { physicalAttribute } from '../core/human';
 import { develop } from '../core/development';
+import { legacyName, unusedName } from './settlementSpec';
 
 /**
  * The pool a newborn's given name is drawn from.
@@ -114,10 +115,7 @@ function generatedName(world: World, gestationalParent: Person, otherParent: Per
   const surname = surnameSource.name.trim().split(/\s+/).slice(-1)[0] || 'Vale';
   const taken = new Set<string>();
   for (const p of world.persons()) taken.add(p.name);
-  let name = `${given} ${surname}`;
-  let suffix = 2;
-  while (taken.has(name)) name = `${given} ${surname} ${suffix++}`;
-  return name;
+  return world.geography?.spec.namingVersion === 1 ? unusedName(given, surname, GIVEN_NAMES, taken) : legacyName(given, surname, taken);
 }
 
 export function giveBirth(world: World, parent: Person): Person | null {
