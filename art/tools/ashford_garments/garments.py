@@ -582,7 +582,8 @@ def obi(fit, segments=20):
         z = _lerp(low, high, t)
         # Pinched very slightly at top and bottom, so it reads as wrapped cloth under tension.
         pinch = 1.0 - 0.10 * abs(t - 0.5) * 2 * 0.5
-        rx, ry = fit.torso(z, 0.045 * pinch, 0.042 * pinch)
+        # Snug: at 4.5 cm off the body it stood out as a padded ring round the waist.
+        rx, ry = fit.torso(z, 0.031 * pinch, 0.029 * pinch)
         rings.append(ring_points(0.0, -0.02, z, rx, ry, segments))
         binds.append(ring_points(0.0, -0.02, z, *fit.torso(z, 0.006, 0.006), segments))
         regions.append(ACCENT)
