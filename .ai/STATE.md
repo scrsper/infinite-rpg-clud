@@ -41,12 +41,16 @@ fingerprint was accepted). Client package `client-6468fc5` in progress.
 
 Local non-git inputs this checkout needs (run once, all write only git-ignored content): LocalPalette
 (`create_local_prop_materials.py`, `create_local_village_materials.py`), `create_local_crowd_head_material.py`
-(75 mirrors), `repair_updo_bindings.py` (else f_003 Updo wearers are bald).
+(75 mirrors), `repair_updo_bindings.py` (else f_003 Updo wearers are bald), and sound:
+`node scripts/audio/synthesize-sounds.mjs` then `import_local_sounds.py` (else the world is silent).
 
 Open: mechanisms need a sustained shortfall (diagnosed, not forced); no player mechanism panel;
-oversized foot blocks; probe does not enter buildings; sound, multi-seed, two-player not yet run.
-Next action: packaged evening journey (tavern food) + dawn/dusk frames on client-6468fc5 → two-player
-shared-world check → native journeys for haul/protection/butchery.
+oversized foot blocks; probe does not enter buildings; multi-seed review not yet run; player
+contention/trade not exercised; sounds are synthesized placeholders, unheard by a human.
+Done since: mechanism actions in the action panel; camera never inside a body; probe hold + shared-world
+record; packaged two-client pair passed (client-f5227fd); soundscape (`1aef56f`, native + editor evidence).
+Next action: package client-1aef56f (in progress) → packaged evening journey (tavern food), dusk frame
+and -WithSound run at the natural hour → native journeys for haul/protection/butchery → player invention.
 
 # Previous: consolidated GitHub main, 2026-09-27
 
