@@ -252,7 +252,15 @@ static bool Tick(float){
             if(!S.bForward){Key(EKeys::W,IE_Pressed);S.bForward=true;}
             Unstick(Pawn,Now);
             if(To.Size2D()<140)++S.Waypoint;
-        } else Release();
+        } else {
+            Release();
+            // Route walked: watch the people nearby, turning gently toward where they are gathered.
+            if(S.bHoldWalk){FVector Sum=FVector::ZeroVector;int32 N=0;
+                for(const auto& Pair:B->Bodies){const ATVCharacter* C=Pair.Value.Get();if(!IsValid(C)||C==Pawn||C->bDead)continue;
+                    if(FVector::Dist2D(C->GetActorLocation(),Pawn->GetActorLocation())<3500.){Sum+=C->GetActorLocation();++N;}}
+                if(N){const float Error=FMath::FindDeltaAngleDegrees(PC->GetControlRotation().Yaw,(Sum/N-Pawn->GetActorLocation()).Rotation().Yaw);
+                    if(FMath::Abs(Error)>4.f)Key(EKeys::MouseX,IE_Axis,FMath::Clamp(Error*.4f,-8.f,8.f));}}
+        }
         return true;
     case 11: { // locomotion showcase: each segment presses what a player would, for its length
         const bool bNew=S.Segment<0||InPhase>=S.Showcase[S.Segment].Seconds;
