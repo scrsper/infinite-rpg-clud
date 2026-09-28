@@ -27,17 +27,26 @@ Local non-git inputs: `Content/TornVeil/Materials/LocalPalette` regenerated in t
 props render white in packages.
 
 Milestone 1 packaged checkpoint (see `docs/CANDIDATE_MANIFEST.md`): client `client-4333a46` (clean) +
-dev server `0.2.0-inhabit.4+4333a462c5c3`; journey-package-04 passed (sign-in → new life → talk → trade →
-buy bread → eat) and its reconnect run returned the same person. Also done: arrival spacing; crowd
-heads cook (derived Nanite-off copy); crowd faces keep their authored skin via mirrored head instances
-(`create_local_crowd_head_material.py`, 75 mirrors; `02903b1`, packaged re-check pending).
+dev server `0.2.0-inhabit.4`; journey-package-04 passed (sign-in → new life → talk → trade → bread → eat)
+and its reconnect run returned the same person.
 
-Open blockers/findings: mechanisms dormant in generated worlds (0 after 7 days × 3 seeds; `compose`
-adopted rarely and never completes — trace `.debug/inhabit/compose-trace.ts`); numeric name suffixes
-("Rhea Ives 2"); conversation camera low/close; no packaged night frame; sound, p95, multi-seed and
-two-player checks not yet run for this candidate.
-Next action: package `02903b1` → packaged journey + face review → dev-night capture at natural nightfall
-→ isolate the invention stall.
+Since then (all pushed; full suite 1276/1276 at `6468fc5`; native Presentation 16/16):
+- Crowd faces keep their authored skin (mirrored head instances, `create_local_crowd_head_material.py`).
+- Conversations frame the partner (panel docked right); TV.JourneyProbe reports frame time (p95 30.6 ms).
+- Twilight and a reachable moonlight (a natural 20:23 frame was black). Groom PSO ensure fixed.
+- Generator `playable-3` (no numeral names); `playable-1/2` baselines pinned and preserved.
+- A nap is not a night: workers who nap in their break wake for their shift (tavern food 14–22 h).
+Dev world now on server `0.2.0-inhabit.5+6468fc59b54e` (switched with backup; its playable-2
+fingerprint was accepted). Client package `client-6468fc5` in progress.
+
+Local non-git inputs this checkout needs (run once, all write only git-ignored content): LocalPalette
+(`create_local_prop_materials.py`, `create_local_village_materials.py`), `create_local_crowd_head_material.py`
+(75 mirrors), `repair_updo_bindings.py` (else f_003 Updo wearers are bald).
+
+Open: mechanisms need a sustained shortfall (diagnosed, not forced); no player mechanism panel;
+oversized foot blocks; probe does not enter buildings; sound, multi-seed, two-player not yet run.
+Next action: packaged evening journey (tavern food) + dawn/dusk frames on client-6468fc5 → two-player
+shared-world check → native journeys for haul/protection/butchery.
 
 # Previous: consolidated GitHub main, 2026-09-27
 
