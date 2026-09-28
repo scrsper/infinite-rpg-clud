@@ -200,7 +200,7 @@ export class DialogueSystem {
   private identity(npc: Person): string {
     const w = this.world; const home = perceivedName(w, npc, npc.homeId); const work = npc.workId ? perceivedName(w, npc, npc.workId) : null;
     const fam = Object.entries(npc.relationships).filter(([, r]) => r.tags.some(t => ['spouse', 'child', 'parent'].includes(t))).map(([id, r]) => `${perceivedName(w, npc, id)} (my ${r.tags.find(t => ['spouse', 'child', 'parent'].includes(t))})`);
-    return `I'm ${npc.name}${npc.title ? ', ' + npc.title : ''}, ${npc.age} years, the ${npc.occupation} here. I live at ${home}${work ? ` and work at ${work}` : ''}.${fam.length ? ` My family: ${fam.join(', ')}.` : ''} ${npc.bio}`;
+    return `I'm ${npc.name}${npc.title ? ', ' + npc.title : ''}, ${npc.age} years, the ${npc.occupation} here. ${npc.homeId ? `I live at ${home}` : 'I have no home here'}${work ? ` and work at ${work}` : ''}.${fam.length ? ` My family: ${fam.join(', ')}.` : ''} ${npc.bio}`;
   }
   private opinionOfPlayer(npc: Person, player: Person): string {
     const w = this.world; const r = getRel(npc, player.id); const mems = memoriesAbout(npc, player.id);
