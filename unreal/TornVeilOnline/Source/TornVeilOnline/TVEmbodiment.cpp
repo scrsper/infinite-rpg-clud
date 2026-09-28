@@ -564,6 +564,9 @@ bool UTVCharacterPresentation::ApplyProfile(const FTVAppearanceProfile& Profile)
         Groom->SetUseCards(true);
         Groom->SetForcedLOD(2);
         Groom->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        // What UGroomComponent::PostLoad does after SetGroomAsset; a runtime-created groom never
+        // loads, and registering it unprecached trips the engine's PSO ensure on every person.
+        Groom->PrecachePSOs();
         Groom->RegisterComponent();
         Groom->AddTickPrerequisiteComponent(FaceComponent);
         Grooms.Add(Groom);
