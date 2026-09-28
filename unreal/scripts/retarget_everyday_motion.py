@@ -102,6 +102,37 @@ def describe(package):
     return {'asset': package, 'seconds': round(length, 3), 'travelCm': rows}
 
 
+CALM_HEAD = ['RT_%s_Anim' % n for n in MOTIFECT_SOCIAL]
+CALM_BONES = ('neck_01', 'neck_02', 'head')
+CALM_SHARE = 0.3
+
+
+def calm_head(package, idle):
+    """Keep a gesture's arms and body, but let the head move only a third as much as captured.
+
+    The social clips were performed broadly; on a person standing in the lane the captured head
+    rolls read as a lolling, tilted head. The neck and head are rebuilt as the idle pose plus
+    CALM_SHARE of the clip's own motion, frame by frame."""
+    anim = unreal.load_asset(package)
+    frames = unreal.AnimationLibrary.get_num_frames(anim)
+    length = anim.get_play_length()
+    idle_length = idle.get_play_length()
+    controller = anim.controller
+    for bone in CALM_BONES:
+        positions, rotations, scales = [], [], []
+        for i in range(frames + 1):
+            t = min(length, length * i / max(1, frames))
+            own = unreal.AnimationLibrary.get_bone_pose_for_time(anim, bone, t, False)
+            base = unreal.AnimationLibrary.get_bone_pose_for_time(idle, bone, t % idle_length, False)
+            r = unreal.MathLibrary.r_lerp(base.rotation.rotator(), own.rotation.rotator(), CALM_SHARE, True).quaternion()
+            q = unreal.Quat()
+            for axis in ('x', 'y', 'z', 'w'):
+                q.set_editor_property(axis, getattr(r, axis))
+            positions.append(own.translation); rotations.append(q); scales.append(own.scale3d)
+        controller.set_bone_track_keys(bone, positions, rotations, scales, False)
+    lib.save_loaded_asset(anim)
+
+
 results = []
 motifect_mesh = unreal.load_asset('/Game/Fab/Motifect_Combat_Motion_Pack/front_kick')
 motifect_rtg = unreal.load_asset('/Game/TornVeil/Combat/Repair/RTG_TV_CombatRepair')
@@ -118,7 +149,12 @@ for name, folder in FREE_SAMPLE.items():
     (free if a else missing).append(a or name)
 results += retarget(free, free_mesh, free_sample_retargeter(free_mesh))
 
+idle_clip = unreal.load_asset('/Game/Characters/Mannequins/Anims/Unarmed/MM_Idle')
+calmed = [p for p in results if p.rsplit('/', 1)[1] in CALM_HEAD]
+for package in calmed:
+    calm_head(package, idle_clip)
+
 root = os.path.abspath(os.path.join(unreal.Paths.project_dir(), '../..'))
 with open(os.path.join(root, '.debug/everyday-motion-retarget.json'), 'w') as f:
     json.dump({'clips': [describe(p) for p in results], 'missing': missing}, f, indent=2)
-print('TV_EVERYDAY_MOTION', len(results), 'missing', missing)
+print('TV_EVERYDAY_MOTION', len(results), 'calmed', len(calmed), 'missing', missing)
