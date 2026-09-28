@@ -68,11 +68,13 @@ export function senseDefense(world: World, animal: Creature, body: Body, state: 
   const provokerVisible = !!provoker && provoker.present && !provoker.dead && provoker.pose !== 'downed'
     && visible(world, body.pos, provoker.pos, spec.senses.localRadiusM);
   const target = provokerVisible ? provoker! : threat;
-  const cur = state.defense;
+  let cur = state.defense;
   // Badly hurt: give up the fight and run.
   if (body.health < body.maxHealth * d.retreatBelowHealth) { if (cur) state.defense = undefined; return false; }
   if (cur && (cur.mode === 'strike' || cur.mode === 'recover')) return true; // committed; the physical step finishes it
-  if (cur?.mode === 'retreat') { if (at - cur.since < d.retreatSeconds) return false; state.defense = undefined; }
+  // A finished retreat leaves no stance: the animal sizes the target up afresh (it used to keep the
+  // stale retreat here, skip making a new stance for the same target, and crash below).
+  if (cur?.mode === 'retreat') { if (at - cur.since < d.retreatSeconds) return false; state.defense = cur = undefined; }
   if (!target) { if (cur) state.defense = undefined; return false; }
   const tb = target, dist = distance(body.pos, tb.pos);
   if (tb.pose === 'downed' || tb.dead) { state.defense = { mode: 'retreat', targetBodyId: tb.id, since: at }; return false; }
