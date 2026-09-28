@@ -142,8 +142,17 @@ export class BridgeSession {
       return { x: site.x - 3.5, y: w.nav.floorY(site.x-4,site.z+120), z: site.z + 120.5 };
     })();
     if (!index) return { ...base };
-    const x = base.x + (index % 4) - 1.5, z = base.z + Math.floor(index / 4) + 1;
-    return { x, y: w.nav.floorY(Math.floor(x), Math.floor(z)), z };
+    // Arrivals stand apart on open ground round the centre (a golden-angle spiral, about 2 m apart),
+    // never on top of one another or of anyone already standing there. They used to share a 1 m grid.
+    let found = 0;
+    for (let i = 1; i < 400; i++) {
+      const r = 2.2 * Math.sqrt(i), a = i * 2.399963, x = Math.floor(base.x + Math.cos(a) * r) + .5, z = Math.floor(base.z + Math.sin(a) * r) + .5;
+      const y = w.nav.floorY(Math.floor(x), Math.floor(z));
+      if (y < 0 || Math.abs(y - base.y) > 1.5 || w.nav.walkCost(Math.floor(x), Math.floor(z)) >= 3) continue;
+      if (w.nearbyPhysicalBodies({ x, y, z }, 1.2).some(b => b.present && Math.hypot(b.pos.x - x, b.pos.z - z) < 1.2)) continue;
+      if (++found === index) return { x, y, z };
+    }
+    return { ...base };
   }
   save(compactEvents = false): string { return serialize(this.world, compactEvents); }
 
