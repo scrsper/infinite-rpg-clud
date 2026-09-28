@@ -49,7 +49,7 @@ struct FState {
     // Shared-world record: our own body and path, and every other body this client was shown
     // (first/last position, when first seen). Two clients' reports can then be cross-checked.
     double HoldSeconds=0; bool bHoldWalk=false,bHeldShot=false;
-    bool bWalk=false,bWalkSet=false;
+    bool bWalk=false,bWalkSet=false,bTalkOnly=false; // talk-only: end a few seconds after the conversation closes
     TArray<FShowcase> Showcase; int32 Segment=-1; // locomotion showcase: ordinary keys and stick values, in order // press the walk toggle once in the world: go about at a walk, not a run
     // Route first: walk to the named places before asking anyone, and there ask only people within
     // NearRadius (cm) — as a player who knows where the tavern is goes in and asks inside.
@@ -216,7 +216,11 @@ static bool Tick(float){
         if(InPhase<.6)return true;
         if(B->bDialogueOpen){if(InPhase>4){SlateKey(EKeys::Escape);S.PhaseAt=Now;}return true;}
         {auto J=MakeShared<FJsonObject>();J->SetStringField(TEXT("replies"),S.LastDialogue);Step(TEXT("conversation-closed"),B,J);}
+        if(S.bTalkOnly){Next(12);return true;}
         Tap(EKeys::I);Next(5);return true;
+    case 12: // talk-only: control is back; stand a moment so the return is seen, then finish
+        if(InPhase<4)return true;
+        Step(TEXT("done"),B);Finish(TEXT("passed"));return false;
     case 5: { // the inventory as projected; press Enter on the focused (first) available action
         if(InPhase<1.2)return true;
         auto J=MakeShared<FJsonObject>();TArray<TSharedPtr<FJsonValue>> Rows;
@@ -284,7 +288,7 @@ static bool Tick(float){
 static void Start(const TArray<FString>& Args){
     if(S.bRunning||Args.Num()<1)return;FString Text;if(!FFileHelper::LoadFileToString(Text,*Args[0])){UE_LOG(LogTemp,Error,TEXT("TV_JOURNEY missing config %s"),*Args[0]);return;}
     TSharedPtr<FJsonObject> C;if(!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text),C)||!C){UE_LOG(LogTemp,Error,TEXT("TV_JOURNEY bad config"));return;}
-    S=FState();C->TryGetStringField(TEXT("out"),S.Out);C->TryGetStringField(TEXT("targetBody"),S.TargetBody);C->TryGetBoolField(TEXT("eat"),S.bEat);C->TryGetBoolField(TEXT("quit"),S.bQuit);C->TryGetBoolField(TEXT("observeOnly"),S.bObserveOnly);C->TryGetNumberField(TEXT("timeoutSeconds"),S.Timeout);C->TryGetNumberField(TEXT("holdSeconds"),S.HoldSeconds);C->TryGetBoolField(TEXT("holdWalk"),S.bHoldWalk);C->TryGetBoolField(TEXT("walk"),S.bWalk);
+    S=FState();C->TryGetStringField(TEXT("out"),S.Out);C->TryGetStringField(TEXT("targetBody"),S.TargetBody);C->TryGetBoolField(TEXT("eat"),S.bEat);C->TryGetBoolField(TEXT("quit"),S.bQuit);C->TryGetBoolField(TEXT("observeOnly"),S.bObserveOnly);C->TryGetNumberField(TEXT("timeoutSeconds"),S.Timeout);C->TryGetNumberField(TEXT("holdSeconds"),S.HoldSeconds);C->TryGetBoolField(TEXT("holdWalk"),S.bHoldWalk);C->TryGetBoolField(TEXT("walk"),S.bWalk);C->TryGetBoolField(TEXT("talkOnly"),S.bTalkOnly);
     C->TryGetBoolField(TEXT("routeFirst"),S.bRouteFirst);C->TryGetNumberField(TEXT("recordFps"),S.RecordFps);C->TryGetNumberField(TEXT("lineup"),S.LineupCount);double NearMetres=0;if(C->TryGetNumberField(TEXT("nearRadiusMetres"),NearMetres))S.NearRadius=NearMetres*100.;
     const TArray<TSharedPtr<FJsonValue>>* Picks=nullptr;if(C->TryGetArrayField(TEXT("dialogue"),Picks))for(const auto& P:*Picks)S.Picks.Add(P->AsString());
     const TArray<TSharedPtr<FJsonValue>>* Route=nullptr;

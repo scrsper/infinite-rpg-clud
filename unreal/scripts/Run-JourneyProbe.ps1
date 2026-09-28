@@ -16,6 +16,8 @@ param(
     [switch]$HoldWalk,
     # Press the walk toggle on entering: go about at a walk instead of the default run.
     [switch]$Walk,
+    # End a few seconds after the conversation closes (no inventory or eating).
+    [switch]$TalkOnly,
     # With -ObserveOnly: a JSON list of locomotion showcase segments {label,seconds,hold[],tap[],axes{}}.
     [string]$ShowcaseFile = '',
     # Run with the audio device (the report then says what the soundscape actually played).
@@ -35,7 +37,7 @@ $repo = (Resolve-Path "$PSScriptRoot/../..").Path
 $Out = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Out)
 if (Test-Path -LiteralPath $Out) { throw "Refusing to reuse journey evidence: $Out" }
 New-Item -ItemType Directory -Path $Out | Out-Null
-$config = [ordered]@{ out = $Out; targetBody = $TargetBody; dialogue = $Dialogue; eat = !$ObserveOnly; observeOnly = [bool]$ObserveOnly; quit = $true; timeoutSeconds = $TimeoutSeconds - 60; holdSeconds = $HoldSeconds; holdWalk = [bool]$HoldWalk; walk = [bool]$Walk; routeFirst = [bool]$RouteFirst; nearRadiusMetres = $NearRadiusMetres; recordFps = $RecordFps; lineup = $Lineup }
+$config = [ordered]@{ out = $Out; targetBody = $TargetBody; dialogue = $Dialogue; eat = !$ObserveOnly; observeOnly = [bool]$ObserveOnly; quit = $true; timeoutSeconds = $TimeoutSeconds - 60; holdSeconds = $HoldSeconds; holdWalk = [bool]$HoldWalk; walk = [bool]$Walk; talkOnly = [bool]$TalkOnly; routeFirst = [bool]$RouteFirst; nearRadiusMetres = $NearRadiusMetres; recordFps = $RecordFps; lineup = $Lineup }
 if ($ShowcaseFile) { $config.showcase = @(Get-Content -LiteralPath $ShowcaseFile -Raw | ConvertFrom-Json) }
 if ($RouteFile) { $config.explore = @(Get-Content -LiteralPath $RouteFile -Raw | ConvertFrom-Json) }
 $configFile = Join-Path $Out 'config.json'
