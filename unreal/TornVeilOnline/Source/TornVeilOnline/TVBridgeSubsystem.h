@@ -71,6 +71,8 @@ public:
      *  Empty CarriedRows with a non-empty inventory means an older server: legacy rows are built. */
     TArray<FTVUIItemRow> CarriedRows;
     TArray<FTVUIActionRow> AbilityRows;
+    /** The timed work the player is doing now (server-projected), shown on the status line. */
+    FString WorkStatus;
     static bool ParseActionRow(const TSharedPtr<FJsonObject>& J,const FString& ItemId,FTVUIActionRow& Out);
     void RunProjectedAction(const FString& ActionId);
     FString TalkTargetBody;

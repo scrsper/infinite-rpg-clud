@@ -62,7 +62,7 @@ void UTVBridgeSubsystem::UpdatePlayerShell() {
     else if(!HasModalScreen()&&Confirmed.bEligible&&!P->IntentDirection().IsNearlyZero()&&PredictionVelocity.Size2D()<1)MovementRestriction=TEXT("Blocked");
     FTVUISnapshot S;S.Revision=SnapshotCount;S.FocusedLabel=NearbyPrompt;S.FocusedTargetId=FocusedTargetId;S.FocusedActionId=FocusedActionId;
     S.FocusedBounds.bHasFocusBounds=FocusedBounds.bIsValid;S.FocusedBounds.BoundsPixels=FocusedBounds;
-    S.Vitals=PlayerVitals+TEXT("\n")+MobilitySummary;S.Journal=JournalSummary+TEXT("\n")+KnowledgeSummary;S.Restriction=MovementRestriction+(LastResult.IsEmpty()?TEXT(""):TEXT("   ")+LastResult);
+    S.Vitals=PlayerVitals+TEXT("\n")+MobilitySummary;S.Journal=JournalSummary+TEXT("\n")+KnowledgeSummary;S.Restriction=MovementRestriction+(WorkStatus.IsEmpty()?TEXT(""):(MovementRestriction.IsEmpty()?TEXT(""):TEXT("\n"))+WorkStatus)+(LastResult.IsEmpty()?TEXT(""):TEXT("   ")+LastResult);
     if(CarriedRows.Num()||InventoryItemIds.IsEmpty())S.Inventory=CarriedRows;
     else for(int32 I=0;I<InventoryItemIds.Num();++I){
         // An older server sends no projected actions: offer only what it always accepted, and let it refuse.

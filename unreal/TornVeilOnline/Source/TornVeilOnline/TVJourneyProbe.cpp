@@ -37,7 +37,7 @@ struct FState {
     FString Out,TargetBody; TArray<FString> Picks; bool bEat=true,bQuit=true,bObserveOnly=false; double Timeout=300;
     TArray<TSharedPtr<FJsonValue>> Steps; TArray<FString> Frames; FString LastDialogue; double HungerBefore=-1,WealthBefore=-1;
     TWeakObjectPtr<UWorld> World; FTSTicker::FDelegateHandle Ticker; bool bForward=false,bStrafe=false,bSignedIn=false,bNearest=false;
-    TSet<FString> Asked; FString Target;
+    TSet<FString> Asked,Faced; FString Target;
 };
 static FState S;
 
@@ -76,6 +76,12 @@ static void Finish(const FString& Status,const FString& Error=FString()){
     if(S.bQuit&&B)B->UICommand(ETVUICommand::Quit,FString(),FString(),INDEX_NONE); // the pause menu's own Quit: save, then leave
 }
 static void Next(int32 Phase){S.Phase=Phase;S.PhaseAt=FPlatformTime::Seconds();}
+static const TCHAR* NumberKey(int32 I){static const TCHAR* K[]={TEXT("One"),TEXT("Two"),TEXT("Three"),TEXT("Four"),TEXT("Five"),TEXT("Six"),TEXT("Seven"),TEXT("Eight"),TEXT("Nine")};return K[FMath::Clamp(I,0,8)];}
+/** End a conversation the way a player does: the "Goodbye" reply by its number, or Escape. */
+static void Goodbye(UTVBridgeSubsystem* B){
+    const int32 I=B->DialogueOptionLabels.IndexOfByPredicate([](const FString& L){return L==TEXT("Goodbye")||L==TEXT("Nothing today")||L==TEXT("Not today");});
+    if(I!=INDEX_NONE&&I<9)SlateKey(FKey(NumberKey(I)));else SlateKey(EKeys::Escape);
+}
 /** The named person, or ("nearest") whoever in view we have not yet asked, as a player would. */
 static bool ChooseTarget(UTVBridgeSubsystem* B,APawn* Pawn){
     if(!S.bNearest){S.Target=S.TargetBody;return B->Bodies.Contains(S.Target);}
@@ -107,7 +113,7 @@ static bool Tick(float){
         const FVector To=T->GetActorLocation()-Pawn->GetActorLocation();const double Dist=To.Size2D();
         const float Error=FMath::FindDeltaAngleDegrees(PC->GetControlRotation().Yaw,To.Rotation().Yaw);
         if(FMath::Abs(Error)>1.5f)Key(EKeys::MouseX,IE_Axis,FMath::Clamp(Error*2.f,-60.f,60.f));
-        if(B->TalkTargetBody==S.Target&&Dist<260){Release();Step(TEXT("facing"),B);Next(2);return true;}
+        if(B->TalkTargetBody==S.Target&&Dist<260){Release();if(!S.Faced.Contains(S.Target)){S.Faced.Add(S.Target);Step(TEXT("facing"),B);}Next(2);return true;}
         if(Dist<140){Release();return true;} // close but not yet in view of the prompt: keep turning only
         if(!S.bForward){Key(EKeys::W,IE_Pressed);S.bForward=true;}
         // Blocked by something between us: step sideways briefly, as a player would, then carry on.
@@ -127,7 +133,7 @@ static bool Tick(float){
         for(int32 I=0;I<B->DialogueOptionLabels.Num()&&Index==INDEX_NONE;++I)for(const FString& A:Alternatives)if(B->DialogueOptionLabels[I].StartsWith(A)){Index=I;break;}
         if(Index==INDEX_NONE||Index>8){auto J=MakeShared<FJsonObject>();J->SetStringField(TEXT("wanted"),S.Picks[S.Choice]);J->SetStringField(TEXT("offered"),FString::Join(B->DialogueOptionLabels,TEXT(" / ")));J->SetStringField(TEXT("speaker"),B->DialogueSpeaker);Step(TEXT("reply-unavailable"),B,J);
             // Nobody owes us a sale: say goodbye and ask someone else, as a player would.
-            if(S.bNearest&&S.Choice==0&&S.Asked.Num()<8){S.Asked.Add(S.Target);SlateKey(EKeys::Escape);Next(8);return true;}
+            if(S.bNearest&&S.Choice==0&&S.Asked.Num()<8){S.Asked.Add(S.Target);Goodbye(B);Next(8);return true;}
             Finish(TEXT("failed"),TEXT("wanted reply not offered"));return false;}
         const FString Label=B->DialogueOptionLabels[Index];SlateKey(FKey(*FString::Printf(TEXT("%s"),*TArray<FString>{TEXT("One"),TEXT("Two"),TEXT("Three"),TEXT("Four"),TEXT("Five"),TEXT("Six"),TEXT("Seven"),TEXT("Eight"),TEXT("Nine")}[Index])));
         auto J=MakeShared<FJsonObject>();J->SetStringField(TEXT("chose"),Label);J->SetStringField(TEXT("offered"),FString::Join(B->DialogueOptionLabels,TEXT(" / ")));
@@ -154,7 +160,7 @@ static bool Tick(float){
     case 7:
         if(InPhase<1)return true;Step(TEXT("done"),B);Finish(TEXT("passed"));return false;
     case 8: // closed a conversation that offered nothing we wanted; choose the next person
-        if(InPhase<.8)return true;if(B->bDialogueOpen){if(InPhase>3){SlateKey(EKeys::Escape);S.PhaseAt=Now;}return true;}
+        if(InPhase<.8)return true;if(B->bDialogueOpen){if(InPhase>3){Goodbye(B);S.PhaseAt=Now;}return true;}
         if(!ChooseTarget(B,Pawn)){Finish(TEXT("failed"),TEXT("nobody nearby offered what we wanted"));return false;}
         Next(1);return true;
     }

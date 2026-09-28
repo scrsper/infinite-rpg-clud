@@ -101,6 +101,7 @@ const commands: Record<string, () => Promise<void>> = {
   init --env <live|staging|dev> [--bind 127.0.0.1,100.x.y.z] [--port N] [--seed N] [--backup-dir D] [--catalogue F]
        creates the environment, its credentials and (unless --no-world) its world
   install --env E --release <dir>          set the release an environment runs (first install only)
+  switch --env dev --release <dir>         (dev only, service stopped) back up, then run a newer release on the same world
   start|stop|status --env E                supervisor lifecycle / live status
   checkpoint|backup --env E                force a durable checkpoint / a backup copy now
   drain --env E [--seconds 60] [--message M]   stop admissions, warn players, disconnect, checkpoint
@@ -142,6 +143,22 @@ const commands: Record<string, () => Promise<void>> = {
     if (currentRelease(c)) fail('environment already has a release; use update (live) or rehearse (staging)');
     writeFileSync(join(c.root, 'current-release.json'), JSON.stringify({ version: rel.version, dir, installedAtIso: new Date().toISOString() }, null, 2));
     out(`installed ${rel.version} for ${c.env}`);
+  },
+  /** A development environment's release changes without the live update ceremony, but never
+   * silently: dev only, stopped, a backup first, a save-schema path checked, the previous kept. */
+  async switch() {
+    const c = config(), dir = resolve(flag('release') ?? fail('--release required')), rel = releaseAt(dir);
+    if (c.env !== 'dev') fail('switch is for dev environments only; live uses rehearse + update and staging is never switched');
+    if (await running(c)) fail('stop the dev service first');
+    const previous = currentRelease(c) ?? fail('no installed release; use install');
+    const store = new WorldStore(c.stateDir), g = store.current();
+    if (g) {
+      const meta = store.candidates().next().value as { meta: CheckpointMeta } | undefined;
+      if (meta && migrationPath(meta.meta.saveSchema, rel.saveSchema) === null) fail(`no migration from save schema ${meta.meta.saveSchema} to ${rel.saveSchema}`);
+      out({ backup: await new BackupSet(c.backupDir).take(store, g) });
+    }
+    writeFileSync(join(c.root, 'current-release.json'), JSON.stringify({ version: rel.version, dir, installedAtIso: new Date().toISOString(), previous }, null, 2));
+    out(`dev now runs ${rel.version} (was ${previous!.version})`);
   },
   async start() { await start(config()); },
   async stop() { await stop(config()); },

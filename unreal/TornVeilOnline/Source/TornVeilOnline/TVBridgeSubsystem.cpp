@@ -534,6 +534,14 @@ void UTVBridgeSubsystem::Receive(const FString& Message) {
         const TArray<TSharedPtr<FJsonValue>>* Acts=nullptr;if(I->TryGetArrayField(TEXT("actions"),Acts))for(const auto& A:*Acts){FTVUIActionRow Action;if(ParseActionRow(A->AsObject(),Row.Id,Action))Row.Actions.Add(Action);}
         CarriedRows.Add(Row);
     }
+    WorkStatus.Empty();
+    const TSharedPtr<FJsonObject>* Work=nullptr;
+    if(M->TryGetObjectField(TEXT("work"),Work)&&Work&&Work->IsValid()){
+        FString Label,Stop;double Progress=0,Remaining=0;(*Work)->TryGetStringField(TEXT("label"),Label);(*Work)->TryGetStringField(TEXT("stop"),Stop);
+        (*Work)->TryGetNumberField(TEXT("progress"),Progress);(*Work)->TryGetNumberField(TEXT("remainingSeconds"),Remaining);
+        // Remaining is world time; say it as the world counts it, not as a promise of wall-clock time.
+        WorkStatus=FString::Printf(TEXT("%s — %.0f%%, about %.0f min of work left (%s)"),*Label,Progress*100,FMath::CeilToDouble(Remaining/60),*Stop);
+    }
     const TArray<TSharedPtr<FJsonValue>>* AbilityJson=nullptr;
     if(M->TryGetArrayField(TEXT("abilities"),AbilityJson))for(const auto& V:*AbilityJson){FTVUIActionRow Action;if(ParseActionRow(V->AsObject(),FString(),Action))AbilityRows.Add(Action);}
     const bool HadContainer=!OpenContainerId.IsEmpty();OpenContainerId.Empty();OpenContainerName.Empty();
