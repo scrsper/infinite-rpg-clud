@@ -9,41 +9,50 @@ complete implementation and not an accepted alpha: coverage is incomplete
 | | |
 |---|---|
 | Branch | `claude/inhabitable-alpha` (pushed; no PR yet; nothing merged) |
-| Packaged client | `%USERPROFILE%\TornVeilAlpha\clients\client-4333a46` — Development, `dirty: false`, revision `4333a462c5c3`, built 2026-09-28T03:38Z |
-| Server release | `0.2.0-inhabit.4+4333a462c5c3` (`%USERPROFILE%\TornVeilAlpha\releases\…`) |
-| World | isolated dev world (`TORN_VEIL_ALPHA_HOME=%USERPROFILE%\TornVeilAlpha\dev-inhabit`, `--env dev`), seed 918271, 127.0.0.1:7430, loopback only |
-| Launch | start the dev service (`node <release>\ops.mjs start --env dev`), then run `client-4333a46\Windows\TornVeilOnline.exe` with a dev profile from `ops account add … --env dev` |
+| Milestone 1 packaged checkpoint | client `%USERPROFILE%\TornVeilAlpha\clients\client-4333a46` (Development, `dirty: false`, revision `4333a462c5c3`) with server release `0.2.0-inhabit.4+4333a462c5c3` |
+| Later packages (evidence only) | `.debug/packages/client-02903b1` (faces), `.debug/packages/client-9502128` (conversation framing, frame timing) — both clean |
+| World | isolated dev world (`TORN_VEIL_ALPHA_HOME=%USERPROFILE%\TornVeilAlpha\dev-inhabit`, `--env dev`), seed 918271, generator `playable-2`, 127.0.0.1:7430, loopback only |
+| Launch | start the dev service (`node <release>\ops.mjs start --env dev`), then run `<client>\Windows\TornVeilOnline.exe` with a dev profile from `ops account add … --env dev` |
 
 Protected and untouched: the accepted package `client-450b7e5cbc80` and its shortcut, the live
 world, and staging `0.1.0-alpha.30` (port 7410). The dev world has its own write authority; nothing
 here writes to live or staging.
 
-## Evidence (packaged)
+## Evidence (packaged, automated ordinary input)
 
-| Run | What happened | Labels |
+| Run | Client | What happened |
 |---|---|---|
-| `.debug/inhabit/journey-package-04` | Sign-in → begin a new life (Ivo Brannock) → walk to the nearest person → talk → Trade → "Nothing today" → next person → Trade → buy bread (4s) → Goodbye → inventory → Eat. Hunger 20%→0%, silver 20→16. 32.9 s. | package, automated ordinary input |
-| `.debug/inhabit/journey-package-04-reconnect` | Relaunch, continue the same person: 16 silver, hunger 0, empty hands, thirst 21%. | package, automated |
+| `journey-package-04` | 4333a46 | **Passed.** Sign-in → new life (Ivo Brannock) → talk → Trade → "Nothing today" → next person → buy bread (4s) → eat. Hunger 20%→0%, silver 20→16. |
+| `journey-package-04-reconnect` | 4333a46 | **Passed.** Same person returned: 16 silver, hunger 0, empty hands. |
+| `journey-package-05` | 02903b1 | **Failed** at world 15:45: the only seller in reach had ale; the route reached the tavern, bakery and well and found nobody new. |
+| `journey-package-06` | 9502128 | **Failed** the same way at 18:00. Frame timing: p50 21.5 ms, **p95 30.6 ms**, p99 33.5 ms, 267 of 22,548 frames over 33.3 ms, max 3.6 s (screenshot frames included; this machine, Development build). |
+| `journey-package-06-night` | 9502128 | **Passed** (observe only) at natural world 20:23 — no clock change. The frame was black but for one lit house (defect, below). The offline body had eaten and spent 9 silver while away. |
 
-Frames reviewed by eye: entered, trade menu (grouped goods), ate (inventory). Props textured; UI
-legible. Defect seen: villagers' faces green-grey — cause found (the cookable head copy lost the
-vendor instances' static switches that select the skin atlas) and fixed at `02903b1`; packaged
-re-check pending.
+Frames reviewed by eye. Fixed from what they showed: green-grey faces (`02903b1`, confirmed in
+05/06), a dialogue panel covering the person spoken to (`9502128`, confirmed in 06), a black dusk
+(`9c61523`, packaged re-check pending). The failed journeys led to the nap fix below.
 
-Non-package evidence: full suite 1265/1265 at `2d7f7f9`; later sim changes (trade rows, arrival
-spacing) pass their own tests; native lighting tests 16/16.
+## Unpackaged changes since the last package (verification pending)
+
+- Newcomers could not buy tavern food 14:00–22:00: innkeepers, cooks and bakers napped from their
+  afternoon break through the evening shift. A nap now ends when its sleeper is no longer tired and
+  their scheduled duty begins (sim; unit test `nap-and-duty`).
+- Generator revision `playable-3`: no generated person is named with a numeral; worlds recorded as
+  `playable-1/2` (including dev, staging and live) keep their exact baseline (fingerprints pinned).
+- Bald Updo wearers (local groom bindings generated) and a groom PSO ensure (`5fc7bcd`).
+- Twilight and a reachable moonlight (`9c61523`).
 
 ## Known defects and gaps (unresolved)
 
-- Mechanisms dormant in generated worlds (0 assemblies after 7 days, 3 seeds); no ordinary player
-  mechanism panel.
-- Numeric NPC name suffixes ("Rhea Ives 2"); conversation camera low and close.
-- No packaged night frame yet; sound, p95 frame time, multi-seed review and a two-player
-  shared-world check not yet done for this candidate.
+- Mechanisms do not arise in a week (they need a sustained shortfall; see coverage MECH-DORMANT);
+  no ordinary player mechanism panel.
+- Oversized white foot blocks on crowd bodies; canonical `skinTone` not mapped to faces.
+- The journey probe does not enter buildings, so "nobody new at the tavern" is partly a probe limit.
+- Sound, multi-seed review and a two-player shared-world check not yet done for this candidate.
 - Native journeys for haul, protection and butchery not yet run (unit/accel only).
-- Canonical `skinTone` not mapped to the face atlas.
 
 ## Next executable task
 
-Package `02903b1`, re-run the packaged journey and review faces; then isolate the invention stall
-after `compose` (`.debug/inhabit/compose-trace.ts`).
+Full suite on the nap and naming changes → build server `0.2.0-inhabit.5` and `ops switch` the dev
+world (must accept its `playable-2` fingerprint) → package the client → evening journey (tavern
+food) and a natural-dusk frame.
