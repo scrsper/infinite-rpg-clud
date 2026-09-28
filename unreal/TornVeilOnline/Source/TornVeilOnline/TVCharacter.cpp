@@ -174,7 +174,8 @@ void ATVCharacter::Tick(float Dt) {
             // A partner standing close sits near the camera's line, so turn further past them.
             const FRotator Aim=(Target-GetActorLocation()).Rotation();
             ConversationDistance=FVector::Dist2D(Target,GetActorLocation());
-            View.Yaw=FMath::FixedTurn(View.Yaw,Aim.Yaw+(ConversationDistance<200.f?26.f:14.f),Dt*140.f);
+            // Close partners (a child, someone at arm's length) sat behind the player's own back at 26 degrees.
+            View.Yaw=FMath::FixedTurn(View.Yaw,Aim.Yaw+(ConversationDistance<200.f?42.f:20.f),Dt*140.f);
             View.Pitch=FMath::FInterpTo(View.Pitch,-6.f,Dt,4.f);
         }
         else if(bTargetLocked&&Bridge&&Bridge->SelectedTargetPosition(Target)&&FPlatformTime::Seconds()-LastManualLook>.6){
@@ -211,7 +212,7 @@ void ATVCharacter::Tick(float Dt) {
             :(LocomotionCameraSignal.CameraMode==ETVPresentationCameraMode::Incapacitated||CanonicalPose==TEXT("sleep"))?FMath::Max(ZoomTarget,390.f) // lying down: stand back from the body
             :bConversationFraming?(ConversationDistance<200.f?FMath::Max(ZoomTarget,330.f):FMath::Clamp(ZoomTarget,240.f,300.f)):ZoomTarget;
         CameraBoom->TargetArmLength=FMath::FInterpTo(CameraBoom->TargetArmLength,ArmTarget,Dt,8);
-        const float Shoulder=FMath::GetMappedRangeValueClamped(FVector2D(160,700),FVector2D(55,0),ArmTarget)*(bConversationFraming?-1.f:CameraShoulderSign); // conversation: left shoulder, the player's own back falls behind the panel
+        const float Shoulder=bConversationFraming?-70.f:FMath::GetMappedRangeValueClamped(FVector2D(160,700),FVector2D(55,0),ArmTarget)*CameraShoulderSign; // conversation: left shoulder, the player's own back falls behind the panel
         CameraBoom->SocketOffset.Y=FMath::FInterpTo(CameraBoom->SocketOffset.Y,Shoulder,Dt,7);
         HideCameraIntruders();
     }
