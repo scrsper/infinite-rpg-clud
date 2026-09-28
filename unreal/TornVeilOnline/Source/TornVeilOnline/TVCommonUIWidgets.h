@@ -77,6 +77,11 @@ struct TORNVEILONLINE_API FTVUISnapshot
 
     UPROPERTY(BlueprintReadOnly) int32 Revision = 0;
     UPROPERTY(BlueprintReadOnly) FString FocusedLabel;
+    /** A person: name, then the verb ([E] Talk) or why they cannot talk now. */
+    UPROPERTY(BlueprintReadOnly) FString FocusedTitle;
+    UPROPERTY(BlueprintReadOnly) FString FocusedVerb;
+    UPROPERTY(BlueprintReadOnly) FString FocusedReason;
+    UPROPERTY(BlueprintReadOnly) bool bFocusedPerson = false;
     UPROPERTY(BlueprintReadOnly) FString FocusedTargetId;
     UPROPERTY(BlueprintReadOnly) FString FocusedActionId;
     UPROPERTY(BlueprintReadOnly) FTVUIFocusBounds FocusedBounds;

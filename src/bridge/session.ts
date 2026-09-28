@@ -46,6 +46,10 @@ import { attemptHush } from '../sim/physical/veil';
 export const BRIDGE_VERSION = 1;
 /** The routing key of the single-player developer bridge. Multiplayer servers use one key per account. */
 export const LOCAL_CHANNEL = 'local';
+/** How long someone spoken to keeps attending after the last step the conversation was open. */
+const ADDRESS_HOLD_SECONDS = 1.5;
+/** What the prompt says instead of [E] Talk, per talkRefusal reason. */
+const TALK_REFUSAL_TEXT = { asleep: 'Asleep', fleeing: 'Fleeing from danger', refuses: "Won't speak with you", too_far: 'Move closer' } as const;
 /** Physical execution is visible; queued intentions and private goals are not. */
 function visibleActivity(p: Person | undefined, pose: string): string {
   if (pose !== 'work') return pose;
@@ -335,6 +339,10 @@ export class BridgeSession {
       const live = ch.move.expires > w.physicalTime;
       moveByIntent(this.sim, p, b, live ? ch.move.x : 0, live ? ch.move.z : 0, live && ch.move.sprint, dt);
       ch.appliedSequence=ch.sequence;
+      // While a conversation is open the person spoken to keeps attending (it lapses on close).
+      const spoken = ch.dialogueState && ch.dialogueSpeakerBodyId ? w.body(ch.dialogueSpeakerBodyId) : undefined;
+      const listener = spoken ? w.person(spoken.ownerId) : undefined;
+      if (listener?.alive) listener.mind.addressedBy = { entityId: p.id, until: w.physicalTime + ADDRESS_HOLD_SECONDS };
     }
     this.sim.stepScheduled(dt, wd);
   }
@@ -396,7 +404,7 @@ export class BridgeSession {
     // One conversation ring per cluster of people the simulation actually has talking.
     const talking = residents.filter(b => b.pose === 'talk' || w.person(b.ownerId)?.mind.goal?.type === 'socialize');
     const conversation = conversationStations(talking);
-    const interactions=handInteractions(this.sim,p),talkTargets=this.talkTargets(ch,p,visible);
+    const interactions=handInteractions(this.sim,p),talkTargets=this.talkTargets(ch,p,visible),talkRefusals=this.talkRefusals(ch,p,visible);
     const ownBody=w.body(controlledBodyId),carried=p.inventory.flatMap(id=>{const item=w.item(id);return item&&item.holderId===p.id?[item]:[];});
     const mobility=ownBody?{eligible:movementState(w,p,ownBody).eligible,fatigue:p.physiology.fatigue,
       speedMultiplier:getPhysicalCapability(p,w,{body:ownBody}).movementMultiplier,
@@ -406,11 +414,13 @@ export class BridgeSession {
       restriction:!p.alive||ownBody.dead?'Dead':ownBody.pose==='sleep'?'Sleeping':ownBody.pose==='downed'||ownBody.subduedUntil>w.physicalTime?'Recovering':p.custody?.active||p.surrender?'Restrained':''}:null;
     return { version: BRIDGE_VERSION, type: 'snapshot', tick: w.physicalTime, worldTime: w.now, ack: ch.appliedSequence, playerId: p.id, controlledBodyId,
       wildlife: wildlifeProjection(w, w.body(controlledBodyId)),
-      knowledge, mechanisms: mechanismPanel(w, p), interactions, mobility, container: openContainerProjection(this.sim,p), dialogue: this.dialogueProjection(ch), talkTargets,
+      knowledge, mechanisms: mechanismPanel(w, p), interactions, mobility, container: openContainerProjection(this.sim,p), dialogue: this.dialogueProjection(ch), talkTargets, talkRefusals,
       carried: carriedItemRows(this.sim, p, interactions), abilities: abilityRows(this.sim, p), work: currentWork(this.sim, p),
       journal: playerJournal(w, p),
       interactionTargets:[...interactions.flatMap(a=>a.target?[{actionId:a.id,targetId:a.target.id,kind:a.target.kind,label:a.label,pos:a.target.pos}]:[]),
-        ...talkTargets.map(t=>({actionId:`talk:${t.bodyId}`,targetId:t.bodyId,kind:'person',label:`Talk — ${t.name||'Unknown person'}`,pos:{...w.body(t.bodyId)!.pos}}))],
+        ...talkTargets.map(t=>({actionId:`talk:${t.bodyId}`,targetId:t.bodyId,kind:'person',label:`Talk — ${t.name||'Unknown person'}`,title:t.name||'Unknown person',verb:'Talk',pos:{...w.body(t.bodyId)!.pos}})),
+        // People close by who cannot be spoken to right now: shown with the reason, never silently absent.
+        ...talkRefusals.map(t=>({actionId:`talk-refused:${t.bodyId}`,targetId:t.bodyId,kind:'person_unavailable',label:`${t.name||'Unknown person'} — ${TALK_REFUSAL_TEXT[t.reason]}`,title:t.name||'Unknown person',reason:TALK_REFUSAL_TEXT[t.reason],pos:{...w.body(t.bodyId)!.pos}}))],
       bodies: residents.map(b => ({
         ...humanoidVisualState(b, visible.has(b.id) ? knownName(p, b.ownerId) : 'an unfamiliar person', visibleActivity(w.person(b.ownerId), b.pose), projectAppearance(w.person(b.ownerId))),
         combatAction:visible.has(b.id) ? combatState(w,b) : null,guarding:visible.has(b.id)&&guardHeld(w,b),
@@ -502,22 +512,54 @@ export class BridgeSession {
     return w.bodies().flatMap(body => {
       if (!visible.has(body.id)||!body.present || body.ownerId === player.id || body.dead || body.shape !== 'humanoid') return [];
       const person = w.person(body.ownerId);
-      if (!person || !person.alive || body.pose === 'sleep') return [];
-      const carrying = player.inventory.map(id => w.item(id)).filter((item): item is Item => !!item);
-      if (!actionsForPerson(w, player, person, carrying).some(action => action.kind === 'talk')) return [];
+      if (!person || !person.alive) return [];
       const distance = Math.hypot(source.pos.x - body.pos.x, source.pos.y - body.pos.y, source.pos.z - body.pos.z);
-      if (distance > 3.1 || !w.grid.lineOfPassage({ ...source.pos, y: source.pos.y + 1.2 }, { ...body.pos, y: body.pos.y + 1.2 }, 4.3)) return [];
+      if (this.talkRefusal(player, person, body, source, distance)) return [];
       return [{ bodyId: body.id, entityId: person.id, name: knownName(player, person.id), distance }];
+    }).sort((a, b) => a.distance - b.distance || a.bodyId.localeCompare(b.bodyId));
+  }
+
+  /**
+   * Why this person cannot be spoken to right now, or null if they can. A player is never left
+   * pressing a key at someone with nothing happening: the client shows the reason instead of a
+   * prompt, and a refused talk request answers with it.
+   */
+  private talkRefusal(player: Person, person: Person, body: Body, source: Body, distance: number): 'asleep' | 'fleeing' | 'refuses' | 'too_far' | null {
+    const w = this.world;
+    if (body.pose === 'sleep') return 'asleep';
+    if (person.mind.goal?.type === 'flee' || person.mind.goal?.type === 'return_home_safe') return 'fleeing';
+    const carrying = player.inventory.map(id => w.item(id)).filter((item): item is Item => !!item);
+    if (!actionsForPerson(w, player, person, carrying).some(action => action.kind === 'talk')) return 'refuses';
+    if (distance > 3.1 || !w.grid.lineOfPassage({ ...source.pos, y: source.pos.y + 1.2 }, { ...body.pos, y: body.pos.y + 1.2 }, 4.3)) return 'too_far';
+    return null;
+  }
+
+  /** Visible people close by who cannot be spoken to, with the reason (see talkRefusal). */
+  private talkRefusals(ch: ControllerChannel, player: Person, visible = new Set(this.game.perceive(ch.id)?.people.map(p => p.bodyId))) {
+    const w = this.world, source = w.primaryBody(player.id);
+    if (!source || source.dead || !player.alive) return [];
+    return w.bodies().flatMap(body => {
+      if (!visible.has(body.id) || !body.present || body.ownerId === player.id || body.dead || body.shape !== 'humanoid') return [];
+      const person = w.person(body.ownerId);
+      if (!person || !person.alive) return [];
+      const distance = Math.hypot(source.pos.x - body.pos.x, source.pos.y - body.pos.y, source.pos.z - body.pos.z);
+      if (distance > 6) return [];
+      const reason = this.talkRefusal(player, person, body, source, distance);
+      return reason ? [{ bodyId: body.id, entityId: person.id, name: knownName(player, person.id), distance, reason }] : [];
     }).sort((a, b) => a.distance - b.distance || a.bodyId.localeCompare(b.bodyId));
   }
 
   private beginDialogue(ch: ControllerChannel, player: Person, targetBodyId: string): string {
     const target = this.talkTargets(ch, player).find(candidate => candidate.bodyId === targetBodyId);
-    if (!target) return 'interaction_unavailable';
+    if (!target) {
+      const refusal = this.talkRefusals(ch, player).find(candidate => candidate.bodyId === targetBodyId);
+      return refusal ? `talk_${refusal.reason}` : 'interaction_unavailable';
+    }
     const speaker = this.world.person(target.entityId);
     if (!speaker) return 'interaction_unavailable';
     ch.dialogueState = this.dialogue.start(speaker, player);
     ch.dialogueSpeakerBodyId = targetBodyId;
+    speaker.mind.addressedBy = { entityId: player.id, until: this.world.physicalTime + ADDRESS_HOLD_SECONDS }; // they stop to listen at once
     ch.dialogueRevision++;
     return 'accepted';
   }

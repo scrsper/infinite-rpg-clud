@@ -397,6 +397,8 @@ void UTVBridgeSubsystem::SendDropIntent() {
 void UTVBridgeSubsystem::Interact() {
     if(HasModalScreen()||!IsLive()||FocusedActionId.IsEmpty())return;
     // Prompt, exact highlighted bounds and submitted ID share this one immutable selection.
+    // Someone who cannot talk now: say why at once, locally, instead of a request that fails.
+    if(FocusedKind==TEXT("person_unavailable")){LastResult=FocusedTitle+TEXT(": ")+FocusedReason+TEXT(".");ResultClock=0;return;}
     if(FocusedKind==TEXT("person"))SendIntent(TEXT("talk"),FocusedTargetId);
     else {if(FocusedKind==TEXT("container")&&FocusedActionId.StartsWith(TEXT("open:")))PendingOpenContainer=FocusedTargetId;
         auto M=MakeShared<FJsonObject>();M->SetStringField(TEXT("type"),TEXT("interact"));M->SetStringField(TEXT("interactionId"),FocusedActionId);Send(M);}
@@ -459,7 +461,7 @@ void UTVBridgeSubsystem::Receive(const FString& Message) {
                 if(BufferedCombat.IsSet()&&BufferedCombat->Sequence==Seq)BufferedCombat.Reset();if(Seq==PendingFeedbackSequence)bCrouchHeld=false;
                 if(Seq==CombatCommandSequence){if(auto* C=Bodies.FindRef(InteractionBody).Get())C->CombatPresentation->RejectAction(PredictedCombat.CommandId);PredictedCombat=FTVLiveCombat();}
                 LastResult=ResultText(M->GetStringField(TEXT("result")));ResultClock=0;}
-            else if(Seq==PendingFeedbackSequence){LastResult=TEXT("Confirmed");ResultClock=0;PendingFeedbackSequence=-1;}
+            else if(Seq==PendingFeedbackSequence){PendingFeedbackSequence=-1;} // success shows in the world; no "Confirmed" noise
         }
         return;
     }
@@ -561,7 +563,8 @@ void UTVBridgeSubsystem::Receive(const FString& Message) {
     }
     FocusTargets.Reset();const TArray<TSharedPtr<FJsonValue>>* Targets;
     if(M->TryGetArrayField(TEXT("interactionTargets"),Targets))for(const auto& V:*Targets){const auto T=V->AsObject();if(!T)continue;const auto P=T->GetObjectField(TEXT("pos"));
-        FocusTargets.Add({T->GetStringField(TEXT("targetId")),T->GetStringField(TEXT("actionId")),T->GetStringField(TEXT("kind")),T->GetStringField(TEXT("label")),FVector(P->GetNumberField(TEXT("x")),P->GetNumberField(TEXT("y")),P->GetNumberField(TEXT("z")))});}
+        FFocusTarget F{T->GetStringField(TEXT("targetId")),T->GetStringField(TEXT("actionId")),T->GetStringField(TEXT("kind")),T->GetStringField(TEXT("label")),FVector(P->GetNumberField(TEXT("x")),P->GetNumberField(TEXT("y")),P->GetNumberField(TEXT("z")))};
+        T->TryGetStringField(TEXT("title"),F.Title);T->TryGetStringField(TEXT("verb"),F.Verb);T->TryGetStringField(TEXT("reason"),F.Reason);FocusTargets.Add(F);}
     const TSharedPtr<FJsonObject>* Journal;
     if(M->TryGetObjectField(TEXT("journal"),Journal)&&Journal&&Journal->IsValid()) {
         // The person's own commitments, wounds and standing - never anyone else's private state.
@@ -804,6 +807,7 @@ FString UTVBridgeSubsystem::ResultText(const FString& Code) {
         {TEXT("insufficient_funds"),TEXT("You cannot afford it.")},{TEXT("unavailable_stock"),TEXT("None left.")},{TEXT("interaction_unavailable"),TEXT("You can't do that from here.")},
         {TEXT("not_carried"),TEXT("You are not carrying that.")},{TEXT("expired"),TEXT("Input arrived too late and was dropped.")},{TEXT("dead"),TEXT("You are dead.")},
         {TEXT("invalid_intent"),TEXT("You can't do that now.")},{TEXT("saved"),TEXT("Progress saved on the server.")},{TEXT("forbidden"),TEXT("Not permitted.")},
+        {TEXT("talk_asleep"),TEXT("They are asleep.")},{TEXT("talk_fleeing"),TEXT("They are fleeing from danger.")},{TEXT("talk_refuses"),TEXT("They will not speak with you.")},{TEXT("talk_too_far"),TEXT("Move closer.")},
         {TEXT("use_command_protocol"),TEXT("Client out of date.")},{TEXT("weapon_unavailable"),TEXT("You no longer hold that weapon.")},{TEXT("standing_blocked"),TEXT("No room to stand.")},
     };
     const FString* T=Text.Find(Code); return T?*T:Code.Replace(TEXT("_"),TEXT(" "));

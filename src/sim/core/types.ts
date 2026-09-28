@@ -790,6 +790,9 @@ export interface Mind {
   attention: EntityId | null;
   lastSpokeAt: number;
   lastToldAt: Record<EntityId, number>; // last time I talked to X (for conversation cooldowns)
+  /** Someone is talking to me right now (a player's open conversation), until `until` in physical
+   *  seconds. Unless my own goal is urgent I stop where I am and face them; it lapses by itself. */
+  addressedBy?: { entityId: EntityId; until: number };
   // v0.2.2 Phase 3 (long-run perf): a plain array here meant `.includes()` — called once per
   // unresolved-crime candidate on EVERY guard's EVERY think() tick — was an O(length) scan of a
   // set that only ever grows for the life of the guard. On a long/violent run (seed 918271's

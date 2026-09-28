@@ -38,7 +38,7 @@ import { maintainConflicts, beginConflict, recordConflictBlow, recordDowning, co
 import { maintainCustody, subdue, takeIntoCustody, beginSurrender, isSubdued } from '../social/custody';
 import { SAW_RATIO, stepMetabolism, stepSpoilage, fieldFor, firstPlot, plantPlot, farmSeedGrain, harvestPlot, mill, bake, saw, findAccessibleFood, eatFood, buyFoodPortion, nearestWaterSource, drinkAt, villageStock, restockTavern, gatherHerbs, SEED_PER_PLOT } from '../world/metabolism';
 import { stepPhysiology, activityLevelFor, heatBand, hungerBand, thirstBand, sleepBand, comfortBand, severityAtLeast, syncNeeds } from '../core/physiology';
-import { isCommittable, DUTY_ACTIVITIES, EMERGENCY_GOAL_TYPES, interruptionSeverityMet, startCommitment, suspendCommitment, resumeCommitment, finishCommitment, commitmentValidity } from './commitment';
+import { attendingTo, isCommittable, DUTY_ACTIVITIES, EMERGENCY_GOAL_TYPES, interruptionSeverityMet, startCommitment, suspendCommitment, resumeCommitment, finishCommitment, commitmentValidity } from './commitment';
 import { getPhysicalCapability, capabilityFor, movementMultiplier } from '../core/attributes';
 import { skillOf, tradeBatchSeconds } from '../core/skills';
 import { wearTool } from '../core/tools';
@@ -1796,6 +1796,15 @@ export class Simulation {
         actOnRecord(w, p, a, physDt); body.pose = 'work'; break;
       }
       case 'goto': {
+        // Spoken to: stop and face the speaker for as long as they keep talking, unless where I am
+        // going is urgent. The trip is not abandoned; it resumes when the attention lapses.
+        const heed = attendingTo(w, p);
+        if (heed) {
+          const hb = w.primaryBody(heed);
+          body.vel.x = 0; body.vel.z = 0; body.pose = 'stand';
+          if (hb) body.yaw = Math.atan2(-(hb.pos.x - body.pos.x), -(hb.pos.z - body.pos.z));
+          break;
+        }
         // Observational only (Constitution §53): records that pathing failed, for headless
         // telemetry/anomaly detection. Never changes canonical decisions itself.
         const failGoto = (reason: string) => {

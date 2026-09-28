@@ -27,14 +27,14 @@ TSharedRef<FJsonObject> UTVBridgeSubsystem::ControlState() const {
     return J;
 }
 void UTVBridgeSubsystem::UpdateInteractionFocus() {
-    FocusedTargetId.Empty();FocusedActionId.Empty();FocusedKind.Empty();NearbyInteraction.Empty();NearbyPrompt.Empty();TalkTargetBody.Empty();FocusedBounds=FBox2D(ForceInit);
+    FocusedTargetId.Empty();FocusedActionId.Empty();FocusedKind.Empty();NearbyInteraction.Empty();NearbyPrompt.Empty();TalkTargetBody.Empty();FocusedBounds=FBox2D(ForceInit);FocusedTitle.Empty();FocusedVerb.Empty();FocusedReason.Empty();
     if(!IsLive()||HasModalScreen())return;
     auto* PC=GetWorld()->GetFirstPlayerController();if(!PC||!PC->PlayerCameraManager)return;
     int32 Width=0,Height=0;PC->GetViewportSize(Width,Height);double Best=TNumericLimits<double>::Max();
     const FVector2D Aim(Width*.5,Height*.5);
     for(const auto& T:FocusTargets) {
         FBox Bounds(ForceInit);
-        if(T.Kind==TEXT("person")){auto* Body=Bodies.FindRef(T.Id).Get();if(!IsValid(Body)||Body->IsHidden())continue;Bounds=Body->GetMesh()->Bounds.GetBox();}
+        if(T.Kind==TEXT("person")||T.Kind==TEXT("person_unavailable")){auto* Body=Bodies.FindRef(T.Id).Get();if(!IsValid(Body)||Body->IsHidden())continue;Bounds=Body->GetMesh()->Bounds.GetBox();}
         else if(!WorldProjection||!WorldProjection->FindVisualBounds(T.Id,Bounds)) {
             const FVector Pos=ToUnreal(T.Position)-FVector(0,0,90);
             Bounds=FBox(Pos-FVector(18,18,0),Pos+FVector(18,18,35));
@@ -43,9 +43,9 @@ void UTVBridgeSubsystem::UpdateInteractionFocus() {
         for(int32 I=0;I<8;++I){FVector2D P;const FVector Corner((I&1)?Bounds.Max.X:Bounds.Min.X,(I&2)?Bounds.Max.Y:Bounds.Min.Y,(I&4)?Bounds.Max.Z:Bounds.Min.Z);
             if(!PC->ProjectWorldLocationToScreen(Corner,P,true)){Visible=false;break;}Screen+=P;}
         if(!Visible)continue;const double Score=TVInteractionFocus::Score(Screen,Aim,Height);
-        if(Score<Best||(Score==Best&&T.Id<FocusedTargetId)){Best=Score;FocusedTargetId=T.Id;FocusedActionId=T.Action;FocusedKind=T.Kind;NearbyPrompt=T.Label;FocusedBounds=Screen;}
+        if(Score<Best||(Score==Best&&T.Id<FocusedTargetId)){Best=Score;FocusedTargetId=T.Id;FocusedActionId=T.Action;FocusedKind=T.Kind;NearbyPrompt=T.Label;FocusedBounds=Screen;FocusedTitle=T.Title;FocusedVerb=T.Verb;FocusedReason=T.Reason;}
     }
-    if(FocusedKind==TEXT("person"))TalkTargetBody=FocusedTargetId;else NearbyInteraction=FocusedActionId;
+    if(FocusedKind==TEXT("person"))TalkTargetBody=FocusedTargetId;else if(FocusedKind!=TEXT("person_unavailable"))NearbyInteraction=FocusedActionId;
 }
 void UTVBridgeSubsystem::UpdatePlayerShell() {
     if(bSignInRequired)return;
@@ -60,7 +60,7 @@ void UTVBridgeSubsystem::UpdatePlayerShell() {
     else if(!bPredictionReady||FPlatformTime::Seconds()-LastLocalStateAt>TVInteractionSpec::inputHorizonSeconds)MovementRestriction=TEXT("Waiting for current movement / collision state");
     else if(PredictedCombat.Locked(CombatAge))MovementRestriction=TEXT("Recovering");
     else if(!HasModalScreen()&&Confirmed.bEligible&&!P->IntentDirection().IsNearlyZero()&&PredictionVelocity.Size2D()<1)MovementRestriction=TEXT("Blocked");
-    FTVUISnapshot S;S.Revision=SnapshotCount;S.FocusedLabel=NearbyPrompt;S.FocusedTargetId=FocusedTargetId;S.FocusedActionId=FocusedActionId;
+    FTVUISnapshot S;S.Revision=SnapshotCount;S.FocusedLabel=NearbyPrompt;S.FocusedTitle=FocusedTitle;S.FocusedVerb=FocusedVerb;S.FocusedReason=FocusedReason;S.bFocusedPerson=FocusedKind.StartsWith(TEXT("person"));S.FocusedTargetId=FocusedTargetId;S.FocusedActionId=FocusedActionId;
     S.FocusedBounds.bHasFocusBounds=FocusedBounds.bIsValid;S.FocusedBounds.BoundsPixels=FocusedBounds;
     S.Vitals=PlayerVitals+TEXT("\n")+MobilitySummary;S.Journal=JournalSummary+TEXT("\n")+KnowledgeSummary;S.Restriction=MovementRestriction+(WorkStatus.IsEmpty()?TEXT(""):(MovementRestriction.IsEmpty()?TEXT(""):TEXT("\n"))+WorkStatus)+(LastResult.IsEmpty()?TEXT(""):TEXT("   ")+LastResult);
     if(CarriedRows.Num()||InventoryItemIds.IsEmpty())S.Inventory=CarriedRows;

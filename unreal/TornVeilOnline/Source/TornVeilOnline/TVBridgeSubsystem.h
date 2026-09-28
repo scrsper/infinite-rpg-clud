@@ -146,7 +146,8 @@ public:
     /** Complete current observed set. Missing rows withdraw presentation; only dead=true is death. */
     UPROPERTY() TMap<FString, TObjectPtr<ATVWildlifePresentation>> WildlifeBodies;
 private:
-    struct FFocusTarget {FString Id,Action,Kind,Label;FVector Position;};
+    struct FFocusTarget {FString Id,Action,Kind,Label;FVector Position;FString Title,Verb,Reason;};
+    FString FocusedTitle,FocusedVerb,FocusedReason; // the focused target, for a person's two-line prompt
     TArray<FFocusTarget> FocusTargets;
     TArray<TSharedPtr<FJsonValue>> ControlTrace;
     double ControlTraceAt=0;
