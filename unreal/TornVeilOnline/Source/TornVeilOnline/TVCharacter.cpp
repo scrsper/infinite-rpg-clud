@@ -648,6 +648,8 @@ FString ATVCharacter::PresentationDiagnostics() const {
     auto J = MakeShared<FJsonObject>();
     J->SetStringField(TEXT("bodyId"), BodyId); J->SetStringField(TEXT("entityId"), EntityId);
     J->SetStringField(TEXT("pose"), CanonicalPose); J->SetStringField(TEXT("animation"), PresentationAnimation());
+    if (bHasEmbodiment) { J->SetStringField(TEXT("activity"), Embodiment.Activity.Family + TEXT("/") + Embodiment.Activity.Detail); J->SetStringField(TEXT("posture"), Embodiment.Activity.Posture); }
+    J->SetStringField(TEXT("name"), DisplayName);
     J->SetBoolField(TEXT("possessed"), IsPlayerControlled()); J->SetBoolField(TEXT("incapacitated"), bIncapacitated); J->SetBoolField(TEXT("dead"), bDead);
     J->SetNumberField(TEXT("attackSeq"), AttackSeq); J->SetNumberField(TEXT("hitSeq"), HitSeq);
     J->SetNumberField(TEXT("playedAttacks"), PlayedAttackEvents+CombatPresentation->PlayedAttacks); J->SetNumberField(TEXT("playedHits"), PlayedHitEvents+CombatPresentation->PlayedHits);

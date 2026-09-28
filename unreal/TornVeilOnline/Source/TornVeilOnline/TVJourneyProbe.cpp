@@ -114,6 +114,9 @@ static void Finish(const FString& Status,const FString& Error=FString()){
       R->SetArrayField(TEXT("seenBodies"),Seen); }
     if(W)if(const auto* Sound=W->GetSubsystem<UTVSoundscape>()){TSharedPtr<FJsonObject> J;
         if(FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Sound->Diagnostics()),J)&&J)R->SetObjectField(TEXT("sound"),J);}
+    if(B)if(const APawn* Me=W->GetFirstPlayerController()?W->GetFirstPlayerController()->GetPawn():nullptr){ // what everyone near us is playing, for judging poses in the frames
+        FString Lines;for(const auto& Pair:B->Bodies){const ATVCharacter* C=Pair.Value.Get();if(IsValid(C)&&FVector::Dist2D(C->GetActorLocation(),Me->GetActorLocation())<2500.)Lines+=C->PresentationDiagnostics()+LINE_TERMINATOR;}
+        FFileHelper::SaveStringToFile(Lines,*FPaths::Combine(S.Out,TEXT("bodies-diagnostics.jsonl")));}
     FString Json;auto Writer=TJsonWriterFactory<>::Create(&Json);FJsonSerializer::Serialize(R,Writer);Writer->Close();
     FFileHelper::SaveStringToFile(Json,*FPaths::Combine(S.Out,TEXT("journey.json")),FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM);
     UE_LOG(LogTemp,Display,TEXT("TV_JOURNEY finished status=%s error=%s"),*Status,*Error);
