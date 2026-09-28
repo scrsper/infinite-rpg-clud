@@ -1,4 +1,38 @@
-# Current: consolidated GitHub main, 2026-09-27
+# Current: inhabitable alpha work, branch `claude/inhabitable-alpha` (2026-09-27/28)
+
+Continuation checkpoint for the consolidated alpha brief (playable, inhabitable, visually coherent).
+Baseline: main `223264d`. Integration branch `claude/inhabitable-alpha` (pushed; no PR yet).
+State: **playable checkpoint** — scope incomplete. Coverage: `docs/SIMULATION_TO_PLAYER_COVERAGE.md`.
+
+Protected, untouched: accepted package `client-450b7e5cbc80` + staging `0.1.0-alpha.30` (port 7410,
+its preserved fork — never rehearse over it, never `ops update --env staging`); live alpha.12 (port 7400).
+Development runs in its own root `%USERPROFILE%/TornVeilAlpha/dev-inhabit` (env `dev`, port 7430, seed
+918271, world `tvo-dev-39a6e14c…`), moved between releases with `ops switch --env dev` (backup first).
+Probe accounts journey-a/b/c there; profiles `dev-journey-*` in `%LOCALAPPDATA%/TornVeil/Client`.
+
+Done on the branch (each with tests that fail on the old code):
+- Carried items and abilities projected from canonical rules (no "Eat" on a knife; no Hush until taught;
+  refusals with reasons); a sleeping body can no longer act; interaction-spec check EOL-neutral.
+- Butchering is real timed work at the carcass (interrupt keeps progress; contention refused; save mid-work).
+- Hunting a wild animal is no longer a witnessed crime (a hunter used to hate and attack the hunter).
+- Trade menu grouped by good and price, whole units, paged.
+- Canonical sky: sun/moon/exposure/fog from the world clock and weather (night adapts, noon black-out refused).
+- TV.JourneyProbe + Run-JourneyProbe.ps1: automated ordinary-input journey (sign-in, walk, talk, trade, eat).
+Evidence still valid: full suite 1265/1265 at `2d7f7f9` (later: trade test + native-only changes);
+native TornVeil.Presentation 16/16 (2 known warnings) at the sky change; editor journeys 03 and 05 passed.
+
+Local non-git inputs: `Content/TornVeil/Materials/LocalPalette` regenerated in this checkout with
+`unreal/scripts/create_local_prop_materials.py` and `create_local_village_materials.py` (their input
+`.debug/playable-world-slice2/local-assets/registry.json` copied from the Codex checkout). Without it
+props render white in packages.
+
+Open blockers/findings: mechanisms dormant in generated worlds (0 after 7 days × 3 seeds); crowd head
+material fails to compile (bald grey heads); spawn crowding; numeric name suffixes ("Rhea Ives 2");
+conversation camera low/close; night rendering not yet captured.
+Next action: package `client-b2b4fb2` (in progress) → packaged journey on dev (inhabit.3) → reconnect
+observe run → dev-night capture at its natural nightfall → candidate manifest.
+
+# Previous: consolidated GitHub main, 2026-09-27
 
 GitHub `scrsper/torn-veil-online` / `main` is the source baseline. PRs #51, #52, #53
 and #54 merged on 2026-09-27 (integration commit `1205973`). Active local development
