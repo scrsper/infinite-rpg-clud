@@ -9,7 +9,7 @@ const path='unreal/TornVeilOnline/Source/TornVeilOnline/TVInteractionSpec.genera
 // Compare content, not line endings: a Windows checkout with core.autocrlf stores these as CRLF.
 const sameText=(file:string,text:string)=>readFileSync(file,'utf8').replace(/\r\n/g,'\n')===text.replace(/\r\n/g,'\n');
 if(process.argv.includes('--check')) {if(!sameText(path,header))throw new Error('Stale native interaction specification; regenerate');}
-else writeFileSync(path,header);
+else if(!sameText(path,header)) writeFileSync(path,header); // unchanged text is left alone (no EOL churn)
 console.log(hash);
 const motion=JSON.parse(readFileSync('src/sim/physical/combatMotion.json','utf8')) as {
   attacks:Record<string,{samples:number[][]}>;duck:number[][];
@@ -32,7 +32,7 @@ inline double Duck(double T) {
 }\n`;
 const motionPath='unreal/TornVeilOnline/Source/TornVeilOnline/TVCombatMotion.generated.h';
 if(process.argv.includes('--check')) {if(!sameText(motionPath,motionHeader))throw new Error('Stale native combat motion specification; regenerate');}
-else writeFileSync(motionPath,motionHeader);
+else if(!sameText(motionPath,motionHeader)) writeFileSync(motionPath,motionHeader);
 
 const repertoire=JSON.parse(readFileSync('src/sim/physical/combatRepertoire.json','utf8')) as {moves:Record<string,Record<string,string|number>>};
 const repertoireV2=JSON.parse(readFileSync('src/sim/physical/combatRepertoireV2.json','utf8')) as typeof repertoire;
@@ -48,4 +48,4 @@ inline const FMove& Move(const FString& Id,int Revision=2) {
 }
 `;
 const rp='unreal/TornVeilOnline/Source/TornVeilOnline/TVCombatRepertoire.generated.h';
-if(process.argv.includes('--check')){if(readFileSync(rp,'utf8')!==rh)throw new Error('Stale native combat repertoire');}else writeFileSync(rp,rh);
+if(process.argv.includes('--check')){if(!sameText(rp,rh))throw new Error('Stale native combat repertoire');}else if(!sameText(rp,rh)) writeFileSync(rp,rh);

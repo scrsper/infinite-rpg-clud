@@ -37,7 +37,7 @@ struct FState {
     FString Out,TargetBody; TArray<FString> Picks; bool bEat=true,bQuit=true,bObserveOnly=false; double Timeout=300;
     TArray<TSharedPtr<FJsonValue>> Steps; TArray<FString> Frames; FString LastDialogue; double HungerBefore=-1,WealthBefore=-1;
     TWeakObjectPtr<UWorld> World; FTSTicker::FDelegateHandle Ticker; bool bForward=false,bStrafe=false,bSignedIn=false,bNearest=false;
-    TSet<FString> Asked,Faced; FString Target; TArray<FVector2D> Explore; TArray<FString> ExploreLabels; int32 Waypoint=0; double TargetSince=0;
+    TSet<FString> Asked,Faced; FString Target; TArray<FVector2D> Explore; TArray<FString> ExploreLabels; int32 Waypoint=0; double TargetSince=0; FString OptionsAtChoice;
 };
 static FState S;
 
@@ -137,15 +137,20 @@ static bool Tick(float){
         S.LastDialogue=FString::Join(B->DialogueLines,TEXT(" / "));Step(TEXT("talking"),B);S.Choice=0;Next(3);return true;
     case 3: { // choose replies by their shown labels, with the number keys the dialogue offers
         if(InPhase<.8)return true;
+        // After a reply, wait for the conversation to actually move on (the server's next options),
+        // however long the round trip takes, rather than reading the old menu or an empty one.
+        if(S.Choice>0&&B->bDialogueOpen&&FString::Join(B->DialogueOptionLabels,TEXT("/"))==S.OptionsAtChoice&&InPhase<4)return true;
+        if(S.Choice>0&&!B->bDialogueOpen){if(S.bNearest&&S.Asked.Num()<8){S.Asked.Add(S.Target);Next(8);return true;}Finish(TEXT("failed"),TEXT("the conversation ended"));return false;}
         if(S.Choice>=S.Picks.Num()){SlateKey(EKeys::Escape);Next(4);return true;}
         TArray<FString> Alternatives;S.Picks[S.Choice].ParseIntoArray(Alternatives,TEXT("|"));int32 Index=INDEX_NONE;
         for(int32 I=0;I<B->DialogueOptionLabels.Num()&&Index==INDEX_NONE;++I)for(const FString& A:Alternatives)if(B->DialogueOptionLabels[I].StartsWith(A)){Index=I;break;}
         if(Index==INDEX_NONE||Index>8){auto J=MakeShared<FJsonObject>();J->SetStringField(TEXT("wanted"),S.Picks[S.Choice]);J->SetStringField(TEXT("offered"),FString::Join(B->DialogueOptionLabels,TEXT(" / ")));J->SetStringField(TEXT("speaker"),B->DialogueSpeaker);Step(TEXT("reply-unavailable"),B,J);
             // Nobody owes us a sale: say goodbye and ask someone else, as a player would.
-            if(S.bNearest&&S.Choice==0&&S.Asked.Num()<8){S.Asked.Add(S.Target);Goodbye(B);Next(8);return true;}
+            if(S.bNearest&&S.Asked.Num()<8){S.Asked.Add(S.Target);Goodbye(B);Next(8);return true;}
             Finish(TEXT("failed"),TEXT("wanted reply not offered"));return false;}
         const FString Label=B->DialogueOptionLabels[Index];SlateKey(FKey(*FString::Printf(TEXT("%s"),*TArray<FString>{TEXT("One"),TEXT("Two"),TEXT("Three"),TEXT("Four"),TEXT("Five"),TEXT("Six"),TEXT("Seven"),TEXT("Eight"),TEXT("Nine")}[Index])));
         auto J=MakeShared<FJsonObject>();J->SetStringField(TEXT("chose"),Label);J->SetStringField(TEXT("offered"),FString::Join(B->DialogueOptionLabels,TEXT(" / ")));
+        S.OptionsAtChoice=FString::Join(B->DialogueOptionLabels,TEXT("/"));
         ++S.Choice;S.PhaseAt=Now;Step(FString::Printf(TEXT("reply-%d"),S.Choice),B,J);return true; }
     case 4: // conversation closed: open the inventory with its key
         if(InPhase<.6)return true;
