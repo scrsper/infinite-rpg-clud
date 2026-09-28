@@ -45,6 +45,6 @@ private:
     UPROPERTY() TArray<TObjectPtr<UAudioComponent>> Loops;
     FVector3f Target = FVector3f::ZeroVector, Current = FVector3f::ZeroVector;
     bool bLoaded = false, bMissing = false, bHasAmbience = false;
-    double LastSilver = -1, LastHunger = -1;
+    double LastSilver = -1, LastHunger = -1; float LiveSeconds = 0;
     int32 NextStep = 0, CoinCues = 0, EatCues = 0;
 };

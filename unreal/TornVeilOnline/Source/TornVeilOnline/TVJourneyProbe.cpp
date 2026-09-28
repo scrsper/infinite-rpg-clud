@@ -44,7 +44,11 @@ struct FState {
     TArray<double> FrameSeconds; // every frame from entering the world to the end of the journey
     // Shared-world record: our own body and path, and every other body this client was shown
     // (first/last position, when first seen). Two clients' reports can then be cross-checked.
-    double HoldSeconds=0; bool bHoldWalk=false,bHeldShot=false; FString SelfBody; TArray<FVector> SelfPath; double LastPathAt=0;
+    double HoldSeconds=0; bool bHoldWalk=false,bHeldShot=false;
+    // Route first: walk to the named places before asking anyone, and there ask only people within
+    // NearRadius (cm) — as a player who knows where the tavern is goes in and asks inside.
+    bool bRouteFirst=false; double NearRadius=0;
+    FVector ProgressAt=FVector::ZeroVector; double ProgressCheckedAt=0; int32 Unsticks=0; bool bStrafeLeft=false; FString SelfBody; TArray<FVector> SelfPath; double LastPathAt=0;
     struct FSeen{FVector First,Last;double FirstAt=0;}; TMap<FString,FSeen> Seen;
 };
 static FState S;
@@ -68,7 +72,16 @@ static void Step(const FString& Name,UTVBridgeSubsystem* B,TSharedPtr<FJsonObjec
     const FString Frame=FPaths::Combine(S.Out,FString::Printf(TEXT("journey-%02d-%s.png"),S.Shot++,*Name));FScreenshotRequest::RequestScreenshot(Frame,true,false);S.Frames.Add(Frame);J->SetStringField(TEXT("frame"),Frame);
     S.Steps.Add(MakeShared<FJsonValueObject>(J));UE_LOG(LogTemp,Display,TEXT("TV_JOURNEY step=%s"),*Name);
 }
-static void Release(){if(S.bForward){Key(EKeys::W,IE_Released,0.f);S.bForward=false;}if(S.bStrafe){Key(EKeys::D,IE_Released,0.f);S.bStrafe=false;}}
+static void Release(){if(S.bForward){Key(EKeys::W,IE_Released,0.f);S.bForward=false;}if(S.bStrafe){Key(EKeys::D,IE_Released,0.f);Key(EKeys::A,IE_Released,0.f);S.bStrafe=false;}}
+/** Walking a route in straight lines: if held W has not carried us 40 cm in 1.5 s we are pinned on
+ *  scenery, so step aside (alternating sides), as a player would, then carry on. */
+static void Unstick(const APawn* Pawn,double Now){
+    if(S.bStrafe&&Now>S.SideStepUntil){Key(S.bStrafeLeft?EKeys::A:EKeys::D,IE_Released,0.f);S.bStrafe=false;S.ProgressAt=Pawn->GetActorLocation();S.ProgressCheckedAt=Now;return;}
+    if(S.bStrafe||!S.bForward)return;
+    if(Now-S.ProgressCheckedAt<1.5)return;
+    if(FVector::Dist2D(Pawn->GetActorLocation(),S.ProgressAt)<40.f){S.bStrafeLeft=!S.bStrafeLeft;Key(S.bStrafeLeft?EKeys::A:EKeys::D,IE_Pressed);S.bStrafe=true;S.SideStepUntil=Now+.9;++S.Unsticks;}
+    S.ProgressAt=Pawn->GetActorLocation();S.ProgressCheckedAt=Now;
+}
 static void Finish(const FString& Status,const FString& Error=FString()){
     Release();auto* W=S.World.Get();auto* B=W?W->GetSubsystem<UTVBridgeSubsystem>():nullptr;
     auto R=MakeShared<FJsonObject>();R->SetStringField(TEXT("kind"),TEXT("automated native ordinary-input journey; config names the person, so not a discoverability proof"));
@@ -108,7 +121,7 @@ static bool ChooseTarget(UTVBridgeSubsystem* B,APawn* Pawn){
     if(!S.bNearest){S.Target=S.TargetBody;return B->Bodies.Contains(S.Target);}
     const FString Previous=S.Target;double Best=TNumericLimits<double>::Max();S.Target.Empty();
     for(const auto& Pair:B->Bodies){ATVCharacter* C=Pair.Value;if(!IsValid(C)||C==Pawn||C->bDead||C->bCanonicalPlayer||S.Asked.Contains(Pair.Key))continue;
-        const double D=FVector::Dist2D(C->GetActorLocation(),Pawn->GetActorLocation());if(D<Best){Best=D;S.Target=Pair.Key;}}
+        const double D=FVector::Dist2D(C->GetActorLocation(),Pawn->GetActorLocation());if(S.NearRadius>0&&D>S.NearRadius)continue;if(D<Best){Best=D;S.Target=Pair.Key;}}
     if(S.Target!=Previous)S.TargetSince=FPlatformTime::Seconds();
     return !S.Target.IsEmpty();
 }
@@ -138,6 +151,15 @@ static bool Tick(float){
         if(!B->IsLive()||!B->bCanonicalReady||!Pawn||InPhase<3)return true;
         if(B->ProjectedRegions<9&&InPhase<45)return true; // let the surroundings stream in, as a player waits
         if(S.bObserveOnly){Step(TEXT("reconnected"),B);Tap(EKeys::I);Next(5);return true;}
+        if(S.bRouteFirst&&S.Explore.Num()){
+            S.HungerBefore=Number(B->PlayerVitals,TEXT("Hunger"));S.WealthBefore=Silver(B->PlayerVitals);Step(TEXT("entered"),B);
+            // Begin the route where we stand (a returning person may already be indoors): the nearest
+            // waypoint we can walk to in a straight line, not one through a wall.
+            double Best=TNumericLimits<double>::Max();const FVector From=Pawn->GetActorLocation();
+            FCollisionQueryParams Query(TEXT("TVJourneyRouteStart"),false,Pawn);
+            for(int32 I=0;I<S.Explore.Num();++I){FVector To=B->ToUnreal(FVector(S.Explore[I].X,0,S.Explore[I].Y));To.Z=From.Z;const double D=FVector::Dist2D(To,From);
+                FHitResult Hit;if(D<Best&&!W->LineTraceSingleByChannel(Hit,From,To,ECC_Visibility,Query)){Best=D;S.Waypoint=I;}}
+            Next(9);return true;}
         if(!ChooseTarget(B,Pawn)){if(S.bNearest&&S.Waypoint<S.Explore.Num()){Next(9);return true;}if(InPhase>60){Finish(TEXT("failed"),TEXT("chosen person never came into view"));return false;}return true;}
         S.HungerBefore=Number(B->PlayerVitals,TEXT("Hunger"));S.WealthBefore=Silver(B->PlayerVitals);Step(TEXT("entered"),B);Next(1);return true;
     case 1: { // walk: hold W, turn with MouseX toward where the person actually is
@@ -210,6 +232,7 @@ static bool Tick(float){
             const float Error=FMath::FindDeltaAngleDegrees(PC->GetControlRotation().Yaw,To.Rotation().Yaw);
             if(FMath::Abs(Error)>1.5f)Key(EKeys::MouseX,IE_Axis,FMath::Clamp(Error*2.f,-60.f,60.f));
             if(!S.bForward){Key(EKeys::W,IE_Pressed);S.bForward=true;}
+            Unstick(Pawn,Now);
             if(To.Size2D()<140)++S.Waypoint;
         } else Release();
         return true;
@@ -223,9 +246,12 @@ static bool Tick(float){
         const FVector To=Goal-Pawn->GetActorLocation();const float Error=FMath::FindDeltaAngleDegrees(PC->GetControlRotation().Yaw,To.Rotation().Yaw);
         if(FMath::Abs(Error)>1.5f)Key(EKeys::MouseX,IE_Axis,FMath::Clamp(Error*2.f,-60.f,60.f));
         if(!S.bForward){Key(EKeys::W,IE_Pressed);S.bForward=true;}
-        if(To.Size2D()<140){++S.Waypoint;if(!S.ExploreLabels[S.Waypoint-1].IsEmpty()){Release();auto J=MakeShared<FJsonObject>();J->SetStringField(TEXT("reached"),S.ExploreLabels[S.Waypoint-1]);Step(TEXT("arrived"),B,J);}}
-        if(FMath::Fmod(InPhase,1.0)<0.02&&ChooseTarget(B,Pawn)){Release();Next(1);return true;}
-        if(InPhase>240){Release();Finish(TEXT("failed"),TEXT("could not walk the route"));return false;}
+        Unstick(Pawn,Now);
+        bool bAtStop=false;
+        if(To.Size2D()<140){++S.Waypoint;if(!S.ExploreLabels[S.Waypoint-1].IsEmpty()){Release();bAtStop=true;auto J=MakeShared<FJsonObject>();J->SetStringField(TEXT("reached"),S.ExploreLabels[S.Waypoint-1]);Step(TEXT("arrived"),B,J);}}
+        // Route first still speaks to whoever is right beside us (ChooseTarget honours NearRadius).
+        if((bAtStop||FMath::Fmod(InPhase,1.0)<0.02)&&ChooseTarget(B,Pawn)){Release();Next(1);return true;}
+        if(InPhase>240){Release();Finish(TEXT("failed"),FString::Printf(TEXT("could not walk the route (waypoint %d of %d, %.0f m away, %d sidesteps)"),S.Waypoint+1,S.Explore.Num(),To.Size2D()/100.,S.Unsticks));return false;}
         return true; }
     }
     return true;
@@ -234,6 +260,7 @@ static void Start(const TArray<FString>& Args){
     if(S.bRunning||Args.Num()<1)return;FString Text;if(!FFileHelper::LoadFileToString(Text,*Args[0])){UE_LOG(LogTemp,Error,TEXT("TV_JOURNEY missing config %s"),*Args[0]);return;}
     TSharedPtr<FJsonObject> C;if(!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text),C)||!C){UE_LOG(LogTemp,Error,TEXT("TV_JOURNEY bad config"));return;}
     S=FState();C->TryGetStringField(TEXT("out"),S.Out);C->TryGetStringField(TEXT("targetBody"),S.TargetBody);C->TryGetBoolField(TEXT("eat"),S.bEat);C->TryGetBoolField(TEXT("quit"),S.bQuit);C->TryGetBoolField(TEXT("observeOnly"),S.bObserveOnly);C->TryGetNumberField(TEXT("timeoutSeconds"),S.Timeout);C->TryGetNumberField(TEXT("holdSeconds"),S.HoldSeconds);C->TryGetBoolField(TEXT("holdWalk"),S.bHoldWalk);
+    C->TryGetBoolField(TEXT("routeFirst"),S.bRouteFirst);double NearMetres=0;if(C->TryGetNumberField(TEXT("nearRadiusMetres"),NearMetres))S.NearRadius=NearMetres*100.;
     const TArray<TSharedPtr<FJsonValue>>* Picks=nullptr;if(C->TryGetArrayField(TEXT("dialogue"),Picks))for(const auto& P:*Picks)S.Picks.Add(P->AsString());
     const TArray<TSharedPtr<FJsonValue>>* Route=nullptr;
     if(C->TryGetArrayField(TEXT("explore"),Route))for(const auto& V:*Route){const auto P=V->AsObject();if(!P)continue;S.Explore.Add(FVector2D(P->GetNumberField(TEXT("x")),P->GetNumberField(TEXT("z"))));FString L;P->TryGetStringField(TEXT("label"),L);S.ExploreLabels.Add(L);}

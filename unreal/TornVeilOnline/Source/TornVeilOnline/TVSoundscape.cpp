@@ -72,7 +72,12 @@ void UTVSoundscape::Tick(float DeltaTime) {
     static constexpr float Gain[3] = {.55f, .45f, .6f};
     for (int32 I = 0; I < Loops.Num(); ++I) if (Loops[I]) Loops[I]->SetVolumeMultiplier(FMath::Max(.001f, Current[I] * Gain[I]));
     // What the player's own body just did, as the vitals line already shows it.
-    if (const UTVBridgeSubsystem* Bridge = World->GetSubsystem<UTVBridgeSubsystem>(); Bridge && Bridge->IsLive()) {
+    const UTVBridgeSubsystem* Bridge = World->GetSubsystem<UTVBridgeSubsystem>();
+    // Cues only for changes that happen while living: not while signing in or the first
+    // snapshots of a (re)connected person settle into the vitals line.
+    if (!Bridge || !Bridge->IsLive() || !Bridge->bCanonicalReady) { LiveSeconds = 0; LastSilver = LastHunger = -1; return; }
+    LiveSeconds += DeltaTime;
+    if (LiveSeconds > 4.f) {
         const double Silver = VitalsNumber(Bridge->PlayerVitals, TEXT(" silver"), true), Hunger = VitalsNumber(Bridge->PlayerVitals, TEXT("Hunger"), false);
         if (Silver >= 0 && LastSilver >= 0 && !FMath::IsNearlyEqual(Silver, LastSilver)) { UGameplayStatics::PlaySound2D(World, Coins, .7f); ++CoinCues; }
         if (Hunger >= 0 && LastHunger >= 0 && Hunger <= LastHunger - 5) { UGameplayStatics::PlaySound2D(World, Eat, .8f); ++EatCues; }

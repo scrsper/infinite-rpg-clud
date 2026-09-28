@@ -15,7 +15,10 @@ param(
     [ValidateRange(0,900)][int]$HoldSeconds = 0,
     [switch]$HoldWalk,
     # Run with the audio device (the report then says what the soundscape actually played).
-    [switch]$WithSound
+    [switch]$WithSound,
+    # Walk the route's named places before asking anyone; there ask only people this close.
+    [switch]$RouteFirst,
+    [ValidateRange(0,100)][double]$NearRadiusMetres = 0
 )
 # Automated ordinary-input journey (TV.JourneyProbe). Real rendering; credentials stay in the
 # client profile. The config names who to walk to, so a pass is not a discoverability claim.
@@ -24,7 +27,7 @@ $repo = (Resolve-Path "$PSScriptRoot/../..").Path
 $Out = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Out)
 if (Test-Path -LiteralPath $Out) { throw "Refusing to reuse journey evidence: $Out" }
 New-Item -ItemType Directory -Path $Out | Out-Null
-$config = [ordered]@{ out = $Out; targetBody = $TargetBody; dialogue = $Dialogue; eat = !$ObserveOnly; observeOnly = [bool]$ObserveOnly; quit = $true; timeoutSeconds = $TimeoutSeconds - 60; holdSeconds = $HoldSeconds; holdWalk = [bool]$HoldWalk }
+$config = [ordered]@{ out = $Out; targetBody = $TargetBody; dialogue = $Dialogue; eat = !$ObserveOnly; observeOnly = [bool]$ObserveOnly; quit = $true; timeoutSeconds = $TimeoutSeconds - 60; holdSeconds = $HoldSeconds; holdWalk = [bool]$HoldWalk; routeFirst = [bool]$RouteFirst; nearRadiusMetres = $NearRadiusMetres }
 if ($RouteFile) { $config.explore = @(Get-Content -LiteralPath $RouteFile -Raw | ConvertFrom-Json) }
 $configFile = Join-Path $Out 'config.json'
 $config | ConvertTo-Json | Set-Content -LiteralPath $configFile -Encoding utf8
