@@ -71,6 +71,8 @@ struct TORNVEILONLINE_API FTVUIFocusBounds
     /** A person: the screen point just above their drawn head, where the name plate sits. */
     UPROPERTY(BlueprintReadOnly) bool bHasAnchor = false;
     UPROPERTY(BlueprintReadOnly) FVector2D AnchorPixels = FVector2D::ZeroVector;
+    /** The same point in the world, projected again each UI frame after the camera has moved. */
+    UPROPERTY(BlueprintReadOnly) FVector AnchorWorld = FVector::ZeroVector;
 };
 
 USTRUCT(BlueprintType)
@@ -157,6 +159,8 @@ public:
 protected:
     virtual TSharedRef<SWidget> RebuildWidget() override;
     virtual void NativeConstruct() override;
+    virtual void NativeTick(const FGeometry&,float) override;
+    bool bPlateAnchored = false; FVector PlateWorld = FVector::ZeroVector;
     FTVUICommandRequested* CommandDelegate = nullptr;
     UInputAction* InteractAction = nullptr;
     UPROPERTY() class UCanvasPanel* Canvas = nullptr;

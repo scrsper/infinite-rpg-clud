@@ -17,6 +17,7 @@
 #include "TVControlSettings.h"
 #include "CommonInputSubsystem.h"
 #include "Engine/LocalPlayer.h"
+#include "GameFramework/PlayerController.h"
 
 namespace
 {
@@ -67,10 +68,21 @@ TSharedRef<SWidget> UTVInteractionPromptWidget::RebuildWidget(){
     return Super::RebuildWidget();
 }
 void UTVInteractionPromptWidget::NativeConstruct(){Super::NativeConstruct();}
+// The UI ticks after the camera has moved this frame; projecting the plate here keeps it on the
+// head while the camera turns, where the snapshot's projection lags a frame (many in a hitch).
+void UTVInteractionPromptWidget::NativeTick(const FGeometry& G,float Dt){
+    Super::NativeTick(G,Dt);
+    if(!bPlateAnchored||!PromptButton)return;
+    APlayerController* PC=GetOwningPlayer();FVector2D P;
+    if(!PC||!PC->ProjectWorldLocationToScreen(PlateWorld,P,true))return;
+    const float Scale=FMath::Max(0.01f,UWidgetLayoutLibrary::GetViewportScale(this));
+    if(auto* PS=Cast<UCanvasPanelSlot>(PromptButton->Slot))PS->SetPosition(FVector2D(P.X/Scale,FMath::Max(64.f,P.Y/Scale)));
+}
 void UTVInteractionPromptWidget::SetInteractAction(UInputAction* InAction){InteractAction=InAction;if(ActionGlyph)ActionGlyph->SetEnhancedInputAction(InAction);}
 void UTVInteractionPromptWidget::SetSnapshot(const FTVUISnapshot& S){if(!PromptText)return;const FString Glyph=UTVControlSettings::Glyph(GetOwningLocalPlayer(),TEXT("Interact"));
     // A person gets a name plate over their head: the name, then "[E] Talk" or why they cannot talk now.
     const bool bPlate=S.bFocusedPerson&&!S.FocusedTitle.IsEmpty()&&S.FocusedBounds.bHasFocusBounds;
+    bPlateAnchored=bPlate&&S.FocusedBounds.bHasAnchor;PlateWorld=S.FocusedBounds.AnchorWorld;
     if(bPlate){const FString Line2=S.FocusedReason.IsEmpty()?FString::Printf(TEXT("[%s] %s"),*Glyph,*(S.FocusedVerb.IsEmpty()?FString(TEXT("Talk")):S.FocusedVerb)):S.FocusedReason;PromptText->SetText(FText::FromString(S.FocusedTitle+LINE_TERMINATOR+Line2));PromptText->SetJustification(ETextJustify::Center);SetVisibility(ESlateVisibility::Visible);
         if(auto* B=Cast<UTVUICommandButton>(PromptButton))B->Configure(CommandDelegate,ETVUICommand::Interact,S.FocusedTargetId,S.FocusedActionId,INDEX_NONE);if(ActionGlyph)ActionGlyph->SetVisibility(ESlateVisibility::Collapsed);for(UBorder* Edge:FocusEdges)if(Edge)Edge->SetVisibility(ESlateVisibility::Collapsed);
         const float Scale=FMath::Max(0.01f,UWidgetLayoutLibrary::GetViewportScale(this));const FVector2D Min=S.FocusedBounds.BoundsPixels.Min/Scale,Max=S.FocusedBounds.BoundsPixels.Max/Scale;

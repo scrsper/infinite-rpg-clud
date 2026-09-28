@@ -78,6 +78,13 @@ static void Step(const FString& Name,UTVBridgeSubsystem* B,TSharedPtr<FJsonObjec
     if(S.bWalk&&!S.bWalkSet&&(Name==TEXT("entered")||Name==TEXT("reconnected"))){S.bWalkSet=true;Tap(EKeys::CapsLock);}
     if(S.RecordFps>0&&!S.bRecording&&(Name==TEXT("entered")||Name==TEXT("reconnected"))){S.bRecording=true;TVVideoCapture::Start(FPaths::Combine(S.Out,TEXT("video")),S.RecordFps,1280);}
     auto J=Extra.IsValid()?Extra:MakeShared<FJsonObject>();J->SetStringField(TEXT("step"),Name);J->SetNumberField(TEXT("atSeconds"),FPlatformTime::Seconds()-S.Started);
+    // Where the focused person is drawn, by each candidate anchor, in screen pixels: for placing the name plate.
+    if(B&&!B->FocusedTargetId.IsEmpty())if(const ATVCharacter* F=B->Bodies.FindRef(B->FocusedTargetId).Get())if(APlayerController* FPC=GameWorld()?GameWorld()->GetFirstPlayerController():nullptr){
+        const auto Px=[FPC](const FVector& At){FVector2D P;const bool Ok=FPC->ProjectWorldLocationToScreen(At,P,true);return Ok?FString::Printf(TEXT("%.0f,%.0f"),P.X,P.Y):FString(TEXT("off"));};
+        auto K=MakeShared<FJsonObject>();K->SetStringField(TEXT("name"),F->DisplayName);K->SetStringField(TEXT("kind"),B->FocusedKind);K->SetStringField(TEXT("actor"),Px(F->GetActorLocation()));
+        K->SetStringField(TEXT("drivenHead"),Px(F->GetMesh()->GetBoneLocation(TEXT("head"))));K->SetStringField(TEXT("presentedHead"),Px(F->PresentedHeadLocation()));
+        if(F->VisibleCharacter){const FBoxSphereBounds VB=F->VisibleCharacter->Bounds;K->SetStringField(TEXT("visibleTop"),Px(VB.Origin+FVector(0,0,VB.BoxExtent.Z)));K->SetBoolField(TEXT("visibleShown"),F->VisibleCharacter->IsVisible()&&F->VisibleCharacter->HasVisibleCharacter());}
+        K->SetStringField(TEXT("plateAnchor"),FString::Printf(TEXT("%.0f,%.0f"),B->FocusedAnchor.X,B->FocusedAnchor.Y));J->SetObjectField(TEXT("focus"),K);}
     if(B){J->SetStringField(TEXT("vitals"),B->PlayerVitals);J->SetStringField(TEXT("status"),B->MovementRestriction);J->SetStringField(TEXT("lastResult"),B->LastResult);J->SetStringField(TEXT("prompt"),B->NearbyPrompt);}
     const FString Frame=FPaths::Combine(S.Out,FString::Printf(TEXT("journey-%02d-%s.png"),S.Shot++,*Name));FScreenshotRequest::RequestScreenshot(Frame,true,false);S.Frames.Add(Frame);J->SetStringField(TEXT("frame"),Frame);
     S.Steps.Add(MakeShared<FJsonValueObject>(J));UE_LOG(LogTemp,Display,TEXT("TV_JOURNEY step=%s"),*Name);

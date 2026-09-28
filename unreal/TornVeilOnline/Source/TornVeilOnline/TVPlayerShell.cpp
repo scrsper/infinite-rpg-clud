@@ -34,7 +34,7 @@ void UTVBridgeSubsystem::UpdateInteractionFocus() {
     int32 Width=0,Height=0;PC->GetViewportSize(Width,Height);double Best=TNumericLimits<double>::Max();
     const FVector2D Aim(Width*.5,Height*.5);
     for(const auto& T:FocusTargets) {
-        FBox Bounds(ForceInit);FVector2D Anchor=FVector2D::ZeroVector;bool bAnchor=false;
+        FBox Bounds(ForceInit);FVector2D Anchor=FVector2D::ZeroVector;FVector AnchorWorld=FVector::ZeroVector;bool bAnchor=false;
         if(T.Kind==TEXT("person")||T.Kind==TEXT("person_unavailable")){auto* Body=Bodies.FindRef(T.Id).Get();if(!IsValid(Body)||Body->IsHidden())continue;
             // The person themself, feet to just above the head: the driver mesh's render bounds are far
             // taller than a person, which floated the name plate a building's height over their head.
@@ -42,7 +42,7 @@ void UTVBridgeSubsystem::UpdateInteractionFocus() {
             const FVector Head=Body->PresentedHeadLocation();
             // Centred on the head, not the actor: a seated or lying body is drawn offset from its actor.
             Bounds=FBox(FVector(Head.X-40,Head.Y-40,FMath::Min(Feet.Z,Head.Z-40)),FVector(Head.X+40,Head.Y+40,Head.Z+22));
-            bAnchor=PC->ProjectWorldLocationToScreen(Head+FVector(0,0,28),Anchor,true);}
+            AnchorWorld=Head+FVector(0,0,28);bAnchor=PC->ProjectWorldLocationToScreen(AnchorWorld,Anchor,true);}
         else if(!WorldProjection||!WorldProjection->FindVisualBounds(T.Id,Bounds)) {
             const FVector Pos=ToUnreal(T.Position)-FVector(0,0,90);
             Bounds=FBox(Pos-FVector(18,18,0),Pos+FVector(18,18,35));
@@ -51,7 +51,7 @@ void UTVBridgeSubsystem::UpdateInteractionFocus() {
         for(int32 I=0;I<8;++I){FVector2D P;const FVector Corner((I&1)?Bounds.Max.X:Bounds.Min.X,(I&2)?Bounds.Max.Y:Bounds.Min.Y,(I&4)?Bounds.Max.Z:Bounds.Min.Z);
             if(!PC->ProjectWorldLocationToScreen(Corner,P,true)){Visible=false;break;}Screen+=P;}
         if(!Visible)continue;const double Score=TVInteractionFocus::Score(Screen,Aim,Height);
-        if(Score<Best||(Score==Best&&T.Id<FocusedTargetId)){Best=Score;FocusedTargetId=T.Id;FocusedActionId=T.Action;FocusedKind=T.Kind;NearbyPrompt=T.Label;FocusedBounds=Screen;FocusedAnchor=Anchor;bFocusedAnchor=bAnchor;FocusedTitle=T.Title;FocusedVerb=T.Verb;FocusedReason=T.Reason;}
+        if(Score<Best||(Score==Best&&T.Id<FocusedTargetId)){Best=Score;FocusedTargetId=T.Id;FocusedActionId=T.Action;FocusedKind=T.Kind;NearbyPrompt=T.Label;FocusedBounds=Screen;FocusedAnchor=Anchor;FocusedAnchorWorld=AnchorWorld;bFocusedAnchor=bAnchor;FocusedTitle=T.Title;FocusedVerb=T.Verb;FocusedReason=T.Reason;}
     }
     if(FocusedKind==TEXT("person"))TalkTargetBody=FocusedTargetId;else if(FocusedKind!=TEXT("person_unavailable"))NearbyInteraction=FocusedActionId;
 }
@@ -69,7 +69,7 @@ void UTVBridgeSubsystem::UpdatePlayerShell() {
     else if(PredictedCombat.Locked(CombatAge))MovementRestriction=TEXT("Recovering");
     else if(!HasModalScreen()&&Confirmed.bEligible&&!P->IntentDirection().IsNearlyZero()&&PredictionVelocity.Size2D()<1)MovementRestriction=TEXT("Blocked");
     FTVUISnapshot S;S.Revision=SnapshotCount;S.FocusedLabel=NearbyPrompt;S.FocusedTitle=FocusedTitle;S.FocusedVerb=FocusedVerb;S.FocusedReason=FocusedReason;S.bFocusedPerson=FocusedKind.StartsWith(TEXT("person"));S.FocusedTargetId=FocusedTargetId;S.FocusedActionId=FocusedActionId;
-    S.FocusedBounds.bHasFocusBounds=FocusedBounds.bIsValid;S.FocusedBounds.BoundsPixels=FocusedBounds;S.FocusedBounds.bHasAnchor=bFocusedAnchor&&FocusedBounds.bIsValid;S.FocusedBounds.AnchorPixels=FocusedAnchor;
+    S.FocusedBounds.bHasFocusBounds=FocusedBounds.bIsValid;S.FocusedBounds.BoundsPixels=FocusedBounds;S.FocusedBounds.bHasAnchor=bFocusedAnchor&&FocusedBounds.bIsValid;S.FocusedBounds.AnchorPixels=FocusedAnchor;S.FocusedBounds.AnchorWorld=FocusedAnchorWorld;
     S.Vitals=PlayerVitals+TEXT("\n")+MobilitySummary;S.Journal=JournalSummary+TEXT("\n")+KnowledgeSummary;S.Restriction=MovementRestriction+(WorkStatus.IsEmpty()?TEXT(""):(MovementRestriction.IsEmpty()?TEXT(""):TEXT("\n"))+WorkStatus)+(LastResult.IsEmpty()?TEXT(""):TEXT("   ")+LastResult);
     if(CarriedRows.Num()||InventoryItemIds.IsEmpty())S.Inventory=CarriedRows;
     else for(int32 I=0;I<InventoryItemIds.Num();++I){
