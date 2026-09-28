@@ -1,5 +1,7 @@
 import type { Action, Person, Vec3 } from '../core/types';
 import { makePerson, makeBody } from '../world/factory';
+import { restyleAppearance } from '../world/characterAppearance';
+import type { AppearanceDescription } from '../core/appearance';
 import { reachable } from '../kernel/mechanics';
 import { Simulation } from '../mind/agent';
 import { knowsVeil, MEDITATION_SECONDS } from '../physical/veil';
@@ -19,7 +21,17 @@ export type PersonIntent = { kind: 'yield' } | { kind: 'advance' } | { kind: 're
   | { kind: 'read'; itemId: string }
   | { kind: 'teach'; target: string; key: string };
 
-export interface SpawnOptions { gender?: 'f' | 'm'; age?: number }
+export interface SpawnOptions { gender?: 'f' | 'm'; age?: number; look?: Partial<AppearanceDescription> }
+/**
+ * A new player's default look, as canonical appearance tokens (never asset paths): a grown man,
+ * fair-skinned, hair kept short, ordinary build. Chosen, not rolled, because it is the face the
+ * player spends the game looking at; `SpawnOptions.look` overrides any of it. NPCs keep their own
+ * generated diversity.
+ */
+export const PLAYER_DEFAULT_LOOK: Partial<AppearanceDescription> = {
+  presentation: 'masculine', skinTone: 'fair', hairStyle: 'short_swept', hairColor: 'brown',
+  eyeColor: 'blue', frame: 'average', stature: 'above_average', faceShape: 'square',
+};
 
 /** Connection routing is outside the world-facing Person. No account, human personality,
  * player flag or control origin enters a simulated mind. One facade can host many controls. */
@@ -40,7 +52,10 @@ export class GameSim {
   spawn(connection: string, name: string, pos: Vec3, options: SpawnOptions = {}): string {
     const w = this.simulation.world;
     const age = Number.isInteger(options.age) && options.age! >= 18 && options.age! <= 60 ? options.age! : 25;
-    const p = makePerson(w, { name, age, gender: options.gender === 'm' ? 'm' : 'f', occupation: 'traveler', traits: {}, appearance: {}, bio: '' });
+    const gender = options.gender === 'f' ? 'f' : 'm';
+    const p = makePerson(w, { name, age, gender, occupation: 'traveler', traits: {}, appearance: {}, bio: '' });
+    const look = { ...(gender === 'm' ? PLAYER_DEFAULT_LOOK : {}), ...(options.look ?? {}) };
+    if (Object.keys(look).length) p.appearance = restyleAppearance(p.appearance, look, p.occupation, p.age);
     p.bodies.push(makeBody(w, p.id, pos).id); this.attach(connection, p.id); return p.id;
   }
   private person(connection: string): Person | undefined { return this.simulation.world.person(this.connections.get(connection)); }

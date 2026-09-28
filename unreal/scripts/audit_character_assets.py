@@ -25,6 +25,10 @@ import socket
 
 import unreal
 
+# City Sample tags its names do not carry: face complexions, hair shapes. See the file itself.
+with open(os.path.join(os.path.dirname(os.path.abspath(unreal.Paths.project_dir())), 'scripts', 'city_sample_tags.json'), encoding='utf-8') as _stream:
+    CITY_SAMPLE_TAGS = {k: v for k, v in json.load(_stream).items() if not k.startswith('_')}
+
 # --- Classification ---------------------------------------------------------------------------
 #
 # Content packs name things inconsistently. Classify the asset name before consulting folders:
@@ -574,6 +578,8 @@ def main():
 
         row = dict(package=package, name=name, assetClass=kind, slot=slot, tags=tags)
         row.update(geometry_metadata(package, slot))
+        if '/CitySampleCrowd/' in package and name in CITY_SAMPLE_TAGS:
+            row['tags'] = sorted(set(row['tags']) | set(CITY_SAMPLE_TAGS[name]))
         if kind in STATIC_CLASSES:
             row['assemblyOnly'] = True  # render via the owning groom, never as a loose LOD card
         if slot == 'head' and '/CitySampleCrowd/' in package:
