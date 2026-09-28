@@ -49,6 +49,9 @@ bool FTVPlayableDaylight::RunTest(const FString&) {
     TestTrue(TEXT("before dawn and at 22:00 it is night"),Dawn.bNight&&Late.bNight);
     // The earlier black frames: a dim night under a fixed EV100 12. Night exposure may now adapt.
     TestTrue(TEXT("night exposure can adapt down"),Late.MinEV100<=0.f&&Late.SunLux>0.f&&Late.SkyIntensity>0.f);
+    const auto Dusk=UTVPlayableLighting::SkyFor(20.4*3600,TEXT("clear"),0);
+    TestTrue(TEXT("dusk is twilight: past sunset, still lit well above moonlight"),Dusk.bNight&&Dusk.SunLux>50*Late.SunLux&&Dusk.MinEV100>Late.MinEV100);
+    TestTrue(TEXT("moonlight is within the exposure floor (EV100 -2 needs about 0.6 lux)"),Late.SunLux>=.6f&&Late.MinEV100>=-2.f);
     TestEqual(TEXT("evening sun is warm and low"),UTVPlayableLighting::SkyFor(19.5*3600,TEXT("clear"),0).Color.B<.9f,true);
     UTVPlayableLighting::ApplyCanonicalSky(World,12*3600,TEXT("clear"),0);
     (*TActorIterator<ADirectionalLight>(World))->GetLightComponent()->SetIntensity(100);

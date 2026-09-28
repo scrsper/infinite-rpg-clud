@@ -118,9 +118,17 @@ UTVPlayableLighting::FSky UTVPlayableLighting::SkyFor(double WorldTimeSeconds, c
         S.Color=FLinearColor::LerpUsingHSV(FLinearColor(1.f,.62f,.38f),FLinearColor::White,float(Rise));
         S.SkyIntensity=1.f;S.MinEV100=InteriorEV100;S.bNight=false;
     } else {
-        // Moonlight: dim and cool, from high in the south; exposure may adapt so night is dark, not black.
-        S.SunLux=float(.35*Cover);S.Direction=FRotator(-40.f,160.f,0.f);S.Color=FLinearColor(.62f,.72f,1.f);
-        S.SkyIntensity=.8f;S.MinEV100=-2.f;S.bNight=true;
+        // Twilight, then moonlight. For an hour and a half after sunset (and before sunrise) the
+        // sky still lights the land from the sun's side, fading fast; a hard switch to moonlight at
+        // 20:00 turned a playable dusk black. Moonlight is brighter than a real moon (1.2 lux, not
+        // 0.3) so exposure, floored at EV100 −2, can reach it: night is dark, not black.
+        constexpr double MoonLux=1.2,TwilightLux=1000.,TwilightHours=1.5;
+        const double FromSun=FMath::Min(FMath::Abs(Hour-20.),FMath::Abs(Hour-6.)),Dusk=FMath::Abs(Hour-20.)<FMath::Abs(Hour-6.)?1.:0.;
+        const double T=1.-FMath::SmoothStep(0.,TwilightHours,FromSun),Glow=T*T*T;
+        S.SunLux=float(FMath::Lerp(MoonLux,TwilightLux,Glow)*Cover);
+        S.Direction=T>0?FRotator(-4.f,float(Dusk>0?100.:-100.),0.f):FRotator(-40.f,160.f,0.f);
+        S.Color=FLinearColor::LerpUsingHSV(FLinearColor(.62f,.72f,1.f),FLinearColor(1.f,.52f,.42f),float(Glow));
+        S.SkyIntensity=float(FMath::Lerp(.8,1.,T));S.MinEV100=float(FMath::Lerp(-2.,double(InteriorEV100),Glow));S.bNight=true;
     }
     S.FogDensity=Kind==TEXT("fog")?.05f:(Kind==TEXT("rain")||Kind==TEXT("storm"))?.03f:.014f;
     return S;
