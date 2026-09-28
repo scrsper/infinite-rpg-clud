@@ -457,10 +457,14 @@ void UTVBridgeSubsystem::Receive(const FString& Message) {
         if(ReceiptStatus!=TEXT("received")) {
             if(const double* At=CommandSentAt.Find(Seq)) {const double Rtt=(FPlatformTime::Seconds()-*At)*1000;TVSample(AppliedRttSamples,Rtt);if(Seq==CombatCommandSequence)TVSample(CombatAppliedRttSamples,Rtt);double Arrival=0,Applied=0;if(M->TryGetNumberField(TEXT("receivedAtMs"),Arrival)&&M->TryGetNumberField(TEXT("appliedAtMs"),Applied)){TVSample(CommandApplicationSamples,Applied-Arrival);if(ClockUncertaintyMs<1e8){TVSample(CommandOutboundSamples,Arrival-(*At*1000+ClockOffsetMs));TVSample(CommandInboundSamples,ReceivedAtMs+ClockOffsetMs-Applied);}}UE_LOG(LogTemp,VeryVerbose,TEXT("TV_COMMAND seq=%d status=%s roundtrip_ms=%.3f"),Seq,*ReceiptStatus,Rtt);}
             CommandSentAt.Remove(Seq);
-            if(ReceiptStatus==TEXT("rejected")||ReceiptStatus==TEXT("cancelled")) {PendingMovement.RemoveAll([Seq](const auto& P){return P.Sequence==Seq;});
+            if(ReceiptStatus==TEXT("rejected")||ReceiptStatus==TEXT("cancelled")) {
+                // A movement sample that expired in a server hitch is already corrected by prediction;
+                // telling the player about it ("Input arrived too late") only flashes noise.
+                const bool bExpiredMove=M->GetStringField(TEXT("result"))==TEXT("expired")&&PendingMovement.ContainsByPredicate([Seq](const auto& P){return P.Sequence==Seq;});
+                PendingMovement.RemoveAll([Seq](const auto& P){return P.Sequence==Seq;});
                 if(BufferedCombat.IsSet()&&BufferedCombat->Sequence==Seq)BufferedCombat.Reset();if(Seq==PendingFeedbackSequence)bCrouchHeld=false;
                 if(Seq==CombatCommandSequence){if(auto* C=Bodies.FindRef(InteractionBody).Get())C->CombatPresentation->RejectAction(PredictedCombat.CommandId);PredictedCombat=FTVLiveCombat();}
-                LastResult=ResultText(M->GetStringField(TEXT("result")));ResultClock=0;}
+                if(!bExpiredMove){LastResult=ResultText(M->GetStringField(TEXT("result")));ResultClock=0;}}
             else if(Seq==PendingFeedbackSequence){PendingFeedbackSequence=-1;} // success shows in the world; no "Confirmed" noise
         }
         return;
