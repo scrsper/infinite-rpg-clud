@@ -1,4 +1,16 @@
-# Current: inhabitable alpha work, branch `claude/inhabitable-alpha` (2026-09-27/28)
+# Current: human checkpoint 1 — STOPPED for human review (2026-09-28)
+
+Course correction (user, 2026-09-28): human experience first; no simulation breadth. Delivered and
+stopped: one polished conversation, a coherent lineup, readable NPC movement, two player gaits.
+Report, play path and five-minute test: `docs/HUMAN_CHECKPOINT_1.md`.
+Play: `%USERPROFILE%\TornVeilAlpha\playtests\checkpoint-9a2aa61\Play.cmd` → client
+`client-9a2aa61…` + server `0.2.0-inhabit.11` in a fresh world `TornVeilAlpha\checkpoint-human`
+(127.0.0.1:7440). Evidence world `TornVeilAlpha\checkpoint-evidence` (7450, probe accounts ev-a..d).
+The older dev world (7430) is crowded with ~20 autonomous probe characters: not for human review.
+Next action: wait for the human's verdict; then combat inventory/presentation and one environment
+reference scene, as the course correction orders.
+
+# Previous: inhabitable alpha work, branch `claude/inhabitable-alpha` (2026-09-27/28)
 
 Continuation checkpoint for the consolidated alpha brief (playable, inhabitable, visually coherent).
 Baseline: main `223264d`. Integration branch `claude/inhabitable-alpha` (pushed; no PR yet).

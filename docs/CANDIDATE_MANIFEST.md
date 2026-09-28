@@ -1,5 +1,9 @@
 # Inhabitable alpha — candidate manifest
 
+> **Current candidate: human checkpoint 1** — client `client-9a2aa61…` + server
+> `0.2.0-inhabit.11` in its own fresh world (127.0.0.1:7440). See `docs/HUMAN_CHECKPOINT_1.md` for
+> the play path, the five-minute test and the evidence. The tables below are the earlier history.
+
 The current candidate for the consolidated alpha brief. It is a **playable checkpoint**, not a
 complete implementation and not an accepted alpha: coverage is incomplete
 (`docs/SIMULATION_TO_PLAYER_COVERAGE.md`), and no human acceptance has taken place.
