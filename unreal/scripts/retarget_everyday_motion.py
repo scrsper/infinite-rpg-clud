@@ -103,28 +103,32 @@ def describe(package):
 
 
 CALM_HEAD = ['RT_%s_Anim' % n for n in MOTIFECT_SOCIAL]
-CALM_BONES = ('neck_01', 'neck_02', 'head')
-CALM_SHARE = 0.3
+# How much of the captured rotation each bone keeps over the idle pose. The head was the first
+# problem (tilted, lolling); the spine and pelvis were the next (a drunken sideways lean while
+# talking). The arms, carried by the clavicles and below, keep the whole gesture.
+CALM_SHARE = {'neck_01': 0.3, 'neck_02': 0.3, 'head': 0.3, 'pelvis': 0.5,
+              'spine_01': 0.4, 'spine_02': 0.4, 'spine_03': 0.4, 'spine_04': 0.4, 'spine_05': 0.4}
 
 
 def calm_head(package, idle):
-    """Keep a gesture's arms and body, but let the head move only a third as much as captured.
+    """Keep a gesture's arms, but let the head and trunk move only part as much as captured.
 
     The social clips were performed broadly; on a person standing in the lane the captured head
-    rolls read as a lolling, tilted head. The neck and head are rebuilt as the idle pose plus
-    CALM_SHARE of the clip's own motion, frame by frame."""
+    rolls read as a lolling, tilted head and the trunk as a drunken lean. Each bone in CALM_SHARE
+    is rebuilt as the idle pose plus that share of the clip's own rotation, frame by frame;
+    translations (the weight shift) are kept."""
     anim = unreal.load_asset(package)
     frames = unreal.AnimationLibrary.get_num_frames(anim)
     length = anim.get_play_length()
     idle_length = idle.get_play_length()
     controller = anim.controller
-    for bone in CALM_BONES:
+    for bone, share in CALM_SHARE.items():
         positions, rotations, scales = [], [], []
         for i in range(frames + 1):
             t = min(length, length * i / max(1, frames))
             own = unreal.AnimationLibrary.get_bone_pose_for_time(anim, bone, t, False)
             base = unreal.AnimationLibrary.get_bone_pose_for_time(idle, bone, t % idle_length, False)
-            r = unreal.MathLibrary.r_lerp(base.rotation.rotator(), own.rotation.rotator(), CALM_SHARE, True).quaternion()
+            r = unreal.MathLibrary.r_lerp(base.rotation.rotator(), own.rotation.rotator(), share, True).quaternion()
             q = unreal.Quat()
             for axis in ('x', 'y', 'z', 'w'):
                 q.set_editor_property(axis, getattr(r, axis))
