@@ -1,6 +1,6 @@
 import type { Item, Person } from '../sim/core/types';
 import type { Simulation } from '../sim/mind/agent';
-import type { HandInteraction } from '../sim/physical/hand';
+import { butcheryLaborSeconds, type HandInteraction } from '../sim/physical/hand';
 import { actionsForCarriedItem, describeCarried } from '../sim/core/interaction';
 import { canReadRecord } from '../sim/mind/records';
 import { knowsVeil, veilStrain } from '../sim/physical/veil';
@@ -63,6 +63,23 @@ function readRow(sim: Simulation, p: Person, it: Item, unable?: string): PlayerA
   // What a reader can tell for themselves: the marks are not ones they know, or the page is spoiled.
   if (!available && !reason) reason = (it.condition ?? 1) <= 0 || !it.record?.notation ? 'It is too damaged to make out.' : 'You cannot read these marks.';
   return { id: `read:${it.id}`, kind: 'read', label: `Read ${it.name || 'the record'}`, available, reason, request: { type: 'person_action', intent: { kind: 'read', itemId: it.id } } };
+}
+
+/** Timed work the player is doing right now, as they would experience it: what, how far along,
+ * and that moving stops it. Read from their own action and the thing being worked on. */
+export function currentWork(sim: Simulation, p: Person): { kind: string; label: string; progress: number; remainingSeconds: number; stop: string } | null {
+  const a = p.mind.plan[0], w = sim.world;
+  if (!a || a.status === 'failed' || a.status === 'done') return null;
+  if (a.type === 'butcher') {
+    const carcass = w.body(a.targetEntity!); if (!carcass) return null;
+    const needed = butcheryLaborSeconds(w, carcass), done = Math.min(needed, carcass.butcheredSeconds ?? 0);
+    return { kind: 'butcher', label: `Dressing the ${w.nameOf(carcass.ownerId)} carcass`, progress: done / needed, remainingSeconds: needed - done, stop: 'move to stop; the work done stays with the carcass' };
+  }
+  if (a.type === 'meditate') {
+    const total = a.duration ?? 0, done = Math.max(0, w.now - (a.startedAt ?? w.now));
+    return total > 0 ? { kind: 'meditate', label: 'Meditating on the veil', progress: Math.min(1, done / total), remainingSeconds: Math.max(0, total - done), stop: 'move to stop' } : null;
+  }
+  return null;
 }
 
 /** The player's own capacities: learned techniques and ordinary bodily actions, with readiness. */

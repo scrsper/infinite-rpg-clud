@@ -127,23 +127,50 @@ const BLADES = new Set(['dagger', 'sword', 'axe', 'stoneaxe']);
 function bladeOf(w: World, p: Person) { return p.inventory.map(id => w.item(id)).find(i => i && i.holderId === p.id && i.quantity > 0 && BLADES.has(i.type) && i.condition !== 0); }
 /** Dress a carcass: needs a blade, takes about twenty minutes of work, yields cuts of meat in
  * proportion to the animal's body mass (tagged with species and origin), and removes the carcass. */
+/** World seconds of labour a carcass takes to dress: about four minutes per ten kilograms, never
+ * less than five minutes or more than an hour. A hare is quick; a boar is half an hour's work. */
+export function butcheryLaborSeconds(w: World, carcass: Body): number {
+  const animal = w.get<Creature>(carcass.ownerId), massKg = (animal && w.ecology?.species[animal.species]?.bodyPlan.massKg) ?? 10;
+  return Math.min(3600, Math.max(300, massKg * 25));
+}
+/** Who, if anyone other than `p`, is dressing this carcass right now (derived from their action). */
+function butcherAtWork(w: World, carcassId: string, except: string): Person | undefined {
+  return w.livingPersons().find(q => q.id !== except && q.mind.plan[0]?.type === 'butcher' && q.mind.plan[0].targetEntity === carcassId
+    && q.mind.plan[0].status !== 'failed' && q.mind.plan[0].status !== 'done');
+}
+/** Start (or resume) dressing a carcass. The meat appears only when the labour is actually done. */
 function butcher(sim: Simulation, p: Person, bodyId: string): string {
   const w = sim.world, b = w.primaryBody(p.id)!, carcass = carcassesAtHand(w, b).find(c => c.id === bodyId);
   if (!carcass) return 'out_of_reach';
   if (!bladeOf(w, p)) return 'missing_tool';
   if (p.physiology.fatigue > 0.9) return 'too_tired';
+  if (butcherAtWork(w, carcass.id, p.id)) return 'in_use';
+  sim.submitIntention(p, { type: 'butcher', targetEntity: carcass.id, status: 'pending', data: { startedSeconds: carcass.butcheredSeconds ?? 0 } });
+  return 'accepted';
+}
+/** One tick of dressing a carcass. Stops (keeping the work done on the carcass) if the butcher
+ * walks off, loses the blade, is hurt out of it or someone else took the carcass. */
+export function butcherWork(w: World, p: Person, body: Body, carcassId: string, worldDt: number): 'working' | 'done' | 'interrupted' {
+  const carcass = w.body(carcassId);
+  if (!carcass || !carcass.present || !carcass.dead || !canActBody(w, p, body)) return 'interrupted';
+  if (Math.hypot(carcass.pos.x - body.pos.x, carcass.pos.z - body.pos.z) > 2.4 || Math.hypot(body.vel.x, body.vel.z) > 0.3 || !bladeOf(w, p)) return 'interrupted';
+  if (p.physiology.fatigue > 0.95) return 'interrupted';
+  const needed = butcheryLaborSeconds(w, carcass);
+  carcass.butcheredSeconds = Math.min(needed, (carcass.butcheredSeconds ?? 0) + worldDt);
+  p.physiology.fatigue = Math.min(1, p.physiology.fatigue + worldDt * 0.06 / 1200);
+  if (carcass.butcheredSeconds < needed) return 'working';
   const animal = w.get<Creature>(carcass.ownerId)!, spec = w.ecology?.species[animal.species];
-  const massKg = spec?.bodyPlan.massKg ?? 10;
-  const units = Math.max(1, Math.round(massKg / 10));
+  const units = Math.max(1, Math.round((spec?.bodyPlan.massKg ?? 10) / 10));
   const meat = makeItem(w, 'meat', `${animal.name} meat`, { owner: p.id, holder: p.id, quantity: units, tags: ['butchered', `species:${animal.species}`, `from:${animal.id}`] });
-  p.inventory.push(meat.id);
   carcass.present = false;
-  p.physiology.fatigue = Math.min(1, p.physiology.fatigue + 0.06);
   const killedBySelf = w.events.some(e => e.type === 'kill' && e.actor === p.id && e.target === animal.id);
   const ev = w.emit('butchered', { actor: p.id, target: animal.id, pos: { ...carcass.pos }, category: 'world', significance: 0.15, visibility: 16, loudness: 4,
-    data: { species: animal.species, units, itemId: meat.id, laborSeconds: 1200, killedBySelf }, summary: `${p.name} butchered a ${animal.name}` });
+    data: { species: animal.species, units, itemId: meat.id, laborSeconds: needed, killedBySelf }, summary: `${p.name} butchered a ${animal.name}` });
   recordCapabilityPractice(w, p, { skill: 'hunting', sourceEventId: ev.id });
-  return 'accepted';
+  return 'done';
+}
+function canActBody(w: World, p: Person, b: Body): boolean {
+  return b.present && !b.dead && p.alive && b.pose !== 'downed' && b.subduedUntil <= w.physicalTime && !p.surrender && !p.custody?.active;
 }
 export function performHandInteraction(sim: Simulation, p: Person, id: unknown): string {
   if (typeof id !== 'string' || !/^(buy|take|steal|recover|consume|drink|gather|drop|open|close|butcher):.+$/.test(id)) return 'invalid_interaction';

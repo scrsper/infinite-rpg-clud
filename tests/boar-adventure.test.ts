@@ -142,16 +142,31 @@ describe('boar encounter and protection loop — separate hard checks', () => {
     // The kill itself is proven above; here it is a disclosed fixture blow through applyHit.
     for (let i = 0; i < 20 && !bb.dead; i++) s.sim.applyHit(player, pb, bb, 30, 'kill');
     expect(bb.dead && bb.present).toBe(true);
+    // Disclosed placement: dress it in the village square, away from the herd, whose defence would
+    // otherwise (correctly) interrupt the work with a blow; interruption is tested in butchery-work.
+    const quiet = s.spawnPoint(9); bb.pos = { ...quiet, x: quiet.x + 3 }; bb.vel = { x: 0, y: 0, z: 0 };
     standBeside(w, pb, bb.pos, 1.2); s.stepInteraction();
     expect(say(s, { type: 'interact', interactionId: `butcher:${bb.id}` }).result).toBe('missing_tool');
     const knife = makeItem(w, 'dagger', 'knife', { owner: player.id, holder: player.id }); player.inventory.push(knife.id);
     const hunting = player.capability?.bySkill.hunting?.effectiveSeconds ?? 0;
     expect(say(s, { type: 'interact', interactionId: `butcher:${bb.id}` }).result).toBe('accepted');
+    // Accepting the job is not the meat: dressing a 70 kg boar is about half an hour of work.
+    expect(player.inventory.some(id => w.item(id)?.type === 'meat')).toBe(false);
+    const started = w.now;
+    stepFor(s, 20);
+    const work = (s.snapshot(false) as any).work;
+    expect(work).toMatchObject({ kind: 'butcher', label: 'Dressing the woodland boar carcass' });
+    expect(work.progress).toBeGreaterThan(0);
+    expect(work.progress).toBeLessThan(1);
+    for (let i = 0; i < 400 && !player.inventory.some(id => w.item(id)?.type === 'meat'); i++) stepFor(s, 1);
+    expect(w.now - started).toBeGreaterThanOrEqual(1750 - 1);
     const meat = player.inventory.map(id => w.item(id)!).find(i => i.type === 'meat')!;
+    expect(player.inventory.filter(id => id === meat.id)).toHaveLength(1); // carried once, not twice
     expect(meat.tags).toEqual(expect.arrayContaining(['species:woodland_boar', `from:${boar.id}`]));
     expect(meat.quantity).toBe(7); // 70 kg of boar
     expect(bb.present).toBe(false);
-    expect(w.events.some(e => e.type === 'butchered' && e.actor === player.id && e.data.killedBySelf === true)).toBe(true);
+    expect(w.events.some(e => e.type === 'butchered' && e.actor === player.id && e.data.killedBySelf === true && e.data.laborSeconds === 1750)).toBe(true);
+    expect((s.snapshot(false) as any).work).toBeNull();
     expect(player.capability!.bySkill.hunting!.effectiveSeconds).toBeGreaterThan(hunting);
     expect(say(s, { type: 'interact', interactionId: `butcher:${bb.id}` }).result).toBe('out_of_reach');
   }, 120_000);

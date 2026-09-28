@@ -33,7 +33,7 @@ import { recogniseClass, type RecognisedClass } from '../sim/mind/vocation';
 import { handInteractions, openContainerProjection, performContainerTransfer, performHandInteraction } from '../sim/physical/hand';
 import { DialogueSystem, type DialogueState } from '../sim/mind/dialogue';
 import { actionsForPerson } from '../sim/core/interaction';
-import { abilityRows, carriedItemRows } from './playerActions';
+import { abilityRows, carriedItemRows, currentWork } from './playerActions';
 import { B } from '../sim/physical/blocks';
 import type { Body, Item, Person, Vec3 } from '../sim/core/types';
 import { RESOURCE_MASS_KG } from '../sim/world/factory';
@@ -398,7 +398,7 @@ export class BridgeSession {
     return { version: BRIDGE_VERSION, type: 'snapshot', tick: w.physicalTime, worldTime: w.now, ack: ch.appliedSequence, playerId: p.id, controlledBodyId,
       wildlife: wildlifeProjection(w, w.body(controlledBodyId)),
       knowledge, mechanisms: mechanismPanel(w, p), interactions, mobility, container: openContainerProjection(this.sim,p), dialogue: this.dialogueProjection(ch), talkTargets,
-      carried: carriedItemRows(this.sim, p, interactions), abilities: abilityRows(this.sim, p),
+      carried: carriedItemRows(this.sim, p, interactions), abilities: abilityRows(this.sim, p), work: currentWork(this.sim, p),
       journal: playerJournal(w, p),
       interactionTargets:[...interactions.flatMap(a=>a.target?[{actionId:a.id,targetId:a.target.id,kind:a.target.kind,label:a.label,pos:a.target.pos}]:[]),
         ...talkTargets.map(t=>({actionId:`talk:${t.bodyId}`,targetId:t.bodyId,kind:'person',label:`Talk — ${t.name||'Unknown person'}`,pos:{...w.body(t.bodyId)!.pos}}))],

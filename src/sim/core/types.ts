@@ -117,6 +117,9 @@ export interface Body extends Entity {
    * (unlike `attackTarget`) because a subdual that outlasts a save/reload must survive it. 0
    * when not subdued. */
   subduedUntil: number;
+  /** A carcass being dressed: world seconds of butchering labour already spent on it, by anyone.
+   * Partial work stays with the carcass when the butcher stops; the next stint continues it. */
+  butcheredSeconds?: number;
 }
 
 // ---------------------------------------------------------------- Persons / Minds
@@ -443,7 +446,9 @@ export type ActionType = 'hush' | 'meditate' | 'goto' | 'wait' | 'use' | 'sit' |
   // v0.8 §P0-G/H: hand a carried item to another person in person — the 'help_recover_item'
   // plan's delivery step (see GoalType). Distinct from the existing NPC-to-player trade/`bought`
   // path; this always uses `Simulation.giveItem` (mind/agent.ts), which pays any owed reward.
-  | 'ask_mechanism' | 'mechanism_task' | 'introduce' | 'give' | 'propose' | 'buy_food' | 'manage_household' | 'construct_mechanism' | 'operate_mechanism' | 'procure_material' | 'read_record' | 'write_record' | 'copy_record' | 'attempt_breakthrough';
+  | 'ask_mechanism' | 'mechanism_task' | 'introduce' | 'give' | 'propose' | 'buy_food' | 'manage_household' | 'construct_mechanism' | 'operate_mechanism' | 'procure_material' | 'read_record' | 'write_record' | 'copy_record' | 'attempt_breakthrough'
+  // Dressing a carcass: real labour at hand over time (see physical/hand.ts butcherWork).
+  | 'butcher';
 export interface Action {
   type: ActionType;
   pos?: Vec3;

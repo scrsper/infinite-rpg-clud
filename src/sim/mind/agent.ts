@@ -1,6 +1,7 @@
 import { provokeAnimal, menacingAnimals } from '../ecology/defense';
 import { maintainProtectionRequests } from '../social/protection';
 import { attemptHush, knowsVeil, meditateOnVeil, MEDITATION_SECONDS, veilStrain, HUSH_RANGE_M } from '../physical/veil';
+import { butcherWork } from '../physical/hand';
 import { naturalDeath } from '../ecology/animals';
 import { knowledgeItems } from './knowledgeView';
 import { combatActionFacts } from '../physical/combatFacts';
@@ -1856,6 +1857,12 @@ export class Simulation {
         break;
       }
       case 'hush': { const r = attemptHush(w, p, a.data?.bodyId ?? ''); a.data = { ...a.data, result: r }; a.status = r === 'calmed' || r === 'resisted' ? 'done' : 'failed'; break; }
+      case 'butcher': {
+        // Real labour at the carcass; progress stays with it if this stint stops (physical/hand.ts).
+        const r = butcherWork(w, p, body, a.targetEntity!, worldDt);
+        if (r === 'working') { body.pose = 'work'; break; }
+        a.status = r === 'done' ? 'done' : 'failed'; a.data = { ...a.data, outcome: r }; body.pose = 'stand'; break;
+      }
       case 'meditate': { if (!knowsVeil(p) || body.pose === 'downed') { a.status = 'failed'; break; } body.pose = 'sit'; body.vel = { x: 0, y: 0, z: 0 }; if (this.elapsed(a)) a.status = meditateOnVeil(w, p, a.duration ?? MEDITATION_SECONDS) ? 'done' : 'failed'; break; }
       case 'sit': if (!this.settleRestPosition(body, a.pos, physDt)) break; body.pose = 'sit'; p.needs.social = clamp(p.needs.social - worldDt / (3 * SECONDS_PER_HOUR)); this.maybeChat(p, body); if (this.elapsed(a)) a.status = 'done'; break;
       case 'eat': {
