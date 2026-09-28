@@ -121,6 +121,25 @@ def add(material, a, b, x, y):
     return node
 
 
+# Installed City Sample fabric scans (plain weave and a linen dye macro). Non-virtual textures,
+# so the sampler types below are the ordinary ones.
+FABRIC_TEXTURES = '/Game/CitySampleCrowd/Character/Shared/Materials/Clothing/Textures'
+FABRIC_ALBEDO = FABRIC_TEXTURES + '/QuixelFabric/Fabric_Plain_rbeskmp0/rbeskmp_4K_Albedo_Grey'
+FABRIC_NORMAL = FABRIC_TEXTURES + '/QuixelFabric/Fabric_Plain_rbeskmp0/rbeskmp_4K_Normal'
+FABRIC_MACRO = FABRIC_TEXTURES + '/macros/macro_linen_rbess3s_4K'
+
+
+def texture_sample(material, path, uv, sampler, x, y):
+    texture = unreal.EditorAssetLibrary.load_asset(path)
+    if texture is None:
+        raise RuntimeError('fabric texture missing: ' + path)
+    node = expression(material, unreal.MaterialExpressionTextureSample, x, y)
+    node.set_editor_property('texture', texture)
+    node.set_editor_property('sampler_type', sampler)
+    connect(*pin(uv), node, 'UVs')
+    return node
+
+
 def build_material():
     # Rebuilt in place, never deleted and recreated. Deleting it breaks every reference to it --
     # the four region instances point at this material, and sixty-six meshes point at those. A
@@ -176,12 +195,44 @@ def build_material():
     darken = expression(material, unreal.MaterialExpressionOneMinus, -300, 300)
     connect(*pin(multiply(material, local_wear, constant(material, 0.45, -400, 380), -350, 320)),
             darken, '')
-    base_colour = multiply(material, with_accent, darken, -100, 0)
+    flat_colour = multiply(material, with_accent, darken, -100, 0)
+
+    # Woven cloth, not clay. A flat tint read as painted plastic: real fabric shows its weave in
+    # the light, its dye is uneven over a garment, and it catches a soft sheen at grazing angles.
+    # The weave and the dye variation are greyscale multipliers around 1, so the canonical colour
+    # (Tint/Accent, pushed per person) is what the eye still reads; only the surface changes.
+    weave_uv = multiply(material, expression(material, unreal.MaterialExpressionTextureCoordinate, -1600, 700),
+                        scalar_param(material, 'WeaveTiling', 14.0, -1600, 800), -1400, 720)
+    macro_uv = multiply(material, expression(material, unreal.MaterialExpressionTextureCoordinate, -1600, 950),
+                        scalar_param(material, 'MacroTiling', 1.6, -1600, 1050), -1400, 970)
+    weave = texture_sample(material, FABRIC_ALBEDO, weave_uv, unreal.MaterialSamplerType.SAMPLERTYPE_COLOR, -1200, 700)
+    macro = texture_sample(material, FABRIC_MACRO, macro_uv, unreal.MaterialSamplerType.SAMPLERTYPE_COLOR, -1200, 950)
+    weave_mul = lerp(material, constant(material, 1.0, -950, 640),
+                     multiply(material, (weave, 'R'), constant(material, 2.2, -1000, 760), -900, 720),
+                     scalar_param(material, 'WeaveStrength', 0.45, -1000, 820), -750, 700)
+    macro_mul = lerp(material, constant(material, 1.0, -950, 900),
+                     multiply(material, (macro, 'R'), constant(material, 1.9, -1000, 1010), -900, 960),
+                     scalar_param(material, 'DyeVariation', 0.3, -1000, 1080), -750, 950)
+    woven = multiply(material, multiply(material, flat_colour, weave_mul, -550, 700), macro_mul, -400, 760)
+    # Grazing-angle sheen of cotton/hemp fibres, a little lighter than the cloth itself.
+    fresnel = expression(material, unreal.MaterialExpressionFresnel, -700, 1150)
+    fresnel.set_editor_property('exponent', 3.0)
+    sheen = multiply(material, multiply(material, fresnel, scalar_param(material, 'Sheen', 0.18, -700, 1250), -500, 1180),
+                     (tint, 'RGB'), -350, 1180)
+    base_colour = add(material, woven, sheen, -200, 800)
     unreal.MaterialEditingLibrary.connect_material_property(
         base_colour, '', unreal.MaterialProperty.MP_BASE_COLOR)
 
-    # Worn cloth is rougher, never shinier. Plant-dyed hemp starts rough to begin with.
-    rough_base = constant(material, 0.72, -500, 500)
+    normal = texture_sample(material, FABRIC_NORMAL, weave_uv, unreal.MaterialSamplerType.SAMPLERTYPE_NORMAL, -1200, 1350)
+    # Soften the scanned weave toward a flat normal (FlattenNormal is a material function, so the
+    # same lerp is built here from expressions).
+    flatten = lerp(material, (normal, 'RGB'), colour(material, (0.0, 0.0, 1.0), -1100, 1420),
+                   scalar_param(material, 'WeaveFlatness', 0.35, -1100, 1480), -900, 1350)
+    unreal.MaterialEditingLibrary.connect_material_property(flatten, '', unreal.MaterialProperty.MP_NORMAL)
+
+    # Worn cloth is rougher, never shinier. Plant-dyed hemp starts rough, and the weave varies it.
+    rough_base = add(material, constant(material, 0.66, -600, 500),
+                     multiply(material, (weave, 'R'), constant(material, 0.18, -700, 560), -560, 540), -450, 500)
     rough_add = multiply(material, local_wear, constant(material, 0.16, -500, 620), -300, 540)
     unreal.MaterialEditingLibrary.connect_material_property(
         add(material, rough_base, rough_add, -100, 520), '', unreal.MaterialProperty.MP_ROUGHNESS)

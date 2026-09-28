@@ -474,7 +474,8 @@ def _hakama_leg(fit, build, side, split_z, hem_z, segments, pleat, short):
         cx = _lerp(thigh.x * 0.18, ankle.x * 0.80, t)
         cy = _lerp(-0.02, ankle.y - 0.01, t)
         # Barely tapered. The width at the ankle is most of the width at the hip.
-        r = _lerp(0.178, 0.120 if not short else 0.134, t)
+        # Full, but not a balloon: 0.178 m per leg stood out as two barrels at settlement distance.
+        r = _lerp(0.150, 0.100 if not short else 0.110, t)
         rings.append(ring_points(cx, cy, z, r, r * 0.86, segments, modulate=pleat))
         # The bind proxy hugs the actual leg, so the cloth follows the knee instead of
         # spraying outward when the character runs.
@@ -633,7 +634,7 @@ def _obi_knot(fit, build, centre_z, height):
 # Footwear -- and the feet themselves
 # ------------------------------------------------------------------------------------------
 
-def _tabi(fit, build, side, height=0.055, region=UNDER):
+def _tabi(fit, build, side, height=0.055, region=HEM):
     """A split-toe foot covering.
 
     This is load-bearing rather than decorative. City Sample puts the bare feet inside the
@@ -645,38 +646,48 @@ def _tabi(fit, build, side, height=0.055, region=UNDER):
     foot = fit.bone['foot_%s' % side]
     ball = fit.bone['ball_%s' % side]
     # The installed City body is a fragment: it supplies hands, not a lower leg.
-    # Every footwear variant needs a calf wrap overlapping the short hakama's hem
-    # (ankle + .22 m), or sandals and trousers visibly float apart by ~16 cm.
-    height = max(height, fit.ankle_z + 0.25 - foot.z)
+    # Every footwear variant is therefore also a leg wrap (kyahan) to just below the knee. A wrap
+    # that stopped 3 cm inside the short hakama's hem showed as a gap with no leg in it as soon
+    # as the knee bent or the hem swung, and a sandal floating under an empty trouser leg.
+    # Dyed and dusty like the hem it meets (HEM), not bright white: white wraps under every
+    # resident read as bare white slabs at settlement distance.
+    height = max(height, fit.ankle_z + 0.42 - foot.z)
     toe = ball + (ball - foot).normalized() * 0.055
     toe.z = max(0.012, ball.z)
     heel = Vector((foot.x, foot.y + 0.055, foot.z * 0.35))
 
     path = [heel, Vector((foot.x, foot.y, foot.z)), ball, toe]
-    frames = frames_along(path, 9)
+    frames = frames_along(path, 12)
     rings, binds, regions = [], [], []
     for origin, tangent, down, sideways, s in frames:
         # Foot cross-section: wide and flat, flatter toward the toe.
         w = _lerp(0.042, 0.047, math.sin(math.pi * s)) * _lerp(1.0, 0.82, max(0.0, s - 0.7) / 0.3)
         h = _lerp(0.050, 0.022, s ** 0.8)
         ring, bound = [], []
-        for k in range(12):
-            a = TAU * k / 12
-            up = max(0.0, math.cos(a))
+        for k in range(16):
+            a = TAU * k / 16
             ring.append(origin + sideways * (math.sin(a) * w)
                         - down * (math.cos(a) * (h if math.cos(a) > 0 else h * 0.45)))
             bound.append(origin + (sideways * math.sin(a) - down * math.cos(a)) * 0.05)
         rings.append(ring)
         binds.append(bound)
         regions.append(region)
-    # An ankle cuff, so the tabi meets the hakama hem instead of ending in mid-air.
-    cuff = Vector((foot.x, foot.y + 0.01, foot.z + height))
-    ring, bound = [], []
-    for k in range(12):
-        a = TAU * k / 12
-        ring.append(cuff + Vector((math.sin(a) * 0.046, math.cos(a) * 0.050, 0.0)))
-        bound.append(cuff + Vector((math.sin(a) * 0.045, math.cos(a) * 0.045, 0.0)))
-    loft(build, [ring] + rings, [bound] + binds, [region] + regions,
+    # The wrap up the shin: narrow at the ankle, calf-width below the knee. The bind ring follows
+    # the shin bone so the wrap bends with the knee instead of standing straight.
+    shin = fit.bone['calf_%s' % side] if ('calf_%s' % side) in fit.bone else foot
+    wrap_rings, wrap_binds = [], []
+    for z_frac, radius in ((1.0, 0.058), (0.55, 0.054), (0.2, 0.047)):
+        z = foot.z + height * z_frac
+        t = (z - foot.z) / max(1e-4, shin.z - foot.z) if shin is not foot else 0.0
+        centre = Vector((_lerp(foot.x, shin.x, min(1.0, t)), _lerp(foot.y + 0.01, shin.y, min(1.0, t)), z))
+        ring, bound = [], []
+        for k in range(16):
+            a = TAU * k / 16
+            ring.append(centre + Vector((math.sin(a) * radius, math.cos(a) * radius * 1.05, 0.0)))
+            bound.append(centre + Vector((math.sin(a) * 0.045, math.cos(a) * 0.045, 0.0)))
+        wrap_rings.append(ring)
+        wrap_binds.append(bound)
+    loft(build, wrap_rings + rings, wrap_binds + binds, [region] * len(wrap_rings) + regions,
          close_bottom=True, close_top=True, v_scale=4.0)
 
 
