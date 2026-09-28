@@ -13,6 +13,8 @@
 #include "GenericPlatform/GenericPlatformInputDeviceMapper.h"
 #include "InputKeyEventArgs.h"
 #include "InputCoreTypes.h"
+#include "Algo/Count.h"
+#include "Misc/App.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "Dom/JsonObject.h"
@@ -38,6 +40,7 @@ struct FState {
     TArray<TSharedPtr<FJsonValue>> Steps; TArray<FString> Frames; FString LastDialogue; double HungerBefore=-1,WealthBefore=-1;
     TWeakObjectPtr<UWorld> World; FTSTicker::FDelegateHandle Ticker; bool bForward=false,bStrafe=false,bSignedIn=false,bNearest=false;
     TSet<FString> Asked,Faced; FString Target; TArray<FVector2D> Explore; TArray<FString> ExploreLabels; int32 Waypoint=0; double TargetSince=0; FString OptionsAtChoice;
+    TArray<double> FrameSeconds; // every frame from entering the world to the end of the journey
 };
 static FState S;
 
@@ -66,6 +69,13 @@ static void Finish(const FString& Status,const FString& Error=FString()){
     auto R=MakeShared<FJsonObject>();R->SetStringField(TEXT("kind"),TEXT("automated native ordinary-input journey; config names the person, so not a discoverability proof"));
     R->SetStringField(TEXT("status"),Status);R->SetStringField(TEXT("error"),Error);R->SetNumberField(TEXT("elapsedSeconds"),FPlatformTime::Seconds()-S.Started);
     R->SetArrayField(TEXT("steps"),S.Steps);
+    { // Frame time while playing. Includes the frames that capture evidence screenshots, so it is a
+      // pessimistic figure for this machine and build configuration, not a hardware-wide claim.
+        TArray<double> Sorted=S.FrameSeconds;Sorted.Sort();auto F=MakeShared<FJsonObject>();F->SetNumberField(TEXT("frames"),Sorted.Num());
+        for(const auto& P:TArray<TPair<const TCHAR*,double>>{{TEXT("p50Ms"),.5},{TEXT("p95Ms"),.95},{TEXT("p99Ms"),.99},{TEXT("maxMs"),1.}})
+            F->SetNumberField(P.Key,Sorted.IsEmpty()?0:1000*Sorted[FMath::Clamp(FMath::CeilToInt(Sorted.Num()*P.Value)-1,0,Sorted.Num()-1)]);
+        F->SetNumberField(TEXT("over33msFrames"),Algo::CountIf(Sorted,[](double T){return T>1./30;}));
+        F->SetStringField(TEXT("includes"),TEXT("evidence screenshot frames"));R->SetObjectField(TEXT("frameTiming"),F);}
     if(B){R->SetStringField(TEXT("release"),B->ServerRelease);R->SetStringField(TEXT("worldId"),B->WorldId);R->SetStringField(TEXT("character"),B->CharacterName);
         TArray<TSharedPtr<FJsonValue>> Rows;for(const auto& Item:B->CarriedRows){auto I=MakeShared<FJsonObject>();I->SetStringField(TEXT("label"),Item.Label);TArray<TSharedPtr<FJsonValue>> A;for(const auto& Act:Item.Actions)A.Add(MakeShared<FJsonValueString>(FString::Printf(TEXT("%s:%s%s"),*Act.Kind,Act.bAvailable?TEXT("available"):TEXT("refused"),Act.Reason.IsEmpty()?TEXT(""):*(TEXT(" (")+Act.Reason+TEXT(")")))));I->SetArrayField(TEXT("actions"),A);Rows.Add(MakeShared<FJsonValueObject>(I));}
         R->SetArrayField(TEXT("carriedAtEnd"),Rows);R->SetStringField(TEXT("vitalsAtEnd"),B->PlayerVitals);}
@@ -105,6 +115,7 @@ static bool Tick(float){
     if(Now-S.Started>S.Timeout){Finish(TEXT("failed"),FString::Printf(TEXT("timed out in phase %d"),S.Phase));return false;}
     auto* W=GameWorld();S.World=W;auto* B=W?W->GetSubsystem<UTVBridgeSubsystem>():nullptr;auto* PC=W?W->GetFirstPlayerController():nullptr;APawn* Pawn=PC?PC->GetPawn():nullptr;
     if(!B||!PC)return true;
+    if(S.Shot>0&&B->IsLive())S.FrameSeconds.Add(FApp::GetDeltaTime());
     switch(S.Phase){
     case 0: // entered: the world, our person and (unless observing) the chosen person are projected
         // A new account meets the ordinary sign-in screen; press its "begin a new life" button

@@ -30,6 +30,7 @@ public:
     bool bCanonicalGuard=false;
     bool bGuardHeld=false,bFocusHeld=false,bTargetLocked=false;
     double LastManualLook=-100;
+    bool bConversationFraming=false;
     float GuardRefresh=0;
     UPROPERTY() TMap<FString, TObjectPtr<UAnimationAsset>> ActivityAnimations;
     void RebasePresentation(const FVector& Delta);

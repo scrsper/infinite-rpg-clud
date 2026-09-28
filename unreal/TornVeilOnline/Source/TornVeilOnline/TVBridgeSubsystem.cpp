@@ -599,6 +599,7 @@ void UTVBridgeSubsystem::Receive(const FString& Message) {
         bDialogueOpen = true;
         DialogueSpeaker = (*Dialogue)->GetStringField(TEXT("name"));
         DialogueOccupation = (*Dialogue)->GetStringField(TEXT("occupation"));
+        DialogueSpeakerBody.Empty(); (*Dialogue)->TryGetStringField(TEXT("speakerBodyId"), DialogueSpeakerBody);
         DialogueLines.Empty(); DialogueOptionIds.Empty(); DialogueOptionLabels.Empty();
         const TArray<TSharedPtr<FJsonValue>>* Lines;
         if ((*Dialogue)->TryGetArrayField(TEXT("lines"), Lines)) for (const auto& Line : *Lines) DialogueLines.Add(Line->AsString());
@@ -608,7 +609,7 @@ void UTVBridgeSubsystem::Receive(const FString& Message) {
             DialogueOptionIds.Add(Option->GetStringField(TEXT("id"))); DialogueOptionLabels.Add(Option->GetStringField(TEXT("label")));
         }
     } else {
-        bDialogueOpen = false; DialogueSpeaker.Empty(); DialogueOccupation.Empty(); DialogueLines.Empty(); DialogueOptionIds.Empty(); DialogueOptionLabels.Empty();
+        bDialogueOpen = false; DialogueSpeaker.Empty(); DialogueOccupation.Empty(); DialogueSpeakerBody.Empty(); DialogueLines.Empty(); DialogueOptionIds.Empty(); DialogueOptionLabels.Empty();
     }
     MechanismLabels.Empty(); MechanismIntents.Empty();
     const TArray<TSharedPtr<FJsonValue>>* Mechanisms;
@@ -720,6 +721,12 @@ void UTVBridgeSubsystem::Receive(const FString& Message) {
     Status = FString::Printf(TEXT("LIVE  |  %d visible people  |  %d wildlife  |  t %.1fs%s"), FMath::Max(0, Bodies.Num() - 1),WildlifeBodies.Num(), ServerTick, bControls ? TEXT("") : TEXT("  |  observer connection"));
 }
 ATVCharacter* UTVBridgeSubsystem::Selected() const { const auto* C = Bodies.Find(SelectedBody); return C ? C->Get() : nullptr; }
+bool UTVBridgeSubsystem::DialoguePartnerPosition(FVector& Position) const {
+    if(!bDialogueOpen||DialogueSpeakerBody.IsEmpty())return false;
+    const AActor* Partner=Bodies.FindRef(DialogueSpeakerBody).Get();
+    if(!IsValid(Partner))return false;
+    Position=Partner->GetActorLocation();return true;
+}
 bool UTVBridgeSubsystem::SelectedTargetPosition(FVector& Position) const {
     AActor* Target=Bodies.FindRef(SelectedBody).Get();
     if(auto* Human=Cast<ATVCharacter>(Target);Human&&(Human->bIncapacitated||Human->bDead))return false;

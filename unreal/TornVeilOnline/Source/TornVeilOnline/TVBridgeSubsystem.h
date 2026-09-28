@@ -77,7 +77,9 @@ public:
     void RunProjectedAction(const FString& ActionId);
     FString TalkTargetBody;
     bool bDialogueOpen = false;
-    FString DialogueSpeaker, DialogueOccupation;
+    FString DialogueSpeaker, DialogueOccupation, DialogueSpeakerBody;
+    /** Where the person being spoken to stands, for conversation framing. */
+    bool DialoguePartnerPosition(FVector& Position) const;
     TArray<FString> DialogueLines, DialogueOptionIds, DialogueOptionLabels;
     void CycleTarget();
     void ToggleMechanisms();
