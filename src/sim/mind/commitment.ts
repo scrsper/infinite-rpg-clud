@@ -52,6 +52,8 @@ export function isCommittable(type: GoalType): boolean { return interruptibility
  * ('dangerous' forcing a rest `idle`) and an active `threat` are checked separately by the
  * caller, since those are conditions rather than goal types. */
 export const EMERGENCY_GOAL_TYPES = new Set<GoalType>(['flee', 'attack', 'confront', 'surrender', 'help']);
+/** Scheduled occupational duties: what ends a daytime nap once the sleeper is rested enough. */
+export const DUTY_ACTIVITIES = new Set<GoalType>(['work', 'guard_post', 'patrol']);
 
 /**
  * Whether `interruptingType` is allowed to break a goal with `interruptibility`, given the

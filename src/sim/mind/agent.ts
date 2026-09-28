@@ -38,7 +38,7 @@ import { maintainConflicts, beginConflict, recordConflictBlow, recordDowning, co
 import { maintainCustody, subdue, takeIntoCustody, beginSurrender, isSubdued } from '../social/custody';
 import { SAW_RATIO, stepMetabolism, stepSpoilage, fieldFor, firstPlot, plantPlot, farmSeedGrain, harvestPlot, mill, bake, saw, findAccessibleFood, eatFood, buyFoodPortion, nearestWaterSource, drinkAt, villageStock, restockTavern, gatherHerbs, SEED_PER_PLOT } from '../world/metabolism';
 import { stepPhysiology, activityLevelFor, heatBand, hungerBand, thirstBand, sleepBand, comfortBand, severityAtLeast, syncNeeds } from '../core/physiology';
-import { isCommittable, EMERGENCY_GOAL_TYPES, interruptionSeverityMet, startCommitment, suspendCommitment, resumeCommitment, finishCommitment, commitmentValidity } from './commitment';
+import { isCommittable, DUTY_ACTIVITIES, EMERGENCY_GOAL_TYPES, interruptionSeverityMet, startCommitment, suspendCommitment, resumeCommitment, finishCommitment, commitmentValidity } from './commitment';
 import { getPhysicalCapability, capabilityFor, movementMultiplier } from '../core/attributes';
 import { skillOf, tradeBatchSeconds } from '../core/skills';
 import { wearTool } from '../core/tools';
@@ -1546,7 +1546,9 @@ export class Simulation {
       case 'compose': return inventionPlan(w, p, g);
       case 'study_record': case 'record_method': return recordPlan(w, g);
       case 'share_family': case 'teach_method': return [A({ type: 'goto', targetEntity: g.targetEntity }), A({ type: 'tell', targetEntity: g.targetEntity, data: { key: g.data?.key } })];
-      case 'sleep': { const home = w.place(p.homeId); const bed = anchorIn(home, ['bed'], true) ?? anchorIn(home, ['bed']) ?? home?.inside ?? body.pos; return [A({ type: 'goto', pos: bed, placeId: home?.id }), A({ type: 'manage_household' }), A({ type: 'sleep', pos: bed, duration: 3 * SECONDS_PER_HOUR })]; }
+      case 'sleep': { const home = w.place(p.homeId); const bed = anchorIn(home, ['bed'], true) ?? anchorIn(home, ['bed']) ?? home?.inside ?? body.pos; // A sleep lain down for outside one's own sleeping hours is a nap (see the sleep action).
+        const nap = !!p.schedule.length && currentScheduleEntry(p, w.clock.hourF)?.activity !== 'sleep';
+        return [A({ type: 'goto', pos: bed, placeId: home?.id }), A({ type: 'manage_household' }), A({ type: 'sleep', pos: bed, duration: 3 * SECONDS_PER_HOUR, ...(nap ? { data: { nap: true } } : {}) })]; }
       case 'provision_home': {
         const home = w.place(p.homeId);
         if (!home || !place) return [];
@@ -1849,7 +1851,14 @@ export class Simulation {
         body.pose = 'sleep';
         const wellRested = p.needs.energy <= 0.02 && w.now - (a.startedAt ?? 0) > (a.duration ?? 0) * 0.5;
         const overslept = w.now - (a.startedAt ?? 0) > 9 * SECONDS_PER_HOUR;
-        if (wellRested || overslept) {
+        // A nap is not a night. Sleep taken outside one's own sleeping hours ends once the sleeper
+        // is no longer tired and their duty begins; otherwise a tired innkeeper's afternoon rest ran
+        // to full restoration through the whole evening shift, and the shifted cycle repeated daily.
+        // Night sleep, and anyone without a schedule (a player), still wake only when rested.
+        const due = currentScheduleEntry(p, w.clock.hourF);
+        const dutyCalls = a.data?.nap === true && a.startedAt !== undefined && w.now - a.startedAt > SECONDS_PER_HOUR
+          && !!due && DUTY_ACTIVITIES.has(due.activity) && !severityAtLeast(sleepBand(p), 'uncomfortable');
+        if (wellRested || overslept || dutyCalls) {
           p.physiology.lastSleepAt = w.now;
           if (overslept) w.emit('sleep_completed', { actor: p.id, significance: 0.03, summary: `${p.name} woke up` });
           a.status = 'done';
