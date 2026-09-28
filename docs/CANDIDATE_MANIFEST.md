@@ -33,6 +33,9 @@ here writes to live or staging.
 | `pair-package-A` + `-B` | f5227fd | **Passed.** Packaged two-client pair: mutual sight; B's sightings of A within 1.6 m of A's own path. |
 | `journey-package-08` | 1aef56f | **Failed** at 07:30: the square's sellers had only ale; the probe spent its eight asks there. Sound played (3 loops, 90 footsteps). |
 | `journey-package-09` | 729fb27 | **Passed** at 12:00 with sound: fresh arrival, route toward the tavern, bought bread 2s from Thora Stone (baker) and ate — hunger 20→0, silver 20→18; one coin and one eating cue; p95 31.2 ms. |
+| `journey-package-10-evening` | 729fb27 | **Failed** at 16:30 in rain: a crowd in the square (mostly idle probe characters) took all eight asks before the probe walked to the tavern — a probe limit, fixed. Sound mix followed the rain (rain 1.0, day 0.4). |
+| `journey-editor-evening` | editor, native | **Passed** at natural 17:58: newcomer walked into the tavern, bought a meal (meat 5s) from the staff and ate — the evening the nap fix restored. |
+| `journey-package-11-evening` | 5730546 | **Passed** at natural 18:32 with sound: newcomer walked into the tavern, bought bread 4s from the staff, ate — hunger 20→0, silver 20→16; p95 28.4 ms. |
 | `pair-A-oren` + `pair-B-sela` | editor, native | **Passed.** Two clients at once on the dev world: each saw the other's body; B's sightings of A lie on A's own path within 0.5–1.6 m. Dawn twilight frame at 04:58. |
 
 Frame timing is measured with the probe's 60 FPS cap and offscreen rendering, screenshot frames
