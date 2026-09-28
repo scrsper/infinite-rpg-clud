@@ -6,6 +6,7 @@
 #include "Animation/AnimationAsset.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/Skeleton.h"
+#include "Materials/Material.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Materials/MaterialInterface.h"
 #include "Misc/FileHelper.h"
@@ -76,6 +77,29 @@ namespace {
      * Inert for every other material in the project: a shader with no `Accent` parameter ignores
      * the write, exactly as vendor shaders already ignore `Tint`.
      */
+    /** The CitySampleCrowd head material cannot compile for SM6 (its Nanite permutation exceeds the
+     *  64-SRV limit), so a cooked game draws every crowd head with the default material. Its
+     *  project-owned copy (create_local_crowd_head_material.py, Nanite usage off) takes its place,
+     *  carrying the character's resolved parameter values. Vendor assets are not edited. */
+    void RepairUncompilableMaterials(USkeletalMeshComponent* Component) {
+        if (!Component) return;
+        static const FString Broken = TEXT("/Game/CitySampleCrowd/Character/Shared/Materials/MetaHuman/M_Crowd_Head_v2.M_Crowd_Head_v2");
+        static TWeakObjectPtr<UMaterial> Fixed; static bool bLoaded = false;
+        for (int32 Index = 0; Index < Component->GetNumMaterials(); ++Index) {
+            UMaterialInterface* Material = Component->GetMaterial(Index);
+            UMaterial* Base = Material ? Material->GetBaseMaterial() : nullptr;
+            if (!Base || Base->GetPathName() != Broken) continue;
+            if (!bLoaded) {
+                bLoaded = true;
+                Fixed = LoadObject<UMaterial>(nullptr, TEXT("/Game/TornVeil/Materials/LocalPalette/Crowd/M_TV_Crowd_Head.M_TV_Crowd_Head"));
+                if (!Fixed.IsValid()) UE_LOG(LogTemp, Warning, TEXT("TV_EMBODIMENT crowd head material copy missing; run create_local_crowd_head_material.py"));
+            }
+            if (!Fixed.IsValid()) return;
+            UMaterialInstanceDynamic* Repaired = UMaterialInstanceDynamic::Create(Fixed.Get(), Component);
+            Repaired->CopyMaterialUniformParameters(Material);
+            Component->SetMaterial(Index, Repaired);
+        }
+    }
     void TintComponent(USkeletalMeshComponent* Component, const TCHAR* MaterialName, int64 Hex, int64 Accent, float Wear, float Grooming) {
         if (!Component) return;
         // Plain project shaders belong only on placeholder mannequins. Replacing a vendor's
@@ -423,6 +447,7 @@ bool UTVCharacterPresentation::ApplyProfile(const FTVAppearanceProfile& Profile)
     EmptyOverrideMaterials();
     ClearMorphTargets();
     SetSkeletalMesh(Visible);
+    RepairUncompilableMaterials(this);
     SetVisibility(true);
     if (DriverMesh) DriverMesh->SetVisibility(false);
 
@@ -476,6 +501,7 @@ bool UTVCharacterPresentation::ApplyProfile(const FTVAppearanceProfile& Profile)
         Part->SetupAttachment(this);
         Part->RegisterComponent();
         Part->SetSkeletalMesh(PartMesh);
+        RepairUncompilableMaterials(Part);
         Part->SetCollisionEnabled(ECollisionEnabled::NoCollision);
         Part->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
         Part->AddTickPrerequisiteComponent(this);
