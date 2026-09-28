@@ -4,6 +4,8 @@ param(
     [Parameter(Mandatory=$true)][string]$TargetBody,
     [string[]]$Dialogue = @('Trade','Buy bread|Buy meat|Buy cheese|Buy stew'),
     [switch]$ObserveOnly,
+    # Waypoints ({x,z,label} canonical metres) to walk when nobody new is in view: disclosed route knowledge.
+    [string]$RouteFile = '',
     [string]$Executable = 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor.exe',
     [ValidateRange(640,3840)][int]$Width = 1920,
     [ValidateRange(480,2160)][int]$Height = 1080,
@@ -17,6 +19,7 @@ $Out = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($
 if (Test-Path -LiteralPath $Out) { throw "Refusing to reuse journey evidence: $Out" }
 New-Item -ItemType Directory -Path $Out | Out-Null
 $config = [ordered]@{ out = $Out; targetBody = $TargetBody; dialogue = $Dialogue; eat = !$ObserveOnly; observeOnly = [bool]$ObserveOnly; quit = $true; timeoutSeconds = $TimeoutSeconds - 60 }
+if ($RouteFile) { $config.explore = @(Get-Content -LiteralPath $RouteFile -Raw | ConvertFrom-Json) }
 $configFile = Join-Path $Out 'config.json'
 $config | ConvertTo-Json | Set-Content -LiteralPath $configFile -Encoding utf8
 $arguments = @()

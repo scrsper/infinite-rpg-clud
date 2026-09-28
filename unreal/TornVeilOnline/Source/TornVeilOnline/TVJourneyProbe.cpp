@@ -37,7 +37,7 @@ struct FState {
     FString Out,TargetBody; TArray<FString> Picks; bool bEat=true,bQuit=true,bObserveOnly=false; double Timeout=300;
     TArray<TSharedPtr<FJsonValue>> Steps; TArray<FString> Frames; FString LastDialogue; double HungerBefore=-1,WealthBefore=-1;
     TWeakObjectPtr<UWorld> World; FTSTicker::FDelegateHandle Ticker; bool bForward=false,bStrafe=false,bSignedIn=false,bNearest=false;
-    TSet<FString> Asked,Faced; FString Target;
+    TSet<FString> Asked,Faced; FString Target; TArray<FVector2D> Explore; TArray<FString> ExploreLabels; int32 Waypoint=0; double TargetSince=0;
 };
 static FState S;
 
@@ -85,10 +85,18 @@ static void Goodbye(UTVBridgeSubsystem* B){
 /** The named person, or ("nearest") whoever in view we have not yet asked, as a player would. */
 static bool ChooseTarget(UTVBridgeSubsystem* B,APawn* Pawn){
     if(!S.bNearest){S.Target=S.TargetBody;return B->Bodies.Contains(S.Target);}
-    double Best=TNumericLimits<double>::Max();S.Target.Empty();
+    const FString Previous=S.Target;double Best=TNumericLimits<double>::Max();S.Target.Empty();
     for(const auto& Pair:B->Bodies){ATVCharacter* C=Pair.Value;if(!IsValid(C)||C==Pawn||C->bDead||C->bCanonicalPlayer||S.Asked.Contains(Pair.Key))continue;
         const double D=FVector::Dist2D(C->GetActorLocation(),Pawn->GetActorLocation());if(D<Best){Best=D;S.Target=Pair.Key;}}
+    if(S.Target!=Previous)S.TargetSince=FPlatformTime::Seconds();
     return !S.Target.IsEmpty();
+}
+/** A person we cannot engage in 20 s (someone else keeps stepping under the prompt) is left be. */
+static bool GiveUpOnTarget(UTVBridgeSubsystem* B,APawn* Pawn){
+    if(!S.bNearest||FPlatformTime::Seconds()-S.TargetSince<20)return false;
+    S.Asked.Add(S.Target);Release();
+    if(ChooseTarget(B,Pawn))Next(1);else if(S.Waypoint<S.Explore.Num())Next(9);else Finish(TEXT("failed"),TEXT("nobody nearby could be engaged"));
+    return true;
 }
 
 static bool Tick(float){
@@ -105,11 +113,12 @@ static bool Tick(float){
         if(!B->IsLive()||!B->bCanonicalReady||!Pawn||InPhase<3)return true;
         if(B->ProjectedRegions<9&&InPhase<45)return true; // let the surroundings stream in, as a player waits
         if(S.bObserveOnly){Step(TEXT("reconnected"),B);Tap(EKeys::I);Next(5);return true;}
-        if(!ChooseTarget(B,Pawn)){if(InPhase>60){Finish(TEXT("failed"),TEXT("chosen person never came into view"));return false;}return true;}
+        if(!ChooseTarget(B,Pawn)){if(S.bNearest&&S.Waypoint<S.Explore.Num()){Next(9);return true;}if(InPhase>60){Finish(TEXT("failed"),TEXT("chosen person never came into view"));return false;}return true;}
         S.HungerBefore=Number(B->PlayerVitals,TEXT("Hunger"));S.WealthBefore=Silver(B->PlayerVitals);Step(TEXT("entered"),B);Next(1);return true;
     case 1: { // walk: hold W, turn with MouseX toward where the person actually is
         ATVCharacter* T=B->Bodies.FindRef(S.Target);
-        if(!IsValid(T)){if(S.bNearest){S.Asked.Add(S.Target);if(ChooseTarget(B,Pawn))return true;}Finish(TEXT("failed"),TEXT("lost sight of the chosen person"));return false;}
+        if(!IsValid(T)){if(S.bNearest){S.Asked.Add(S.Target);if(ChooseTarget(B,Pawn))return true;if(S.Waypoint<S.Explore.Num()){Release();Next(9);return true;}}Finish(TEXT("failed"),TEXT("lost sight of the chosen person"));return false;}
+        if(GiveUpOnTarget(B,Pawn))return S.bRunning;
         const FVector To=T->GetActorLocation()-Pawn->GetActorLocation();const double Dist=To.Size2D();
         const float Error=FMath::FindDeltaAngleDegrees(PC->GetControlRotation().Yaw,To.Rotation().Yaw);
         if(FMath::Abs(Error)>1.5f)Key(EKeys::MouseX,IE_Axis,FMath::Clamp(Error*2.f,-60.f,60.f));
@@ -124,7 +133,7 @@ static bool Tick(float){
         return true; }
     case 2: // talk through the ordinary prompt
         if(InPhase<.3)return true;
-        if(!B->bDialogueOpen){if(B->TalkTargetBody!=S.Target){Next(1);return true;}if(FMath::Fmod(InPhase,1.5)<0.05||InPhase<.35)Tap(EKeys::E);if(InPhase>10){Finish(TEXT("failed"),TEXT("conversation did not open"));return false;}return true;}
+        if(!B->bDialogueOpen){if(GiveUpOnTarget(B,Pawn))return S.bRunning;if(B->TalkTargetBody!=S.Target){Next(1);return true;}if(FMath::Fmod(InPhase,1.5)<0.05||InPhase<.35)Tap(EKeys::E);if(InPhase>10){Finish(TEXT("failed"),TEXT("conversation did not open"));return false;}return true;}
         S.LastDialogue=FString::Join(B->DialogueLines,TEXT(" / "));Step(TEXT("talking"),B);S.Choice=0;Next(3);return true;
     case 3: { // choose replies by their shown labels, with the number keys the dialogue offers
         if(InPhase<.8)return true;
@@ -161,8 +170,18 @@ static bool Tick(float){
         if(InPhase<1)return true;Step(TEXT("done"),B);Finish(TEXT("passed"));return false;
     case 8: // closed a conversation that offered nothing we wanted; choose the next person
         if(InPhase<.8)return true;if(B->bDialogueOpen){if(InPhase>3){Goodbye(B);S.PhaseAt=Now;}return true;}
-        if(!ChooseTarget(B,Pawn)){Finish(TEXT("failed"),TEXT("nobody nearby offered what we wanted"));return false;}
+        if(!ChooseTarget(B,Pawn)){if(S.Waypoint<S.Explore.Num()){Next(9);return true;}Finish(TEXT("failed"),TEXT("nobody nearby offered what we wanted"));return false;}
         Next(1);return true;
+    case 9: { // nobody new in view: walk on through the settlement's public places, looking about
+        if(S.Waypoint>=S.Explore.Num()){Release();Finish(TEXT("failed"),TEXT("walked the whole route; nobody offered what we wanted"));return false;}
+        const FVector2D& P=S.Explore[S.Waypoint];const FVector Goal=B->ToUnreal(FVector(P.X,0,P.Y));
+        const FVector To=Goal-Pawn->GetActorLocation();const float Error=FMath::FindDeltaAngleDegrees(PC->GetControlRotation().Yaw,To.Rotation().Yaw);
+        if(FMath::Abs(Error)>1.5f)Key(EKeys::MouseX,IE_Axis,FMath::Clamp(Error*2.f,-60.f,60.f));
+        if(!S.bForward){Key(EKeys::W,IE_Pressed);S.bForward=true;}
+        if(To.Size2D()<140){++S.Waypoint;if(!S.ExploreLabels[S.Waypoint-1].IsEmpty()){Release();auto J=MakeShared<FJsonObject>();J->SetStringField(TEXT("reached"),S.ExploreLabels[S.Waypoint-1]);Step(TEXT("arrived"),B,J);}}
+        if(FMath::Fmod(InPhase,1.0)<0.02&&ChooseTarget(B,Pawn)){Release();Next(1);return true;}
+        if(InPhase>240){Release();Finish(TEXT("failed"),TEXT("could not walk the route"));return false;}
+        return true; }
     }
     return true;
 }
@@ -171,6 +190,8 @@ static void Start(const TArray<FString>& Args){
     TSharedPtr<FJsonObject> C;if(!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text),C)||!C){UE_LOG(LogTemp,Error,TEXT("TV_JOURNEY bad config"));return;}
     S=FState();C->TryGetStringField(TEXT("out"),S.Out);C->TryGetStringField(TEXT("targetBody"),S.TargetBody);C->TryGetBoolField(TEXT("eat"),S.bEat);C->TryGetBoolField(TEXT("quit"),S.bQuit);C->TryGetBoolField(TEXT("observeOnly"),S.bObserveOnly);C->TryGetNumberField(TEXT("timeoutSeconds"),S.Timeout);
     const TArray<TSharedPtr<FJsonValue>>* Picks=nullptr;if(C->TryGetArrayField(TEXT("dialogue"),Picks))for(const auto& P:*Picks)S.Picks.Add(P->AsString());
+    const TArray<TSharedPtr<FJsonValue>>* Route=nullptr;
+    if(C->TryGetArrayField(TEXT("explore"),Route))for(const auto& V:*Route){const auto P=V->AsObject();if(!P)continue;S.Explore.Add(FVector2D(P->GetNumberField(TEXT("x")),P->GetNumberField(TEXT("z"))));FString L;P->TryGetStringField(TEXT("label"),L);S.ExploreLabels.Add(L);}
     S.bNearest=S.TargetBody==TEXT("nearest");IFileManager::Get().MakeDirectory(*S.Out,true);S.bRunning=true;S.Started=FPlatformTime::Seconds();Next(0);
     S.Ticker=FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateStatic(&Tick));UE_LOG(LogTemp,Display,TEXT("TV_JOURNEY start target=%s picks=%d"),*S.TargetBody,S.Picks.Num());
 }
