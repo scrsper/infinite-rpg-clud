@@ -47,7 +47,7 @@ struct FState {
     double HoldSeconds=0; bool bHoldWalk=false,bHeldShot=false;
     // Route first: walk to the named places before asking anyone, and there ask only people within
     // NearRadius (cm) — as a player who knows where the tavern is goes in and asks inside.
-    bool bRouteFirst=false; double NearRadius=0;
+    bool bRouteFirst=false,bReachedStop=false; double NearRadius=0; // route first: nobody is asked before the first named stop
     FVector ProgressAt=FVector::ZeroVector; double ProgressCheckedAt=0; int32 Unsticks=0; bool bStrafeLeft=false; FString SelfBody; TArray<FVector> SelfPath; double LastPathAt=0;
     struct FSeen{FVector First,Last;double FirstAt=0;}; TMap<FString,FSeen> Seen;
 };
@@ -238,7 +238,7 @@ static bool Tick(float){
         return true;
     case 8: // closed a conversation that offered nothing we wanted; choose the next person
         if(InPhase<.8)return true;if(B->bDialogueOpen){if(InPhase>3){Goodbye(B);S.PhaseAt=Now;}return true;}
-        if(!ChooseTarget(B,Pawn)){if(S.Waypoint<S.Explore.Num()){Next(9);return true;}Finish(TEXT("failed"),TEXT("nobody nearby offered what we wanted"));return false;}
+        if((S.bRouteFirst&&!S.bReachedStop)||!ChooseTarget(B,Pawn)){if(S.Waypoint<S.Explore.Num()){Next(9);return true;}Finish(TEXT("failed"),TEXT("nobody nearby offered what we wanted"));return false;}
         Next(1);return true;
     case 9: { // nobody new in view: walk on through the settlement's public places, looking about
         if(S.Waypoint>=S.Explore.Num()){Release();Finish(TEXT("failed"),TEXT("walked the whole route; nobody offered what we wanted"));return false;}
@@ -249,8 +249,10 @@ static bool Tick(float){
         Unstick(Pawn,Now);
         bool bAtStop=false;
         if(To.Size2D()<140){++S.Waypoint;if(!S.ExploreLabels[S.Waypoint-1].IsEmpty()){Release();bAtStop=true;auto J=MakeShared<FJsonObject>();J->SetStringField(TEXT("reached"),S.ExploreLabels[S.Waypoint-1]);Step(TEXT("arrived"),B,J);}}
-        // Route first still speaks to whoever is right beside us (ChooseTarget honours NearRadius).
-        if((bAtStop||FMath::Fmod(InPhase,1.0)<0.02)&&ChooseTarget(B,Pawn)){Release();Next(1);return true;}
+        // Route first walks straight to the first named place (a crowd on the way is not asked), then
+        // speaks to whoever is right beside us (ChooseTarget honours NearRadius).
+        if(bAtStop)S.bReachedStop=true;
+        if((bAtStop||((!S.bRouteFirst||S.bReachedStop)&&FMath::Fmod(InPhase,1.0)<0.02))&&ChooseTarget(B,Pawn)){Release();Next(1);return true;}
         if(InPhase>240){Release();Finish(TEXT("failed"),FString::Printf(TEXT("could not walk the route (waypoint %d of %d, %.0f m away, %d sidesteps)"),S.Waypoint+1,S.Explore.Num(),To.Size2D()/100.,S.Unsticks));return false;}
         return true; }
     }
