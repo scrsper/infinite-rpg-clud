@@ -68,7 +68,7 @@ static float GroundZ(UWorld* W, const FVector& At, float Fallback) {
 }
 
 /** Activity families shown one per clone of the player in activities mode. */
-static const TCHAR* Activities[] = { TEXT(""), TEXT("socialize"), TEXT("trade"), TEXT("work"), TEXT("work/chop"), TEXT("carry"), TEXT("drink"), TEXT("eat"), TEXT("rest"), TEXT("travel"), TEXT("injured") };
+static const TCHAR* Activities[] = { TEXT(""), TEXT("socialize"), TEXT("trade"), TEXT("work"), TEXT("work/chop"), TEXT("carry"), TEXT("drink"), TEXT("eat"), TEXT("rest/seated"), TEXT("rest/sleep"), TEXT("travel"), TEXT("injured") };
 
 void Start(const FString& File, int32 Count, bool bActivities) {
     UWorld* W = GameWorld(); if (!W) return;
@@ -81,7 +81,13 @@ void Start(const FString& File, int32 Count, bool bActivities) {
     for (const auto& Pair : B->Bodies) if (ATVCharacter* C = Pair.Value.Get(); IsValid(C) && C != Player && !C->bDead) Others.Add(C);
     Others.Sort([Player](const ATVCharacter& A, const ATVCharacter& C) { return FVector::DistSquared(A.GetActorLocation(), Player->GetActorLocation()) < FVector::DistSquared(C.GetActorLocation(), Player->GetActorLocation()); });
     if (bActivities) { People.Empty(); for (int32 I = 0; I < UE_ARRAY_COUNT(Activities); ++I) People.Add(Player); }
-    else for (ATVCharacter* C : Others) { if (People.Num() >= Count) break; People.Add(C); }
+    else {
+        // Distinct looks only: several people sharing one resolved face, hair and garment (new players
+        // all start from the same default look) would fill the row with copies of one person.
+        const auto Look = [](const ATVCharacter* C) { FString K; for (const FTVFoundrySlot& Slot : C->Embodiment.Appearance.Slots) if (Slot.Slot == TEXT("head") || Slot.Slot == TEXT("hair") || Slot.Slot == TEXT("upperGarment")) K += Slot.Name + TEXT("|"); return K; };
+        TSet<FString> Seen = { Look(Player) };
+        for (ATVCharacter* C : Others) { if (People.Num() >= Count) break; const FString K = Look(C); if (!K.IsEmpty() && Seen.Contains(K)) continue; Seen.Add(K); People.Add(C); }
+    }
     const FVector Forward = FRotator(0, PC->GetControlRotation().Yaw, 0).Vector(), Right = FRotationMatrix(FRotator(0, PC->GetControlRotation().Yaw, 0)).GetUnitAxis(EAxis::Y);
     const FVector Centre = Player->GetActorLocation() + Forward * 700.f;
     const float Spacing = 105.f, Half = Player->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
@@ -96,7 +102,7 @@ void Start(const FString& File, int32 Count, bool bActivities) {
         // A lineup judges looks in a neutral stand; activities mode shows one activity clip each.
         FString Family, Detail; FString(bActivities ? Activities[I] : TEXT("")).Split(TEXT("/"), &Family, &Detail);
         if (Family.IsEmpty()) Family = bActivities ? FString(Activities[I]) : FString();
-        Clone->Embodiment.Activity.Family = Family; Clone->Embodiment.Activity.Detail = Detail; Clone->Embodiment.Activity.Posture = TEXT("stand");
+        Clone->Embodiment.Activity.Family = Family; Clone->Embodiment.Activity.Detail = Detail; Clone->Embodiment.Activity.Posture = Detail == TEXT("sleep") ? TEXT("lie") : Detail == TEXT("seated") ? TEXT("sit") : TEXT("stand");
         auto J = MakeShared<FJsonObject>(); J->SetNumberField(TEXT("index"), I); J->SetStringField(TEXT("who"), bActivities ? FString::Printf(TEXT("activity:%s"), Activities[I]) : I == 0 ? FString(TEXT("player")) : People[I]->DisplayName);
         TArray<TSharedPtr<FJsonValue>> Parts; for (const FTVFoundrySlot& Slot : People[I]->Embodiment.Appearance.Slots) Parts.Add(MakeShared<FJsonValueString>(Slot.Slot + TEXT("=") + Slot.Name));
         J->SetArrayField(TEXT("parts"), Parts); Rows.Add(MakeShared<FJsonValueObject>(J));
@@ -105,7 +111,7 @@ void Start(const FString& File, int32 Count, bool bActivities) {
     FActorSpawnParameters CP; ACameraActor* Camera = W->SpawnActor<ACameraActor>(Player->GetActorLocation() + FVector(0, 0, 60) - Forward * 20.f, FRotator::ZeroRotator, CP);
     if (Camera) {
         const FVector Look = FVector(Centre.X, Centre.Y, Player->GetActorLocation().Z + 10.f);
-        Camera->SetActorRotation((Look - Camera->GetActorLocation()).Rotation()); Camera->GetCameraComponent()->SetFieldOfView(People.Num() > 6 ? 70.f : 55.f);
+        Camera->SetActorRotation((Look - Camera->GetActorLocation()).Rotation()); Camera->GetCameraComponent()->SetFieldOfView(People.Num() > 10 ? 85.f : People.Num() > 6 ? 70.f : 55.f);
         S.Spawned.Add(Camera); PC->SetViewTarget(Camera);
         // A soft key light from beside the camera, so the lineup is judged the same at any hour.
         if (APointLight* Key = W->SpawnActor<APointLight>(Camera->GetActorLocation() + FVector(0, 0, 150) + Right * 250.f, FRotator::ZeroRotator, CP)) {
