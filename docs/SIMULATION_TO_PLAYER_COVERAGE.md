@@ -15,15 +15,18 @@ consequence, persistence) · `excluded` (with the reason).
 simulation) · `native` (automated native journey, ordinary input) · `package` (the same, in a packaged
 build) · `human` (actual human play). "Compiled" is not evidence of anything.
 
-Candidate identity for evidence below: branch `claude/inhabitable-alpha`; server release
-`0.2.0-inhabit.1+5dce62d73ca9` in the isolated dev world `tvo-dev-39a6e14c…` (seed 918271, port 7430);
-Milestone 1 packaged client `client-84c1700` (Development, clean). Full suite at `2d7f7f9`: 1265/1265.
+Candidate identity for evidence below: branch `claude/inhabitable-alpha`; isolated dev world
+`tvo-dev-39a6e14c…` (seed 918271, port 7430, `%USERPROFILE%\TornVeilAlpha\dev-inhabit`). Milestone 1
+packaged checkpoint: client `client-4333a46` (Development, clean, revision `4333a462c5c3`) against server
+release `0.2.0-inhabit.4+4333a462c5c3`; see `docs/CANDIDATE_MANIFEST.md`. Earlier rows cite
+`client-84c1700` / `0.2.0-inhabit.1`. Full suite at `2d7f7f9`: 1265/1265.
 
 ## 1. Embodiment and travel
 
 | ID | Capability | Canonical source | Player entry | Status | Evidence | Remaining |
 |---|---|---|---|---|---|---|
-| EMB-ENTRY | Sign in; create or continue a person | `live.ts` connect, `createCharacter` | Sign-in screen (begin a new life / continue) | playable | native (journey-editor-02/03) | human; spawn spacing (arrivals 1 m apart) |
+| EMB-ENTRY | Sign in; create or continue a person | `live.ts` connect, `createCharacter` | Sign-in screen (begin a new life / continue) | playable | native (journey-editor-02/03); package (journey-package-04: sign-in → new life "Ivo Brannock") | human. Arrivals now spread on a golden-angle spiral clear of bodies (unit: arrival-spacing) |
+| EMB-APPEAR | People look like who they are | canonical visual state (`TVHumanoidVisualState`) → CitySample crowd bodies | seen in world | partial | package frames (journey-package-04) | crowd faces drew green-grey placeholder skin (vendor static switches lost on the cookable head copy); fixed at `02903b1` by mirrored head instances — packaged re-check pending. Canonical `skinTone` not yet mapped to the face atlas |
 | EMB-MOVE | Walk, sprint, turn, stop | `interactionMovement`, prediction | WASD/stick, Shift, mouse | playable | native (journey), prior packaged control probes | camera sits low/close in conversation |
 | EMB-CROUCH | Crouch | `posture.ts` | Ctrl / Abilities | playable | prior native | — |
 | EMB-DOOR | Open/close doors | hand `open:/close:door` | Interact prompt | playable | prior tests | — |
@@ -35,12 +38,12 @@ Milestone 1 packaged client `client-84c1700` (Development, clean). Full suite at
 
 | ID | Capability | Canonical source | Player entry | Status | Evidence | Remaining |
 |---|---|---|---|---|---|---|
-| SURV-EAT | Eat carried food | hand `consume:`, `actionsForCarriedItem` | Inventory → "Eat …" (only food offers it) | playable | unit; native journey-editor-03 (hunger 21%→0%, silver 20→19) | package run in progress (journey-package-01 reached conversations; closing fix pending) |
+| SURV-EAT | Eat carried food | hand `consume:`, `actionsForCarriedItem` | Inventory → "Eat …" (only food offers it) | playable | unit; native journey-editor-03 (hunger 21%→0%, silver 20→19); package journey-package-04 (bought bread 4s, ate: hunger 20→0, silver 20→16) | human |
 | SURV-DRINK | Drink at water / carried ale | hand `drink:` | Interact prompt; inventory for ale | playable | prior tests | — |
 | SURV-CARRY | Carry, weigh, drop items | inventory, `dropPositionAtHand` | Inventory → "Drop …" (refused with reason when no ground) | playable | unit | — |
 | SURV-READ | Read a carried record | `read_record`, `canReadRecord` | Inventory → "Read …" (refused: unknown marks / damaged) | partial | unit (projection) | no record journey yet; write/copy not exposed |
 | SURV-CONTAINER | Store/take from containers | `container_transfer` | Container panel | playable | prior native UI test | — |
-| SURV-BUY | Buy from a person | dialogue Trade / Buy a meal | Talk → Trade → Buy | playable | native journey-editor-03 (bread, 1 s) | trade list shows fractional quantities (9.375 planks) and duplicate "Buy log" rows |
+| SURV-BUY | Buy from a person | dialogue Trade / Buy a meal | Talk → Trade → Buy | playable | native journey-editor-03 (bread, 1 s); unit (trade-menu-rows); package journey-package-04 (declined one seller's goods, bought from the next) | fixed: offers grouped by good and price, whole units, seven per page with "More goods…" |
 | SURV-BUYDISPLAY | Buy goods set out on a counter | hand `buy:` (seller present) | Interact prompt | partial | accel (knife) | regional world sets out only the tavern knife; food sits off-display |
 | SURV-SELL / GIVE | Sell or give to a person | dialogue Sell / Give something | Talk → … | canonical-only in inventory | — | inventory hides Give (no direct intent); route through dialogue |
 | SURV-THEFT | Take someone's goods | hand `steal:` | Interact prompt ("Take … anyway — this is theft") | playable | prior tests | — |
@@ -64,14 +67,14 @@ Milestone 1 packaged client `client-84c1700` (Development, clean). Full suite at
 | ID | Capability | Canonical source | Player entry | Status | Evidence | Remaining |
 |---|---|---|---|---|---|---|
 | MECH-ALL | Inspect, diagnose, test, reverse-engineer, dismantle, replace, connect, manufacture, reconstruct, ask | `gameSim` mechanism intents, `mechanismPanel` | Only inside the developer inspector (`bInspector && bMechanismsOpen`) | canonical-only | unit (mechanism tests) | no ordinary player panel: historical finding reproduced |
-| MECH-DORMANT | Mechanisms arise in generated worlds | `invention.ts` (`inventionGoals`: needs a production shortfall at a usable place + a known component/method for that process + a reachable energy boundary); `settlementMechanics.ts` seeds only wind boundaries and primitive knowledge | — | canonical-only | accel: **0 assemblies and 0 components** after 7 world days on seeds 918271/918272/918273; 0 at start | the whole family is dormant in the worlds players enter; which invention precondition never holds is unresolved. A native panel alone would expose nothing. Needs investigation before UI work |
+| MECH-DORMANT | Mechanisms arise in generated worlds | `invention.ts` (`inventionGoals`: needs a production shortfall at a usable place + a known component/method for that process + a reachable energy boundary); `settlementMechanics.ts` seeds only wind boundaries and primitive knowledge | — | canonical-only | accel: **0 assemblies and 0 components** after 7 world days on seeds 918271/918272/918273; 0 at start. Trace (seed 918271): production shortfalls open and people know components, yet only 3 `compose` goals appear in 22 invention observations and none completes an assembly | the chain stalls after `compose` is chosen; the failing step (execution, materials or completion) is not yet isolated. A native panel alone would expose nothing. Needs the stall fixed before UI work |
 | BUILD | Construction labour | agent `build`, construction projects | — | canonical-only | accel (NPCs) | — |
 
 ## 5. Knowledge and society
 
 | ID | Capability | Canonical source | Player entry | Status | Evidence | Remaining |
 |---|---|---|---|---|---|---|
-| SOC-TALK | Conversation, news, who are you, introductions | `dialogue.ts` | Talk prompt → dialogue panel | playable | native journey-editor-03 | several NPC names carry numeric suffixes ("Rhea Ives 2") |
+| SOC-TALK | Conversation, news, who are you, introductions | `dialogue.ts` | Talk prompt → dialogue panel | playable | native journey-editor-03; package journey-package-04 (two conversations, Goodbye) | several NPC names carry numeric suffixes ("Rhea Ives 2"); conversation camera sits low and close |
 | SOC-ASK | Ask about someone / an item | dialogue | Talk → Ask about … | playable | prior | — |
 | SOC-TELL | Tell someone something you know | dialogue `tell` | Talk → Tell them something… | playable | prior | — |
 | SOC-TEACH | Be taught the hush (paid, with provenance) | `teach`, dialogue | Talk → Teach me the hush | playable | accel, unit | — |
@@ -95,12 +98,12 @@ Milestone 1 packaged client `client-84c1700` (Development, clean). Full suite at
 | ID | Capability | Canonical source | Player entry | Status | Evidence | Remaining |
 |---|---|---|---|---|---|---|
 | ENV-WILD | Species, sensing, defence, carcasses | `ecology/*`, wildlife projection | seen in world; danger cue | partial | accel; prior captures | boar/hare are primitive-shape bodies |
-| ENV-TIME | Canonical time and weather | clock, weather | — | partial | — | lighting forced to fixed daylight (historical finding, not yet addressed) |
+| ENV-TIME | Canonical time and weather | clock, weather → region `worldTime`/`environment` | the sky itself | partial | native (TVPlayableLightingTests: sun follows the hour, noon black-out refused, night adapts, storm dims; 16/16) | fixed-daylight lighting replaced by the canonical sky; no packaged night frame yet (captured only at the dev world's natural nightfall, never by advancing the clock) |
 
 ## 8. Continuity
 
 | ID | Capability | Canonical source | Player entry | Status | Evidence | Remaining |
 |---|---|---|---|---|---|---|
-| CONT-RECONNECT | Quit and continue the same person | live server, checkpoints | Escape → Quit; relaunch | playable | prior drills; native reconnect run pending | — |
+| CONT-RECONNECT | Quit and continue the same person | live server, checkpoints | Escape → Quit; relaunch | playable | prior drills; package journey-package-04-reconnect (same person returned: 16 silver, hunger 0, empty hands) | human |
 | CONT-SHARED | Two players, one world | live server | two clients | playable | prior pair (staging) | contention/trade between players not yet exercised |
 | CONT-OFFLINE | The world continues without the player | scheduler | — | playable | prior soaks and 7-day continuations | — |

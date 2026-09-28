@@ -26,11 +26,18 @@ Local non-git inputs: `Content/TornVeil/Materials/LocalPalette` regenerated in t
 `.debug/playable-world-slice2/local-assets/registry.json` copied from the Codex checkout). Without it
 props render white in packages.
 
-Open blockers/findings: mechanisms dormant in generated worlds (0 after 7 days × 3 seeds); crowd head
-material fails to compile (bald grey heads); spawn crowding; numeric name suffixes ("Rhea Ives 2");
-conversation camera low/close; night rendering not yet captured.
-Next action: package `client-b2b4fb2` (in progress) → packaged journey on dev (inhabit.3) → reconnect
-observe run → dev-night capture at its natural nightfall → candidate manifest.
+Milestone 1 packaged checkpoint (see `docs/CANDIDATE_MANIFEST.md`): client `client-4333a46` (clean) +
+dev server `0.2.0-inhabit.4+4333a462c5c3`; journey-package-04 passed (sign-in → new life → talk → trade →
+buy bread → eat) and its reconnect run returned the same person. Also done: arrival spacing; crowd
+heads cook (derived Nanite-off copy); crowd faces keep their authored skin via mirrored head instances
+(`create_local_crowd_head_material.py`, 75 mirrors; `02903b1`, packaged re-check pending).
+
+Open blockers/findings: mechanisms dormant in generated worlds (0 after 7 days × 3 seeds; `compose`
+adopted rarely and never completes — trace `.debug/inhabit/compose-trace.ts`); numeric name suffixes
+("Rhea Ives 2"); conversation camera low/close; no packaged night frame; sound, p95, multi-seed and
+two-player checks not yet run for this candidate.
+Next action: package `02903b1` → packaged journey + face review → dev-night capture at natural nightfall
+→ isolate the invention stall.
 
 # Previous: consolidated GitHub main, 2026-09-27
 
