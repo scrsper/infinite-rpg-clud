@@ -133,6 +133,17 @@ def texture_sample(material, path, uv, sampler, x, y):
     texture = unreal.EditorAssetLibrary.load_asset(path)
     if texture is None:
         raise RuntimeError('fabric texture missing: ' + path)
+    # The sampler must match how the texture is stored, or the material fails to compile and the
+    # game silently draws the default grid material on every garment. The City Sample fabrics are
+    # virtual-textured, and the macro variation map is linear (not sRGB).
+    types = unreal.MaterialSamplerType
+    virtual = bool(texture.get_editor_property('virtual_texture_streaming'))
+    if sampler == types.SAMPLERTYPE_NORMAL:
+        sampler = types.SAMPLERTYPE_VIRTUAL_NORMAL if virtual else types.SAMPLERTYPE_NORMAL
+    elif not texture.get_editor_property('srgb'):
+        sampler = types.SAMPLERTYPE_VIRTUAL_LINEAR_COLOR if virtual else types.SAMPLERTYPE_LINEAR_COLOR
+    else:
+        sampler = types.SAMPLERTYPE_VIRTUAL_COLOR if virtual else types.SAMPLERTYPE_COLOR
     node = expression(material, unreal.MaterialExpressionTextureSample, x, y)
     node.set_editor_property('texture', texture)
     node.set_editor_property('sampler_type', sampler)

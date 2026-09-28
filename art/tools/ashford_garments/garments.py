@@ -262,7 +262,9 @@ def _collar(fit, build, collar_z, surface_at):
     # right for both, and every attempt produced a flat flap standing off the shoulder. Splitting
     # it lets each half be right, and the 2 cm of kosode between them reads as the collar
     # disappearing under itself, which is what it does on a real garment.
-    for lift, width, region, inset in ((0.026, 0.021, ACCENT, 0.0), (0.015, 0.015, UNDER, 0.013)):
+    # Laid flatter and wider than it was (2.6 cm off the cloth, 2.1 cm wide): standing that far off
+    # the kosode it caught light all round and read as a rope over the shoulder, not a band of cloth.
+    for lift, width, region, inset in ((0.017, 0.030, ACCENT, 0.0), (0.011, 0.016, UNDER, 0.015)):
         # No separate band round the back of the neck. Laid on a neckline that closes onto the
         # neck, it rendered as a flat plank across the nape -- the view a third-person camera
         # shows most. The closure ring (UNDER) already reads as the collar at the back.
@@ -710,7 +712,7 @@ def waraji(fit):
     the working and the destitute register, and the one the monk wears."""
     build = Build()
     for side in ('l', 'r'):
-        _tabi(fit, build, side, region=(0.0, 0.85, 0.6))
+        _tabi(fit, build, side)  # dusty hem colour, like every other wrap; the pale variant read as white slabs
         _geta_sole(fit, build, side, raised=False)
     return build
 
