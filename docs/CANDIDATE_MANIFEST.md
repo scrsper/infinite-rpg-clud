@@ -30,6 +30,9 @@ here writes to live or staging.
 | `journey-package-06-night` | 9502128 | **Passed** (observe only) at natural world 20:23 — no clock change. The frame was black but for one lit house (defect, below). The offline body had eaten and spent 9 silver while away. |
 | `journey-package-07` | 6468fc5 | **Failed** at natural 02:53 (everyone asleep; a legitimate outcome at night). p95 33.7 ms — just over target, with the server slowed by a concurrent cook. |
 | `journey-editor-night-hold-3` | editor, native | **Passed** (observe + 30 s hold) at 04:17–04:29: after exposure settles the night is readable; the camera no longer sits inside the player's own body. |
+| `pair-package-A` + `-B` | f5227fd | **Passed.** Packaged two-client pair: mutual sight; B's sightings of A within 1.6 m of A's own path. |
+| `journey-package-08` | 1aef56f | **Failed** at 07:30: the square's sellers had only ale; the probe spent its eight asks there. Sound played (3 loops, 90 footsteps). |
+| `journey-package-09` | 729fb27 | **Passed** at 12:00 with sound: fresh arrival, route toward the tavern, bought bread 2s from Thora Stone (baker) and ate — hunger 20→0, silver 20→18; one coin and one eating cue; p95 31.2 ms. |
 | `pair-A-oren` + `pair-B-sela` | editor, native | **Passed.** Two clients at once on the dev world: each saw the other's body; B's sightings of A lie on A's own path within 0.5–1.6 m. Dawn twilight frame at 04:58. |
 
 Frame timing is measured with the probe's 60 FPS cap and offscreen rendering, screenshot frames
@@ -55,7 +58,11 @@ Frames reviewed by eye. Fixed from what they showed: green-grey faces (`02903b1`
 
 - Mechanisms do not arise in a week (they need a sustained shortfall; see coverage MECH-DORMANT);
   no ordinary player mechanism panel.
-- Oversized white foot blocks on crowd bodies; canonical `skinTone` not mapped to faces.
+- Blocky pale footwear, some pieces floating detached from bodies (cause not found); sack props
+  fail to compile; canonical `skinTone` not mapped to faces.
+- Conversation framing crowds the partner under the panel when they stand very close.
+- The dev world now holds a dozen offline probe characters (journey accounts a–l) who idle in the
+  square — a testing artifact that inflates crowds there.
 - The journey probe does not enter buildings, so "nobody new at the tavern" is partly a probe limit.
 - Sound and a multi-seed review not yet done; the two-player check is native only (not packaged),
   and players have not yet contended for or traded the same goods.
