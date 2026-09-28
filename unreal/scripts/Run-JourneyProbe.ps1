@@ -9,7 +9,11 @@ param(
     [string]$Executable = 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor.exe',
     [ValidateRange(640,3840)][int]$Width = 1920,
     [ValidateRange(480,2160)][int]$Height = 1080,
-    [ValidateRange(60,1200)][int]$TimeoutSeconds = 420
+    [ValidateRange(60,1200)][int]$TimeoutSeconds = 420,
+    # Stay in the shared world this long after the journey (walking the route with -HoldWalk),
+    # recording our own path and every body shown to us, for two-client cross-checks.
+    [ValidateRange(0,900)][int]$HoldSeconds = 0,
+    [switch]$HoldWalk
 )
 # Automated ordinary-input journey (TV.JourneyProbe). Real rendering; credentials stay in the
 # client profile. The config names who to walk to, so a pass is not a discoverability claim.
@@ -18,7 +22,7 @@ $repo = (Resolve-Path "$PSScriptRoot/../..").Path
 $Out = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Out)
 if (Test-Path -LiteralPath $Out) { throw "Refusing to reuse journey evidence: $Out" }
 New-Item -ItemType Directory -Path $Out | Out-Null
-$config = [ordered]@{ out = $Out; targetBody = $TargetBody; dialogue = $Dialogue; eat = !$ObserveOnly; observeOnly = [bool]$ObserveOnly; quit = $true; timeoutSeconds = $TimeoutSeconds - 60 }
+$config = [ordered]@{ out = $Out; targetBody = $TargetBody; dialogue = $Dialogue; eat = !$ObserveOnly; observeOnly = [bool]$ObserveOnly; quit = $true; timeoutSeconds = $TimeoutSeconds - 60; holdSeconds = $HoldSeconds; holdWalk = [bool]$HoldWalk }
 if ($RouteFile) { $config.explore = @(Get-Content -LiteralPath $RouteFile -Raw | ConvertFrom-Json) }
 $configFile = Join-Path $Out 'config.json'
 $config | ConvertTo-Json | Set-Content -LiteralPath $configFile -Encoding utf8

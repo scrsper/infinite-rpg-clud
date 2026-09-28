@@ -41,6 +41,10 @@ struct FState {
     TWeakObjectPtr<UWorld> World; FTSTicker::FDelegateHandle Ticker; bool bForward=false,bStrafe=false,bSignedIn=false,bNearest=false;
     TSet<FString> Asked,Faced; FString Target; TArray<FVector2D> Explore; TArray<FString> ExploreLabels; int32 Waypoint=0; double TargetSince=0; FString OptionsAtChoice;
     TArray<double> FrameSeconds; // every frame from entering the world to the end of the journey
+    // Shared-world record: our own body and path, and every other body this client was shown
+    // (first/last position, when first seen). Two clients' reports can then be cross-checked.
+    double HoldSeconds=0; bool bHoldWalk=false,bHeldShot=false; FString SelfBody; TArray<FVector> SelfPath; double LastPathAt=0;
+    struct FSeen{FVector First,Last;double FirstAt=0;}; TMap<FString,FSeen> Seen;
 };
 static FState S;
 
@@ -79,6 +83,10 @@ static void Finish(const FString& Status,const FString& Error=FString()){
     if(B){R->SetStringField(TEXT("release"),B->ServerRelease);R->SetStringField(TEXT("worldId"),B->WorldId);R->SetStringField(TEXT("character"),B->CharacterName);
         TArray<TSharedPtr<FJsonValue>> Rows;for(const auto& Item:B->CarriedRows){auto I=MakeShared<FJsonObject>();I->SetStringField(TEXT("label"),Item.Label);TArray<TSharedPtr<FJsonValue>> A;for(const auto& Act:Item.Actions)A.Add(MakeShared<FJsonValueString>(FString::Printf(TEXT("%s:%s%s"),*Act.Kind,Act.bAvailable?TEXT("available"):TEXT("refused"),Act.Reason.IsEmpty()?TEXT(""):*(TEXT(" (")+Act.Reason+TEXT(")")))));I->SetArrayField(TEXT("actions"),A);Rows.Add(MakeShared<FJsonValueObject>(I));}
         R->SetArrayField(TEXT("carriedAtEnd"),Rows);R->SetStringField(TEXT("vitalsAtEnd"),B->PlayerVitals);}
+    { auto Vec=[](const FVector& V){TArray<TSharedPtr<FJsonValue>> A;for(double X:{V.X,V.Y,V.Z})A.Add(MakeShared<FJsonValueNumber>(FMath::RoundToDouble(X)));return A;};
+      R->SetStringField(TEXT("selfBodyId"),S.SelfBody);TArray<TSharedPtr<FJsonValue>> Path;for(const FVector& P:S.SelfPath)Path.Add(MakeShared<FJsonValueArray>(Vec(P)));R->SetArrayField(TEXT("selfPath"),Path);
+      TArray<TSharedPtr<FJsonValue>> Seen;for(const auto& Pair:S.Seen){auto J=MakeShared<FJsonObject>();J->SetStringField(TEXT("bodyId"),Pair.Key);J->SetArrayField(TEXT("first"),Vec(Pair.Value.First));J->SetArrayField(TEXT("last"),Vec(Pair.Value.Last));J->SetNumberField(TEXT("firstSeenAt"),Pair.Value.FirstAt);Seen.Add(MakeShared<FJsonValueObject>(J));}
+      R->SetArrayField(TEXT("seenBodies"),Seen); }
     FString Json;auto Writer=TJsonWriterFactory<>::Create(&Json);FJsonSerializer::Serialize(R,Writer);Writer->Close();
     FFileHelper::SaveStringToFile(Json,*FPaths::Combine(S.Out,TEXT("journey.json")),FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM);
     UE_LOG(LogTemp,Display,TEXT("TV_JOURNEY finished status=%s error=%s"),*Status,*Error);
@@ -116,6 +124,9 @@ static bool Tick(float){
     auto* W=GameWorld();S.World=W;auto* B=W?W->GetSubsystem<UTVBridgeSubsystem>():nullptr;auto* PC=W?W->GetFirstPlayerController():nullptr;APawn* Pawn=PC?PC->GetPawn():nullptr;
     if(!B||!PC)return true;
     if(S.Shot>0&&B->IsLive())S.FrameSeconds.Add(FApp::GetDeltaTime());
+    if(Pawn&&B->IsLive())for(const auto& Pair:B->Bodies){const ATVCharacter* C=Pair.Value.Get();if(!IsValid(C))continue;
+        if(C==Pawn){S.SelfBody=Pair.Key;if(Now-S.LastPathAt>2){S.SelfPath.Add(C->GetActorLocation());S.LastPathAt=Now;}continue;}
+        auto& Seen=S.Seen.FindOrAdd(Pair.Key);if(Seen.FirstAt==0){Seen.First=C->GetActorLocation();Seen.FirstAt=Now-S.Started;}Seen.Last=C->GetActorLocation();}
     switch(S.Phase){
     case 0: // entered: the world, our person and (unless observing) the chosen person are projected
         // A new account meets the ordinary sign-in screen; press its "begin a new life" button
@@ -183,7 +194,22 @@ static bool Tick(float){
         J->SetNumberField(TEXT("silverBefore"),S.WealthBefore);J->SetNumberField(TEXT("silverAfter"),Silver(B->PlayerVitals));Step(TEXT("ate"),B,J);
         SlateKey(EKeys::Escape);Next(7);return true; }
     case 7:
-        if(InPhase<1)return true;Step(TEXT("done"),B);Finish(TEXT("passed"));return false;
+        if(InPhase<1)return true;
+        if(S.HoldSeconds>0){Step(TEXT("holding"),B);S.Waypoint=0;Next(10);return true;}
+        Step(TEXT("done"),B);Finish(TEXT("passed"));return false;
+    case 10: // stay in the shared world a while; walk the route (if asked) so others see us move
+        // The last frame is taken before quitting (screenshots are written asynchronously), once
+        // exposure has had the whole hold to settle.
+        if(!S.bHeldShot&&InPhase>=S.HoldSeconds-3){S.bHeldShot=true;Step(TEXT("held"),B);}
+        if(InPhase>=S.HoldSeconds){Release();Step(TEXT("done"),B);Finish(TEXT("passed"));return false;}
+        if(S.bHoldWalk&&S.Waypoint<S.Explore.Num()){
+            const FVector Goal=B->ToUnreal(FVector(S.Explore[S.Waypoint].X,0,S.Explore[S.Waypoint].Y)),To=Goal-Pawn->GetActorLocation();
+            const float Error=FMath::FindDeltaAngleDegrees(PC->GetControlRotation().Yaw,To.Rotation().Yaw);
+            if(FMath::Abs(Error)>1.5f)Key(EKeys::MouseX,IE_Axis,FMath::Clamp(Error*2.f,-60.f,60.f));
+            if(!S.bForward){Key(EKeys::W,IE_Pressed);S.bForward=true;}
+            if(To.Size2D()<140)++S.Waypoint;
+        } else Release();
+        return true;
     case 8: // closed a conversation that offered nothing we wanted; choose the next person
         if(InPhase<.8)return true;if(B->bDialogueOpen){if(InPhase>3){Goodbye(B);S.PhaseAt=Now;}return true;}
         if(!ChooseTarget(B,Pawn)){if(S.Waypoint<S.Explore.Num()){Next(9);return true;}Finish(TEXT("failed"),TEXT("nobody nearby offered what we wanted"));return false;}
@@ -204,7 +230,7 @@ static bool Tick(float){
 static void Start(const TArray<FString>& Args){
     if(S.bRunning||Args.Num()<1)return;FString Text;if(!FFileHelper::LoadFileToString(Text,*Args[0])){UE_LOG(LogTemp,Error,TEXT("TV_JOURNEY missing config %s"),*Args[0]);return;}
     TSharedPtr<FJsonObject> C;if(!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text),C)||!C){UE_LOG(LogTemp,Error,TEXT("TV_JOURNEY bad config"));return;}
-    S=FState();C->TryGetStringField(TEXT("out"),S.Out);C->TryGetStringField(TEXT("targetBody"),S.TargetBody);C->TryGetBoolField(TEXT("eat"),S.bEat);C->TryGetBoolField(TEXT("quit"),S.bQuit);C->TryGetBoolField(TEXT("observeOnly"),S.bObserveOnly);C->TryGetNumberField(TEXT("timeoutSeconds"),S.Timeout);
+    S=FState();C->TryGetStringField(TEXT("out"),S.Out);C->TryGetStringField(TEXT("targetBody"),S.TargetBody);C->TryGetBoolField(TEXT("eat"),S.bEat);C->TryGetBoolField(TEXT("quit"),S.bQuit);C->TryGetBoolField(TEXT("observeOnly"),S.bObserveOnly);C->TryGetNumberField(TEXT("timeoutSeconds"),S.Timeout);C->TryGetNumberField(TEXT("holdSeconds"),S.HoldSeconds);C->TryGetBoolField(TEXT("holdWalk"),S.bHoldWalk);
     const TArray<TSharedPtr<FJsonValue>>* Picks=nullptr;if(C->TryGetArrayField(TEXT("dialogue"),Picks))for(const auto& P:*Picks)S.Picks.Add(P->AsString());
     const TArray<TSharedPtr<FJsonValue>>* Route=nullptr;
     if(C->TryGetArrayField(TEXT("explore"),Route))for(const auto& V:*Route){const auto P=V->AsObject();if(!P)continue;S.Explore.Add(FVector2D(P->GetNumberField(TEXT("x")),P->GetNumberField(TEXT("z"))));FString L;P->TryGetStringField(TEXT("label"),L);S.ExploreLabels.Add(L);}
