@@ -455,7 +455,13 @@ function favorTrace(world: World, sim: Simulation, spec: MotiveSpec): MotiveTrac
   // re-derivation — it is the same number the decision itself reads, sampled hourly while the
   // window runs. Sampling matters: taking it once at the end would report zero for precisely the
   // cases where the mechanism worked, because a stake that has been answered is no longer live.
-  const stranger = villagers.find(q => q.id !== recipient.id && q.id !== giver.id);
+  // The control is chosen at each sample, not once: somebody the recipient owes nothing AT THAT
+  // HOUR. Fixing it at the start compared the debt against whoever came first in the list, and
+  // over a 40-hour window of ordinary life the recipient can come to owe that person too, which
+  // turned the control into a second debt.
+  const owesNothing = (q: Person) => q.id !== recipient.id && q.id !== giver.id && obligationCredit(recipient, q.id) <= 0;
+  const firstPick = villagers.find(q => q.id !== recipient.id && q.id !== giver.id);
+  let stranger = villagers.find(owesNothing);
   const GOALS: GoalType[] = ['help', 'check_on', 'haul', 'help_recover_item'];
   let peakCredit = 0; let peakBonus = 0; let peakReasons: string[] = []; let peakGoal: GoalType = 'help';
   let peakTotal = 0;
@@ -476,14 +482,16 @@ function favorTrace(world: World, sim: Simulation, spec: MotiveSpec): MotiveTrac
       }
     }
     // The control: the very same goal, aimed at somebody they owe nothing.
-    if (stranger) controlBonus = Math.max(controlBonus, obligationGoalBoost(recipient, peakGoal, stranger.id, stranger.id).bonus);
+    const controlNow = villagers.find(owesNothing);
+    if (controlNow) { stranger = controlNow; controlBonus = Math.max(controlBonus, obligationGoalBoost(recipient, peakGoal, controlNow.id, controlNow.id).bonus); }
   }
 
   const measurements: string[] = [];
   const credit = obligationCredit(recipient, giver.id);
   measurements.push(`at its height ${recipient.name} carried ${peakCredit.toFixed(2)} of standing obligation toward ${giver.name} (now ${credit.toFixed(2)})`);
   measurements.push(`  a '${peakGoal}' that serves ${giver.name} got up to +${peakBonus.toFixed(3)} from the debt alone (+${peakTotal.toFixed(3)} once every live motive is counted) — ${peakReasons.join('; ')}`);
-  if (stranger) measurements.push(`  the same '${peakGoal}' aimed at ${stranger.name}, whom they owe nothing, never got more than +${controlBonus.toFixed(3)} from any debt`);
+  if (stranger) measurements.push(`  the same '${peakGoal}' aimed at someone they owe nothing at the time (last: ${stranger.name}) never got more than +${controlBonus.toFixed(3)} from any debt`);
+  if (firstPick && firstPick.id !== stranger?.id) measurements.push(`  (${recipient.name} carries ${obligationCredit(recipient, firstPick.id).toFixed(2)} of standing obligation toward ${firstPick.name}, the first villager listed, so they are no control)`);
   const actedFor = (rec.goalsBy.get(recipient.id) ?? []).filter(g => g.reasons.some(r => /I owe them/.test(r)));
   measurements.push(actedFor.length
     ? `${recipient.name} adopted ${actedFor.length} goal(s) whose stated reasons include the debt`
