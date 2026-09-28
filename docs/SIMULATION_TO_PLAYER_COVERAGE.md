@@ -64,6 +64,7 @@ Milestone 1 packaged client `client-84c1700` (Development, clean). Full suite at
 | ID | Capability | Canonical source | Player entry | Status | Evidence | Remaining |
 |---|---|---|---|---|---|---|
 | MECH-ALL | Inspect, diagnose, test, reverse-engineer, dismantle, replace, connect, manufacture, reconstruct, ask | `gameSim` mechanism intents, `mechanismPanel` | Only inside the developer inspector (`bInspector && bMechanismsOpen`) | canonical-only | unit (mechanism tests) | no ordinary player panel: historical finding reproduced |
+| MECH-DORMANT | Mechanisms arise in generated worlds | `invention.ts` (`inventionGoals`: needs a production shortfall at a usable place + a known component/method for that process + a reachable energy boundary); `settlementMechanics.ts` seeds only wind boundaries and primitive knowledge | — | canonical-only | accel: **0 assemblies and 0 components** after 7 world days on seeds 918271/918272/918273; 0 at start | the whole family is dormant in the worlds players enter; which invention precondition never holds is unresolved. A native panel alone would expose nothing. Needs investigation before UI work |
 | BUILD | Construction labour | agent `build`, construction projects | — | canonical-only | accel (NPCs) | — |
 
 ## 5. Knowledge and society
