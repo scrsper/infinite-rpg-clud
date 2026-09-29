@@ -45,6 +45,8 @@ export class Showroom {
   private t = 0;
   private stage: Mesh | null = null;
   pose: Pose = 'idle';
+  /** When set, combat poses hold this age (seconds into the action) so a frame of the strike can be inspected. */
+  freezeAge: number | null = null;
   private label: HTMLElement | null = null;
   constructor(private readonly app: App) {}
 
@@ -93,7 +95,7 @@ export class Showroom {
       const detail = this.pose === 'work' ? 'chop' : this.pose === 'talk' ? 'converse' : '';
       let combat: CombatContext | null = null;
       if (['jab', 'cross', 'front_kick', 'round_kick', 'guard', 'sidestep'].includes(this.pose)) {
-        const cyc = (this.t % 1.4); combat = { moveId: this.pose, weight: 'light', age: cyc, prep: 0.3, active: 0.15, recovery: 0.3, side: 1 };
+        const cyc = this.freezeAge ?? (this.t % 1.4); combat = { moveId: this.pose, weight: 'light', age: cyc, prep: 0.3, active: 0.15, recovery: 0.3, side: 1 };
       }
       const st: ActorState = {
         bodyId: 'show', own: false, kind: 'person', speed, velocity: { x: 0, y: 0, z: -speed }, yaw: 0, crouch: this.pose === 'crouch' ? 1 : 0, age: 0, speaking: this.pose === 'talk', gesture: 0.8, combat,

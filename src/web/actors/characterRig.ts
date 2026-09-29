@@ -57,6 +57,8 @@ export class CharacterRig {
     this.model.computeWorldMatrix(true);
     this.captureRest();
     for (const m of this.entries.rootNodes.flatMap(n => n.getChildMeshes(false))) {
+      // A constant set of morph influencers keeps the shader variant fixed, so a blink starting mid-frame never triggers a recompile.
+      const mm = (m as Mesh).morphTargetManager; if (mm) { mm.optimizeInfluencers = false; mm.enableNormalMorphing = false; }
       const tag = (m.metadata?.gltf?.extras?.tv_part as string | undefined) ?? (m.parent as TransformNode | null)?.metadata?.gltf?.extras?.tv_part ?? 'part';
       this.parts.push({ mesh: m, tag, name: m.name.replace(`${name}.`, '') });
       m.isPickable = false;

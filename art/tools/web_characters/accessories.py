@@ -12,7 +12,7 @@ from mathutils import Vector
 from common import Dims, smoothstep
 from head import head_frame
 from body import layout, tube_mesh, mirror, foot_rings, arm_rings, leg_rings
-from garments_web import SLOTS, Fit
+from garments_web import SLOTS, Fit, orient_outward
 from ashford_lib import normalise_weights, transfer_weights
 
 ACC_SLOTS = ['Cloth', 'Under', 'Accent', 'Metal', 'Leather', 'Fur', 'Hem', 'Straw', 'Lacquer', 'Crystal']
@@ -95,6 +95,7 @@ def footwear(d: Dims, style, body, arm):
     for poly in obj.data.polygons:
         poly.material_index = 0 if style == 'boots' else 2
     _from_body(obj, body, arm)
+    orient_outward(obj, body)
     return obj
 
 
@@ -180,6 +181,7 @@ def arm_wrap(d: Dims, body, arm):
     obj = _obj_from_bm(bm, 'Accessory_arm_wrap', ['Cloth'], 'accessory')
     obj['tv_style'] = 'arm_wrap'
     _from_body(obj, body, arm)
+    orient_outward(obj, body)
     return obj
 
 
@@ -322,6 +324,7 @@ def hero_stole(d: Dims, arm, body):
     obj = _obj_from_bm(bm, 'Hero_stole', ['Fur'], 'hero')
     obj['tv_style'] = 'stole'
     _from_body(obj, body, arm)
+    orient_outward(obj, body)
     return obj
 
 

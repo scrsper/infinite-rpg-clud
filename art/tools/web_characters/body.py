@@ -204,7 +204,7 @@ def arm_rings(d: Dims, s):
     sh, el, wr = m(j['shoulder']), m(j['elbow']), m(j['wrist'])
     c = d.sex == 'c'
     return [
-        (sh + Vector((-0.004 * H if s == 'l' else 0.004 * H, 0.0, 0.006 * H)), 0.036 * H if not c else 0.032 * H, 0.037 * H if not c else 0.033 * H),
+        (sh + Vector((-0.004 * H if s == 'l' else 0.004 * H, 0.0, -0.008 * H)), 0.032 * H if not c else 0.029 * H, 0.033 * H if not c else 0.030 * H),
         (_at(sh, el, 0.25), 0.031 * H, 0.033 * H if not c else 0.030 * H),
         (_at(sh, el, 0.6), 0.027 * H, 0.029 * H),
         (el, 0.024 * H, 0.025 * H),

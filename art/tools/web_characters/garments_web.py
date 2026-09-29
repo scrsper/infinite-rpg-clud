@@ -72,6 +72,21 @@ class Fit:
         self.knee_z = d.knee
 
     def torso(self, z):
+        cy, rx, ry = self._torso(z)
+        H = self.H
+        if self.d.sex == 'f':
+            # The body's bust and glute bumps stand proud of the base rings; give the cloth the same room, front and back.
+            front = 0.028 * H * math.exp(-((z - 0.706 * H) ** 2) / (2 * (0.032 * H) ** 2))
+            back = 0.018 * H * math.exp(-((z - 0.530 * H) ** 2) / (2 * (0.036 * H) ** 2))
+            cy = cy - front / 2 + back / 2
+            ry = ry + front / 2 + back / 2
+        else:
+            front = 0.012 * H * math.exp(-((z - 0.72 * H) ** 2) / (2 * (0.05 * H) ** 2))
+            cy -= front / 2
+            ry += front / 2
+        return cy, rx, ry
+
+    def _torso(self, z):
         """(cy, rx, ry) of the body's trunk at height z; below the crotch it stays at the hip width."""
         zs = self.zs
         if z <= zs[0]:
@@ -122,15 +137,19 @@ def torso_wrap(fit, b, z_top, z_hem, ease=0.020, hem_flare=0.0, hem_taper=0.0, r
         cy, rx, ry = fit.torso(max(z, z_hip))
         # From the hip down, hold the hip width and let flare/taper act.
         width = rx + e + hem_flare * below - hem_taper * below
-        # The yoke: from the chest up, widen to the shoulder joint and then slope in to the collar, so the cloth covers the deltoid.
-        zc, zs_, zn = fit.d.chest + 0.02 * fit.H, fit.shoulder_z + 0.018 * fit.H, fit.neck_z + 0.008 * fit.H
-        sh_out = fit.d.shoulder_x + 0.032 * fit.H + e
-        neck_w = 0.038 * fit.H + e
-        if z > zc:
-            if z <= zs_:
-                width = max(width, lerp(rx + e, sh_out, smooth01((z - zc) / (zs_ - zc))))
+        # The yoke: follow the rounded top of the shoulder (the arm's own first ring), then slope in to the collar.
+        H = fit.H
+        zc_arm, r_arm, sx = fit.shoulder_z - 0.020 * H, 0.034 * H + 0.5 * e, fit.d.shoulder_x
+        neck_w, z_neck = 0.038 * H + e, fit.neck_z + 0.010 * H
+        if z > fit.d.chest:
+            dz = z - zc_arm
+            cover = sx + math.sqrt(max(0.0, r_arm * r_arm - dz * dz)) if abs(dz) < r_arm else 0.0
+            top = zc_arm + r_arm
+            if z > top:
+                slope = lerp(sx + 0.01 * H, neck_w, smooth01((z - top) / max(1e-4, z_neck - top)))
+                width = max(neck_w, slope) if z < z_neck else neck_w
             else:
-                width = max(neck_w, lerp(sh_out, neck_w, smooth01((z - zs_) / max(1e-4, zn - zs_))))
+                width = max(width, cover)
         depth = ry + e + hem_flare * below * 0.8 - hem_taper * below * 0.6
         rings.append(ring_points(0.0, cy + dy_hem * below, z, width * (1 + (kx_hem - 1) * below), depth, segs, power=2.4))
         binds.append(bind_ring(fit, max(z, z_hip - 0.0), segs) if z >= z_hip else [Vector((p.x * 0.55, p.y, z)) for p in bind_ring(fit, z_hip, segs)])
@@ -538,13 +557,55 @@ def to_object(build, name):
     return obj
 
 
+def orient_outward(obj, body):
+    """Make every face point away from the body: a garment is a shell around the figure, and an open shell has no inside to infer from,
+    so ask the body itself (nearest surface point) which way is out. Backface-culled engines show a wrongly wound face as a hole."""
+    from mathutils.bvhtree import BVHTree
+    bm_body = bmesh.new()
+    bm_body.from_mesh(body.data)
+    bm_body.transform(body.matrix_world)
+    tree = BVHTree.FromBMesh(bm_body)
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    bm.faces.ensure_lookup_table()
+    flip = []
+    for f in bm.faces:
+        c = f.calc_center_median()
+        loc, nrm, idx, dist = tree.find_nearest(c)
+        if loc is None:
+            continue
+        away = c - loc
+        if away.length < 1e-6:
+            continue
+        if f.normal.dot(away) < 0:
+            flip.append(f)
+    bmesh.ops.reverse_faces(bm, faces=flip)
+    bm.to_mesh(obj.data)
+    bm.free()
+    bm_body.free()
+    return len(flip)
+
+
+def finish(obj):
+    mesh = obj.data
+    for poly in mesh.polygons:
+        poly.use_smooth = True
+    bm = bmesh.new()
+    bm.from_mesh(mesh)
+    bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=0.0008)
+    bm.to_mesh(mesh)
+    bm.free()
+    mesh.update()
+
+
 def make_garment(kind, fit, body, arm, name=None):
     build = REGISTRY[kind](fit)
     obj = to_object(build, name or f'G_{kind}')
     proxy = bind_pose_object(build, 'proxy')
     transfer_weights(obj, proxy, [body])
     normalise_weights(obj, limit=4)
-    smooth_and_finish(obj)
+    finish(obj)
+    orient_outward(obj, body)
     obj.parent = arm
     mod = obj.modifiers.new('Armature', 'ARMATURE')
     mod.object = arm
