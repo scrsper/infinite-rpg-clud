@@ -80,6 +80,16 @@ export class RegionManager {
     return { y, height: 1 - 0.5 * Math.max(0, Math.min(1, (g.forest[k] - 0.5) * 2)) };
   }
 
+  /** The ground block id drawn at a simulation position (for footstep sound), or null. */
+  blockAt(x: number, z: number): number | null {
+    const reg = this.regions.get(this.regionOf(x, z)); if (!reg) return null; const g = reg.terrain.grid;
+    const i = Math.max(0, Math.min(g.n - 1, Math.round((x - g.x0) / g.stride))), j = Math.max(0, Math.min(g.n - 1, Math.round((z - g.z0) / g.stride))); return g.block[i * g.n + j];
+  }
+  /** Number of lit fires within 14 m (crackle level). */
+  fireCountNear(x: number, z: number): number {
+    let n = 0; const d = this.lastDynamics; if (!d) return 0; for (const f of d.fires) if (f.lit && Math.hypot(f.pos.x - x, f.pos.z - z) < 14) n++; return n;
+  }
+
   /** Whether built structure occupies the simulation-space point (used by the camera). */
   structureAt(x: number, y: number, z: number): boolean {
     const r = this.regions.get(this.regionOf(x, z)); if (!r?.cells) return false;

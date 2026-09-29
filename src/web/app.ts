@@ -19,6 +19,7 @@ import { CreatureFactory } from './actors/creatureFactory';
 import { add, h } from './ui/dom';
 import { UiNav } from './ui/nav';
 import { PortraitRenderer } from './ui/portrait';
+import { GameAudio } from './audio/audio';
 import { ModalHost } from './ui/modal';
 import { Hud } from './ui/hud';
 import { DialoguePanel } from './ui/dialoguePanel';
@@ -58,6 +59,8 @@ export class App {
   creatures = new CreatureFactory();
   grass!: GrassField;
   portrait!: PortraitRenderer;
+  audio = new GameAudio();
+  private stepDist = 0; private lastStepPos: { x: number; z: number } | null = null; private nextBlip = 0;
   private choice: CharacterChoice = { kind: 'auto' };
   private closedFinal = false;
   private hintsShown = new Set<string>();
@@ -93,7 +96,7 @@ export class App {
     this.actors.env = {
       physicalNow: () => this.physTick + (performance.now() - this.physAt) / 1000, speakerBodyId: () => (this.dialogue.isOpen ? this.dialogue.speaker : null), playerBodyId: () => this.ownBodyId,
       playerLook: () => { const t = this.controller.lockedBodyId; return t ? this.actors.headPoint(t, new Vector3()) : null; },
-      onHit: (id, own) => { if (own) { this.rig.impact(0.8); this.input.vibrate(0.6, 0.3, 160); } },
+      onHit: (id, own) => { if (own) { this.rig.impact(0.8); this.input.vibrate(0.6, 0.3, 160); this.audio.combat('hurt'); } else this.audio.combat('hit'); },
     };
     this.actors.factory = (ctx, atmos, a) => (a.kind === 'person' ? this.characters.create(ctx.scene, atmos, a.body?.bodyId ?? 'x', makeRealization(a.body, a.body?.bodyId ?? 'x')) : a.wildlife ? this.creatures.create(ctx.scene, atmos, a.wildlife) : null) ?? placeholderVisual(ctx, atmos, a);
     this.input = new InputManager(canvas, () => this.settings);
@@ -103,7 +106,7 @@ export class App {
     this.modal = new ModalHost(this.modalLayer, this.nav);
     this.portrait = new PortraitRenderer(this.ctx.scene, this.actors);
     this.dialogue = new DialoguePanel(this.overlay, {
-      choose: async (id, label) => { const r = await this.link.intent({ type: 'dialogue_option', optionId: id }); void label; return { result: r.result }; },
+      choose: async (id, label) => { this.audio.ui('confirm'); const r = await this.link.intent({ type: 'dialogue_option', optionId: id }); void label; return { result: r.result }; },
       close: () => void this.link.intent({ type: 'dialogue_close' }),
       portrait: this.portrait,
       keyLabel: n => String(n), toast: (t, tone) => this.hud.toast(t, tone), describe: r => describeResult(r).text,
@@ -115,6 +118,8 @@ export class App {
       onCombatCommand: c => this.onCombatCommand(c), onLockChange: id => this.onLock(id),
     }, () => this.candidates(), () => this.predictor.predicted?.pos ?? null);
     this.wireLink();
+    const wake = () => { this.audio.start(); this.audio.setVolumes({ master: this.settings.masterVolume, music: this.settings.musicVolume, effects: this.settings.effectsVolume, ambience: this.settings.ambienceVolume, voice: this.settings.voiceVolume }); };
+    window.addEventListener('pointerdown', wake, { once: true }); window.addEventListener('keydown', wake, { once: true });
     this.input.onLockChange = locked => { if (!locked && this.phase === 'playing' && !this.modal.isOpen && !this.dialogue.isOpen && !this.own()?.dead) { this.ignoreEscUntil = performance.now() + 300; this.openPause(); } };
     canvas.addEventListener('click', () => { if (this.phase === 'playing' && !this.modal.isOpen && this.input.device === 'keyboard') this.input.requestLock(); });
     (window as unknown as { __tv: unknown }).__tv = this;
@@ -139,6 +144,7 @@ export class App {
   updateSettings(patch: Partial<Settings>): void {
     this.settings = { ...this.settings, ...patch }; saveSettings(this.settings); this.applyUiSettings();
     if (patch.quality) { const t = patch.quality === 'auto' ? 'balanced' : patch.quality; this.ctx.setQuality(t); this.regions.lights.setSize(this.ctx.quality.maxLights); }
+    this.audio.setVolumes({ master: this.settings.masterVolume, music: this.settings.musicVolume, effects: this.settings.effectsVolume, ambience: this.settings.ambienceVolume, voice: this.settings.voiceVolume });
     if (patch.resolutionScale !== undefined) this.ctx.engine.setHardwareScalingLevel(1 / patch.resolutionScale);
   }
 
@@ -280,6 +286,7 @@ export class App {
     const r = await this.link.intent({ type: 'hush', targetBodyId: t.bodyId }); const d = describeResult(r.result); this.hud.toast(d.text, d.tone === 'info' ? 'info' : d.tone);
   }
   private onCombatCommand(c: CombatIntent): void {
+    this.audio.combat(c.kind === 'attack' ? (c.weight === 'heavy' ? 'heavy' : 'swing') : 'dodge');
     this.hintState.attacked = true; this.rig.setMode('combat'); const now = performance.now(); this.combatUntil = now + 5000;
     // Anticipation begins on this very frame; the server's own action (same command id) takes over once it exists.
     let moveId: string, weight: 'light' | 'heavy' = c.weight ?? 'light';
@@ -311,6 +318,7 @@ export class App {
     };
   }
   openMenu(tab: 'items' | 'abilities' | 'journal'): void {
+    this.audio.ui('open');
     if (this.phase !== 'playing') return;
     this.controller.release(); this.input.exitLock();
     const svc = this.panelServices();
@@ -319,6 +327,7 @@ export class App {
       footer: f => f.append(h('button', { class: 'tv-btn', type: 'button', on: { click: () => this.modal.close() } }, 'Close')) });
   }
   openPause(): void {
+    this.audio.ui('open');
     if (this.phase !== 'playing' || this.modal.isOpen) return;
     this.controller.release(); this.input.exitLock();
     const rerender = () => this.modal.refresh();
@@ -425,8 +434,25 @@ export class App {
     this.grass.update(this.camera.position.x + this.regions.origin.x, this.camera.position.z + this.regions.origin.z);
     this.regions.update(dt, this.camera.position, this.rig.forward, 1 - this.atmosphere.daylight);
     if (this.controller.lockedBodyId === null && now > this.combatUntil && this.rig.mode === 'combat') this.rig.setMode('explore');
+    this.audioFrame(dt, now);
     // HUD (10 Hz).
     if (now - this.lastHudAt > 100 && s) { this.lastHudAt = now; this.updateHud(s, own); }
+  }
+  private audioFrame(dt: number, now: number): void {
+    const vis = this.predictor.predicted; if (!vis) return;
+    const place = this.regions.placeAt(vis.pos.x, vis.pos.y, vis.pos.z), indoor = place.kind === 'building';
+    const fires = (this.regions as unknown as { fireCountNear?: (x: number, z: number) => number }).fireCountNear?.(vis.pos.x, vis.pos.z) ?? 0;
+    const hour = ((this.regions.worldTime / 3600) % 24 + 24) % 24, w = this.regions.weather;
+    // Footfalls by distance travelled: one per stride.
+    const cur = { x: vis.pos.x, z: vis.pos.z };
+    if (this.lastStepPos) { const d = Math.hypot(cur.x - this.lastStepPos.x, cur.z - this.lastStepPos.z); if (d < 3) this.stepDist += d; }
+    this.lastStepPos = cur;
+    const running = this.controller.sprintHeld, stride = running ? 1.5 : 0.85;
+    const g = this.regions.groundAt(cur.x, cur.z) !== null ? this.regions.blockAt?.(cur.x, cur.z) ?? 1 : 1;
+    const near: 'grass' | 'stone' | 'wood' | 'dirt' | 'water' = indoor ? 'wood' : g === 3 || g === 4 ? 'stone' : g === 2 || g === 15 ? 'dirt' : 'grass';
+    if (this.stepDist >= stride) { this.stepDist = 0; this.audio.footstep(near, running ? 1.3 : 0.8); }
+    this.audio.update(dt, { hour, weather: w.kind, wind: w.wind, indoor, fires, near });
+    if (this.dialogue.isOpen && now > this.nextBlip) { this.audio.speechBlip(170 + (this.speakerPos() ? 40 : 0)); this.nextBlip = now + 140 + Math.random() * 120; }
   }
   private updateHud(s: SnapshotMessage, own: BodyState | null): void {
     if (!own) return;
