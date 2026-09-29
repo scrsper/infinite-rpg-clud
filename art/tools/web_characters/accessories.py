@@ -327,9 +327,24 @@ def hero_tail(d: Dims, arm):
     bm = bmesh.new()
     pts = [Vector(b[2]) for b in bones] + [Vector(bones[-1][3])]
     radii = [0.030, 0.050, 0.070, 0.078, 0.066, 0.040, 0.010]
-    rings = [(p, r * H / 1.66, r * H / 1.66 * 1.15) for p, r in zip(pts, radii)]
-    tube_mesh(bm, rings, segments=16, kind='limb', cap_start=True, cap_end=True)
-    add_fur_tufts(bm, 1400, 0.11 * H / 1.66, 0.014 * H / 1.66, droop=0.25, seed=11, min_up=-1.0)
+    base0 = pts[0]
+
+    def fan(pt, ang, lift):
+        # Spread a copy of the tail about the tailbone (yaw) and raise its far end a little, so the brush reads as several tails.
+        v = pt - base0
+        ca, sa = math.cos(ang), math.sin(ang)
+        return base0 + Vector((v.x * ca - v.y * sa, v.x * sa + v.y * ca, v.z + lift * v.length))
+    # (yaw, lift, scale, seed): the centre tail plus two pairs fanned to either side, the outer pair smaller and higher.
+    for ang, lift, sc, seed in ((0.0, 0.0, 1.0, 11), (0.45, 0.16, 0.92, 12), (-0.45, 0.16, 0.92, 13), (0.90, 0.30, 0.80, 14), (-0.90, 0.30, 0.80, 15)):
+        part = bmesh.new()
+        rings = [(fan(p_, ang, lift), r * sc * H / 1.66, r * sc * H / 1.66 * 1.15) for p_, r in zip(pts, radii)]
+        tube_mesh(part, rings, segments=14, kind='limb', cap_start=True, cap_end=True)
+        add_fur_tufts(part, 700, 0.11 * sc * H / 1.66, 0.014 * H / 1.66, droop=0.25, seed=seed, min_up=-1.0)
+        tmp = bpy.data.meshes.new('tail_part')
+        part.to_mesh(tmp)
+        part.free()
+        bm.from_mesh(tmp)
+        bpy.data.meshes.remove(tmp)
     obj = _obj_from_bm(bm, 'Hero_tail', ['Fur'], 'hero')
     obj['tv_style'] = 'tail'
     names = [b[0] for b in bones]
@@ -369,6 +384,58 @@ def hero_stole(d: Dims, arm, body):
     obj['tv_style'] = 'stole'
     _from_body(obj, body, arm)
     orient_outward(obj, body)
+    return obj
+
+
+def hero_bow(d: Dims, arm):
+    """A large obi bow at the back of the sash: two loops, a knot and two trailing ribbons (the concept sheet's blue bow)."""
+    H = d.height
+    fit = Fit(d)
+    z = d.waist + 0.012 * H
+    cy, rx, ry = fit.torso(z)
+    c = Vector((0, cy + ry + 0.035 * H, z))
+    bm = bmesh.new()
+    for sg in (-1, 1):
+        res = bmesh.ops.create_uvsphere(bm, u_segments=14, v_segments=10, radius=1.0)
+        for v in res['verts']:
+            local = Vector((v.co.x * 0.085 * H, v.co.y * 0.020 * H, v.co.z * 0.058 * H))
+            ca, sa = math.cos(sg * 0.32), math.sin(sg * 0.32)
+            local = Vector((local.x * ca - local.z * sa, local.y, local.x * sa + local.z * ca))
+            v.co = c + Vector((sg * 0.090 * H, 0, 0.012 * H)) + local
+    res = bmesh.ops.create_uvsphere(bm, u_segments=10, v_segments=8, radius=0.024 * H)
+    for v in res['verts']:
+        v.co = Vector((v.co.x, v.co.y * 0.8, v.co.z * 1.1)) + c
+    for sg in (-1, 1):
+        tube_mesh(bm, [(c + Vector((sg * 0.02 * H, 0.004 * H, -0.02 * H)), 0.018 * H, 0.006 * H), (c + Vector((sg * 0.05 * H, 0.014 * H, -0.12 * H)), 0.022 * H, 0.005 * H),
+                       (c + Vector((sg * 0.06 * H, 0.020 * H, -0.24 * H)), 0.020 * H, 0.004 * H), (c + Vector((sg * 0.065 * H, 0.024 * H, -0.30 * H)), 0.006 * H, 0.002 * H)], segments=8, kind='limb')
+    obj = _obj_from_bm(bm, 'Hero_bow', ['Accent'], 'hero')
+    obj['tv_style'] = 'bow'
+    _rigid(obj, arm, 'spine_01')
+    return obj
+
+
+def hero_flower(d: Dims, arm):
+    """A cluster of crystal petals with a gold heart and hanging drops at the side of the head."""
+    c, rx, ry, rz = head_frame(d)
+    k = d.height / 1.66
+    ctr = c + Vector((rx * 0.98, -ry * 0.10, rz * 0.62))
+    bm = bmesh.new()
+    for layer, (n, r_out, sc, off) in enumerate(((7, 0.030, 1.0, 0.0), (7, 0.021, 0.8, math.pi / 7))):
+        for i in range(n):
+            a = off + i / n * math.tau
+            res = bmesh.ops.create_uvsphere(bm, u_segments=8, v_segments=6, radius=1.0)
+            for v in res['verts']:
+                lp = Vector((v.co.x * 0.010 * k, v.co.y * 0.020 * k * sc, v.co.z * 0.008 * k))
+                ca, sa = math.cos(a), math.sin(a)
+                lp = Vector((lp.x * ca - lp.y * sa, lp.x * sa + lp.y * ca, lp.z))
+                v.co = ctr + Vector((0.006 * k * layer, r_out * k * math.cos(a) * 0.5, r_out * k * math.sin(a) * 0.5)) + Vector((0, lp.x, lp.y)) + Vector((0.008 * k * layer, 0, lp.z))
+    for i in range(4):
+        res = bmesh.ops.create_uvsphere(bm, u_segments=8, v_segments=6, radius=0.0075 * k)
+        for v in res['verts']:
+            v.co = Vector((v.co.x, v.co.y, v.co.z * 1.8)) + ctr + Vector((0.006 * k, (-0.012 + 0.008 * i) * k, -(0.05 + 0.028 * i) * k))
+    obj = _obj_from_bm(bm, 'Hero_flower', ['Crystal'], 'hero')
+    obj['tv_style'] = 'flower'
+    _rigid(obj, arm, 'head')
     return obj
 
 

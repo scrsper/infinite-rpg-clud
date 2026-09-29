@@ -94,6 +94,8 @@ if want('hero') and sex == 'f':
     parts.append(A.hero_tail(d, arm))
     parts.append(A.hero_stole(d, arm, body))
     parts.append(A.hero_ornaments(d, arm))
+    parts.append(A.hero_bow(d, arm))
+    parts.append(A.hero_flower(d, arm))
 
 tris = sum(sum(len(p.vertices) - 2 for p in o.data.polygons) for o in parts if o.type == 'MESH')
 print('KIT', sex, 'parts', len(parts), 'tris', tris)

@@ -116,7 +116,7 @@ export function heroRealization(): Realization {
     garmentSilhouette: 'layered_kimono', garmentPalette: 'snow_moon', accessories: ['hair_ornament', 'ear_drops'], culturalTags: ['ashford', 'snow_moon'], grooming: 1, wear: 0, status: 'noble', agePresentation: 'adult', roleCues: [],
   };
   const r = realize('hero-preview', desc, undefined);
-  r.parts = ['Body', 'Head', 'EyeL', 'EyeR', 'G_furisode_hero', 'Hair_hero_long', 'Foot_geta', 'Hero_ears', 'Hero_tail', 'Hero_stole', 'Hero_ornaments', 'Accessory_ear_drops'];
+  r.parts = ['Body', 'Head', 'EyeL', 'EyeR', 'G_furisode_hero', 'Hair_hero_long', 'Foot_geta', 'Hero_ears', 'Hero_tail', 'Hero_stole', 'Hero_ornaments', 'Hero_bow', 'Hero_flower', 'Accessory_ear_drops'];
   r.materials.cloth = { primary: [168, 200, 236], secondary: [30, 44, 96], accent: [26, 38, 84], motif: 'snow', wear: 0, seed: 7 };
   r.materials.fur = [244, 240, 232]; r.materials.furGlow = true; r.materials.hairShine = 0.9; r.materials.hairEmissive = 0.06;
   r.materials.face.makeup = 'kitsune';
