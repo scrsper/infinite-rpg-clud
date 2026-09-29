@@ -70,7 +70,9 @@ async function walkTo(g: Goal, stopAt: number, maxMs: number, sprint = true): Pr
 const dialogueText = () => page.evaluate(() => ({ title: document.querySelector('.tv-talk .tv-h2')?.textContent ?? '', lines: [...document.querySelectorAll('.tv-talk .tv-line')].map(e => e.textContent), options: [...document.querySelectorAll('.tv-talk button.tv-opt')].map(e => e.textContent) }));
 
 await start();
+const resources = () => page.evaluate(() => { const sc = (window as any).__tv.ctx.scene; return { materials: sc.materials.length, textures: sc.textures.length, meshes: sc.meshes.length, heapMB: (performance as any).memory ? Math.round((performance as any).memory.usedJSHeapSize / 1048576) : null }; });
 const before = await own();
+const res0 = await resources();
 note('entered the world with the existing character', !!before, before);
 await shot('01-start');
 
@@ -152,6 +154,8 @@ const post = await own(); await shot('10-after-reconnect');
 note('the same person returns after reconnect', !!post && !!preSave && post.id === preSave.id, { before: preSave?.name, after: post?.name });
 note('purse and belongings are unchanged across reconnect', !!post && !!preSave && post.wealth === preSave.wealth && JSON.stringify(post.carried) === JSON.stringify(preSave.carried), { before: preSave && { w: preSave.wealth, c: preSave.carried }, after: post && { w: post.wealth, c: post.carried } });
 
+const res1 = await resources();
+note('scene objects after the whole scenario (materials/textures/meshes)', null, { start: res0, end: res1 });
 writeFileSync(join(out, 'report.json'), JSON.stringify({ at: new Date().toISOString(), renderer, size: `${w}x${h}`, report, errors: errors.slice(0, 20), note: 'Automated ordinary-input scenario against the isolated preview world. Not a human playtest.' }, null, 1));
 console.log(JSON.stringify({ steps: report.length, ok: report.filter(r => r.ok === true).length, failed: report.filter(r => r.ok === false).length, unknown: report.filter(r => r.ok === null).length, errors: errors.length }));
 await browser.close();

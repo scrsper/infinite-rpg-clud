@@ -114,7 +114,7 @@ def build_hair(d: Dims, style: str, name=None):
     # ---- scalp shell from the head's own surface ----
     cover = {'shaved': 0.0015, 'cropped': 0.006, 'short_swept': 0.011, 'topknot': 0.005, 'warrior_bun': 0.006, 'tied_back': 0.008, 'loose_long': 0.012, 'wavy_long': 0.014,
              'braided': 0.009, 'twin_braid': 0.009, 'updo_ornamented': 0.010, 'ponytail': 0.008, 'bob': 0.013, 'unkempt': 0.014, 'side_fringe': 0.011, 'hero_long': 0.014}[style] * k
-    seg_u, seg_v = 96, 64
+    seg_u, seg_v = 112, 72
     res = bmesh.ops.create_uvsphere(bm, u_segments=seg_u, v_segments=seg_v, radius=1.0)
     p = dict(DEFAULT)
 
@@ -122,7 +122,7 @@ def build_hair(d: Dims, style: str, name=None):
         nx, ny, nz = n.x, n.y, n.z
         ax = abs(nx)
         if ny <= 0:
-            hf = 0.60 - 0.30 * min(1.0, ax / 0.9) ** 1.4
+            hf = 0.47 - 0.24 * min(1.0, ax / 0.9) ** 1.4
             base = hf * (1 - smoothstep(-0.7, -0.05, ny)) + (-0.03) * smoothstep(-0.7, -0.05, ny)
         else:
             base = -0.03 + (-0.64 + 0.03) * smoothstep(0.0, 0.9, ny)
@@ -166,8 +166,21 @@ def build_hair(d: Dims, style: str, name=None):
         out = (pos - c).normalized()
         feather = 0.35 if v.index in lower else 1.0
         v.co = pos + out * cover * feather * (1.0 + 0.6 * smoothstep(0.0, 1.0, n.z))
+    # A quad with exactly one vertex outside the cap is not dropped: it becomes a triangle of the other three, whose
+    # free edge joins two neighbouring hairline vertices. Without this the boundary is a row of teeth (each column
+    # ends one row higher or lower than its neighbour); with it the edge is one continuous line along the hairline.
+    bridges = []
+    for f in bm.faces:
+        outside = [v for v in f.verts if v.index not in keep]
+        if len(outside) == 1 and len(f.verts) == 4:
+            bridges.append([v for v in f.verts if v.index in keep])
     drop = [f for f in bm.faces if not all(v.index in keep for v in f.verts)]
-    bmesh.ops.delete(bm, geom=drop, context='FACES')
+    bmesh.ops.delete(bm, geom=drop, context='FACES_ONLY')
+    for tri in bridges:
+        try:
+            bm.faces.new(tri)
+        except ValueError:
+            pass
     for v in [v for v in bm.verts if not v.link_faces]:
         bm.verts.remove(v)
 

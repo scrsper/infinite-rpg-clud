@@ -73,7 +73,10 @@ export class InputManager {
   requestLock(): void {
     if (this.pointerLocked || performance.now() - this.lockRequestedAt < 400) return;
     this.lockRequestedAt = performance.now();
-    try { const p = this.canvas.requestPointerLock({ unadjustedMovement: true } as PointerLockOptions) as unknown as Promise<void> | undefined; p?.catch?.(() => this.canvas.requestPointerLock()); } catch { try { this.canvas.requestPointerLock(); } catch { /* denied */ } }
+    // Raw (unadjusted) movement if the browser allows it, else ordinary pointer lock. Every promise is handled: a refusal
+    // (menu opening at the same moment, tab not focused, document not valid for lock) is normal and must not surface as an error.
+    const plain = () => { try { (this.canvas.requestPointerLock() as unknown as Promise<void> | undefined)?.catch?.(() => undefined); } catch { /* denied */ } };
+    try { (this.canvas.requestPointerLock({ unadjustedMovement: true } as PointerLockOptions) as unknown as Promise<void> | undefined)?.catch?.(plain); } catch { plain(); }
   }
   exitLock(): void { if (document.pointerLockElement) document.exitPointerLock(); }
   /** The next key, mouse button or gamepad button becomes the answer; Escape cancels through `cancelCapture`. */

@@ -48,7 +48,12 @@
     "web:build": "tsc --noEmit && vite build --config vite.web.config.ts",
     "web:gateway": "tsx src/webgate/main.ts",
     "web:assets": "node scripts/web/build-assets.mjs",
-    "web:play": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/web/Play-Web.ps1"
+    "web:play": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/web/Play-Web.ps1",
+    "web:perf": "tsx scripts/web/perf.ts",
+    "web:journey": "tsx scripts/web/journey.ts",
+    "web:scenario": "tsx scripts/web/scenario.ts",
+    "web:pad": "tsx scripts/web/pad.ts",
+    "web:ui": "tsx scripts/web/uicheck.ts"
   },
   "dependencies": {
     "@babylonjs/core": "9.28.0",
