@@ -115,9 +115,12 @@ export interface BodyState {
   health?: number; maxHealth?: number; needs?: Record<string, number>; wealth?: number;
 }
 export interface InteractionTarget { actionId: string; targetId: string; kind: string; label: string; title?: string; verb?: string; reason?: string; pos: Vec3 }
-export interface HandInteraction { id: string; kind: string; label: string; slot?: string; target?: { id: string; kind: string; pos: Vec3 } }
-export interface ActionRow { id: string; kind: string; label: string; detail?: string; available: boolean; reason?: string; request?: { type: string; intent?: Record<string, unknown> } & Record<string, unknown> }
-export interface CarriedRow { id: string; label: string; description?: string[]; actions: { id: string; kind: string; label: string; available: boolean; reason?: string; request?: unknown }[]; quantity?: number; type?: string }
+/** Row shapes the server projects; taken from its own definitions so a renamed or missing field is a compile error here, not a blank label in a menu. Type-only, so nothing is bundled. */
+import type { CarriedItemRow, PlayerActionRow } from '../../bridge/playerActions';
+import type { HandInteraction as ServerHandInteraction } from '../../sim/physical/hand';
+export type CarriedRow = CarriedItemRow;
+export type ActionRow = PlayerActionRow;
+export type HandInteraction = ServerHandInteraction;
 export interface DialogueProjection { revision: number; speakerId: string; speakerBodyId: string | null; name: string; lines: string[]; options: { id: string; label: string }[] }
 export interface KnownPerson { entityId: string; name: string; knownName: boolean; recognition: string; bodyId: string; pos: Vec3 }
 export interface SnapshotMessage {

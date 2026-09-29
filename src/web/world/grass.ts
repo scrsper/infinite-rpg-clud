@@ -10,6 +10,7 @@ import type { RegionManager } from './regionManager';
  */
 export class GrassField {
   private readonly host: Mesh;
+  private mat!: PBRMaterial;
   private readonly cap: number;
   private readonly matrices: Float32Array;
   private readonly colors: Float32Array;
@@ -34,10 +35,13 @@ export class GrassField {
     const vd = new VertexData(); vd.positions = pos; vd.normals = nrm; vd.colors = col; vd.indices = idx; vd.applyToMesh(this.host);
     const m = new PBRMaterial('grass-mat', scene);
     m.albedoColor = Color3.White(); m.roughness = 0.85; m.metallic = 0; m.backFaceCulling = false; m.twoSidedLighting = true; m.environmentIntensity = 0.5; m.maxSimultaneousLights = 4;
+    this.mat = m;
     this.host.material = m; this.host.isPickable = false; this.host.alwaysSelectAsActiveMesh = true; this.host.receiveShadows = true; this.host.setEnabled(false);
     this.host.thinInstanceSetBuffer('matrix', this.matrices, 16, false); this.host.thinInstanceSetBuffer('color', this.colors, 4, false); this.host.thinInstanceCount = 0;
   }
 
+  /** The blades' own colours are light; at full white albedo daylight blows them out to white. Scale them to a natural green by day, and dimmer still under moonlight (where they otherwise glow violet against the dark ground). */
+  tint(daylight: number): void { const k = Math.max(0, Math.min(1, daylight)); this.mat.albedoColor.set(0.14 + 0.08 * k, 0.24 + 0.18 * k, 0.14 + 0.06 * k); }
   /** Scatter around `cam` (simulation coordinates). Cheap enough to run whenever the camera has moved a few metres. */
   update(camX: number, camZ: number, force = false): void {
     if (!force && Math.hypot(camX - this.last.x, camZ - this.last.z) < 3.5) return;

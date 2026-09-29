@@ -110,7 +110,9 @@ export class CharacterRig {
     for (const p of this.parts) { const mm = (p.mesh as Mesh).morphTargetManager; if (!mm) continue; for (let i = 0; i < mm.numTargets; i++) { const t = mm.getTarget(i); if (t.name === name) t.influence = value; } }
   }
   dispose(): void {
-    for (const p of this.parts) p.mesh.dispose(false, true);
+    // Materials and per-person textures belong to CharacterMaterials / CreatureVisual, which dispose them. Textures shared between people
+    // (the cloth weave, cached cloth prints) must outlive any one person: disposing them here left later people with a dead texture and no garments.
+    for (const p of this.parts) p.mesh.dispose(false, false);
     this.skeleton?.dispose(); this.model.dispose(); this.root.dispose();
   }
 }

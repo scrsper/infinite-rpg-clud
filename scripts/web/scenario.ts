@@ -18,6 +18,7 @@ const argv = process.argv.slice(2);
 const flag = (n: string, d: string) => { const i = argv.indexOf(`--${n}`); return i >= 0 ? argv[i + 1] : d; };
 const [w, h] = flag('size', '1920x1080').split('x').map(Number);
 const renderer = flag('renderer', 'webgpu');
+const newName = flag('name', '');   // begin a new life in the preview world (arrives at the spawn point, beside the village) instead of continuing the current one
 const out = resolve(flag('out', '.debug/web/scenario')); mkdirSync(out, { recursive: true });
 
 const st = JSON.parse(readFileSync(join(homedir(), 'TornVeilAlpha', 'web-gateway', 'gateway.json'), 'utf8')) as { origin: string; operator: string };
@@ -37,12 +38,12 @@ const shot = (n: string) => page.screenshot({ path: join(out, `${n}.png`) });
 async function start(): Promise<void> {
   const { url } = await (await fetch(`${st.origin}/api/operator/launch`, { method: 'POST', headers: { 'x-torn-veil-gateway-operator': st.operator } })).json() as { url: string };
   await page.goto(url);
-  await page.goto(`${st.origin}/?autoplay=1${renderer === 'webgl2' ? '&renderer=webgl2' : ''}`);
+  await page.goto(`${st.origin}/?autoplay=1${newName ? `&name=${encodeURIComponent(newName)}` : ''}${renderer === 'webgl2' ? '&renderer=webgl2' : ''}`);
   await page.waitForFunction(() => (window as any).__tv?.ready === true, undefined, { timeout: 120000 });
   await page.waitForTimeout(2000);
   await page.mouse.move(w / 2, h / 2); await page.mouse.down(); await page.waitForTimeout(60); await page.mouse.up(); await page.waitForTimeout(300);
 }
-const own = () => page.evaluate(() => { const tv = (window as any).__tv, b = tv.own(); return b ? { id: b.bodyId, name: b.name, wealth: b.wealth, health: b.health, carried: (tv.snapshot?.carried ?? []).map((c: any) => `${c.label}${c.quantity > 1 ? ' x' + c.quantity : ''}`), pos: [+b.pos.x.toFixed(1), +b.pos.z.toFixed(1)] } : null; });
+const own = () => page.evaluate(() => { const tv = (window as any).__tv, b = tv.own(); return b ? { id: b.bodyId, name: b.name, wealth: b.wealth, health: b.health, carried: (tv.snapshot?.carried ?? []).map((c: any) => `${c.name}${c.quantity > 1 ? ' x' + c.quantity : ''}`), pos: [+b.pos.x.toFixed(1), +b.pos.z.toFixed(1)] } : null; });
 const state = () => page.evaluate(() => { const tv = (window as any).__tv; return { dialogue: !!tv.dialogue.isOpen, modal: !!tv.modal.isOpen, target: tv.focus?.target ? { kind: tv.focus.target.kind, label: tv.focus.target.label ?? tv.focus.target.name ?? null } : null, screen: !!tv.screen, phase: tv.phase }; });
 
 let mouseRadPerPx = 0.0022;

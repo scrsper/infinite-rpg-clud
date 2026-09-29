@@ -107,7 +107,7 @@ function dyn(scene: Scene, key: string, size: number, draw: (g: CanvasRenderingC
 }
 
 function weaveNormal(scene: Scene): RawTexture {
-  if (clothNormal) return clothNormal;
+  if (clothNormal && clothNormal.getInternalTexture()) return clothNormal;
   const p = paintTexture('cloth', 41);
   clothNormal = RawTexture.CreateRGBATexture(new Uint8Array(p.normal.buffer, p.normal.byteOffset, p.normal.byteLength), p.size, p.size, scene, true, false, Texture.TRILINEAR_SAMPLINGMODE);
   clothNormal.wrapU = Texture.WRAP_ADDRESSMODE; clothNormal.wrapV = Texture.WRAP_ADDRESSMODE; return clothNormal;

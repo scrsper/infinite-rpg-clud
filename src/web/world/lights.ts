@@ -18,7 +18,9 @@ export class LightPool {
   constructor(scene: Scene, private size: number) {
     for (let i = 0; i < size; i++) {
       const l = new PointLight(`pool-${i}`, new Vector3(0, -1000, 0), scene);
-      l.intensity = 0; l.specular = Color3.Black(); l.setEnabled(false); this.lights.push(l);
+      // Always enabled: a light that is switched on and off changes the number of lights in every lit material's shader, and
+      // each new count is a shader (and, on WebGPU, a pipeline) to build in the middle of play. An idle light is parked at zero intensity instead.
+      l.intensity = 0; l.specular = Color3.Black(); l.range = 1; this.lights.push(l);
     }
   }
   setSize(n: number): void { this.size = Math.min(n, this.lights.length); }
@@ -26,7 +28,7 @@ export class LightPool {
   remove(id: string): void { this.candidates.delete(id); }
   removeByPrefix(prefix: string): void { for (const k of [...this.candidates.keys()]) if (k.startsWith(prefix)) this.candidates.delete(k); }
   get count(): number { return this.candidates.size; }
-  get active(): number { return this.lights.filter(l => l.isEnabled()).length; }
+  get active(): number { return this.lights.filter(l => l.intensity > 0).length; }
   /** `night` in 0..1 lifts lights when it is dark. */
   update(dt: number, cameraPos: Vector3, night: number): void {
     this.time += dt;
@@ -42,8 +44,7 @@ export class LightPool {
     ranked.sort((a, b) => a.d - b.d);
     for (let i = 0; i < this.lights.length; i++) {
       const l = this.lights[i], r = i < this.size ? ranked[i] : undefined;
-      if (!r) { if (l.isEnabled()) l.setEnabled(false); continue; }
-      if (!l.isEnabled()) l.setEnabled(true);
+      if (!r) { if (l.intensity !== 0) { l.intensity = 0; l.position.set(0, -1000, 0); } continue; }
       const seed = r.c.id.length * 1.7 + r.wx * 0.13;
       const fl = 1 + r.c.flicker * (Math.sin(this.time * 9 + seed) * 0.05 + Math.sin(this.time * 23.7 + seed * 2.3) * 0.035);
       l.position.set(r.wx, r.wy, r.wz);

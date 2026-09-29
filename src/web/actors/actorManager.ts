@@ -107,6 +107,7 @@ export class ActorManager {
         // Only a fresh contact draws feedback; a snapshot taken after a reconnect may carry an old one.
         if (Math.abs((this.env?.physicalNow() ?? 0) - contact.at) < 1.2) this.env?.onContact?.(contact.position, contact.bodyId === ownBodyId);
       }
+      this.syncLantern(b.bodyId, a, b.embodiment?.activity.carried);
       a.body = b; a.own = b.bodyId === ownBodyId; a.vel = b.velocity; a.stampMs = nowMs; a.lastSeen = nowMs;
       a.targetPos.set(b.pos.x, b.pos.y, b.pos.z); a.targetYaw = b.yaw;
       // The authoritative action for the controlled body supersedes local anticipation once it exists.
@@ -129,7 +130,14 @@ export class ActorManager {
     };
     this.actors.set(id, a); return a;
   }
-  private remove(id: string, a: Actor): void { a.visual.dispose(); this.actors.delete(id); }
+  private remove(id: string, a: Actor): void { this.regions.lights.remove(`lantern:${id}`); this.lanterns.delete(id); a.visual.dispose(); this.actors.delete(id); }
+  /** A body that carries a lantern lights the ground around it (the simulation's lantern is a real light source); pooled like every other light. */
+  private readonly lanterns = new Set<string>();
+  private syncLantern(id: string, a: Actor, carried: unknown): void {
+    const has = carried === 'lantern';
+    if (has && !this.lanterns.has(id)) { this.lanterns.add(id); this.regions.lights.add({ id: `lantern:${id}`, root: a.visual.root, x: 0.3, y: 0.95, z: 0.1, color: [1, 0.72, 0.42], intensity: 1.3, range: 9, flicker: 1, enabled: true }); }
+    else if (!has && this.lanterns.has(id)) { this.lanterns.delete(id); this.regions.lights.remove(`lantern:${id}`); }
+  }
   clear(): void { for (const [id, a] of this.actors) this.remove(id, a); }
 
   /** Start local anticipation for the controlled body the instant a combat command is sent. */

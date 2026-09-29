@@ -26,7 +26,7 @@ await page.addInitScript(`
 `);
 const errors: string[] = [];
 page.on('console', m => { if (m.type() === 'error') errors.push(m.text().slice(0, 200)); });
-page.on('pageerror', e => errors.push(`pageerror ${String(e).slice(0, 240)}`));
+page.on('pageerror', e => errors.push(`pageerror ${String(e).slice(0, 120)} @ ${String((e as Error).stack ?? '').split(String.fromCharCode(10)).slice(1, 3).join(' <- ').slice(0, 300)}`));
 const results: { step: string; ok: boolean; detail?: unknown }[] = [];
 const check = (step: string, ok: boolean, detail?: unknown) => { results.push({ step, ok, detail }); console.log(`${ok ? 'ok' : 'NO'} ${step}${detail !== undefined ? ' ' + JSON.stringify(detail).slice(0, 200) : ''}`); };
 const shot = (n: string) => page.screenshot({ path: join(out, `${n}.png`) });
@@ -38,7 +38,7 @@ await page.waitForFunction(() => (window as any).__tv?.ready === true, undefined
 await page.waitForTimeout(2500);
 
 const pad = {
-  connect: () => page.evaluate(() => { const p = (window as any).__pad; p.connected = true; const ev: any = new Event('gamepadconnected'); ev.gamepad = { id: 'Xbox 360 Controller (XInput STANDARD GAMEPAD)', index: 0 }; window.dispatchEvent(ev); }),
+  connect: () => page.evaluate(() => { const p = (window as any).__pad; p.connected = true; const ev: any = new Event('gamepadconnected'); ev.gamepad = navigator.getGamepads()[0]; window.dispatchEvent(ev); }),
   axes: (a: number[]) => page.evaluate((v: number[]) => { (window as any).__pad.axes = v; }, a),
   hold: (i: number, on: boolean) => page.evaluate(([idx, o]) => { const b = (window as any).__pad.buttons[idx as number]; b.pressed = b.touched = !!o; b.value = o ? 1 : 0; }, [i, on] as [number, boolean]),
   tap: async (i: number, ms = 90) => { await pad.hold(i, true); await page.waitForTimeout(ms); await pad.hold(i, false); await page.waitForTimeout(120); },
@@ -90,7 +90,7 @@ await pad.tap(8); await page.waitForTimeout(700); s = await st0(); check('View o
 
 // Disconnect: held input must not stick, and prompts fall back to keyboard.
 await pad.axes([0, -1, 0, 0]); await page.waitForTimeout(300);
-await page.evaluate(() => { (window as any).__pad.connected = false; (window as any).__pad.axes = [0, 0, 0, 0]; window.dispatchEvent(new Event('gamepaddisconnected')); });
+await page.evaluate(() => { const last = navigator.getGamepads()[0]; (window as any).__pad.connected = false; (window as any).__pad.axes = [0, 0, 0, 0]; const ev: any = new Event('gamepaddisconnected'); ev.gamepad = last; window.dispatchEvent(ev); });
 await page.waitForTimeout(500);
 const d0 = await st0(); await page.waitForTimeout(800); const d1 = await st0();
 check('unplugging the pad while the stick is held stops movement', Math.hypot(d1.pos[0] - d0.pos[0], d1.pos[1] - d0.pos[1]) < 0.4 && d1.dev === 'keyboard', { device: d1.dev });

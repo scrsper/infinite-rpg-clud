@@ -42,7 +42,7 @@ export function itemsTab(svc: PanelServices): TabDef {
       if (!carried.length) left.append(h('p', { class: 'tv-muted', text: 'You are carrying nothing.' }));
       for (const c of carried) {
         left.append(h('div', { class: 'tv-row', style: 'flex-direction:column;align-items:stretch;cursor:default' },
-          h('div', { style: 'display:flex;gap:.6rem;align-items:baseline' }, h('strong', { text: `${c.label}${qty(c.quantity)}` }), c.type ? h('span', { class: 'tv-chip', text: titleCase(c.type) }) : null),
+          h('div', { style: 'display:flex;gap:.6rem;align-items:baseline' }, h('strong', { text: `${c.name}${qty(c.quantity)}` }), c.type ? h('span', { class: 'tv-chip', text: titleCase(c.type) }) : null),
           ...(c.description ?? []).map(d => h('small', { text: d })),
           h('div', { style: 'display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.35rem' },
             ...c.actions.map(a => actionButton(a as never, svc)),

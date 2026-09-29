@@ -29,7 +29,8 @@ import { DialoguePanel } from './ui/dialoguePanel';
 import { abilitiesTab, itemsTab, journalTab, type PanelServices } from './ui/menuPanels';
 import { settingsTabs } from './ui/settingsPanel';
 import { banner, characterScreen, deathScreen, loadingScreen, noticeScreen, titleScreen } from './ui/screens';
-import { Showroom } from './showroom/showroom';
+import { Showroom, LINEUP } from './showroom/showroom';
+import { realize } from './actors/appearanceMap';
 import { noteSlow, slowEvents, timed } from './game/probe';
 import './ui/theme.css';
 
@@ -136,15 +137,37 @@ export class App {
     const boot = loadingScreen(this.overlay, 'Preparing the people…'); this.screen = boot as { remove(): void };
     await this.characters.load(this.ctx.scene, (d, t) => boot.set(`Preparing the people… ${d}/${t}`));
     boot.set('Preparing the wildlife…'); await this.creatures.load(this.ctx.scene);
+    if (!this.params.has('showroom') && !this.params.has('replay')) { boot.set('Warming the renderer…'); await this.warmUp(); }
     this.clearScreen();
     if (this.params.has('showroom')) { this.phase = 'showroom'; this.showroom = new Showroom(this); await this.showroom.init(this.params.get('showroom') || 'kit_f'); this.ready = true; return; }
     this.showTitle();
     if (this.params.get('autoplay') || this.params.get('replay')) this.play(this.params.get('name') ? { kind: 'new', name: this.params.get('name')!, sex: 'f' } : { kind: 'auto' });
   }
 
+  /**
+   * Compile every shader variant the first person, animal or strike would otherwise compile in the middle of play:
+   * a WebGPU pipeline built on first use can stall a frame for hundreds of milliseconds. One of each kind of person
+   * and animal is drawn for a few frames behind the loading screen, then discarded. Cosmetic only.
+   */
+  private async warmUp(): Promise<void> {
+    const scene = this.ctx.scene, made: { root: { position: Vector3 }; dispose(): void }[] = [];
+    try {
+      const fwd = this.camera.getForwardRay(1).direction, base = this.camera.position.add(fwd.scale(4));
+      LINEUP.forEach((p, i) => { const v = this.characters.create(scene, this.atmosphere, `warm-${i}`, realize(`warm-${i}`, p.desc, undefined)); if (v) { v.root.position.copyFrom(base.add(new Vector3((i % 6 - 2.5) * 0.9, -1.6, Math.floor(i / 6) * 1.2))); made.push(v); } });
+      for (const species of ['roe_deer', 'woodland_boar', 'field_hare']) {
+        const c = this.creatures.create(scene, this.atmosphere, { speciesId: species, creatureId: `warm-${species}`, bodyPlan: { heightM: 1 }, scale: 1, ageClass: 'adult' } as never);
+        if (c) { c.root.position.copyFrom(base.add(new Vector3(0, -1.6, 3))); made.push(c); }
+      }
+      this.impactFx.burst(base, false);
+      await scene.whenReadyAsync();
+      for (let i = 0; i < 3; i++) { scene.render(); await new Promise<void>(r => requestAnimationFrame(() => r())); }
+    } catch (e) { console.warn('renderer warm-up skipped', e); }
+    finally { for (const v of made) { try { v.dispose(); } catch { /* already gone */ } } }
+  }
+
   // ── settings ─────────────────────────────────────────────────────────────────────────────────
   applyUiSettings(): void {
-    const s = this.settings, h1 = window.innerHeight, base = 17 * Math.max(0.95, Math.min(1.6, h1 / 1080)) * s.uiScale * (s.textSize === 'large' ? 1.15 : 1);
+    const s = this.settings, h1 = window.innerHeight, base = 17 * Math.max(1, Math.min(1.6, h1 / 1080)) * s.uiScale * (s.textSize === 'large' ? 1.15 : 1);
     document.documentElement.style.setProperty('--root-size', `${base.toFixed(2)}px`);
     document.documentElement.dataset.contrast = s.highContrast ? 'high' : 'normal';
     document.documentElement.dataset.motion = s.reducedMotion ? 'reduced' : 'normal';
@@ -446,6 +469,7 @@ export class App {
     // World.
     const hour = this.params.get('hour') ? Number(this.params.get('hour')) : ((this.regions.worldTime / 3600) % 24 + 24) % 24;
     this.atmosphere.update(hour, this.regions.weather, dt); this.atmosphere.follow(this.camera.position);
+    this.grass.tint(this.atmosphere.daylight);
     this.grass.update(this.camera.position.x + this.regions.origin.x, this.camera.position.z + this.regions.origin.z);
     this.regions.update(dt, this.camera.position, this.rig.forward, 1 - this.atmosphere.daylight);
     if (this.controller.lockedBodyId === null && now > this.combatUntil && this.rig.mode === 'combat') this.rig.setMode('explore');
