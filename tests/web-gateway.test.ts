@@ -180,6 +180,41 @@ describe.sequential('Web gateway and admission adapter', () => {
     } finally { await g2.close(); }
   }, 60_000);
 
+  it('launch links and sessions expire, and an expired session cannot open a socket', async () => {
+    const short = new WebGateway({ port: 0, upstream: { host: '127.0.0.1', port }, credentials: { account: 'webby', token }, launchTtlMs: 150, sessionTtlMs: 400, log: quiet });
+    await short.listen();
+    try {
+      const stale = short.issueLaunchUrl();
+      await new Promise(r => setTimeout(r, 250));
+      expect((await fetch(stale, { redirect: 'manual' })).status).toBe(403);           // the link expired before it was used
+      const { cookie } = await launch(short);
+      expect((await fetch(`${short.url}/api/session`, { headers: { cookie } })).status).toBe(200);
+      await new Promise(r => setTimeout(r, 600));
+      expect((await fetch(`${short.url}/api/session`, { headers: { cookie } })).status).toBe(401);
+      const late = await browser(short, 'character=auto', goodHeaders(short, cookie));
+      expect(late.rejected).toBe(401);                                                  // an expired session cannot open a socket
+    } finally { await short.close(); }
+  }, 30_000);
+
+  it('a browser cannot act as, or even see, a character that belongs to another account', async () => {
+    const registry = new AccountRegistry(join(root, 'credentials', 'accounts.json'));
+    const otherToken = registry.add('other-owner', 'Other Owner');
+    const owner = await ProbeClient.connect({ port, account: 'other-owner', token: otherToken, character: 'new', name: 'Not Yours', realtime: true });
+    try {
+      const theirs = owner.personId;
+      expect(theirs).toBeTruthy();
+      const { cookie } = await launch(gateway);
+      const b = await browser(gateway, `character=${theirs}`, goodHeaders(gateway, cookie));
+      await until(() => !!b.closed || b.messages.some(m => m.type === 'hello'), 15_000);
+      expect(b.messages.some(m => m.type === 'hello' && m.playerId === theirs)).toBe(false);
+      expect(b.closed).not.toBeNull();
+      expect([CLOSE.forbidden, CLOSE.characterUnavailable, CLOSE.noCharacter]).toContain(b.closed!.code);
+      expect(JSON.stringify(b.messages)).not.toContain('Not Yours');                    // nothing of the other character's leaked into the browser stream
+      // ...and the rightful owner is undisturbed by the attempt.
+      expect(owner.closed).toBeNull();
+    } finally { await owner.close(); }
+  }, 60_000);
+
   it('a second browser for the same account takes over exactly as a second native client would', async () => {
     const { cookie } = await launch(gateway);
     const first = await browser(gateway, 'character=auto', goodHeaders(gateway, cookie));
