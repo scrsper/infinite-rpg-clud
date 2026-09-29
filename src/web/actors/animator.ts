@@ -67,6 +67,9 @@ class PoseBuffer {
 
 interface Spring { a: number; b: number; va: number; vb: number }
 
+/** Carried items that need both arms; anything else is held in one hand. */
+const TWO_HANDED = new Set(['log', 'plank', 'stone', 'grain', 'flour', 'wheat']);
+
 export class Animator {
   private t = Math.random() * 10;
   private phase = 0;
@@ -96,7 +99,14 @@ export class Animator {
   update(dt: number, s: ActorPoseState): void {
     dt = Math.min(dt, 0.1); this.t += dt;
     const rig = this.rig, S = this.S;
-    const speed = s.speed, family = s.body?.embodiment?.activity.family ?? 'idle', detail = s.body?.embodiment?.activity.detail ?? '', posture = s.body?.embodiment?.activity.posture ?? 'stand';
+    const speed = s.speed, posture = s.body?.embodiment?.activity.posture ?? 'stand';
+    let family = s.body?.embodiment?.activity.family ?? 'idle', detail = s.body?.embodiment?.activity.detail ?? '';
+    // The simulation keeps a finished action on the body, so its activity can read "combat" long after the exchange ended.
+    // Only a live action (s.combat), a hit, or a canonical attack/confront goal is a fighting stance; otherwise the body is at ease.
+    if (family === 'combat' && !s.combat && !s.hit) {
+      const ev = s.body?.embodiment?.activity.evidence;
+      if (!ev || (ev.pose !== 'attack' && ev.pose !== 'hit' && ev.goal !== 'attack' && ev.goal !== 'confront')) { family = 'idle'; detail = ''; }
+    }
     const dead = !!s.body?.dead, downed = detail === 'downed' || !!s.body?.incapacitated;
     // ── smoothing of the state machines ──────────────────────────────────────────────────────
     const k = (rate: number) => 1 - Math.exp(-rate * dt);
@@ -276,7 +286,8 @@ export class Animator {
     } else if (kind === 'rest') {
       arms(0.15, 0.2, 0.3, 0.15, 0.2, 0.3); L.set('spine_02', R.lean(0.08));
     } else if (wantCarry) {
-      arms(0.65, 0.05, 1.5, 0.65, 0.05, 1.5); L.set('spine_02', R.lean(-0.05));
+      if (TWO_HANDED.has(String(carried))) { arms(0.65, 0.05, 1.5, 0.65, 0.05, 1.5); L.set('spine_02', R.lean(-0.05)); }
+      else { L.set('upperarm_r', chain(R.fwd(0.26), R.out(0.06, -1))); L.set('lowerarm_r', Q.x(-0.8)); }   // a lantern, tool or loaf hangs from one hand; the other arm keeps swinging
       B.over(L, this.moveW); return;
     }
     B.over(L, this.actW);

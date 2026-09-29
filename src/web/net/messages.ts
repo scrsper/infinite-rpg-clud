@@ -90,6 +90,8 @@ export interface ActivityPresentation {
   speed: number; placeId: string | null; facingEntityId: string | null; targetPos: Vec3 | null; carried: unknown;
   injury: { impaired: boolean; severity: number; movementMultiplier: number };
   family: string; detail: string; posture: 'stand' | 'sit' | 'lie' | string; locomotion: string; station: unknown;
+  /** What the canonical state was derived from (pose, action, goal). */
+  evidence?: { pose?: string | null; action?: string | null; goal?: string | null };
 }
 export interface CombatActionState {
   id: string; commandId?: string; actorBodyId: string; kind: string; definition: string; techniqueId?: string; techniqueName?: string;
