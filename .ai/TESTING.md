@@ -294,3 +294,14 @@ Verification should answer:
 It should not answer:
 
 **"What is every command in the repository that we could possibly run?"**
+
+---
+
+# Web client verification
+
+- Fast: `npx vitest run tests/web-*.test.ts` (gateway, structures, browser boundary, client logic, governor) and `npm run typecheck`.
+- Bundle: `npm run web:build`. Never rebuild `dist-web` while a browser session is being served from it.
+- Runtime evidence uses real headed Chrome with ordinary trusted input (`scripts/web/*.ts`) against an **isolated**
+  preview world (its own `TORN_VEIL_ALPHA_HOME`, port, credentials); never live, staging or another agent's world.
+  Automated input is not a human playtest, and injected gamepad input is not a physical-controller test.
+- Only one browser may drive one account at a time (a second one takes over): run one harness at a time.

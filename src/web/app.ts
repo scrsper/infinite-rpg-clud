@@ -6,6 +6,7 @@ import { RegionManager } from './world/regionManager';
 import { GrassField } from './world/grass';
 import { WeatherFx } from './world/weatherFx';
 import { ImpactFx } from './world/impactFx';
+import { QualityGovernor } from './render/governor';
 import { GameConnection, type CharacterChoice, type ClosedInfo, type GameLink } from './net/connection';
 import { ReplayConnection } from './net/replay';
 import type { BodyState, DialogueProjection, InteractionTarget, SnapshotMessage, Vec3 } from './net/messages';
@@ -151,7 +152,7 @@ export class App {
   }
   updateSettings(patch: Partial<Settings>): void {
     this.settings = { ...this.settings, ...patch }; saveSettings(this.settings); this.applyUiSettings();
-    if (patch.quality) { const t = patch.quality === 'auto' ? 'balanced' : patch.quality; this.ctx.setQuality(t); this.regions.lights.setSize(this.ctx.quality.maxLights); }
+    if (patch.quality) { this.governor.reset(performance.now()); const t = patch.quality === 'auto' ? 'balanced' : patch.quality; this.ctx.setQuality(t); this.regions.lights.setSize(this.ctx.quality.maxLights); }
     this.audio.setVolumes({ master: this.settings.masterVolume, music: this.settings.musicVolume, effects: this.settings.effectsVolume, ambience: this.settings.ambienceVolume, voice: this.settings.voiceVolume });
     if (patch.resolutionScale !== undefined) this.ctx.engine.setHardwareScalingLevel(1 / patch.resolutionScale);
   }
@@ -312,6 +313,7 @@ export class App {
     void own;
   }
   private pivotInPlant = false;
+  private readonly governor = new QualityGovernor(); private governorAt = 0;
   private combatUntil = 0;
   private onLock(id: string | null): void { this.rig.setLock(null); void id; }
 
@@ -377,7 +379,8 @@ export class App {
     const now = performance.now(), dtRaw = (now - this.lastFrame) / 1000; this.lastFrame = now; this.frameMs.push(dtRaw * 1000); noteSlow('frame gap', dtRaw * 1000, 45); if (this.frameMs.length > 4000) this.frameMs.shift();
     const dt = Math.min(0.1, dtRaw);
     this.input.beginFrame(dt);
-    this.regions.pump(this.phase === 'playing' ? 6 : 40); // stream regions in slices; a long load is fine behind the loading screen, in play it must not hitch
+    this.regions.pump(this.phase === 'playing' ? 6 : 40);
+    if (this.phase === 'playing' && this.settings.quality === 'auto' && now - this.governorAt > 2000) { this.governorAt = now; this.runGovernor(now); } // stream regions in slices; a long load is fine behind the loading screen, in play it must not hitch
     const wasOpen = this.modal.isOpen;
     if (this.nav.open) this.nav.update();
     if (this.phase === 'connecting') this.tryEnter();
@@ -487,6 +490,15 @@ export class App {
 
   // ── evidence helpers ─────────────────────────────────────────────────────────────────────────
   get slowEvents() { return slowEvents(); }
+  /** With quality on auto: sustained slow frames step the renderer down a tier (or its scale). Never steps up. */
+  private runGovernor(now: number): void {
+    const recent = this.frameMs.slice(-120); if (recent.length < 60 || document.hidden) return;
+    const a = [...recent].sort((x, y) => x - y), median = a[a.length >> 1], p95 = a[Math.min(a.length - 1, Math.floor(a.length * 0.95))];
+    const act = this.governor.evaluate(median, p95, now, this.ctx.quality.tier);
+    if (!act) return;
+    if ('tier' in act) { this.ctx.setQuality(act.tier); this.regions.lights.setSize(this.ctx.quality.maxLights); this.hud.toast(`Frame rate was low, so graphics were lowered to "${act.tier}". You can change this in Settings.`, 'info', 6000); }
+    else { this.ctx.engine.setHardwareScalingLevel(1 / act.scale); this.hud.toast('Frame rate was low, so the render resolution was lowered. You can change this in Settings.', 'info', 6000); }
+  }
   perfReset(): void { this.frameMs.length = 0; }
   perfReport(): { frames: number; medianMs: number; p95Ms: number; p99Ms: number; maxMs: number; fpsMedian: number } {
     const a = [...this.frameMs].sort((x, y) => x - y), q = (p: number) => (a.length ? a[Math.min(a.length - 1, Math.floor(p * a.length))] : 0);

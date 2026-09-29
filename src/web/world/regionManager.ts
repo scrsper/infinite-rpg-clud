@@ -117,9 +117,12 @@ export class RegionManager {
   pump(budgetMs: number): void {
     const t0 = performance.now();
     while (this.jobs.length) {
-      const s0 = performance.now(), r = this.jobs[0].next();
+      const s0 = performance.now();
+      let done = false;
+      try { done = !!this.jobs[0].next().done; }
+      catch (e) { done = true; console.error('region build failed; skipping it', e); }   // one bad region must not wedge the stream (the transfer's ack times out on its own)
       noteSlow(this.stepLabel, performance.now() - s0, 6);
-      if (r.done) this.jobs.shift();
+      if (done) this.jobs.shift();
       if (performance.now() - t0 >= budgetMs) break;
     }
   }

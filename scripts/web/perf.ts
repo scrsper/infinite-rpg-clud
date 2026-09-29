@@ -19,6 +19,7 @@ const renderer = flag('renderer', 'webgpu');
 const [w, h] = flag('size', '1920x1080').split('x').map(Number);
 const scale = Number(flag('seconds', '1'));
 const quality = flag('quality', '');
+const throttle = Number(flag('throttle', '0'));   // CDP CPU throttling factor, to prove the quality governor reacts to a slow machine
 const outFile = resolve(flag('out', `.debug/web/perf/${renderer}-${w}x${h}.json`));
 mkdirSync(join(outFile, '..'), { recursive: true });
 
@@ -47,6 +48,8 @@ const info = await page.evaluate(async () => {
   return { engine: eng.description ?? eng.constructor.name, webgpu: !!eng.isWebGPU, quality: tv.ctx.quality ?? null, canvas: [eng.getRenderWidth(), eng.getRenderHeight()], adapter, ua: navigator.userAgent };
 });
 await page.mouse.move(w / 2, h / 2); await page.mouse.down(); await page.waitForTimeout(60); await page.mouse.up(); await page.waitForTimeout(500);
+const tierStart = await page.evaluate('window.__tv.ctx.quality.tier') as string;
+if (throttle > 1) { const cdp = await page.context().newCDPSession(page); await cdp.send('Emulation.setCPUThrottlingRate', { rate: throttle }); }
 
 type Stat = { frames: number; medianMs: number; p95Ms: number; p99Ms: number; maxMs: number; over33: number; over50: number; over100: number; fpsMedian: number; meters?: unknown };
 const phases: Record<string, Stat> = {};
@@ -76,7 +79,8 @@ await page.screenshot({ path: outFile.replace(/\.json$/, '.png') });
 const overall = stats(allSamples);
 const loaf = await page.evaluate('window.__loaf') as unknown[];
 const slow = await page.evaluate('window.__tv.slowEvents') as { label: string; ms: number; at: number }[];
-const result = { at: new Date().toISOString(), renderer, requested: { width: w, height: h }, info, phases, overall, slow: slow.sort((a, b) => b.ms - a.ms).slice(0, 25), longFrames: (loaf as { dur: number }[]).filter(x => x.dur >= 50).slice(0, 40), logs: logs.slice(0, 8), note: 'Automated ordinary-input run against the isolated preview world; not a human playtest.' };
+const tierEnd = await page.evaluate('window.__tv.ctx.quality.tier') as string;
+const result = { at: new Date().toISOString(), renderer, throttle, tierStart, tierEnd, requested: { width: w, height: h }, info, phases, overall, slow: slow.sort((a, b) => b.ms - a.ms).slice(0, 25), longFrames: (loaf as { dur: number }[]).filter(x => x.dur >= 50).slice(0, 40), logs: logs.slice(0, 8), note: 'Automated ordinary-input run against the isolated preview world; not a human playtest.' };
 writeFileSync(outFile, JSON.stringify(result, null, 1));
 console.log(JSON.stringify({ renderer, size: `${w}x${h}`, engine: info.engine, phases: Object.fromEntries(Object.entries(phases).map(([k, v]) => [k, `${v.medianMs} / ${v.p95Ms} / ${v.p99Ms} ms (max ${v.maxMs}, >50: ${v.over50}, n=${v.frames})`])), logs: logs.slice(0, 4) }, null, 1));
 await browser.close();

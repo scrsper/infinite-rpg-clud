@@ -96,3 +96,11 @@ commits outside `main` have local archive tags. Historical worktrees are detache
 and locked in the archive; licensed/ignored content and test saves were retained.
 The separate `TornVeilAlpha/source-checkpoints` baseline remains historical evidence.
 Restore specific work from these records only after comparing it with current `main`.
+
+## Play in a browser (web client, experimental)
+
+A Babylon.js browser client for the same world is on the `claude/web-rebirth` branch. It has its own launcher,
+`Play Torn Veil Web.cmd`, which runs a read-only preflight and never starts, resets or changes a world; the world
+must already be running and must opt in with `"webGateway": true`. It is not part of the accepted Unreal package and
+has had no human playtest. Run, build, world selection, switching back to Unreal and removal: `docs/web/README.md`
+and `docs/web/ROLLBACK.md`.

@@ -256,3 +256,18 @@
 - Canonical liveness cannot depend on completing presentation. Hello/metadata/snapshot precede progressive center-first geometry. Regional protocol 2 bounds wire messages and assembly separately, with one acknowledged presentation chunk in flight per connection.
 - Presentation application and transport/snapshot health are distinct. Canonical motion remains in TypeScript; Unreal input expires/pauses on stale canonical state, never falls back to local physics.
 - Launch performs an incremental native build. Current source in a checkout does not prove its untracked DLL is current. A stale executable or incompatible bridge must fail visibly rather than silently entering an empty world.
+
+## Browser client through a loopback gateway (web rebirth, Lane A)
+
+- The server keeps its native admission (custom `x-torn-veil-*` upgrade headers). A browser cannot set them,
+  so a small loopback gateway (`src/webgate`) holds the account credential and opens the native-style upstream
+  socket with client kind `web`. The server admits `web` only when the environment config has `webGateway: true`
+  and the connection is from loopback; the default is off, so legacy worlds and native clients are untouched.
+- The client sends intentions only (the same command envelope and legacy intents as native) and reuses the shared
+  pure prediction kernel; it never steps a `World`, and the bundle excludes server, persistence and Node code.
+- The gateway forwards an allowlist of message types (no `debug_inspect`), caps frames at 4096 B and 400 msg/s,
+  serves one upstream, binds loopback only, and never puts the credential in a URL, cookie, page, bundle or log.
+  A second client for one account takes over exactly as a second native client would.
+- The web client is additive to the region projection (`structures`, web-only) and does not change any native field.
+- New action mechanics (vault/dive) are Lane B and are not implemented; they would need a persisted, versioned world
+  capability that is off for every existing world. See `docs/web/EXTENSIONS.md`.
