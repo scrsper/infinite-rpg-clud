@@ -43,7 +43,10 @@
     "appearance:sheet": "tsx src/headless/appearance/cli.ts",
     "foundry:report": "tsx src/headless/foundry/cli.ts",
     "foundry:fallback": "tsx src/headless/foundry/fallback.ts",
-    "ashford:wardrobe": "tsx src/headless/foundry/ashfordWardrobe.ts"
+    "ashford:wardrobe": "tsx src/headless/foundry/ashfordWardrobe.ts",
+    "web:dev": "vite --config vite.web.config.ts",
+    "web:build": "tsc --noEmit && vite build --config vite.web.config.ts",
+    "web:gateway": "tsx src/webgate/main.ts"
   },
   "dependencies": {
     "@babylonjs/core": "9.28.0",

@@ -16,7 +16,9 @@ const VARIANTS = 4;
 type Tint = [number, number, number];
 const mixT = (a: Tint, b: Tint, t: number): Tint => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 
+let DETAIL = 0;
 function blobGradient(b: MeshBatch, cx: number, cy: number, cz: number, rx: number, ry: number, rz: number, low: Tint, high: Tint, seed: number, seg = 9, ring = 6, jitter = 0.32): void {
+  if (DETAIL) { seg = Math.max(5, Math.round(seg * 0.62)); ring = Math.max(3, Math.round(ring * 0.55)); }
   const pt = (i: number, j: number): { p: V; t: Tint } => {
     const th = (i % seg) / seg * Math.PI * 2, ph = j / ring * Math.PI, jit = 1 + (hash2(i % seg, j, seed) - 0.5) * jitter;
     const y = Math.cos(ph), p: V = [cx + Math.cos(th) * Math.sin(ph) * rx * jit, cy + y * ry * jit, cz + Math.sin(th) * Math.sin(ph) * rz * jit];
@@ -31,6 +33,7 @@ function blobGradient(b: MeshBatch, cx: number, cy: number, cz: number, rx: numb
   }
 }
 function tube(b: MeshBatch, from: V, to: V, r0: number, r1: number, sides: number, tint: Tint): void {
+  if (DETAIL) { if (r0 < 0.12) return; sides = Math.max(4, sides - 3); }
   const dx = to[0] - from[0], dy = to[1] - from[1], dz = to[2] - from[2], len = Math.hypot(dx, dy, dz) || 1;
   const ax: V = [dx / len, dy / len, dz / len], ref: V = Math.abs(ax[1]) > 0.9 ? [1, 0, 0] : [0, 1, 0];
   const u = norm(cross(ax, ref)), v = cross(ax, u);
@@ -45,7 +48,8 @@ function tube(b: MeshBatch, from: V, to: V, r0: number, r1: number, sides: numbe
 const cross = (a: V, b: V): V => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
 const norm = (a: V): V => { const l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
 
-function buildSpecies(species: Species, seed: number): { bark: MeshBatch; leaf: MeshBatch } {
+function buildSpecies(species: Species, seed: number, lod = 0): { bark: MeshBatch; leaf: MeshBatch } {
+  DETAIL = lod;
   const bark = new MeshBatch(), leaf = new MeshBatch(), r = mulberry(seed * 977 + species.length * 31);
   const lerp = (a: number, b: number) => a + (b - a) * r();
   const greens: Record<string, [Tint, Tint]> = {
@@ -76,9 +80,9 @@ function buildSpecies(species: Species, seed: number): { bark: MeshBatch; leaf: 
     case 'pine': {
       const h = lerp(7, 10), tk: Tint = [0.28, 0.2, 0.15];
       tube(bark, [0, -0.2, 0], [0, h, 0], 0.26, 0.08, 7, tk);
-      const tiers = 6; for (let i = 0; i < tiers; i++) {
+      const tiers = DETAIL ? 4 : 6; for (let i = 0; i < tiers; i++) {
         const t = i / tiers, y = h * (0.22 + 0.72 * t), rad = lerp(2.4, 2.8) * (1 - t) + 0.45, hh = lerp(1.7, 2.3);
-        const rot = r() * 6, seg = 9; const apex: V = [0, y + hh, 0];
+        const rot = r() * 6, seg = DETAIL ? 6 : 9; const apex: V = [0, y + hh, 0];
         for (let s = 0; s < seg; s++) {
           const a0 = rot + s / seg * Math.PI * 2, a1 = rot + (s + 1) / seg * Math.PI * 2, m = (a0 + a1) / 2, j = 1 + (hash2(s, i, seed) - 0.5) * 0.25;
           const p0: V = [Math.cos(a0) * rad * j, y, Math.sin(a0) * rad * j], p1: V = [Math.cos(a1) * rad * j, y, Math.sin(a1) * rad * j];
@@ -119,10 +123,11 @@ function buildSpecies(species: Species, seed: number): { bark: MeshBatch; leaf: 
 export class VegetationLibrary {
   private readonly protos = new Map<string, Mesh>();
   constructor(private readonly scene: Scene, private readonly mats: MaterialLibrary) {}
-  get(species: Species, variant: number): Mesh {
-    const key = `${species}:${variant % VARIANTS}`;
+  /** lod 0 is the full model; lod 1 is a much cheaper silhouette used beyond the near ring. */
+  get(species: Species, variant: number, lod = 0): Mesh {
+    const key = `${species}:${variant % VARIANTS}:${lod}`;
     let m = this.protos.get(key); if (m) return m;
-    const { bark, leaf } = buildSpecies(species, variant % VARIANTS + 1);
+    const { bark, leaf } = buildSpecies(species, variant % VARIANTS + 1, lod);
     const meshes: Mesh[] = [];
     const barkMat: Material = this.mats.get('bark'), leafMat: Material = this.mats.get(species === 'rock' ? 'rock' : 'leaf');
     const bm = bark.build(`veg-${key}-bark`, this.scene, barkMat, { receiveShadow: true }); if (bm) meshes.push(bm);
@@ -134,25 +139,56 @@ export class VegetationLibrary {
   dispose(): void { for (const m of this.protos.values()) m.dispose(); this.protos.clear(); }
 }
 
-/** Host meshes (one per species/variant used) carrying the thin instances for one region. */
+interface Group { species: Species; variant: number; matrices: number[]; positions: number[]; near: Mesh | null; far: Mesh | null; nearBuf: Float32Array; farBuf: Float32Array }
+/**
+ * Thin-instance hosts for one region: one near (full detail) and one far (cheap silhouette) host
+ * per species and variant. Each refresh classifies every instance by its distance to the camera:
+ * near ring -> full model (and shadow casting), middle ring -> cheap model, beyond or clearly behind
+ * the camera -> not drawn. That keeps a dense forest inside a few hundred thousand triangles with a
+ * few hundred draw calls, and the classification is a few thousand distance tests.
+ */
 export class InstanceSet {
   readonly hosts: Mesh[] = [];
-  private readonly lists = new Map<string, { proto: Mesh; matrices: number[] }>();
-  add(lib: VegetationLibrary, species: Species, variant: number, pos: Vector3, yaw: number, scale: number): void {
-    const proto = lib.get(species, variant), key = proto.name;
-    let e = this.lists.get(key); if (!e) this.lists.set(key, e = { proto, matrices: [] });
+  private readonly groups = new Map<string, Group>();
+  count = 0;
+  add(_lib: VegetationLibrary, species: Species, variant: number, pos: Vector3, yaw: number, scale: number): void {
+    const key = `${species}:${variant % VARIANTS}`;
+    let g = this.groups.get(key); if (!g) this.groups.set(key, g = { species, variant: variant % VARIANTS, matrices: [], positions: [], near: null, far: null, nearBuf: new Float32Array(0), farBuf: new Float32Array(0) });
     const m = Matrix.Compose(new Vector3(scale, scale, scale), Quaternion.RotationAxis(Vector3.Up(), yaw), pos);
-    e.matrices.push(...m.toArray());
+    g.matrices.push(...m.toArray()); g.positions.push(pos.x, pos.z); this.count++;
   }
-  finish(parent: import('@babylonjs/core').TransformNode, name: string, castShadow: (m: Mesh) => void): void {
-    for (const [key, e] of this.lists) {
-      const host = e.proto.clone(`${name}-${key}`, parent); host.setEnabled(true); host.isPickable = false;
-      host.thinInstanceSetBuffer('matrix', new Float32Array(e.matrices), 16, true);
-      host.thinInstanceRefreshBoundingInfo(true); host.alwaysSelectAsActiveMesh = false;
-      castShadow(host); this.hosts.push(host);
+  finish(lib: VegetationLibrary, parent: import('@babylonjs/core').TransformNode, name: string, castShadow: (m: Mesh) => void): void {
+    for (const [key, g] of this.groups) {
+      const n = g.positions.length / 2;
+      for (const lod of [0, 1]) {
+        const host = lib.get(g.species, g.variant, lod).clone(`${name}-${key}-${lod}`, parent);
+        host.makeGeometryUnique(); host.isPickable = false; host.alwaysSelectAsActiveMesh = true; host.setEnabled(false);
+        const buf = new Float32Array(n * 16);
+        host.thinInstanceSetBuffer('matrix', buf, 16, false); host.thinInstanceCount = 0;
+        if (lod === 0) { g.near = host; g.nearBuf = buf; castShadow(host); } else { g.far = host; g.farBuf = buf; }
+        this.hosts.push(host);
+      }
     }
   }
-  dispose(): void { for (const h of this.hosts) h.dispose(); this.hosts.length = 0; this.lists.clear(); }
+  /** `rootX/rootZ`: the region root's render position. `cam`: camera render position and horizontal forward. */
+  refresh(rootX: number, rootZ: number, camX: number, camZ: number, fwdX: number, fwdZ: number, nearDist: number, farDist: number): void {
+    const n2 = nearDist * nearDist, f2 = farDist * farDist;
+    for (const g of this.groups.values()) {
+      if (!g.near || !g.far) continue;
+      let nn = 0, nf = 0; const P = g.positions, M = g.matrices;
+      for (let i = 0, j = 0; i < P.length; i += 2, j += 16) {
+        const dx = P[i] + rootX - camX, dz = P[i + 1] + rootZ - camZ, d2 = dx * dx + dz * dz;
+        if (d2 > f2) continue;
+        if (d2 > 900 && dx * fwdX + dz * fwdZ < -0.25 * Math.sqrt(d2) - 8) continue;   // well behind the camera
+        const out = d2 < n2 ? g.nearBuf : g.farBuf, o = (d2 < n2 ? nn++ : nf++) * 16;
+        for (let k = 0; k < 16; k++) out[o + k] = M[j + k];
+      }
+      g.near.thinInstanceCount = nn; g.far.thinInstanceCount = nf;
+      if (nn) g.near.thinInstanceBufferUpdated('matrix'); if (nf) g.far.thinInstanceBufferUpdated('matrix');
+      g.near.setEnabled(nn > 0); g.far.setEnabled(nf > 0);
+    }
+  }
+  dispose(): void { for (const h of this.hosts) h.dispose(); this.hosts.length = 0; this.groups.clear(); }
 }
 
 export interface ScatterInput {

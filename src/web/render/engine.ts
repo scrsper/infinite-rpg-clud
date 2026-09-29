@@ -19,12 +19,14 @@ export interface QualityProfile {
   fogDensityScale: number;
   maxLights: number;
   treeDensity: number;
+  vegetationNear: number;
+  vegetationFar: number;
   grass: boolean;
 }
 export const QUALITY: Record<QualityTier, QualityProfile> = {
-  high: { tier: 'high', resolutionScale: 1, shadowMapSize: 2048, shadowCascades: 3, shadowDistance: 140, bloom: true, msaaSamples: 4, grain: true, drawDistance: 900, fogDensityScale: 1, maxLights: 8, treeDensity: 1, grass: true },
-  balanced: { tier: 'balanced', resolutionScale: 1, shadowMapSize: 1024, shadowCascades: 3, shadowDistance: 100, bloom: true, msaaSamples: 4, grain: false, drawDistance: 700, fogDensityScale: 1, maxLights: 6, treeDensity: 0.8, grass: true },
-  low: { tier: 'low', resolutionScale: 0.85, shadowMapSize: 1024, shadowCascades: 2, shadowDistance: 70, bloom: false, msaaSamples: 1, grain: false, drawDistance: 500, fogDensityScale: 1.15, maxLights: 4, treeDensity: 0.5, grass: false },
+  high: { tier: 'high', resolutionScale: 1, shadowMapSize: 2048, shadowCascades: 3, shadowDistance: 140, bloom: true, msaaSamples: 4, grain: true, drawDistance: 900, fogDensityScale: 1, maxLights: 8, treeDensity: 1, vegetationNear: 120, vegetationFar: 420, grass: true },
+  balanced: { tier: 'balanced', resolutionScale: 1, shadowMapSize: 1024, shadowCascades: 3, shadowDistance: 100, bloom: true, msaaSamples: 4, grain: false, drawDistance: 700, fogDensityScale: 1, maxLights: 6, treeDensity: 0.8, vegetationNear: 100, vegetationFar: 360, grass: true },
+  low: { tier: 'low', resolutionScale: 0.85, shadowMapSize: 1024, shadowCascades: 2, shadowDistance: 70, bloom: false, msaaSamples: 1, grain: false, drawDistance: 500, fogDensityScale: 1.15, maxLights: 4, treeDensity: 0.5, vegetationNear: 70, vegetationFar: 260, grass: false },
 };
 
 export interface RenderContext {

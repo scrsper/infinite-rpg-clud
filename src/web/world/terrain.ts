@@ -58,7 +58,7 @@ export function buildTerrain(scene: Scene, mats: MaterialLibrary, r: RegionProje
   for (let i = 0; i < n - 1; i++) for (let j = 0; j < n - 1; j++) {
     const a = i * n + j, b = (i + 1) * n + j, c = (i + 1) * n + j + 1, d = i * n + j + 1;
     // Counter-clockwise seen from above (+Y) for the right-handed scene.
-    idx.push(a, d, b, b, d, c);
+    idx.push(a, b, d, b, c, d);
   }
   const mesh = new Mesh(`terrain-${r.id}`, scene);
   const vd = new VertexData(); vd.positions = positions; vd.normals = normals; vd.uvs = uvs; vd.colors = colors; vd.indices = idx; vd.applyToMesh(mesh);

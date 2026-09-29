@@ -6,7 +6,7 @@ import type { Atmosphere } from './atmosphere';
 import { PropLibrary, RegionDynamics } from './dynamicWorld';
 import { LightPool } from './lights';
 import { buildStaticProps, type DoorHandle } from './props';
-import { buildStructures, decodeStructure, type WorldLight } from './structures';
+import { blocksCamera, buildStructures, decodeStructure, type Cells, type WorldLight } from './structures';
 import { buildTerrain, type TerrainBuild } from './terrain';
 import { InstanceSet, VegetationLibrary, scatterVegetation } from './vegetation';
 
@@ -21,7 +21,7 @@ import { InstanceSet, VegetationLibrary, scatterVegetation } from './vegetation'
  */
 interface RegionEntry {
   id: string; projection: RegionProjection; root: TransformNode; terrain: TerrainBuild; meshes: Mesh[]; instances: InstanceSet; lightIds: string[];
-  doors: DoorHandle[]; dynamics: RegionDynamics; stats: { cells: number; roofs: number; windows: number; trees: number; props: number; buildMs: number };
+  doors: DoorHandle[]; dynamics: RegionDynamics; cells: Cells | null; stats: { cells: number; roofs: number; windows: number; trees: number; props: number; buildMs: number };
 }
 
 export class RegionManager {
@@ -58,6 +58,20 @@ export class RegionManager {
     const r = this.regions.get(this.regionOf(x, z)); return r ? r.terrain.heightAt(x, z) : null;
   }
 
+  /** The named place around a simulation position: a building type, a settlement, or open country. */
+  placeAt(x: number, y: number, z: number): { kind: 'building' | 'settlement' | 'wild'; type: string; id: string } {
+    const reg = this.regions.get(this.regionOf(x, z)); if (!reg) return { kind: 'wild', type: 'open country', id: '' };
+    for (const p of reg.projection.places) { const b = p.bounds; if (x >= b.x0 && x <= b.x1 + 1 && z >= b.z0 && z <= b.z1 + 1 && y >= b.y0 - 1 && y <= b.y1 + 1) return { kind: 'building', type: p.type, id: p.id }; }
+    for (const s of reg.projection.settlements) { const b = s.bounds; if (x >= b.x0 && x <= b.x1 && z >= b.z0 && z <= b.z1) return { kind: 'settlement', type: 'settlement', id: s.id }; }
+    return { kind: 'wild', type: 'open country', id: '' };
+  }
+
+  /** Whether built structure occupies the simulation-space point (used by the camera). */
+  structureAt(x: number, y: number, z: number): boolean {
+    const r = this.regions.get(this.regionOf(x, z)); if (!r?.cells) return false;
+    const b = r.cells.get(Math.floor(x), Math.floor(y), Math.floor(z)); return b !== 0 && blocksCamera(b);
+  }
+
   applyPresentation(payload: PresentationPayload): void {
     for (const proj of payload.regions) this.build(proj);
     if (payload.dynamic) this.applyDynamics(payload.dynamic);
@@ -88,7 +102,7 @@ export class RegionManager {
       region: proj, terrain, density, canonical: this.lastDynamics?.resources.filter(r => this.regionOf(r.pos.x, r.pos.z) === proj.id) ?? [],
       exclusions: [...proj.dressingExclusions.map(e => e.bounds), ...proj.places.map(p => p.bounds), ...proj.settlements.map(s => s.bounds)],
     }, proj.decoration.seed);
-    instances.finish(root, `veg-${proj.id}`, m => this.atmosphere.addCaster(m));
+    instances.finish(this.vegetation, root, `veg-${proj.id}`, m => this.atmosphere.addCaster(m));
 
     const lightIds: string[] = [];
     lightList.forEach((l, i) => {
@@ -98,12 +112,13 @@ export class RegionManager {
 
     const dynamics = new RegionDynamics(scene, this.mats, this.props, this.vegetation, proj, terrain, this.lights, sp.doors, root, m => this.atmosphere.addCaster(m));
     const entry: RegionEntry = {
-      id: proj.id, projection: proj, root, terrain, meshes, instances, lightIds, doors: sp.doors, dynamics,
+      id: proj.id, projection: proj, root, terrain, meshes, instances, lightIds, doors: sp.doors, dynamics, cells,
       stats: { cells: st.stats.cells, roofs: st.stats.roofsAnalytic, windows: st.stats.windows, trees, props: proj.furnishings.length, buildMs: performance.now() - t0 },
     };
     this.regions.set(proj.id, entry); this.place(entry);
     for (const m of meshes) { m.freezeWorldMatrix?.(); m.unfreezeWorldMatrix(); }
     if (this.lastDynamics) dynamics.apply(this.subset(this.lastDynamics, proj.id));
+    this.lastVeg.x = 1e9;
   }
 
   private subset(d: DynamicsProjection, id: string): DynamicsProjection {
@@ -128,8 +143,18 @@ export class RegionManager {
     r.root.dispose(false, false); this.regions.delete(id);
   }
 
-  update(dt: number, cameraPos: Vector3, night: number): void {
+  private vegClock = 0; private lastVeg = { x: 1e9, z: 1e9, fx: 0, fz: 0 };
+  /** Re-classify vegetation only when the camera has moved or turned enough to matter. */
+  private refreshVegetation(cam: Vector3, fwd: Vector3, dt: number, force = false): void {
+    this.vegClock += dt;
+    const l = this.lastVeg, moved = Math.hypot(cam.x - l.x, cam.z - l.z), fl = Math.hypot(fwd.x, fwd.z) || 1, fx = fwd.x / fl, fz = fwd.z / fl;
+    if (!force && moved < 5 && fx * l.fx + fz * l.fz > 0.985 && this.vegClock < 1.5) return;
+    this.vegClock = 0; l.x = cam.x; l.z = cam.z; l.fx = fx; l.fz = fz;
+    for (const r of this.regions.values()) r.instances.refresh(r.root.position.x, r.root.position.z, cam.x, cam.z, fx, fz, this.ctx.quality.vegetationNear, this.ctx.quality.vegetationFar);
+  }
+  update(dt: number, cameraPos: Vector3, cameraForward: Vector3, night: number): void {
     for (const r of this.regions.values()) r.dynamics.update(dt);
+    this.refreshVegetation(cameraPos, cameraForward, dt);
     this.lights.update(dt, cameraPos, night);
   }
   dispose(): void { for (const id of [...this.regions.keys()]) this.unload(id); this.lights.dispose(); this.vegetation.dispose(); this.props.dispose(); }

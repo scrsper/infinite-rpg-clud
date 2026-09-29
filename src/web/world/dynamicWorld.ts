@@ -28,14 +28,20 @@ export class PropLibrary {
   container(open: boolean): Mesh { return this.make(`container:${open}`, b => containerGeometry(b, open)); }
   crop(state: string, seed: number): Mesh {
     return this.make(`crop:${state}:${seed % 3}`, b => {
-      const green = COLORS.herb, gold: [number, number, number] = [0.86, 0.72, 0.32], sprout: [number, number, number] = [0.42, 0.62, 0.3];
-      const rows = state === 'planted' ? 3 : 5;
-      for (let i = 0; i < rows; i++) for (let j = 0; j < rows; j++) {
-        const x = (i + 0.5) / rows - 0.5 + (hash2(i, j, seed) - 0.5) * 0.08, z = (j + 0.5) / rows - 0.5 + (hash2(i, j, seed + 5) - 0.5) * 0.08;
-        if (state === 'planted') b.box(x - 0.012, 0, z - 0.012, 0.024, 0.07, 0.024, sprout);
-        else if (state === 'growing') b.box(x - 0.012, 0, z - 0.012, 0.024, 0.28 + hash2(i, j, 3) * 0.1, 0.024, green);
-        else if (state === 'mature') { const h = 0.62 + hash2(i, j, 4) * 0.16; b.box(x - 0.012, 0, z - 0.012, 0.024, h, 0.024, [0.72, 0.68, 0.32]); b.blob(x, h, z, 0.03, 0.09, 0.03, gold, 5, 3); }
-        else if (state === 'harvested') b.box(x - 0.012, 0, z - 0.012, 0.024, 0.09, 0.024, [0.62, 0.55, 0.32]);
+      if (state === 'fallow') return;
+      const n = state === 'planted' ? 3 : 4;
+      for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+        const x = (i + 0.5) / n - 0.5 + (hash2(i, j, seed) - 0.5) * 0.1, z = (j + 0.5) / n - 0.5 + (hash2(i, j, seed + 5) - 0.5) * 0.1, k = hash2(i, j, seed + 9);
+        const h = state === 'planted' ? 0.08 : state === 'growing' ? 0.3 + k * 0.1 : state === 'mature' ? 0.7 + k * 0.15 : 0.1;
+        const low: [number, number, number] = state === 'mature' ? [0.5, 0.46, 0.2] : state === 'harvested' ? [0.55, 0.48, 0.28] : [0.28, 0.5, 0.2];
+        const top: [number, number, number] = state === 'mature' ? [0.88, 0.74, 0.34] : state === 'harvested' ? [0.6, 0.52, 0.3] : [0.46, 0.68, 0.3];
+        const w = state === 'planted' ? 0.08 : 0.16, rot = k * 3.1;
+        for (const a of [rot, rot + Math.PI / 2]) {
+          const cx = Math.cos(a) * w, cz = Math.sin(a) * w;
+          const p = (dx: number, y: number, dz: number): [number, number, number] => [x + dx, y, z + dz];
+          b.batch.quad(p(-cx, 0, -cz), p(cx, 0, cz), p(cx * 0.5, h, cz * 0.5), p(-cx * 0.5, h, -cz * 0.5), [low, low, top, top], 1, { normal: [-Math.sin(a), 0, Math.cos(a)] });
+          b.batch.quad(p(cx, 0, cz), p(-cx, 0, -cz), p(-cx * 0.5, h, -cz * 0.5), p(cx * 0.5, h, cz * 0.5), [low, low, top, top], 1, { normal: [Math.sin(a), 0, -Math.cos(a)] });
+        }
       }
     });
   }

@@ -27,6 +27,8 @@ const WALL_MATERIAL: Record<number, MatName> = {
 };
 const CLOTH: Record<number, MatName> = { [B.Cloth]: 'cloth', [B.ClothRed]: 'clothRed', [B.ClothBlue]: 'clothBlue', [B.Wool]: 'cloth' };
 const NON_OCCLUDING = new Set<number>([0, B.Glass, B.Torch, B.Cloth, B.ClothRed, B.ClothBlue, B.Wool, B.Gravestone]);
+/** Whether a projected structure block would hide the camera (walls and roofs do; glass, cloth and torches do not). */
+export const blocksCamera = (b: number): boolean => !NON_OCCLUDING.has(b);
 const T = 0.42; // vertical roof thickness (metres)
 
 const DIRS: { n: V; corners: [number, number, number][] }[] = [
