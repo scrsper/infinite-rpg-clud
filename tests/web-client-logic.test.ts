@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ACTIONS, DEFAULT_KEYBOARD, DEFAULT_PAD, DEFAULT_SETTINGS, bindingsFor, codeLabel, sanitizeSettings } from '../src/web/game/bindings';
 import { clockText, daypart, describeResult, pct, titleCase } from '../src/web/game/text';
-import { classify, splitPrice } from '../src/web/ui/dialoguePanel';
+import { classify, splitPrice, needsConfirm } from '../src/web/ui/dialoguePanel';
 
 /**
  * Pure client logic that a player's experience rests on: what the bindings say, how stored settings are
@@ -78,6 +78,10 @@ describe('player-facing wording', () => {
 });
 
 describe('dialogue menu grouping', () => {
+  it('anything that spends silver or commits the player asks first, in every wording the server uses', () => {
+    for (const l of ['Buy bread (4s each, 9 to be had)', 'Buy iron key (5s, 2 to be had)', 'Buy a meal — stew (3s)', 'Sell bread (2s)', 'Carry 3 flour from the mill to the bakery (4s)', 'Deal with the boar near the mill (10s)', 'Teach me the hush — how you still a frightened beast (6s)']) expect(needsConfirm(l), l).toBe(true);
+    for (const l of ['Goodbye', "What's the news?", 'Trade', 'More goods…', 'Ask about someone…']) expect(needsConfirm(l), l).toBe(false);
+  });
   it('sorts the server\'s own option labels into a few intentions', () => {
     expect(classify('Goodbye.')).toBe('leave');
     expect(classify('Trade')).toBe('trade');
@@ -90,8 +94,12 @@ describe('dialogue menu grouping', () => {
     expect(classify('Something unforeseen')).toBe('more');
   });
   it('splits a price out of a label without altering the words', () => {
-    expect(splitPrice('Buy a meal — stew (3s)')).toEqual({ text: 'Buy a meal — stew', price: '3 silver' });
-    expect(splitPrice('Sell bread (2s)')).toEqual({ text: 'Sell bread', price: '2 silver' });
-    expect(splitPrice('Goodbye')).toEqual({ text: 'Goodbye', price: null });
+    expect(splitPrice('Buy a meal — stew (3s)')).toEqual({ text: 'Buy a meal — stew', price: '3 silver', note: null });
+    expect(splitPrice('Sell bread (2s)')).toEqual({ text: 'Sell bread', price: '+2 silver', note: null });
+    expect(splitPrice('Goodbye')).toEqual({ text: 'Goodbye', price: null, note: null });
+    // The exact wording the dialogue system uses for a stack and for a single item with stock.
+    expect(splitPrice('Buy bread (4s each, 9 to be had)')).toEqual({ text: 'Buy bread', price: '4 silver each', note: '9 to be had' });
+    expect(splitPrice('Buy iron key (5s, 2 to be had)')).toEqual({ text: 'Buy iron key', price: '5 silver', note: '2 to be had' });
+    expect(splitPrice('Carry 3 flour from the mill to the bakery (4s)').price).toBe('4 silver');
   });
 });

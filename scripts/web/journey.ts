@@ -84,20 +84,27 @@ async function combat() {
     else { await page.keyboard.down(pick(['KeyA', 'KeyD', 'KeyS'])); await page.keyboard.press('Space'); await page.keyboard.up('KeyA'); await page.keyboard.up('KeyD'); await page.keyboard.up('KeyS'); counts.dodges++; await page.waitForTimeout(500); }
   }
 }
-/** Turn the camera toward a simulation position with ordinary mouse motion, correcting from the measured response. */
-let mouseRadPerPx = 0.0022;
-async function faceToward(x: number, z: number): Promise<number> {
-  for (let i = 0; i < 8; i++) {
-    const r = await page.evaluate(([tx, tz]) => { const tv = (window as any).__tv, p = tv.predictor.predicted.pos; const want = Math.atan2(-(tx - p.x), -(tz - p.z)); let e = want - tv.rig.yaw; e = Math.atan2(Math.sin(e), Math.cos(e)); return { e, yaw: tv.rig.yaw, d: Math.hypot(tx - p.x, tz - p.z) }; }, [x, z]);
-    if (Math.abs(r.e) < 0.12) return r.d;
-    const dx = Math.max(-500, Math.min(500, -r.e / mouseRadPerPx));
-    await page.mouse.move(w / 2, h / 2); await page.mouse.move(w / 2 + dx / 2, h / 2); await page.mouse.move(w / 2 + dx, h / 2); await page.waitForTimeout(120);
-    const after = await page.evaluate(() => (window as any).__tv.rig.yaw as number);
-    const moved = Math.atan2(Math.sin(after - r.yaw), Math.cos(after - r.yaw));
-    if (Math.abs(moved) > 0.02 && Math.abs(dx) > 40) { const k = Math.abs(moved / dx); if (k > 1e-4 && k < 0.02) mouseRadPerPx = (mouseRadPerPx + k) / 2; }
-  }
-  return -1;
+/**
+ * Steer toward a simulation position with the ordinary movement keys only. Movement is camera-relative, so the
+ * best of the eight key combinations toward the target is held and re-chosen every few hundred milliseconds
+ * (no mouse turning: synthetic mouse deltas in pointer lock are relative to the last synthetic position and
+ * cannot be recentred without also turning). Returns the remaining distance in metres.
+ */
+const held = new Set<string>();
+async function setKeys(want: string[]): Promise<void> {
+  for (const k of [...held]) if (!want.includes(k)) { await page.keyboard.up(k); held.delete(k); }
+  for (const k of want) if (!held.has(k)) { await page.keyboard.down(k); held.add(k); }
 }
+async function steerStep(x: number, z: number, sprint: boolean): Promise<number> {
+  const r = await page.evaluate(([tx, tz]) => { const tv = (window as any).__tv, p = tv.predictor.predicted.pos, y = tv.rig.yaw; const dx = tx - p.x, dz = tz - p.z, d = Math.hypot(dx, dz) || 1; const ux = dx / d, uz = dz / d; return { d, fwd: ux * -Math.sin(y) + uz * -Math.cos(y), right: ux * Math.cos(y) + uz * -Math.sin(y) }; }, [x, z]);
+  const keys: string[] = [];
+  if (r.fwd > 0.38) keys.push('KeyW'); else if (r.fwd < -0.38) keys.push('KeyS');
+  if (r.right > 0.38) keys.push('KeyD'); else if (r.right < -0.38) keys.push('KeyA');
+  if (sprint && keys.length) keys.push('ShiftLeft');
+  await setKeys(keys);
+  return r.d;
+}
+async function releaseKeys(): Promise<void> { await setKeys([]); }
 async function settlementCentres(): Promise<{ x: number; z: number; name: string }[]> {
   return page.evaluate(() => { const tv = (window as any).__tv, out: any[] = []; for (const r of tv.regions.regions.values()) for (const st of r.projection.settlements ?? []) { const b = st.bounds; out.push({ x: (b.x0 + b.x1) / 2, z: (b.z0 + b.z1) / 2, name: st.name ?? st.id ?? 'settlement' }); } return out; });
 }
@@ -106,14 +113,8 @@ async function travel(): Promise<void> {
   const cs = (await settlementCentres()).sort((a, b) => Math.hypot(a.x - here.x, a.z - here.z) - Math.hypot(b.x - here.x, b.z - here.z));
   if (!cs.length) { await move(8, true); return; }
   const c = cs[0]; counts.travel++;
-  await page.keyboard.down('ShiftLeft'); await page.keyboard.down('KeyW');
   const end = Date.now() + 60_000;
-  while (Date.now() < end) {
-    const d = await faceToward(c.x, c.z);
-    if (d >= 0 && d < 14) break;
-    await page.waitForTimeout(1500);
-  }
-  await page.keyboard.up('KeyW'); await page.keyboard.up('ShiftLeft');
+  try { while (Date.now() < end) { const d = await steerStep(c.x, c.z, true); if (d < 14) break; await page.waitForTimeout(400); } } finally { await releaseKeys(); }
 }
 async function move(seconds: number, sprint: boolean) {
   if (sprint) await page.keyboard.down('ShiftLeft');

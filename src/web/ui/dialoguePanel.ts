@@ -33,14 +33,21 @@ export function classify(label: string): GroupId {
   if (/^(what's|what is|who are|introduce|what do you|ask about|is there anything)/i.test(l)) return 'talk';
   return 'more';
 }
-/** The price shown in the row, split from the label: "Buy a meal — stew (3s)" -> ["Buy a meal — stew", "3 silver"]. */
-export function splitPrice(label: string): { text: string; price: string | null } {
-  const m = /^(.*?)\s*\((\d+)s\)\s*$/.exec(label); if (m) return { text: m[1], price: `${m[2]} silver` };
-  const r = /^(.*)\((\d+)s\)(.*)$/.exec(label); if (r) return { text: (r[1] + r[3]).trim(), price: `${r[2]} silver` };
-  const t = /^Sell (.*?) \((\d+)s\)$/.exec(label); if (t) return { text: `Sell ${t[1]}`, price: `+${t[2]} silver` };
-  return { text: label, price: null };
+/**
+ * The price shown in the row, split from the label. The dialogue system words prices as "(3s)", "(3s, 9 to be had)"
+ * or "(4s each, 9 to be had)", and a sale as "Sell bread (2s)": the words stay as the server wrote them, the price and any
+ * stock note are lifted out into their own columns.
+ *   "Buy a meal — stew (3s)"               -> text "Buy a meal — stew", price "3 silver"
+ *   "Buy bread (4s each, 9 to be had)"     -> text "Buy bread", price "4 silver each", note "9 to be had"
+ *   "Sell bread (2s)"                      -> text "Sell bread", price "+2 silver"
+ */
+export function splitPrice(label: string): { text: string; price: string | null; note: string | null } {
+  const sell = /^(Sell .*?)\s*\((\d+)s\)\s*$/.exec(label); if (sell) return { text: sell[1], price: `+${sell[2]} silver`, note: null };
+  const m = /^(.*?)\s*\((\d+)s(\s+each)?(?:,\s*([^)]*))?\)\s*$/.exec(label); if (m) return { text: m[1], price: `${m[2]} silver${m[3] ? ' each' : ''}`, note: m[4]?.trim() || null };
+  const r = /^(.*)\((\d+)s\)(.*)$/.exec(label); if (r) return { text: (r[1] + r[3]).trim(), price: `${r[2]} silver`, note: null };
+  return { text: label, price: null, note: null };
 }
-const needsConfirm = (label: string): boolean => /^(buy |sell |pay |teach me|carry |deal with)/i.test(label.trim()) && /\(\d+s\)/.test(label);
+export const needsConfirm = (label: string): boolean => /^(buy |sell |pay |teach me|carry |deal with)/i.test(label.trim()) && /\(\d+s\b/.test(label);
 
 export class DialoguePanel {
   readonly root: HTMLElement;
@@ -107,9 +114,9 @@ export class DialoguePanel {
       const list = buckets.get(g.id); if (!list?.length) continue;
       const box = h('div', { class: 'list' });
       for (const o of list) {
-        n++; const { text, price } = splitPrice(o.label);
+        n++; const { text, price, note } = splitPrice(o.label);
         box.append(h('button', { class: 'tv-opt', type: 'button', ...(n === 1 ? { 'data-autofocus': '1' } : {}), on: { click: () => this.pick(o) } },
-          n <= 9 ? h('span', { class: 'tv-key', text: String(n) }) : null, h('span', { text }), price ? h('span', { class: 'price', text: price }) : null));
+          n <= 9 ? h('span', { class: 'tv-key', text: String(n) }) : null, h('span', { text }), note ? h('span', { class: 'tv-muted', style: 'margin-left:auto;padding-right:.6rem', text: note }) : null, price ? h('span', { class: 'price', text: price }) : null));
       }
       this.options.append(h('div', { class: 'tv-opt-group' }, h('h4', { text: g.title }), box));
     }

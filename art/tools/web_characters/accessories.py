@@ -137,11 +137,13 @@ def hair_ornament(d: Dims, arm, style='pins'):
     bm = bmesh.new()
     top = Vector((0, c.y, c.z + rz))
     for sg in (-1, 1):
-        base = top + Vector((sg * 0.055 * k, 0.045 * k, 0.020 * k))
-        tube_mesh(bm, [(base, 0.0025 * k, 0.0025 * k), (base + Vector((sg * 0.03 * k, 0.03 * k, 0.05 * k)), 0.0025 * k, 0.0025 * k)], segments=6, kind='limb')
-        res = bmesh.ops.create_uvsphere(bm, u_segments=10, v_segments=7, radius=0.011 * k)
+        # A hairpin laid back and out through the hair, not standing up like an antenna.
+        base = top + Vector((sg * 0.045 * k, 0.05 * k, -0.010 * k))
+        tip = base + Vector((sg * 0.050 * k, 0.050 * k, 0.010 * k))
+        tube_mesh(bm, [(base, 0.0022 * k, 0.0022 * k), (tip, 0.0022 * k, 0.0022 * k)], segments=6, kind='limb')
+        res = bmesh.ops.create_uvsphere(bm, u_segments=10, v_segments=7, radius=0.0075 * k)
         for v in res['verts']:
-            v.co += base + Vector((sg * 0.03 * k, 0.03 * k, 0.05 * k))
+            v.co += tip
     obj = _obj_from_bm(bm, 'Ornament_pins', ['Metal'], 'accessory')
     obj['tv_style'] = style
     _rigid(obj, arm, 'head')
