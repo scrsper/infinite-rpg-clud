@@ -22,7 +22,7 @@ const gotoFlag = flag('goto', '');   // "x,z": where to head when no settlement 
 const newName = flag('name', '');   // begin a new life in the preview world (arrives at the spawn point, beside the village) instead of continuing the current one
 const out = resolve(flag('out', '.debug/web/scenario')); mkdirSync(out, { recursive: true });
 
-const st = JSON.parse(readFileSync(join(homedir(), 'TornVeilAlpha', 'web-gateway', 'gateway.json'), 'utf8')) as { origin: string; operator: string };
+const st = JSON.parse(readFileSync(join(homedir(), 'TornVeilAlpha', process.env.TV_GW_DIR ?? 'web-gateway', 'gateway.json'), 'utf8')) as { origin: string; operator: string };
 if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(st.origin)) throw new Error('gateway must be loopback');
 const args = ['--disable-renderer-backgrounding', '--disable-background-timer-throttling', `--window-size=${w + 16},${h + 130}`];
 if (renderer === 'webgpu') args.push('--enable-unsafe-webgpu', '--ignore-gpu-blocklist');

@@ -79,15 +79,22 @@ Two automated ordinary-input sessions in real Chrome (labelled automated, not hu
 JS heap, scene objects (meshes, materials, textures), resident regions, frame-time tail, prediction corrections,
 latency, console errors.
 
-| | 45 min, before the leak and streaming fixes | 40 min, final build |
+| | 45 min, before the leak and streaming fixes | 40 min, later build (before the cloth-print cache bound) |
 |---|---|---|
-| Duration / distance | 45.1 min, roughly 7 km of travel | FINAL_SOAK_DURATION |
-| Heap (JS) | 151–322 MB, no upward trend | FINAL_SOAK_HEAP |
-| Resident regions | 6–9 | FINAL_SOAK_REGIONS |
-| Materials / textures | rose 48 → 263 / 49 → 77 once while passing a settlement, then flat (the leak, since fixed) | FINAL_SOAK_MATS |
-| Frame time | median 6.9 ms; worst window p99 20.8 ms; one 408 ms frame | FINAL_SOAK_FRAMES |
-| Prediction corrections | 0 snapped, largest smoothed correction 7 cm; RTT 0.4–25 ms | FINAL_SOAK_NET |
-| Disconnects / errors | none / 1 unhandled pointer-lock refusal (fixed) | FINAL_SOAK_ERR |
+| Duration / distance | 45.1 min, roughly 7 km of travel | 40.1 min; 59 travel legs between settlements, 1 conversation |
+| Heap (JS) | 151–322 MB, no upward trend | 255–610 MB (one 610 MB spike, otherwise 255–500 MB) with a **slow upward drift** |
+| Resident regions | 6–9 | 6–9 |
+| Materials / textures | materials 38–164 (they follow how many people are in view); textures flat at 77 | materials 38–164 (same); **textures rose steadily 180 → 729** |
+| Frame time | median 6.9 ms; worst window p99 20.8 ms; one 408 ms frame | median of medians 7.0 ms; worst window p99 18.4 ms; worst frame 87 ms |
+| Prediction corrections | 0 snapped, largest smoothed correction 7 cm; RTT 0.4–25 ms | 0 snapped, largest smoothed correction 0.03 mm; RTT up to 126 ms (a single spike) |
+| Disconnects / errors | none / 1 unhandled pointer-lock refusal (fixed) | none / 0 |
+
+**The second soak found a real leak, and it is not re-verified.** Cloth prints (a 256² canvas texture per person's
+garment colours) were cached forever by key, so texture count grew about 14 per minute of walking through settlements
+and the heap drifted upward. After the run I bounded the cache (reference-counted; only the 40 most recently used idle
+prints are kept, `src/web/actors/characterMaterials.ts`). That fix compiles and the affected screens render, but **no
+new long soak has confirmed that textures and heap now stay flat**. Treat memory stability over an hour as unproven
+until it is re-run (`npm run web:journey`).
 
 ## Quality governor (automatic tier)
 

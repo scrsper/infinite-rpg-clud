@@ -37,6 +37,7 @@ reduced but present. Severity is my judgement, not a human's.
 | B5 | Accounts are limited to three characters; the fourth is refused | The web client shows "Character limit (3) reached" with a way back; there is no character-deletion UI (none exists upstream for players). |
 | B6 | Auto-reconnect and the "Signed in elsewhere" take-back were exercised by unit test and the Reconnect button, not by pulling the network | |
 | B7 | `window.__tv` debug handle is present in production builds | It exposes client state only (no credential; the gateway never sends one). Used by the evidence scripts. |
+| B9 | Texture/heap growth in a long session (cloth prints cached forever): fixed in code, **not re-soaked** | A 40-minute soak showed textures 180 → 729 and a drifting heap; the cache is now bounded (`PERFORMANCE.md`). Memory stability over an hour is unproven until a new soak. |
 | B8 | Decorative bushes/rocks can hide the player for a frame or two when the camera is very low | Mitigated by camera plant obstruction. |
 
 ## Fixed during this work because running it found them

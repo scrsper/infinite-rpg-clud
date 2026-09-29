@@ -15,7 +15,7 @@ const argv = process.argv.slice(2);
 const flag = (n: string, d: string) => { const i = argv.indexOf(`--${n}`); return i >= 0 ? argv[i + 1] : d; };
 const out = resolve(flag('out', '.debug/web/pad')); mkdirSync(out, { recursive: true });
 const [w, h] = flag('size', '1920x1080').split('x').map(Number);
-const st = JSON.parse(readFileSync(join(homedir(), 'TornVeilAlpha', 'web-gateway', 'gateway.json'), 'utf8')) as { origin: string; operator: string };
+const st = JSON.parse(readFileSync(join(homedir(), 'TornVeilAlpha', process.env.TV_GW_DIR ?? 'web-gateway', 'gateway.json'), 'utf8')) as { origin: string; operator: string };
 if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(st.origin)) throw new Error('gateway must be loopback');
 const browser = await chromium.launch({ channel: 'chrome', headless: false, args: ['--enable-unsafe-webgpu', '--ignore-gpu-blocklist', '--disable-renderer-backgrounding', '--disable-background-timer-throttling', `--window-size=${w + 16},${h + 130}`] });
 const page = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 1 });

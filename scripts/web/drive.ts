@@ -23,7 +23,7 @@ const page = await browser.newPage({ viewport: { width: w, height: h }, deviceSc
 const logs: string[] = [];
 page.on('console', m => { if (m.type() === 'error') logs.push(`error: ${m.text().slice(0, 240)}`); });
 page.on('pageerror', e => logs.push(`pageerror: ${String(e).slice(0, 300)}`));
-const st = JSON.parse(readFileSync(join(homedir(), 'TornVeilAlpha', 'web-gateway', 'gateway.json'), 'utf8')) as { origin: string; operator: string };
+const st = JSON.parse(readFileSync(join(homedir(), 'TornVeilAlpha', process.env.TV_GW_DIR ?? 'web-gateway', 'gateway.json'), 'utf8')) as { origin: string; operator: string };
 const front = flag('devhost') ?? st.origin;
 const { url: launch } = await (await fetch(`${st.origin}/api/operator/launch`, { method: 'POST', headers: { 'x-torn-veil-gateway-operator': st.operator } })).json() as { url: string };
 await page.goto(launch.replace(st.origin, front));

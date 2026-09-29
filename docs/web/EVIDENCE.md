@@ -14,7 +14,7 @@ this client (`HUMAN_TEST_GUIDE.md`).
 | Scope | Result |
 |---|---|
 | `tests/web-*.test.ts` (gateway 12, structures 4, browser boundary 7, client logic 12, quality governor 6, differential admission 4) | 45 / 45 pass |
-| Full suite `npx vitest run` (Windows, low priority, 3 workers, while a browser soak ran) | FULL_SUITE_RESULT |
+| Full suite `npx vitest run` (Windows, low priority, 3 workers, while a browser soak ran; run mid-session, before the last ~15 commits) | 153 of 154 files, 1300 of 1301 tests passed; the one failure was a 5 s timeout under load (passes alone). **Not re-run on the final commit** (see below) |
 | Typecheck `npx tsc --noEmit -p .` | clean |
 | Baseline for comparison (`BASELINE.md`, at `9556da5`) | 151 files, 1280 / 1280 |
 
@@ -66,6 +66,13 @@ is empty (`CHANGE_LANES.md`).
 | Pause → *Reconnect*: **same person, same purse, same belongings** | ok |
 | Console errors during the run | 0 |
 
+The full pass above was recorded at commit `63d9edb` (morning in the world's clock, villagers in the square). Three
+later re-runs after further changes (affordability marking in trade, bounded cloth-print cache, static cache policy)
+did **not** reach a conversation: it was afternoon and stormy in the preview world, nobody was outdoors, and the
+account's character limit (3) prevented starting a fresh character beside the village. The steps that do not need a
+person (menus, save, reconnect, purse/belongings unchanged) passed in those runs. So the talk → trade → eat path is
+verified on `63d9edb`, and only unit-tested (price parsing, cost reading, confirmation rules) on the commits after it.
+
 This run found and fixed two real defects that unit tests could not: carried items showed the word "undefined"
 (the client read `label`, the server sends `name`; the row types are now taken from the server's own definitions so a
 renamed field fails compilation), and trade rows worded "(4s each, 9 to be had)" were not recognised, so they showed no
@@ -82,7 +89,10 @@ guards and dodges, seeded and unscripted-looking but not a person. Two runs (see
 - **45.1 min** on an earlier build: no disconnect, ~7 km of travel, flat heap, one materials/textures step-up
   that led to the leak fix. The walker steered by mouse, which turned out not to steer at all (synthetic pointer
   deltas are relative), so it wandered instead of visiting villages: **it never reached a conversation** (talk = 0).
-- **40 min** on the final build with keyboard steering: FINAL_SOAK_SUMMARY
+- **40.1 min** on a later build with keyboard steering: 59 legs between settlements, 63 walks, 36 sprints, 22 menu
+  openings, 53 strikes, 14 guards, 17 dodges, 91 interact attempts, **1 conversation**, no disconnect, 0 console errors,
+  0 snapped prediction corrections, worst frame 87 ms. It exposed a texture/heap leak (cloth prints cached without release;
+  see `PERFORMANCE.md`). The fix was made afterwards and has **not** been re-soaked.
 
 What this does not exercise: a full first-hour arc (find work, train, fight something, recover, return), nor
 danger (no boar encounter was scripted), nor a night session. The mandate's 45–60 minute *ordinary session with

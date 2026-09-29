@@ -18,8 +18,11 @@ prototype-level next to the two concept sheets, and Lane B was not started.
   walk up to a person, talk, read grouped options, trade with a confirmation, buy, eat, open Items/Abilities/Journal,
   save, reconnect and find the same person with the same purse and belongings.
 - **Performance** on the RX 6650 XT: median ≤ 7 ms at 720p/1080p/1440p on WebGPU and WebGL 2 at the display's
-  144 Hz cap, 4.3 ms median with the cap lifted, p99 ≤ 15 ms; region streaming time-sliced; long-session memory flat
-  (`PERFORMANCE.md`).
+  144 Hz cap, 4.3 ms median with the cap lifted, p99 ≤ 15 ms; region streaming time-sliced (`PERFORMANCE.md`).
+  **Not verified:** long-session memory. A 40-minute soak found a texture/heap leak; it was fixed afterwards but not
+  re-soaked.
+- **Full test suite on the final commit** was not re-run (last full run: 1300/1301 mid-session; the 45 web tests and
+  typecheck pass on recent commits).
 - **Launcher**: read-only preflight with negative cases; never starts or changes a world.
 - **Injected gamepad code path**: 17/17 (labelled injected, not physical).
 - **UI legibility numbers** at 720p/1080p/1440p (nothing under 14.2 px, body 17 px).
