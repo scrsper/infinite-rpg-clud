@@ -103,3 +103,24 @@ function fallback(id: string, proj: ProjectedAppearance | undefined, seed: numbe
   const face: FaceSpec = { skin, hair, eyeColor: [74, 42, 22], lipTint: [skin[0] * 0.92, skin[1] * 0.6, skin[2] * 0.62], presentation: kit === 'f' ? 'feminine' : 'masculine', age: 'adult', grooming: 0.6, wear: 0.3, beard: 0, seed };
   return { kit, heightScale: proj?.height ?? 1, buildScale: proj?.build ?? 1, parts: ['Body', 'Head', 'EyeL', 'EyeR', 'G_work_kimono', 'Hair_cropped', 'Foot_zori'], morphs: {}, materials: { skin, hair, eye: [74, 42, 22], lip: face.lipTint, face, cloth }, hairStyle: 'cropped', garment: 'work_kimono', tools: [] };
 }
+
+/**
+ * The art-preview hero (docs/web/STYLE.md, art/reference/web-rebirth/02-ice-character.png): a silver-haired
+ * woman in a white-and-blue snowflake kimono with a navy sash, an ivory fur stole, gold and crystal
+ * ornaments, fox ears and a full tail. Ears and tail are NOT canonical: the simulation has no species that
+ * has them, so this figure only ever exists in the showroom and is labelled as a presentation preview.
+ */
+export function heroRealization(): Realization {
+  const desc: AppearanceDescription = {
+    archetype: 'hero-preview', culture: 'ashford', presentation: 'feminine', skinTone: 'porcelain', faceShape: 'heart', hairStyle: 'loose_long', hairColor: 'silver', eyeColor: 'blue', frame: 'lean', stature: 'above_average',
+    garmentSilhouette: 'layered_kimono', garmentPalette: 'snow_moon', accessories: ['hair_ornament', 'ear_drops'], culturalTags: ['ashford', 'snow_moon'], grooming: 1, wear: 0, status: 'noble', agePresentation: 'adult', roleCues: [],
+  };
+  const r = realize('hero-preview', desc, undefined);
+  r.parts = ['Body', 'Head', 'EyeL', 'EyeR', 'G_furisode_hero', 'Hair_hero_long', 'Foot_geta', 'Hero_ears', 'Hero_tail', 'Hero_stole', 'Hero_ornaments', 'Accessory_ear_drops'];
+  r.materials.cloth = { primary: [168, 200, 236], secondary: [30, 44, 96], accent: [26, 38, 84], motif: 'snow', wear: 0, seed: 7 };
+  r.materials.fur = [244, 240, 232]; r.materials.furGlow = true; r.materials.hairShine = 0.9; r.materials.hairEmissive = 0.06;
+  r.materials.face.makeup = 'kitsune';
+  r.morphs = { face_heart: 0.8, feminine: 0.9 };
+  r.hero = true; r.hairStyle = 'hero_long'; r.garment = 'furisode_hero';
+  return r;
+}

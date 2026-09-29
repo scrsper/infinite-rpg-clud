@@ -1,10 +1,13 @@
-import { Color3, MeshBuilder, PBRMaterial, Vector3, type Mesh } from '@babylonjs/core';
+import { Color3, Color4, DirectionalLight, DynamicTexture, MeshBuilder, PBRMaterial, ParticleSystem, PointLight, Texture, Vector3, type Mesh } from '@babylonjs/core';
 import type { App } from '../app';
 import type { ActorState } from '../actors/actorManager';
 import { CharacterVisual } from '../actors/characterFactory';
-import { realize } from '../actors/appearanceMap';
+import type { CreatureVisual } from '../actors/creatureFactory';
+import type { WildlifeBody } from '../net/messages';
+import { heroRealization, realize } from '../actors/appearanceMap';
 import type { AppearanceDescription } from '../net/messages';
 import type { CombatContext } from '../actors/combatPose';
+import { PREVIEWS, PreviewCreature } from './previewCreatures';
 
 /**
  * The art showroom: a lit stage with the character kit and previews, an orbit camera, and no
@@ -41,6 +44,9 @@ export const LINEUP: { name: string; desc: AppearanceDescription }[] = [
 
 export class Showroom {
   private visuals: { v: CharacterVisual; x: number; name: string }[] = [];
+  private animals: { v: CreatureVisual; x: number; species: string }[] = [];
+  private animalPose = 'idle';
+  private previews: PreviewCreature[] = [];
   private yaw = 0.25; private pitch = 0.12; private dist = 6.5; private target = new Vector3(0, 1.0, 0);
   private t = 0;
   private stage: Mesh | null = null;
@@ -68,15 +74,60 @@ export class Showroom {
       const f = app.params.get('focus'); if (f !== null) { const idx = Number(f); this.target.set((idx - (list.length - 1) / 2) * spacing, 1.05, 0); this.dist = Number(app.params.get('dist') ?? 2.6); this.yaw = Number(app.params.get('yaw') ?? 0.15); }
       if (app.params.get('focus') === null) this.target.set(0, 0.95, 0);
     }
+    if (subject === 'hero') await this.stageHero();
+    if (subject === 'creatures') {
+      const list: [string, number][] = [['roe_deer', 1.5], ['woodland_boar', 1.1], ['field_hare', 0.55]]; let i = 0;
+      for (const [sp, h] of list) for (const age of ['adult', 'juvenile'] as const) {
+        const wb = { bodyId: `w${i}`, creatureId: `c${i}`, speciesId: sp, regionId: null, bodyPlan: { id: 'quadruped', shape: 'quadruped', heightM: h, radiusM: 0.3 }, pos: { x: 0, y: 0, z: 0 }, yaw: 0, vel: { x: 0, y: 0, z: 0 }, scale: 1, ageClass: age, condition: 1, alive: true, dead: false, present: true, activity: 'idle', defense: null, defenseAtViewer: false } as WildlifeBody;
+        const v = app.creatures.create(scene, app.atmosphere, wb); if (!v) continue;
+        const x = (i - (list.length * 2 - 1) / 2) * 1.7; v.root.position.set(x, 0, 0); v.root.rotation.y = Math.PI * 0.5;
+        this.animals.push({ v, x, species: sp }); (v as unknown as { wb: WildlifeBody }).wb = wb; i++;
+      }
+      this.dist = 9; this.yaw = 0.2; this.target.set(0, 0.6, 0);
+    }
+    if (subject === 'previews') {
+      let i = 0;
+      for (const def of PREVIEWS) { const pc = await PreviewCreature.create(scene, app.atmosphere, def.id); if (!pc) continue; const x = (i++ - 1.5) * 3.6; pc.rig.root.position.set(x, def.id === 'rift_hawk' ? 1.6 : 0, 0); pc.rig.root.rotation.y = Math.PI * 0.05; this.previews.push(pc); }
+      this.dist = 12; this.yaw = 0.05; this.target.set(0, 1.3, 0);
+      const b = document.createElement('div'); b.className = 'tv-badge preview'; b.style.cssText = 'position:absolute;left:14px;bottom:14px;pointer-events:none;max-width:90%'; b.textContent = PREVIEWS.map(p => `${p.label}: ${p.note}`).join('  ·  '); app.ctx.canvas.parentElement?.appendChild(b); this.badge = b;
+    }
     const canvas = app.ctx.canvas;
     let drag = false;
     canvas.addEventListener('pointerdown', () => { drag = true; });
     window.addEventListener('pointerup', () => { drag = false; });
     window.addEventListener('pointermove', e => { if (drag) { this.yaw -= e.movementX * 0.006; this.pitch = Math.max(-0.4, Math.min(1.2, this.pitch + e.movementY * 0.005)); } });
     canvas.addEventListener('wheel', e => { this.dist = Math.max(0.6, Math.min(30, this.dist * (1 + Math.sign(e.deltaY) * 0.08))); }, { passive: true });
-    window.addEventListener('keydown', e => { const i = e.key === '0' ? 9 : Number(e.key) - 1; if (i >= 0 && i < POSES.length) this.pose = POSES[i]; });
+    window.addEventListener('keydown', e => { const i = e.key === '0' ? 9 : Number(e.key) - 1; if (i >= 0 && i < POSES.length) this.pose = POSES[i]; if (subject === 'creatures') { const A = ['idle', 'walk', 'trot', 'gallop', 'graze', 'drink', 'rest', 'dead', 'warn', 'charge']; if (i >= 0 && i < A.length) this.animalPose = A[i]; } });
     this.label = document.createElement('div'); this.label.style.cssText = 'position:absolute;left:14px;top:12px;color:#e8dfc8;font:14px Segoe UI,sans-serif;text-shadow:0 1px 3px #000'; app.ctx.canvas.parentElement?.appendChild(this.label);
-    app.atmosphere.update(Number(app.params.get('hour') ?? 13.5), { kind: 'clear', intensity: 0, wind: 0.1 }, 0);
+    if (subject !== 'hero') app.atmosphere.update(Number(app.params.get('hour') ?? 13.5), { kind: 'clear', intensity: 0, wind: 0.1 }, 0);
+  }
+
+  private flakes: ParticleSystem | null = null;
+  private badge: HTMLElement | null = null;
+  private async stageHero(): Promise<void> {
+    const app = this.app, scene = app.ctx.scene;
+    const r = heroRealization();
+    const v = app.characters.create(scene, app.atmosphere, 'hero-preview', r); if (!v) return;
+    v.root.position.set(0, 0.06, 0); v.root.rotation.y = Math.PI * 0.80; this.visuals.push({ v, x: 0, name: 'Hero' });
+    const dais = MeshBuilder.CreateCylinder('dais', { diameter: 3.0, height: 0.12, tessellation: 64 }, scene); dais.position.y = 0;
+    const dm = new PBRMaterial('dais-mat', scene); dm.albedoColor = new Color3(0.55, 0.65, 0.78).toLinearSpace(); dm.roughness = 0.35; dm.metallic = 0.1; dm.emissiveColor = new Color3(0.05, 0.09, 0.16); dais.material = dm; dais.receiveShadows = true;
+    // Snow and crystal motes: a presentation effect only.
+    const tex = new DynamicTexture('flake', { width: 64, height: 64 }, scene, true); const g = tex.getContext() as CanvasRenderingContext2D;
+    g.clearRect(0, 0, 64, 64); const rad = g.createRadialGradient(32, 32, 1, 32, 32, 30); rad.addColorStop(0, 'rgba(255,255,255,1)'); rad.addColorStop(0.35, 'rgba(200,225,255,0.55)'); rad.addColorStop(1, 'rgba(160,200,255,0)'); g.fillStyle = rad; g.fillRect(0, 0, 64, 64);
+    g.strokeStyle = 'rgba(255,255,255,0.9)'; g.lineWidth = 2; for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; g.beginPath(); g.moveTo(32, 32); g.lineTo(32 + Math.cos(a) * 26, 32 + Math.sin(a) * 26); g.stroke(); } tex.update(); tex.hasAlpha = true;
+    const ps = new ParticleSystem('flakes', 260, scene); ps.particleTexture = tex; ps.emitter = new Vector3(0, 3.6, 0); ps.minEmitBox = new Vector3(-2.6, 0, -2.6); ps.maxEmitBox = new Vector3(2.6, 0, 2.6);
+    ps.color1 = new Color4(0.85, 0.93, 1, 0.9); ps.color2 = new Color4(0.7, 0.85, 1, 0.7); ps.colorDead = new Color4(0.7, 0.85, 1, 0); ps.minSize = 0.03; ps.maxSize = 0.10; ps.minLifeTime = 4; ps.maxLifeTime = 7;
+    ps.emitRate = 55; ps.gravity = new Vector3(0, -0.35, 0); ps.direction1 = new Vector3(-0.12, -0.2, -0.12); ps.direction2 = new Vector3(0.12, -0.35, 0.12); ps.minAngularSpeed = -1; ps.maxAngularSpeed = 1; ps.blendMode = ParticleSystem.BLENDMODE_ADD; ps.start(); this.flakes = ps;
+    this.dist = 3.6; this.yaw = 0.15; this.target.set(0, 1.0, 0); this.pitch = 0.05;
+    app.atmosphere.update(21.0, { kind: 'clear', intensity: 0, wind: 0.1 }, 0);
+    app.atmosphere.setStage(new Color3(0.06, 0.10, 0.20)); if (app.ctx.pipeline) app.ctx.pipeline.imageProcessing.exposure = 0.95;
+    (this.stage?.material as PBRMaterial | null)?.albedoColor.copyFromFloats(0.02, 0.035, 0.07);
+    // Studio lighting: a cool key from the front-left, a blue rim from behind, a warm low fill; the sun/moon of the world are not used.
+    app.atmosphere.key.direction = new Vector3(0.5, -0.55, -0.7).normalize(); app.atmosphere.key.intensity = 3.2; app.atmosphere.key.diffuse = new Color3(0.86, 0.92, 1);
+    app.atmosphere.fill.intensity = 0.9; app.atmosphere.fill.diffuse = new Color3(0.55, 0.65, 0.9); app.atmosphere.fill.groundColor = new Color3(0.22, 0.2, 0.28);
+    const rim = new PointLight('rim', new Vector3(-1.6, 2.2, 2.4), scene); rim.diffuse = new Color3(0.4, 0.62, 1); rim.intensity = 9; rim.range = 9;
+    const warm = new PointLight('warm', new Vector3(1.6, 0.8, -2.2), scene); warm.diffuse = new Color3(1, 0.82, 0.62); warm.intensity = 2.4; warm.range = 8;
+    const b = document.createElement('div'); b.className = 'tv-badge preview'; b.style.cssText = 'position:absolute;left:14px;bottom:14px;pointer-events:none'; b.textContent = 'Art preview — hero concept. Fox ears, tail and frost effects are not simulation features.'; app.ctx.canvas.parentElement?.appendChild(b); this.badge = b;
   }
 
   setFocus(x: number, dist: number, yaw: number, pitch = 0.1): void { this.target.set(x, 1.0, 0); this.dist = dist; this.yaw = yaw; this.pitch = pitch; }
@@ -87,6 +138,15 @@ export class Showroom {
     const cp = Math.cos(this.pitch);
     cam.position.set(this.target.x + Math.sin(this.yaw) * cp * this.dist, this.target.y + Math.sin(this.pitch) * this.dist, this.target.z + Math.cos(this.yaw) * cp * this.dist);
     cam.setTarget(this.target); cam.fov = 0.6;
+    for (const pc of this.previews) pc.update(dt);
+    for (const an of this.animals) {
+      const wb = (an.v as unknown as { wb: WildlifeBody }).wb; const pose = this.animalPose;
+      const speed = pose === 'walk' ? 1.2 : pose === 'trot' ? 3 : pose === 'gallop' ? 6 : 0;
+      wb.activity = (pose === 'walk' || pose === 'trot' || pose === 'gallop' ? 'walk' : pose === 'graze' ? 'forage' : pose) as WildlifeBody['activity'];
+      wb.defense = pose === 'warn' ? 'warn' : pose === 'charge' ? 'charge' : pose === 'strike' ? 'strike' : null; wb.dead = pose === 'dead'; wb.alive = pose !== 'dead';
+      const st: ActorState = { bodyId: wb.bodyId, own: false, kind: 'wildlife', wildlife: wb, speed, velocity: { x: 0, y: 0, z: -speed }, yaw: 0, crouch: 0, age: 0 };
+      an.v.update(dt, st);
+    }
     for (const { v, x } of this.visuals) {
       const walking = this.pose === 'walk' || this.pose === 'run';
       const speed = this.pose === 'walk' ? 1.5 : this.pose === 'run' ? 4.6 : 0;
@@ -107,5 +167,6 @@ export class Showroom {
     if (this.label) this.label.textContent = `Showroom · pose: ${this.pose} · keys 1-0 · drag to orbit · wheel to zoom`;
     app.atmosphere.follow(cam.position);
   }
-  dispose(): void { for (const { v } of this.visuals) v.dispose(); this.stage?.dispose(); this.label?.remove(); }
+  setAnimalPose(p: string): void { this.animalPose = p; }
+  dispose(): void { for (const { v } of this.animals) v.dispose(); for (const { v } of this.visuals) v.dispose(); this.stage?.dispose(); this.label?.remove(); this.badge?.remove(); this.flakes?.dispose(); }
 }

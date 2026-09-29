@@ -147,6 +147,12 @@ export class Atmosphere {
     this.lastHour = h;
   }
   private lastOvercast = -1;
+  /** A plain studio backdrop for the showroom: no sky, no fog, a flat clear colour. */
+  setStage(color: Color3 | null): void {
+    const on = !!color;
+    for (const m of [this.skyDome, this.starDome, this.cloudDome, this.sunDisc, this.moonDisc]) m.setEnabled(!on);
+    const s = this.ctx.scene; if (color) { s.clearColor = new Color4(color.r, color.g, color.b, 1); s.fogDensity = 0; s.fogMode = Scene.FOGMODE_NONE; }
+  }
   /** Follow the camera so the sky is always centred on the viewer. */
   follow(cameraPos: Vector3): void { for (const m of [this.skyDome, this.starDome, this.cloudDome]) m.position.copyFrom(cameraPos); this.key.position.copyFrom(cameraPos); }
   get hourValue(): number { return this.lastHour; }

@@ -222,6 +222,48 @@ def travel_pack(d: Dims, arm):
 # The hero's parts: fox ears, a many-tailed brush, a fur stole and gold/crystal ornaments.
 # --------------------------------------------------------------------------------------------
 
+def add_fur_tufts(bm, count, length, width, droop=0.35, seed=5, min_up=-0.4, only_lower=None):
+    """Scatter tapered fur tufts over a bmesh: each is a four-sided cone along the surface normal, drooping under gravity."""
+    import random
+    rnd = random.Random(seed)
+    faces = [f for f in bm.faces if f.calc_area() > 1e-7]
+    if not faces:
+        return
+    areas = [f.calc_area() for f in faces]
+    total = sum(areas)
+    for _ in range(count):
+        r = rnd.random() * total
+        acc = 0.0
+        f = faces[-1]
+        for fc, ar in zip(faces, areas):
+            acc += ar
+            if acc >= r:
+                f = fc
+                break
+        vs = [v.co for v in f.verts]
+        w = [rnd.random() for _ in vs]
+        s = sum(w)
+        p = sum((v * (wi / s) for v, wi in zip(vs, w)), Vector())
+        n = f.normal.copy()
+        if n.z < min_up:
+            continue
+        dirv = (n + Vector((0, 0, -droop)) + Vector((rnd.uniform(-0.15, 0.15), rnd.uniform(-0.15, 0.15), 0))).normalized()
+        L = length * (0.6 + 0.8 * rnd.random())
+        side = dirv.cross(Vector((0, 0, 1)))
+        if side.length < 1e-3:
+            side = Vector((1, 0, 0))
+        side.normalize()
+        up2 = dirv.cross(side).normalized()
+        base = [p + side * width + up2 * width * 0.3, p - side * width + up2 * width * 0.3, p + side * width * 0.0 - up2 * width]
+        tip = p + dirv * L + Vector((0, 0, -droop * L * 0.4))
+        vv = [bm.verts.new(x) for x in base] + [bm.verts.new(tip)]
+        for i in range(3):
+            try:
+                bm.faces.new((vv[i], vv[(i + 1) % 3], vv[3]))
+            except ValueError:
+                pass
+
+
 def hero_ear_bones(d: Dims):
     c, rx, ry, rz = head_frame(d)
     k = d.height / 1.66
@@ -287,6 +329,7 @@ def hero_tail(d: Dims, arm):
     radii = [0.030, 0.050, 0.070, 0.078, 0.066, 0.040, 0.010]
     rings = [(p, r * H / 1.66, r * H / 1.66 * 1.15) for p, r in zip(pts, radii)]
     tube_mesh(bm, rings, segments=16, kind='limb', cap_start=True, cap_end=True)
+    add_fur_tufts(bm, 1400, 0.11 * H / 1.66, 0.014 * H / 1.66, droop=0.25, seed=11, min_up=-1.0)
     obj = _obj_from_bm(bm, 'Hero_tail', ['Fur'], 'hero')
     obj['tv_style'] = 'tail'
     names = [b[0] for b in bones]
@@ -321,6 +364,7 @@ def hero_stole(d: Dims, arm, body):
     for sg in (-1, 1):
         tube_mesh(bm, [(Vector((sg * 0.055 * H, -0.11 * H, d.chest + 0.02 * H)), 0.036 * H, 0.03 * H), (Vector((sg * 0.06 * H, -0.115 * H, d.chest - 0.08 * H)), 0.038 * H, 0.032 * H),
                        (Vector((sg * 0.062 * H, -0.11 * H, d.waist - 0.02 * H)), 0.030 * H, 0.026 * H), (Vector((sg * 0.062 * H, -0.105 * H, d.waist - 0.07 * H)), 0.012 * H, 0.010 * H)], segments=12, kind='limb')
+    add_fur_tufts(bm, 1800, 0.06 * k, 0.011 * k, droop=0.5, seed=19, min_up=-0.6)
     obj = _obj_from_bm(bm, 'Hero_stole', ['Fur'], 'hero')
     obj['tv_style'] = 'stole'
     _from_body(obj, body, arm)

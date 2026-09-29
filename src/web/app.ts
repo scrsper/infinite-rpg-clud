@@ -15,6 +15,7 @@ import { DEFAULT_SETTINGS, codeLabel, loadSettings, saveSettings, type Settings 
 import { describeResult, TALK_REASON, titleCase } from './game/text';
 import { ActorManager, placeholderVisual, predictedTiming } from './actors/actorManager';
 import { CharacterFactory, makeRealization } from './actors/characterFactory';
+import { CreatureFactory } from './actors/creatureFactory';
 import { add, h } from './ui/dom';
 import { UiNav } from './ui/nav';
 import { PortraitRenderer } from './ui/portrait';
@@ -54,6 +55,7 @@ export class App {
   ready = false;
   showroom: Showroom | null = null;
   characters = new CharacterFactory();
+  creatures = new CreatureFactory();
   grass!: GrassField;
   portrait!: PortraitRenderer;
   private choice: CharacterChoice = { kind: 'auto' };
@@ -93,7 +95,7 @@ export class App {
       playerLook: () => { const t = this.controller.lockedBodyId; return t ? this.actors.headPoint(t, new Vector3()) : null; },
       onHit: (id, own) => { if (own) { this.rig.impact(0.8); this.input.vibrate(0.6, 0.3, 160); } },
     };
-    this.actors.factory = (ctx, atmos, a) => (a.kind === 'person' ? this.characters.create(ctx.scene, atmos, a.body?.bodyId ?? 'x', makeRealization(a.body, a.body?.bodyId ?? 'x')) : null) ?? placeholderVisual(ctx, atmos, a);
+    this.actors.factory = (ctx, atmos, a) => (a.kind === 'person' ? this.characters.create(ctx.scene, atmos, a.body?.bodyId ?? 'x', makeRealization(a.body, a.body?.bodyId ?? 'x')) : a.wildlife ? this.creatures.create(ctx.scene, atmos, a.wildlife) : null) ?? placeholderVisual(ctx, atmos, a);
     this.input = new InputManager(canvas, () => this.settings);
     this.nav = new UiNav(this.input);
     this.overlay = h('div', { class: 'tv-layer', style: 'pointer-events:none' }); this.modalLayer = h('div', { class: 'tv-layer', style: 'pointer-events:none' });
@@ -119,6 +121,7 @@ export class App {
     this.ctx.engine.runRenderLoop(() => this.frame());
     const boot = loadingScreen(this.overlay, 'Preparing the people…'); this.screen = boot as { remove(): void };
     await this.characters.load(this.ctx.scene, (d, t) => boot.set(`Preparing the people… ${d}/${t}`));
+    boot.set('Preparing the wildlife…'); await this.creatures.load(this.ctx.scene);
     this.clearScreen();
     if (this.params.has('showroom')) { this.phase = 'showroom'; this.showroom = new Showroom(this); await this.showroom.init(this.params.get('showroom') || 'kit_f'); this.ready = true; return; }
     this.showTitle();

@@ -123,10 +123,15 @@ def _frame(T, kind='limb'):
     if kind == 'foot':
         return Vector((1, 0, 0)), Vector((0, 0, 1))
     hint = Vector((0, -1, 0))
+    if abs(T.dot(hint)) > 0.7:
+        # A tube running along the figure's front-back axis (a quadruped's barrel): keep the section frame tied to 'up' so it cannot flip between rings.
+        hint = Vector((0, 0, 1))
     front = hint - T * hint.dot(T)
     if front.length < 1e-4:
         front = Vector((0, 0, 1))
     front.normalize()
+    if hint.z == 1 and front.z < 0:
+        front = -front
     side = T.cross(front).normalized()
     return side, front
 

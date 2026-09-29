@@ -15,7 +15,7 @@ from common import Dims, smoothstep
 from head import head_frame, face_position, DEFAULT
 
 HAIR_STYLES = ['shaved', 'cropped', 'short_swept', 'topknot', 'warrior_bun', 'tied_back', 'loose_long', 'wavy_long', 'braided', 'twin_braid',
-               'updo_ornamented', 'ponytail', 'bob', 'unkempt', 'side_fringe']
+               'updo_ornamented', 'ponytail', 'bob', 'unkempt', 'side_fringe', 'hero_long']
 SLOTS = ['Hair', 'Accent', 'Metal']
 
 
@@ -113,7 +113,7 @@ def build_hair(d: Dims, style: str, name=None):
     ch = chains(d)
     # ---- scalp shell from the head's own surface ----
     cover = {'shaved': 0.0015, 'cropped': 0.006, 'short_swept': 0.011, 'topknot': 0.005, 'warrior_bun': 0.006, 'tied_back': 0.008, 'loose_long': 0.012, 'wavy_long': 0.014,
-             'braided': 0.009, 'twin_braid': 0.009, 'updo_ornamented': 0.010, 'ponytail': 0.008, 'bob': 0.013, 'unkempt': 0.014, 'side_fringe': 0.011}[style] * k
+             'braided': 0.009, 'twin_braid': 0.009, 'updo_ornamented': 0.010, 'ponytail': 0.008, 'bob': 0.013, 'unkempt': 0.014, 'side_fringe': 0.011, 'hero_long': 0.014}[style] * k
     seg_u, seg_v = 96, 64
     res = bmesh.ops.create_uvsphere(bm, u_segments=seg_u, v_segments=seg_v, radius=1.0)
     p = dict(DEFAULT)
@@ -206,6 +206,29 @@ def build_hair(d: Dims, style: str, name=None):
             pts = [Vector((sg * rx * 0.98, c.y - ry * 0.62, c.z + rz * 0.18)), Vector((sg * rx * 1.04, c.y - ry * 0.42, c.z - rz * 0.25)), Vector((sg * rx * 1.02, c.y - ry * 0.28, c.z - rz * 0.85)),
                    Vector((sg * rx * 0.98, c.y - ry * 0.20, c.z - rz * 1.6)), Vector((sg * rx * 0.94, c.y - ry * 0.16, c.z - rz * 2.3))]
             _strand_tube(bm, pts, [W(0.012), W(0.016), W(0.015), W(0.009), W(0.002)], W(0.008), 6)
+    elif style == 'hero_long':
+        import random
+        rnd = random.Random(23)
+        strands = 25
+        for i in range(strands):
+            u = (i - (strands - 1) / 2) / ((strands - 1) / 2)
+            chain = ch['l'] if u > 0.35 else ch['r'] if u < -0.35 else ch['b']
+            L = 1.15 + 0.35 * rnd.random()
+            n_s = 14
+            pts = _path_on_chain(chain, samples=n_s, sway=0.030 * k, phase=i * 0.5, length_k=min(1.0, L))
+            ext = max(0.0, L - 1.0)
+            spread = rx * (0.30 + 0.62 * abs(u) ** 0.85) * (1 if u >= 0 else -1) * 1.08
+            pts = [Vector((spread * (0.75 + 0.55 * (j / (n_s - 1))), pt.y + 0.006 * k * (j / n_s) + 0.004 * k * abs(u), pt.z - (ext * 0.34 * k * (j / (n_s - 1)) ** 1.5)) ) for j, pt in enumerate(pts)]
+            widths = [W(0.036) * (1.0 - 0.94 * smoothstep(0.55, 1.0, j / (n_s - 1))) + W(0.002) for j in range(n_s)]
+            _strand_tube(bm, pts, widths, W(0.014), 6)
+        # straight fringe across the brow and two long framing locks
+        for i in range(9):
+            u = (i - 4) / 4
+            pts = [Vector((u * rx * 0.62, c.y - ry * 0.86, c.z + rz * 0.92)), Vector((u * rx * 0.72, c.y - ry * 1.02, c.z + rz * 0.62)), Vector((u * rx * 0.76, c.y - ry * 1.03, c.z + rz * 0.34))]
+            _strand_tube(bm, pts, [W(0.016), W(0.016), W(0.004)], W(0.007), 5)
+        for sg in (-1, 1):
+            pts = [Vector((sg * rx * 0.96, c.y - ry * 0.70, c.z + rz * 0.20)), Vector((sg * rx * 1.08, c.y - ry * 0.55, c.z - rz * 0.4)), Vector((sg * rx * 1.05, c.y - ry * 0.4, c.z - rz * 1.1)), Vector((sg * rx * 1.02, c.y - ry * 0.3, c.z - rz * 2.0)), Vector((sg * rx * 0.96, c.y - ry * 0.24, c.z - rz * 3.0)), Vector((sg * rx * 0.9, c.y - ry * 0.2, c.z - rz * 3.8))]
+            _strand_tube(bm, pts, [W(0.013), W(0.018), W(0.018), W(0.014), W(0.008), W(0.002)], W(0.010), 6)
     elif style == 'braided':
         pts = _path_on_chain(ch['b'], samples=8, y_off=0.0)
         for i, pt in enumerate(pts):
