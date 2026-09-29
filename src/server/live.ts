@@ -18,7 +18,7 @@ import { AccountRegistry, type AccountRecord } from './accounts';
 import { CheckpointEncoder } from './checkpointEncoder';
 import type { AlphaConfig, ReleaseIdentity } from './config';
 import { GENERATOR_VERSION, playableBaselineFingerprint } from './fingerprint';
-import { ALPHA_PROTOCOL, CLOSE, H, parseCharacterRequest } from './protocol';
+import { ALPHA_PROTOCOL, CLIENT_KINDS, CLOSE, H, parseCharacterRequest } from './protocol';
 import type { Lifecycle } from './readiness';
 import { BackupSet, RefuseToStartError, WorldStore, WriterLock, type CheckpointMeta, type GeneratorIdentity } from './store';
 
@@ -341,7 +341,10 @@ export class LiveServer {
     const remote = req.socket.remoteAddress ?? 'unknown', header = (name: string) => { const v = req.headers[name]; return Array.isArray(v) ? v[0] : v; };
     const failures = this.authFailures.get(remote);
     if (failures && Date.now() - failures.since < 60_000 && failures.count >= 10) return this.reject(socket, CLOSE.full, 'Too many failed sign-ins; wait a minute', remote);
-    if (!['unreal', 'probe'].includes(String(header(H.client)))) return this.reject(socket, CLOSE.incompatible, 'Torn Veil client required', remote);
+    const kind = String(header(H.client));
+    const native = kind === CLIENT_KINDS.unreal || kind === CLIENT_KINDS.probe;
+    const gateway = kind === CLIENT_KINDS.web && this.config.webGateway && LOOPBACK.has(remote);
+    if (!native && !gateway) return this.reject(socket, CLOSE.incompatible, kind === CLIENT_KINDS.web ? 'Web gateway not enabled for this environment' : 'Torn Veil client required', remote);
     if (header(H.protocol) !== String(ALPHA_PROTOCOL)) return this.reject(socket, CLOSE.incompatible, `Incompatible client: server protocol ${ALPHA_PROTOCOL}, release ${this.release.version}. Update your client.`, remote);
     if (header(H.region) !== String(REGION_PROTOCOL)) return this.reject(socket, CLOSE.incompatible, `Incompatible client: regional protocol ${REGION_PROTOCOL} required`, remote);
     const account = this.accounts.authenticate(header(H.account), header(H.token));

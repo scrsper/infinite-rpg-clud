@@ -46,6 +46,8 @@
     "ashford:wardrobe": "tsx src/headless/foundry/ashfordWardrobe.ts"
   },
   "dependencies": {
+    "@babylonjs/core": "9.28.0",
+    "@babylonjs/loaders": "9.28.0",
     "three": "^0.170.0",
     "ws": "^8.21.3"
   },
