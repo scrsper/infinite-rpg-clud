@@ -391,7 +391,7 @@ export class LiveServer {
     const person = w.person(personId!)!;
     const realtime = header(H.interaction) === '2';
     const c: Connection = { socket, serial: ++this.serial, account, channelId, personId: personId!, remote, connectedAt: Date.now(), lastSaveRequest: 0, realtime,
-      stream: new RegionalTransport(e => this.log('info', 'region', { conn: this.serial, ...e }), () => personId), controlWindow: new FixedRateWindow(realtime ? 160 : 80, performance.now()), presentationWindow: new FixedRateWindow(80, performance.now()) };
+      stream: new RegionalTransport(e => this.log('info', 'region', { conn: this.serial, ...e }), () => personId, { structures: kind === CLIENT_KINDS.web }), controlWindow: new FixedRateWindow(realtime ? 160 : 80, performance.now()), presentationWindow: new FixedRateWindow(80, performance.now()) };
     this.connections.set(socket, c); this.byAccount.set(account.id, c); this.metrics.connectionsServed++;
     const interaction = realtime ? this.session.bindInteraction(`${account.id}:${c.serial}`, channelId) : undefined;
     this.log('info', 'connected', { account: account.id, personId, created, remote, serial: c.serial });
