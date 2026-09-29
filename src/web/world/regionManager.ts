@@ -92,6 +92,11 @@ export class RegionManager {
   }
 
   /** Whether built structure occupies the simulation-space point (used by the camera). */
+  /** True when a simulation-space point lies inside a tree trunk, bush or rock (camera collision). */
+  plantAt(x: number, y: number, z: number): boolean {
+    const r = this.regions.get(this.regionOf(x, z)); if (!r) return false;
+    return r.instances.obstructs(x - r.projection.bounds.x0, y, z - r.projection.bounds.z0);
+  }
   structureAt(x: number, y: number, z: number): boolean {
     const r = this.regions.get(this.regionOf(x, z)); if (!r?.cells) return false;
     const b = r.cells.get(Math.floor(x), Math.floor(y), Math.floor(z)); return b !== 0 && blocksCamera(b);

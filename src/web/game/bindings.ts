@@ -83,11 +83,39 @@ export const DEFAULT_SETTINGS: Settings = {
 };
 
 const KEY = 'torn-veil-web.settings.v1';
+/** Accepted range for each numeric setting; anything outside (or not a number) falls back to the default. */
+const RANGES: Partial<Record<keyof Settings, [number, number]>> = {
+  mouseSensitivity: [0.2, 12], padSensitivityX: [0.5, 10], padSensitivityY: [0.5, 10], moveDeadZone: [0, 0.6], lookDeadZone: [0, 0.6], fov: [40, 100], cameraShake: [0, 1], resolutionScale: [0.5, 1],
+  masterVolume: [0, 1], musicVolume: [0, 1], effectsVolume: [0, 1], ambienceVolume: [0, 1], voiceVolume: [0, 1], uiScale: [0.85, 1.4],
+};
+const BOOLS: (keyof Settings)[] = ['invertY', 'padInvertY', 'vibration', 'sprintToggle', 'focusToggle', 'guardToggle', 'reducedMotion', 'highContrast', 'subtitles', 'showHints'];
+const ENUMS: Partial<Record<keyof Settings, readonly string[]>> = { quality: ['auto', 'high', 'balanced', 'low'], textSize: ['normal', 'large'], colorAssist: ['off', 'protanopia', 'deuteranopia', 'tritanopia'] };
+const validCode = (c: unknown): c is string => typeof c === 'string' && /^(Key[A-Z]|Digit\d|Mouse[0-4]|Pad\d{1,2}|Arrow(Up|Down|Left|Right)|Shift(Left|Right)|Control(Left|Right)|Alt(Left|Right)|Space|Tab|Enter|Escape|Backspace|Bracket(Left|Right)|Page(Up|Down)|F\d{1,2})$/.test(c);
+function sanitizeMap(m: unknown): Map3 {
+  const out: Map3 = {}; if (!m || typeof m !== 'object') return out;
+  for (const a of ACTIONS) {
+    const v = (m as Record<string, unknown>)[a.id];
+    if (!Array.isArray(v) || !a.rebindable) continue;
+    const codes = v.filter(validCode).slice(0, 4);
+    if (codes.length || v.length === 0) out[a.id] = codes;   // an empty list is a deliberate unbind; a list of garbage keeps the default
+  }
+  return out;
+}
+/** Settings live in browser storage that anyone (or a bug, or an old version) can leave in any state: only well-formed values survive. */
+export function sanitizeSettings(parsed: unknown): Settings {
+  const base = structuredClone(DEFAULT_SETTINGS) as unknown as Record<string, unknown>;
+  if (!parsed || typeof parsed !== 'object') return base as unknown as Settings;
+  const p = parsed as Record<string, unknown>;
+  for (const [k, [lo, hi]] of Object.entries(RANGES) as [string, [number, number]][]) { const v = p[k]; if (typeof v === 'number' && Number.isFinite(v)) base[k] = Math.min(hi, Math.max(lo, v)); }
+  for (const k of BOOLS) if (typeof p[k] === 'boolean') base[k] = p[k];
+  for (const [k, allowed] of Object.entries(ENUMS) as [string, readonly string[]][]) if (typeof p[k] === 'string' && allowed.includes(p[k] as string)) base[k] = p[k];
+  base.keyboard = sanitizeMap(p.keyboard); base.pad = sanitizeMap(p.pad);
+  return base as unknown as Settings;
+}
 export function loadSettings(): Settings {
   try {
     const raw = localStorage.getItem(KEY); if (!raw) return structuredClone(DEFAULT_SETTINGS);
-    const parsed = JSON.parse(raw) as Partial<Settings>;
-    return { ...structuredClone(DEFAULT_SETTINGS), ...parsed, keyboard: { ...(parsed.keyboard ?? {}) }, pad: { ...(parsed.pad ?? {}) } };
+    return sanitizeSettings(JSON.parse(raw));
   } catch { return structuredClone(DEFAULT_SETTINGS); }
 }
 export function saveSettings(s: Settings): void { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch { /* storage unavailable: settings last for the session */ } }

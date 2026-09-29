@@ -1,4 +1,4 @@
-import { AbstractMesh, Mesh, MultiMaterial, Node, PBRMaterial, Scene, TransformNode, Vector3 } from '@babylonjs/core';
+import { AbstractMesh, Material, Mesh, MultiMaterial, Node, PBRMaterial, Scene, TransformNode, Vector3 } from '@babylonjs/core';
 import type { Atmosphere } from '../world/atmosphere';
 import type { ActorState, BodyVisual } from './actorManager';
 import { CharacterRig, KitAsset } from './characterRig';
@@ -40,22 +40,24 @@ export class CharacterFactory {
       return true;
     });
     const mats = new CharacterMaterials(scene, name, r.materials);
+    const orphans = new Set<Material>();   // the kit's per-instance material clones, replaced below and never used again
     for (const p of rig.parts) {
-      const m = p.mesh as Mesh; m.receiveShadows = true; m.isPickable = false; m.alwaysSelectAsActiveMesh = true; m.material && this.reskin(m, mats);
+      const m = p.mesh as Mesh; m.receiveShadows = true; m.isPickable = false; m.alwaysSelectAsActiveMesh = true; m.material && this.reskin(m, mats, orphans);
       if (!/^Hair_|^Hat_|^Accessory_|^Ornament_|^EyeL|^EyeR/.test(p.name) || /^Hair_/.test(p.name)) atmosphere.addCaster(m);
     }
+    for (const o of orphans) o.dispose(false, false);
     for (const [k, v] of Object.entries(r.morphs)) rig.setMorph(k, v);
     rig.root.scaling.set(r.heightScale * r.buildScale, r.heightScale, r.heightScale * r.buildScale);
     return new CharacterVisual(rig, mats, r, atmosphere, kit === this.kits.get('c') ? 1.22 * r.heightScale : (r.kit === 'm' ? 1.78 : 1.66) * r.heightScale);
   }
 
-  private reskin(mesh: Mesh, mats: CharacterMaterials): void {
+  private reskin(mesh: Mesh, mats: CharacterMaterials, orphans: Set<Material>): void {
     const mat = mesh.material;
     if (mat instanceof MultiMaterial) {
       const multi = new MultiMaterial(`${mesh.name}.multi`, mesh.getScene());
-      for (const sub of mat.subMaterials) multi.subMaterials.push(sub ? mats.bySlot.get(baseSlot(sub.name)) ?? sub : null);
-      mesh.material = multi;
-    } else if (mat) mesh.material = mats.bySlot.get(baseSlot(mat.name)) ?? mat;
+      for (const sub of mat.subMaterials) { const rep = sub ? mats.bySlot.get(baseSlot(sub.name)) : undefined; multi.subMaterials.push(sub ? rep ?? sub : null); if (sub && rep) orphans.add(sub); }
+      mesh.material = multi; orphans.add(mat);
+    } else if (mat) { const rep = mats.bySlot.get(baseSlot(mat.name)); if (rep) { mesh.material = rep; orphans.add(mat); } }
   }
 }
 const baseSlot = (n: string) => { const m = /TV_[A-Za-z]+/.exec(n); return m ? m[0] : n; };

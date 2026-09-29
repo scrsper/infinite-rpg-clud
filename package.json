@@ -46,7 +46,9 @@
     "ashford:wardrobe": "tsx src/headless/foundry/ashfordWardrobe.ts",
     "web:dev": "vite --config vite.web.config.ts",
     "web:build": "tsc --noEmit && vite build --config vite.web.config.ts",
-    "web:gateway": "tsx src/webgate/main.ts"
+    "web:gateway": "tsx src/webgate/main.ts",
+    "web:assets": "node scripts/web/build-assets.mjs",
+    "web:play": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/web/Play-Web.ps1"
   },
   "dependencies": {
     "@babylonjs/core": "9.28.0",

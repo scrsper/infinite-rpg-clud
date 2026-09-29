@@ -147,13 +147,37 @@ interface Group { species: Species; variant: number; matrices: number[]; positio
  * the camera -> not drawn. That keeps a dense forest inside a few hundred thousand triangles with a
  * few hundred draw calls, and the classification is a few thousand distance tests.
  */
+/** How much of the camera's way a plant or rock takes: trunk radius and height above the base, at scale 1. */
+const OBSTACLE: Partial<Record<Species, { r: number; h: number }>> = {
+  oak: { r: 0.38, h: 6 }, birch: { r: 0.22, h: 6 }, pine: { r: 0.3, h: 7 }, bush: { r: 0.85, h: 1.2 }, berry: { r: 0.7, h: 1.1 }, rock: { r: 0.8, h: 1.0 }, stump: { r: 0.35, h: 0.6 },
+};
+/** Bucket size (m) of the obstacle lookup used to keep the camera from sitting inside a trunk, bush or rock. */
+const OBSTACLE_CELL = 4;
 export class InstanceSet {
   readonly hosts: Mesh[] = [];
+  /** Solid-ish things the camera must not enter, in region-local coordinates, bucketed by ground cell. */
+  private readonly obstacles: { x: number; y: number; z: number; r: number; h: number }[] = [];
+  private readonly obstacleGrid = new Map<number, number[]>();
+  /** True if the region-local point is inside a trunk, bush or rock. */
+  obstructs(lx: number, ly: number, lz: number): boolean {
+    if (!this.obstacles.length) return false;
+    const cx = Math.floor(lx / OBSTACLE_CELL), cz = Math.floor(lz / OBSTACLE_CELL);
+    for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) {
+      const list = this.obstacleGrid.get((cx + dx) * 4099 + (cz + dz)); if (!list) continue;
+      for (const i of list) { const o = this.obstacles[i]; if (ly < o.y - 0.1 || ly > o.y + o.h) continue; const ex = lx - o.x, ez = lz - o.z; if (ex * ex + ez * ez < o.r * o.r) return true; }
+    }
+    return false;
+  }
   private readonly groups = new Map<string, Group>();
   count = 0;
   add(_lib: VegetationLibrary, species: Species, variant: number, pos: Vector3, yaw: number, scale: number): void {
     const key = `${species}:${variant % VARIANTS}`;
     let g = this.groups.get(key); if (!g) this.groups.set(key, g = { species, variant: variant % VARIANTS, matrices: [], positions: [], near: null, far: null, nearBuf: new Float32Array(0), farBuf: new Float32Array(0) });
+    const ob = OBSTACLE[species];
+    if (ob) {
+      const idx = this.obstacles.length; this.obstacles.push({ x: pos.x, y: pos.y, z: pos.z, r: ob.r * scale, h: ob.h * scale });
+      const key = Math.floor(pos.x / OBSTACLE_CELL) * 4099 + Math.floor(pos.z / OBSTACLE_CELL); const cell = this.obstacleGrid.get(key); if (cell) cell.push(idx); else this.obstacleGrid.set(key, [idx]);
+    }
     const m = Matrix.Compose(new Vector3(scale, scale, scale), Quaternion.RotationAxis(Vector3.Up(), yaw), pos);
     g.matrices.push(...m.toArray()); g.positions.push(pos.x, pos.z); this.count++;
   }

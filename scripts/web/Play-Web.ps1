@@ -63,7 +63,7 @@ if ((-not (Test-Path -LiteralPath $index)) -or $stale) {
 }
 if (Test-Path -LiteralPath $index) {
     if (Test-Path -LiteralPath (Join-Path $dist 'models\kit_f.glb')) { Ok 'Client bundle and character kits are present.' }
-    else { Bad 'The character kits are not in dist-web\models. Build them: see docs\web\WEB_ASSETS.md.' }
+    else { Bad 'The character kits are not in dist-web\models. Run `npm run web:assets` (needs Blender), then `npm run web:build`; see docs\web\WEB_ASSETS.md.' }
 }
 
 # 3. Profile ------------------------------------------------------------------------------------

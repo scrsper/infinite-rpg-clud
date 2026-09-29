@@ -5,6 +5,7 @@ import { Atmosphere } from './world/atmosphere';
 import { RegionManager } from './world/regionManager';
 import { GrassField } from './world/grass';
 import { WeatherFx } from './world/weatherFx';
+import { ImpactFx } from './world/impactFx';
 import { GameConnection, type CharacterChoice, type ClosedInfo, type GameLink } from './net/connection';
 import { ReplayConnection } from './net/replay';
 import type { BodyState, DialogueProjection, InteractionTarget, SnapshotMessage, Vec3 } from './net/messages';
@@ -61,6 +62,7 @@ export class App {
   creatures = new CreatureFactory();
   grass!: GrassField;
   weatherFx!: WeatherFx;
+  impactFx!: ImpactFx;
   portrait!: PortraitRenderer;
   audio = new GameAudio();
   private stepDist = 0; private lastStepPos: { x: number; z: number } | null = null; private nextBlip = 0;
@@ -89,17 +91,19 @@ export class App {
     this.regions = new RegionManager(this.ctx, this.atmosphere);
     const gq = { high: { radius: 30, capacity: 90000 }, balanced: { radius: 24, capacity: 60000 }, low: { radius: 14, capacity: 16000 } }[this.ctx.quality.tier];
     this.grass = new GrassField(this.ctx.scene, this.regions, gq); this.regions.onOriginChange = () => this.grass.invalidate();
+    this.impactFx = new ImpactFx(this.ctx.scene);
     this.weatherFx = new WeatherFx(this.ctx.scene, this.ctx.quality.tier === 'low' ? 900 : 2600);
     this.camera = new FreeCamera('camera', new Vector3(0, 30, 0), this.ctx.scene);
     attachPipeline(this.ctx, this.camera);
     this.rig = new CameraRig(this.camera, () => this.settings, {
-      blocked: (x, y, z) => this.regions.structureAt(x + this.regions.origin.x, y + this.regions.origin.y, z + this.regions.origin.z),
+      blocked: (x, y, z) => { const sx = x + this.regions.origin.x, sy = y + this.regions.origin.y, sz = z + this.regions.origin.z; return this.regions.structureAt(sx, sy, sz) || (!this.pivotInPlant && this.regions.plantAt(sx, sy, sz)); },
       ground: (x, z) => { const g = this.regions.groundAt(x + this.regions.origin.x, z + this.regions.origin.z); return g === null ? null : g - this.regions.origin.y; },
     });
     this.actors = new ActorManager(this.ctx, this.atmosphere, this.regions);
     this.actors.env = {
       physicalNow: () => this.physTick + (performance.now() - this.physAt) / 1000, speakerBodyId: () => (this.dialogue.isOpen ? this.dialogue.speaker : null), playerBodyId: () => this.ownBodyId,
       playerLook: () => { const t = this.controller.lockedBodyId; return t ? this.actors.headPoint(t, new Vector3()) : null; },
+      onContact: (pos, onPlayer) => this.impactFx.burst(this.regions.toRender(pos), onPlayer),
       onHit: (id, own) => { if (own) { this.rig.impact(0.8); this.input.vibrate(0.6, 0.3, 160); this.audio.combat('hurt'); } else this.audio.combat('hit'); },
     };
     this.actors.factory = (ctx, atmos, a) => (a.kind === 'person' ? this.characters.create(ctx.scene, atmos, a.body?.bodyId ?? 'x', makeRealization(a.body, a.body?.bodyId ?? 'x')) : a.wildlife ? this.creatures.create(ctx.scene, atmos, a.wildlife) : null) ?? placeholderVisual(ctx, atmos, a);
@@ -307,6 +311,7 @@ export class App {
     this.actors.predict(this.ownBodyId, { commandId: c.commandId, moveId, weight, startedAtMs: now, kind: c.kind, ...(c.kind === 'attack' ? t : { prep: 0.06, active: defTotal - 0.06 - 0.12, recovery: 0.12 }), dirLocal, side: c.side });
     void own;
   }
+  private pivotInPlant = false;
   private combatUntil = 0;
   private onLock(id: string | null): void { this.rig.setLock(null); void id; }
 
@@ -431,6 +436,8 @@ export class App {
     if (vis) {
       const eye = own?.embodiment?.activity.posture === 'sit' ? 1.05 : own?.embodiment?.activity.posture === 'lie' ? 0.5 : 1.55;
       this.rig.pivotDrop = (INTERACTION_SPEC.height - INTERACTION_SPEC.duckHeight) * vis.crouch * 0.9;
+      // Decorative plants are not collision in the simulation, so the player can stand inside one; the camera then ignores plants this frame instead of collapsing onto the head.
+      this.pivotInPlant = this.regions.plantAt(vis.pos.x, vis.pos.y + 0.5, vis.pos.z) || this.regions.plantAt(vis.pos.x, vis.pos.y + eye, vis.pos.z);
       this.rig.update(dt, { x: vis.pos.x - this.regions.origin.x, y: vis.pos.y - this.regions.origin.y + eye, z: vis.pos.z - this.regions.origin.z }, vis.yaw);
     }
     // World.

@@ -1,4 +1,4 @@
-import { Color3, Mesh, MultiMaterial, PBRMaterial, Scene, TransformNode } from '@babylonjs/core';
+import { Color3, Material, Mesh, MultiMaterial, PBRMaterial, Scene, TransformNode } from '@babylonjs/core';
 import type { Atmosphere } from '../world/atmosphere';
 import type { ActorState, BodyVisual } from './actorManager';
 import { CharacterRig, KitAsset } from './characterRig';
@@ -39,13 +39,15 @@ export class CreatureFactory {
     make('TV_Antler', m => { m.albedoColor = lin([178, 164, 138]); m.roughness = 0.7; });
     make('TV_Tusk', m => { m.albedoColor = lin([226, 218, 192]); m.roughness = 0.5; });
     make('TV_CreatureEye', m => { m.albedoColor = lin([14, 10, 10]); m.roughness = 0.06; m.clearCoat.isEnabled = true; });
+    const orphans = new Set<Material>();   // the kit's per-instance material clones, replaced below and never used again
     for (const p of rig.parts) {
       const mesh = p.mesh as Mesh; mesh.receiveShadows = true; mesh.alwaysSelectAsActiveMesh = true; atmosphere.addCaster(mesh);
       const mat = mesh.material;
       const slot = (n: string) => { const m = /TV_[A-Za-z]+/.exec(n); return m ? m[0] : n; };
-      if (mat instanceof MultiMaterial) { const multi = new MultiMaterial(`${mesh.name}.multi`, scene); for (const sub of mat.subMaterials) multi.subMaterials.push(sub ? mats.get(slot(sub.name)) ?? sub : null); mesh.material = multi; }
-      else if (mat) mesh.material = mats.get(slot(mat.name)) ?? mat;
+      if (mat instanceof MultiMaterial) { const multi = new MultiMaterial(`${mesh.name}.multi`, scene); for (const sub of mat.subMaterials) { const rep = sub ? mats.get(slot(sub.name)) : undefined; multi.subMaterials.push(sub ? rep ?? sub : null); if (sub && rep) orphans.add(sub); } mesh.material = multi; orphans.add(mat); }
+      else if (mat) { const rep = mats.get(slot(mat.name)); if (rep) { mesh.material = rep; orphans.add(mat); } }
     }
+    for (const o of orphans) o.dispose(false, false);
     const scale = (w.bodyPlan.heightM / art.kitHeight) * (w.scale || 1) * (w.ageClass === 'juvenile' ? 0.62 : 1);
     rig.root.scaling.setAll(scale);
     return new CreatureVisual(rig, atmosphere, [...mats.values()], w.speciesId, w.bodyPlan.heightM * (w.scale || 1) * (w.ageClass === 'juvenile' ? 0.62 : 1), scale);

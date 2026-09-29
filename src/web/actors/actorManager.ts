@@ -42,6 +42,8 @@ export interface ActorEnvironment {
   playerLook(): Vector3 | null;
   /** Called when a body's hit counter advances. */
   onHit?(bodyId: string, own: boolean): void;
+  /** Called once per confirmed contact, with the simulation-space contact point. */
+  onContact?(pos: Vec3, onPlayer: boolean): void;
 }
 
 interface Actor {
@@ -83,6 +85,7 @@ export class ActorManager {
   env: ActorEnvironment | null = null;
   constructor(private readonly ctx: RenderContext, private readonly atmosphere: Atmosphere, private readonly regions: RegionManager) {}
 
+  private readonly seenContacts = new Set<string>();
   get count(): number { return this.actors.size; }
   get(id: string): Actor | undefined { return this.actors.get(id); }
   all(): IterableIterator<Actor> { return this.actors.values(); }
@@ -98,6 +101,12 @@ export class ActorManager {
       a.hitSeq = b.hitSeq;
       if (b.speech && b.speech !== a.body?.speech) a.speechAt = nowMs; else if (!b.speech) a.speechAt = 0;
       if (b.guarding && !a.lastGuarding) a.guardSince = nowMs; a.lastGuarding = !!b.guarding;
+      const contact = b.combatAction?.contact;
+      if (contact && b.combatAction!.outcome === 'hit' && !this.seenContacts.has(contact.eventId)) {
+        this.seenContacts.add(contact.eventId); if (this.seenContacts.size > 256) this.seenContacts.delete(this.seenContacts.values().next().value!);
+        // Only a fresh contact draws feedback; a snapshot taken after a reconnect may carry an old one.
+        if (Math.abs((this.env?.physicalNow() ?? 0) - contact.at) < 1.2) this.env?.onContact?.(contact.position, contact.bodyId === ownBodyId);
+      }
       a.body = b; a.own = b.bodyId === ownBodyId; a.vel = b.velocity; a.stampMs = nowMs; a.lastSeen = nowMs;
       a.targetPos.set(b.pos.x, b.pos.y, b.pos.z); a.targetYaw = b.yaw;
       // The authoritative action for the controlled body supersedes local anticipation once it exists.
