@@ -200,7 +200,9 @@ export class WebGateway {
     try { if (!existsSync(target) || statSync(target).isDirectory()) target = join(root, 'index.html'); } catch { target = join(root, 'index.html'); }
     if (!existsSync(target)) { res.writeHead(404, headers); return void res.end('Client not built. Run npm run web:build.'); }
     const body = readFileSync(target);
-    const long = /\.(glb|ktx2|png|jpg|webp|ogg|wav|woff2?)$/.test(target) || /assets[\\/]/.test(target);
+    // Only Vite's content-hashed files under /assets/ may be cached for an hour. Models and other unhashed files keep their
+    // names when they are rebuilt, and a stale cached kit is worse than re-reading a local file, so they are always revalidated.
+    const long = /[\\/]assets[\\/]/.test(target);
     res.writeHead(200, { ...headers, 'content-type': MIME[extname(target).toLowerCase()] ?? 'application/octet-stream', 'content-length': String(body.length), 'cache-control': long ? 'public, max-age=3600' : 'no-cache' });
     res.end(req.method === 'HEAD' ? undefined : body);
   }

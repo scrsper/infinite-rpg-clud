@@ -20,7 +20,20 @@ export interface CharacterMaterialSpec {
   hairShine?: number; hairEmissive?: number;
 }
 
-const canvasCache = new Map<string, DynamicTexture>();
+/**
+ * Cloth prints are shared between people who wear the same one, so they are cached by their key. Each holder counts as a
+ * reference; once nobody holds a print it stays available for reuse, but only the CACHE_KEEP (40) most recently used idle prints
+ * are kept, so a long walk through many settlements does not grow texture memory without bound.
+ */
+interface CacheEntry { tex: DynamicTexture; refs: number; used: number }
+const canvasCache = new Map<string, CacheEntry>();
+const CACHE_KEEP = 40;
+let cacheClock = 0;
+function releasePrints(keys: string[]): void {
+  for (const k of keys) { const e = canvasCache.get(k); if (e) e.refs = Math.max(0, e.refs - 1); }
+  const idle = [...canvasCache.entries()].filter(([, e]) => e.refs === 0).sort((a, b) => a[1].used - b[1].used);
+  for (let i = 0; i < idle.length - CACHE_KEEP; i++) { idle[i][1].tex.dispose(); canvasCache.delete(idle[i][0]); }
+}
 let clothNormal: RawTexture | null = null;
 
 const rgbs = (c: [number, number, number], a = 1) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a})`;
@@ -97,13 +110,16 @@ function paintCloth(g: CanvasRenderingContext2D, S: number, c: ClothSpec, slot: 
   if (slot === 'hem') { g.fillStyle = rgbs([60, 50, 40], 0.18); for (let i = 0; i < 60; i++) { g.beginPath(); g.arc(rnd() * S, S * (0.4 + rnd() * 0.6), S * (0.01 + rnd() * 0.03), 0, 6.3); g.fill(); } }
 }
 
-function dyn(scene: Scene, key: string, size: number, draw: (g: CanvasRenderingContext2D) => void, wrap = true): DynamicTexture {
-  let t = canvasCache.get(key);
-  if (t && t.getInternalTexture()) return t;
-  t = new DynamicTexture(`ct:${key}`, { width: size, height: size }, scene, true, Texture.TRILINEAR_SAMPLINGMODE);
-  draw(t.getContext() as CanvasRenderingContext2D); t.update(false);
-  if (wrap) { t.wrapU = Texture.WRAP_ADDRESSMODE; t.wrapV = Texture.WRAP_ADDRESSMODE; }
-  t.anisotropicFilteringLevel = 4; canvasCache.set(key, t); return t;
+function dyn(scene: Scene, key: string, size: number, draw: (g: CanvasRenderingContext2D) => void, held: string[], wrap = true): DynamicTexture {
+  let e = canvasCache.get(key);
+  if (!e || !e.tex.getInternalTexture()) {
+    const t = new DynamicTexture(`ct:${key}`, { width: size, height: size }, scene, true, Texture.TRILINEAR_SAMPLINGMODE);
+    draw(t.getContext() as CanvasRenderingContext2D); t.update(false);
+    if (wrap) { t.wrapU = Texture.WRAP_ADDRESSMODE; t.wrapV = Texture.WRAP_ADDRESSMODE; }
+    t.anisotropicFilteringLevel = 4; e = { tex: t, refs: 0, used: 0 }; canvasCache.set(key, e);
+  }
+  e.refs++; e.used = ++cacheClock; held.push(key);
+  return e.tex;
 }
 
 function weaveNormal(scene: Scene): RawTexture {
@@ -118,6 +134,7 @@ const c3 = (c: [number, number, number]) => new Color3(c[0] / 255, c[1] / 255, c
 export class CharacterMaterials {
   readonly bySlot = new Map<string, PBRMaterial>();
   private readonly owned: (PBRMaterial | DynamicTexture)[] = [];
+  private readonly prints: string[] = [];
   constructor(private readonly scene: Scene, readonly id: string, spec: CharacterMaterialSpec) {
     const make = (slot: string, cfg: (m: PBRMaterial) => void) => { const m = new PBRMaterial(`${id}.${slot}`, scene); m.metallic = 0; m.roughness = 0.8; m.environmentIntensity = 0.6; m.maxSimultaneousLights = 8; cfg(m); this.bySlot.set(slot, m); this.owned.push(m); return m; };
 
@@ -133,7 +150,7 @@ export class CharacterMaterials {
     const cl = spec.cloth, weaveN = weaveNormal(scene);
     const key = (slot: string) => `${slot}:${cl.motif}:${cl.primary}|${cl.secondary}|${cl.accent}|${Math.round(cl.wear * 4)}:${cl.seed % 4}`;
     for (const [slot, kind] of [['TV_Cloth', 'cloth'], ['TV_Under', 'under'], ['TV_Accent', 'accent'], ['TV_Hem', 'hem']] as const) {
-      const tex = dyn(scene, key(slot), 256, g => paintCloth(g, 256, cl, kind));
+      const tex = dyn(scene, key(slot), 256, g => paintCloth(g, 256, cl, kind), this.prints);
       make(slot, m => {
         m.albedoTexture = tex; m.albedoColor = Color3.White(); m.bumpTexture = weaveN; m.bumpTexture.level = 0.22; m.roughness = slot === 'TV_Accent' ? 0.45 : 0.88;
         m.sheen.isEnabled = true; m.sheen.intensity = slot === 'TV_Accent' ? 0.5 : 0.25; m.sheen.color = c3(mix(cl.accent, [255, 255, 255], 0.4));
@@ -147,5 +164,5 @@ export class CharacterMaterials {
     make('TV_Lacquer', m => { const l = spec.lacquer ?? [30, 26, 30]; m.albedoColor = c3(l); m.roughness = 0.28; m.clearCoat.isEnabled = true; m.clearCoat.intensity = 0.8; });
     make('TV_Crystal', m => { m.albedoColor = new Color3(0.72, 0.88, 1); m.roughness = 0.08; m.alpha = 0.85; m.emissiveColor = new Color3(0.25, 0.4, 0.6); });
   }
-  dispose(): void { for (const o of this.owned) o.dispose(); this.bySlot.clear(); }
+  dispose(): void { for (const o of this.owned) o.dispose(); this.bySlot.clear(); releasePrints(this.prints); this.prints.length = 0; }
 }

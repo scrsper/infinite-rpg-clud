@@ -165,3 +165,7 @@ body { font-family: var(--sans); color: var(--ivory); -webkit-font-smoothing: an
 .tv-setting { display: grid; grid-template-columns: 14rem 1fr 4rem; gap: .8rem; align-items: center; padding: .3rem 0; }
 .tv-setting label { color: var(--ivory-dim); }
 .tv-setting output { text-align: right; color: var(--gold); font-variant-numeric: tabular-nums; }
+
+/* An offer the player cannot afford: still readable (the server is the authority), but clearly out of reach. */
+.tv-opt.tv-short { opacity: .55; cursor: not-allowed; }
+.tv-opt.tv-short .price { color: var(--crimson); }

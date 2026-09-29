@@ -20,6 +20,7 @@ const [w, h] = flag('size', '1920x1080').split('x').map(Number);
 const scale = Number(flag('seconds', '1'));
 const quality = flag('quality', '');
 const uncapped = argv.includes('--uncapped');   // lift the display's frame-rate cap so frame time reflects real cost instead of the refresh rate
+const newName = flag('name', '');   // begin a new life (arrives at the spawn point, in the village crowd) instead of resuming the last character
 const throttle = Number(flag('throttle', '0'));   // CDP CPU throttling factor, to prove the quality governor reacts to a slow machine
 const outFile = resolve(flag('out', `.debug/web/perf/${renderer}-${w}x${h}.json`));
 mkdirSync(join(outFile, '..'), { recursive: true });
@@ -39,7 +40,7 @@ page.on('console', m => { if (m.type() === 'error') logs.push(`error: ${m.text()
 page.on('pageerror', e => logs.push(`pageerror: ${String(e).slice(0, 300)}`));
 const { url: launch } = await (await fetch(`${st.origin}/api/operator/launch`, { method: 'POST', headers: { 'x-torn-veil-gateway-operator': st.operator } })).json() as { url: string };
 await page.goto(launch);
-await page.goto(`${st.origin}/?autoplay=1${renderer === 'webgl2' ? '&renderer=webgl2' : ''}${quality ? `&quality=${quality}` : ''}`);
+await page.goto(`${st.origin}/?autoplay=1${newName ? `&name=${encodeURIComponent(newName)}` : ''}${renderer === 'webgl2' ? '&renderer=webgl2' : ''}${quality ? `&quality=${quality}` : ''}`);
 await page.waitForFunction(() => (window as any).__tv?.ready === true, undefined, { timeout: 120000 });
 await page.waitForTimeout(3000);
 const info = await page.evaluate(async () => {

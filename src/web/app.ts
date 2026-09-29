@@ -119,7 +119,7 @@ export class App {
       choose: async (id, label) => { this.audio.ui('confirm'); const r = await this.link.intent({ type: 'dialogue_option', optionId: id }); void label; return { result: r.result }; },
       close: () => void this.link.intent({ type: 'dialogue_close' }),
       portrait: this.portrait,
-      keyLabel: n => String(n), toast: (t, tone) => this.hud.toast(t, tone), describe: r => describeResult(r).text,
+      keyLabel: n => String(n), toast: (t, tone) => this.hud.toast(t, tone), describe: r => describeResult(r).text, silver: () => Math.round(this.own()?.wealth ?? 0),
     });
     this.link = this.params.get('replay') ? new ReplayConnection(this.params.get('replay')!) : new GameConnection();
     this.controller = new PlayerController(this.link, this.predictor, this.input, this.rig, () => this.settings, {

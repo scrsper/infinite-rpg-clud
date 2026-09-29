@@ -15,6 +15,8 @@ export interface DialogueDeps {
   portrait: PortraitSource;
   keyLabel(n: number): string;
   toast(text: string, tone?: 'info' | 'good' | 'bad' | 'veil'): void;
+  /** The player's silver right now, to mark what they cannot afford before they try. */
+  silver?(): number;
   describe(result: string): string;
 }
 
@@ -46,6 +48,13 @@ export function splitPrice(label: string): { text: string; price: string | null;
   const m = /^(.*?)\s*\((\d+)s(\s+each)?(?:,\s*([^)]*))?\)\s*$/.exec(label); if (m) return { text: m[1], price: `${m[2]} silver${m[3] ? ' each' : ''}`, note: m[4]?.trim() || null };
   const r = /^(.*)\((\d+)s\)(.*)$/.exec(label); if (r) return { text: (r[1] + r[3]).trim(), price: `${r[2]} silver`, note: null };
   return { text: label, price: null, note: null };
+}
+/** What a row asks the player to pay, in silver, or null when it costs nothing. */
+export function costOf(label: string): number | null {
+  // Only buying, paying and paid lessons cost the player; a sale and a job (carry, deal with) pay them.
+  if (!/^(buy |pay |teach me)/i.test(label.trim())) return null;
+  const { price } = splitPrice(label); const m = price ? /^(\d+) silver/.exec(price) : null;
+  return m ? Number(m[1]) : null;
 }
 export const needsConfirm = (label: string): boolean => /^(buy |sell |pay |teach me|carry |deal with)/i.test(label.trim()) && /\(\d+s\b/.test(label);
 
@@ -115,7 +124,8 @@ export class DialoguePanel {
       const box = h('div', { class: 'list' });
       for (const o of list) {
         n++; const { text, price, note } = splitPrice(o.label);
-        box.append(h('button', { class: 'tv-opt', type: 'button', ...(n === 1 ? { 'data-autofocus': '1' } : {}), on: { click: () => this.pick(o) } },
+        const cost = costOf(o.label), silver = this.deps.silver?.(), short = cost !== null && silver !== undefined && cost > silver;
+        box.append(h('button', { class: short ? 'tv-opt tv-short' : 'tv-opt', type: 'button', ...(short ? { 'aria-disabled': 'true', title: `You have ${silver} silver` } : {}), ...(n === 1 ? { 'data-autofocus': '1' } : {}), on: { click: () => { if (short) { this.deps.toast(`That costs ${cost} silver; you have ${silver}.`, 'bad'); return; } this.pick(o); } } },
           n <= 9 ? h('span', { class: 'tv-key', text: String(n) }) : null, h('span', { text }), note ? h('span', { class: 'tv-muted', style: 'margin-left:auto;padding-right:.6rem', text: note }) : null, price ? h('span', { class: 'price', text: price }) : null));
       }
       this.options.append(h('div', { class: 'tv-opt-group' }, h('h4', { text: g.title }), box));

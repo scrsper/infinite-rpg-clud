@@ -47,7 +47,7 @@ const st0 = () => page.evaluate(() => { const tv = (window as any).__tv, p = tv.
 
 await pad.connect(); await page.waitForTimeout(400);
 let s = await st0();
-await pad.tap(0); await page.waitForTimeout(300);   // a first button makes the client switch to pad prompts
+await pad.axes([0.6, 0, 0, 0]); await page.waitForTimeout(150); await pad.axes([0, 0, 0, 0]); await page.waitForTimeout(300);   // touching a stick switches the prompts to the controller (a button might act: A is Interact)
 s = await st0(); check('the client switches to controller prompts once a pad is used', s.dev === 'xbox', { device: s.dev });
 await shot('01-pad-prompts');
 

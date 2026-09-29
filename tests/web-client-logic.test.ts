@@ -103,3 +103,15 @@ describe('dialogue menu grouping', () => {
     expect(splitPrice('Carry 3 flour from the mill to the bakery (4s)').price).toBe('4 silver');
   });
 });
+
+describe('what an offer costs the player', () => {
+  it('reads the price a row asks, and nothing for a sale or a free row', async () => {
+    const { costOf } = await import('../src/web/ui/dialoguePanel');
+    expect(costOf('Buy bread (4s each, 9 to be had)')).toBe(4);
+    expect(costOf('Buy a meal — stew (3s)')).toBe(3);
+    expect(costOf('Teach me the hush — how you still a frightened beast (6s)')).toBe(6);
+    expect(costOf('Carry 3 flour from the mill to the bakery (4s)')).toBeNull();   // a job: it pays the player
+    expect(costOf('Sell bread (2s)')).toBeNull();
+    expect(costOf('Goodbye')).toBeNull();
+  });
+});
