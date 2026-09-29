@@ -1,3 +1,4 @@
+import { timed } from '../game/probe';
 import {
   ALPHA_PROTOCOL, CLOSE, INTERACTION_SPEC_REVISION, REGION_PROTOCOL,
   type CombatFrameMessage, type CommandReceiptMessage, type HelloMessage, type InteractionCommand, type LocalStateMessage,
@@ -119,7 +120,7 @@ export class GameConnection implements GameLink {
     try { ws = new WebSocket(`${this.secure ? 'wss' : 'ws'}://${this.base}/ws?${this.query()}`); }
     catch (e) { this.handleClose(gen, 1006, String(e)); return; }
     this.socket = ws;
-    ws.onmessage = ev => { if (gen === this.generation) this.onMessage(ev.data); };
+    ws.onmessage = ev => { if (gen === this.generation) timed('message', () => this.onMessage(ev.data), 10); };
     ws.onclose = ev => this.handleClose(gen, ev.code, ev.reason);
     ws.onerror = () => { /* the close event carries the outcome */ };
   }

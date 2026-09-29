@@ -158,6 +158,10 @@ export class InstanceSet {
     g.matrices.push(...m.toArray()); g.positions.push(pos.x, pos.z); this.count++;
   }
   finish(lib: VegetationLibrary, parent: import('@babylonjs/core').TransformNode, name: string, castShadow: (m: Mesh) => void): void {
+    for (const _ of this.finishSteps(lib, parent, name, castShadow)) void _;
+  }
+  /** The same work as `finish`, one host mesh per step, so streaming can spread it over frames. */
+  *finishSteps(lib: VegetationLibrary, parent: import('@babylonjs/core').TransformNode, name: string, castShadow: (m: Mesh) => void): Generator<void, void, void> {
     for (const [key, g] of this.groups) {
       const n = g.positions.length / 2;
       for (const lod of [0, 1]) {
@@ -167,6 +171,7 @@ export class InstanceSet {
         host.thinInstanceSetBuffer('matrix', buf, 16, false); host.thinInstanceCount = 0;
         if (lod === 0) { g.near = host; g.nearBuf = buf; castShadow(host); } else { g.far = host; g.farBuf = buf; }
         this.hosts.push(host);
+        yield;
       }
     }
   }

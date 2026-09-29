@@ -45,7 +45,9 @@ export class InputManager {
     window.addEventListener('keyup', e => { if (typing()) return; if (['AltLeft', 'AltRight'].includes(e.code)) e.preventDefault(); this.up(e.code); });
     canvas.addEventListener('mousedown', e => {
       if (this.capture) { e.preventDefault(); const c = this.capture; this.capture = null; c(`Mouse${e.button}`); return; }
-      this.noteDevice('keyboard'); e.preventDefault(); this.down(`Mouse${e.button}`);
+      this.noteDevice('keyboard'); e.preventDefault();
+      // The click that captures the pointer is not an attack: only a locked pointer sends mouse actions.
+      if (this.pointerLocked) this.down(`Mouse${e.button}`);
     });
     window.addEventListener('mouseup', e => { if (e.button >= 3) e.preventDefault(); this.up(`Mouse${e.button}`); });
     window.addEventListener('auxclick', e => { if (e.button >= 1) e.preventDefault(); });

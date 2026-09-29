@@ -28,6 +28,7 @@ import { abilitiesTab, itemsTab, journalTab, type PanelServices } from './ui/men
 import { settingsTabs } from './ui/settingsPanel';
 import { banner, characterScreen, deathScreen, loadingScreen, noticeScreen, titleScreen } from './ui/screens';
 import { Showroom } from './showroom/showroom';
+import { noteSlow, slowEvents, timed } from './game/probe';
 import './ui/theme.css';
 
 /**
@@ -203,7 +204,7 @@ export class App {
     l.on('hello', m => { this.ownBodyId = m.interaction?.bodyId ?? ''; this.remember(m.character.name); this.loading?.set('Loading the land…'); });
     l.on('scene', s => { this.regions.regionSize = s.geography?.regionSize ?? 256; this.regions.setOrigin(s.origin); });
     l.on('regions_state', s => { this.regions.setOrigin(s.origin); for (const id of s.unload) this.regions.unload(id); });
-    l.on('presentation', p => { this.regions.applyPresentation(p.payload); requestAnimationFrame(() => requestAnimationFrame(() => p.applied())); });
+    l.on('presentation', p => this.regions.applyPresentation(p.payload, () => requestAnimationFrame(() => requestAnimationFrame(() => p.applied()))));
     l.on('local_state', s => { this.predictor.applyLocalState(s); if (s.bodyId) this.ownBodyId = s.bodyId; this.physTick = s.tick; this.physAt = performance.now(); });
     l.on('receipt', r => { this.predictor.applyReceipt(r); if (r.status === 'rejected' || r.status === 'cancelled') this.actors.cancelPredicted(this.ownBodyId, r.commandId); });
     l.on('combat_frame', f => { void f; });
@@ -368,17 +369,18 @@ export class App {
 
   // ── frame ────────────────────────────────────────────────────────────────────────────────────
   private frame(): void {
-    const now = performance.now(), dtRaw = (now - this.lastFrame) / 1000; this.lastFrame = now; this.frameMs.push(dtRaw * 1000); if (this.frameMs.length > 4000) this.frameMs.shift();
+    const now = performance.now(), dtRaw = (now - this.lastFrame) / 1000; this.lastFrame = now; this.frameMs.push(dtRaw * 1000); noteSlow('frame gap', dtRaw * 1000, 45); if (this.frameMs.length > 4000) this.frameMs.shift();
     const dt = Math.min(0.1, dtRaw);
     this.input.beginFrame(dt);
+    this.regions.pump(this.phase === 'playing' ? 6 : 40); // stream regions in slices; a long load is fine behind the loading screen, in play it must not hitch
     const wasOpen = this.modal.isOpen;
     if (this.nav.open) this.nav.update();
     if (this.phase === 'connecting') this.tryEnter();
     if (this.showroom) { this.showroom.update(dt); this.ctx.scene.render(); return; }
     if (this.phase === 'playing') { this.gameFrame(dt, now, wasOpen); this.portrait.update(dt); }
     else this.backdropFrame(dt);
-    this.ctx.scene.render();
-    if (!this.ready && this.phase === 'playing' && this.regions.regions.size >= 5 && ++this.readyFrames > 30) this.ready = true;
+    timed('render', () => this.ctx.scene.render(), 12);
+    if (!this.ready && this.phase === 'playing' && this.regions.regions.size >= 5 && this.regions.pendingBuilds === 0 && ++this.readyFrames > 30) this.ready = true;
     if (this.params.get('replay') && !this.ready && this.regions.regions.size >= 5 && this.snapshot && ++this.readyFrames > 30) this.ready = true;
   }
   private backdropFrame(dt: number): void {
@@ -477,6 +479,7 @@ export class App {
   }
 
   // ── evidence helpers ─────────────────────────────────────────────────────────────────────────
+  get slowEvents() { return slowEvents(); }
   perfReset(): void { this.frameMs.length = 0; }
   perfReport(): { frames: number; medianMs: number; p95Ms: number; p99Ms: number; maxMs: number; fpsMedian: number } {
     const a = [...this.frameMs].sort((x, y) => x - y), q = (p: number) => (a.length ? a[Math.min(a.length - 1, Math.floor(p * a.length))] : 0);

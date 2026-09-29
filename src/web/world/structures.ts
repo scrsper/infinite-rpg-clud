@@ -64,7 +64,13 @@ export function decodeStructure(runs: number[], x0: number, z0: number): Cells {
 
 interface RoofFit { roofY: number; alongX: boolean; material: MatName; wall: MatName }
 
+/** Whole-region build in one go (tests, showroom). The streaming path drives `buildStructuresSteps` inside a frame budget. */
 export function buildStructures(scene: Scene, mats: MaterialLibrary, r: RegionProjection, litPlaces: ReadonlySet<string> = new Set()): StructureBuild {
+  const steps = buildStructuresSteps(scene, mats, r, litPlaces);
+  for (;;) { const s = steps.next(); if (s.done) return s.value; }
+}
+/** The same build, yielding every few milliseconds so a large settlement never holds a frame. */
+export function* buildStructuresSteps(scene: Scene, mats: MaterialLibrary, r: RegionProjection, litPlaces: ReadonlySet<string> = new Set()): Generator<void, StructureBuild, void> {
   const out: StructureBuild = { meshes: [], lights: [], panes: new Map(), stats: { cells: 0, faces: 0, roofsAnalytic: 0, roofsVoxel: 0, windows: 0 } };
   if (!r.structures?.runs.length) return out;
   const x0 = r.bounds.x0, z0 = r.bounds.z0, cells = decodeStructure(r.structures.runs, x0, z0);
@@ -94,7 +100,9 @@ export function buildStructures(scene: Scene, mats: MaterialLibrary, r: RegionPr
   };
 
   // ── walls and other cells ──────────────────────────────────────────────────────────────────────
+  let sliceAt = performance.now(), visited = 0;
   for (const [x, y, z, b] of cells.entries()) {
+    if ((++visited & 127) === 0 && performance.now() - sliceAt > 3) { yield; sliceAt = performance.now(); }
     if (insideFittedRoof(x, y, z, b)) continue;
     const place = placeOf(x, z), variation = 0.95 + hash2(x, z, 11) * 0.05 + hash2(x + y * 7, z, 3) * 0.04;
     const buildingTint = place ? 0.92 + hash2(place.visualSeed | 0, 5, 1) * 0.16 : 1;
@@ -171,10 +179,12 @@ export function buildStructures(scene: Scene, mats: MaterialLibrary, r: RegionPr
   for (const [mat, bt] of batches) {
     const mesh = bt.build(`structure-${r.id}-${mat}`, scene, mats.get(mat), { receiveShadow: true });
     if (mesh) out.meshes.push(mesh);
+    yield;
   }
   for (const [id, gb] of glassBatches) {
     const mesh = gb.build(`panes-${r.id}-${id}`, scene, mats.get('glass'), { receiveShadow: false });
     if (mesh) { out.meshes.push(mesh); out.panes.set(id, mesh); }
+    yield;
   }
   return out;
 }

@@ -6,8 +6,9 @@ import type { Atmosphere } from './atmosphere';
 import { PropLibrary, RegionDynamics } from './dynamicWorld';
 import { LightPool } from './lights';
 import { buildStaticProps, type DoorHandle } from './props';
-import { blocksCamera, buildStructures, decodeStructure, type Cells, type WorldLight } from './structures';
+import { blocksCamera, buildStructuresSteps, decodeStructure, type Cells, type WorldLight } from './structures';
 import { buildTerrain, type TerrainBuild } from './terrain';
+import { noteSlow } from '../game/probe';
 import { InstanceSet, VegetationLibrary, scatterVegetation } from './vegetation';
 
 /**
@@ -21,7 +22,7 @@ import { InstanceSet, VegetationLibrary, scatterVegetation } from './vegetation'
  */
 interface RegionEntry {
   id: string; projection: RegionProjection; root: TransformNode; terrain: TerrainBuild; meshes: Mesh[]; instances: InstanceSet; lightIds: string[];
-  doors: DoorHandle[]; dynamics: RegionDynamics; cells: Cells | null; pathCells: Set<number>; boxes: { x0: number; z0: number; x1: number; z1: number }[]; stats: { cells: number; roofs: number; windows: number; trees: number; props: number; buildMs: number };
+  doors: DoorHandle[]; dynamics: RegionDynamics; cells: Cells | null; pathCells: Set<number>; boxes: { x0: number; z0: number; x1: number; z1: number }[]; stats: { cells: number; roofs: number; windows: number; trees: number; props: number; buildMs: number; stageMs?: Record<string, number> };
 }
 
 export class RegionManager {
@@ -96,28 +97,62 @@ export class RegionManager {
     const b = r.cells.get(Math.floor(x), Math.floor(y), Math.floor(z)); return b !== 0 && blocksCamera(b);
   }
 
-  applyPresentation(payload: PresentationPayload): void {
-    for (const proj of payload.regions) this.build(proj);
+  /**
+   * Queue a presentation chunk. Building a region is hundreds of milliseconds of geometry work, so it is
+   * cut into stages that `pump` runs inside a per-frame time budget: the player keeps a steady frame
+   * rate while the land streams in. `done` runs once every region in the chunk is built and registered.
+   */
+  applyPresentation(payload: PresentationPayload, done?: () => void): void {
+    for (const proj of payload.regions) this.dropped.delete(proj.id);
+    this.jobs.push(this.presentationJob(payload, done));
+  }
+  /** Regions still being built or queued (the loading screen and the ack wait for these). */
+  get pendingBuilds(): number { return this.jobs.length; }
+  /** Advance queued builds until `budgetMs` of this frame is spent (always at least one stage). */
+  pump(budgetMs: number): void {
+    const t0 = performance.now();
+    while (this.jobs.length) {
+      const s0 = performance.now(), r = this.jobs[0].next();
+      noteSlow(this.stepLabel, performance.now() - s0, 6);
+      if (r.done) this.jobs.shift();
+      if (performance.now() - t0 >= budgetMs) break;
+    }
+  }
+  private stepLabel = 'region';
+  private readonly jobs: Generator<void, void, void>[] = [];
+  private readonly dropped = new Set<string>();
+  private *presentationJob(payload: PresentationPayload, done?: () => void): Generator<void, void, void> {
+    for (const proj of payload.regions) {
+      yield* this.buildSteps(proj);
+      if (this.dropped.delete(proj.id)) this.disposeRegion(proj.id); // the server unloaded it while it was still being built
+    }
     if (payload.dynamic) this.applyDynamics(payload.dynamic);
+    done?.();
   }
 
-  private build(proj: RegionProjection): void {
+  private *buildSteps(proj: RegionProjection): Generator<void, void, void> {
     const t0 = performance.now();
-    this.unload(proj.id);
+    const stageMs: Record<string, number> = {}; let ts = t0;
+    const stage = (name: string) => { const n = performance.now(); stageMs[name] = +(n - ts).toFixed(1); ts = n; this.stepLabel = `region ${proj.id} after ${name}`; };
     const scene = this.ctx.scene, root = new TransformNode(`region-${proj.id}`, scene);
     const terrain = buildTerrain(scene, this.mats, proj); terrain.mesh.parent = root; if (terrain.water) terrain.water.parent = root;
     const meshes: Mesh[] = [terrain.mesh]; if (terrain.water) meshes.push(terrain.water);
     const lightList: WorldLight[] = [];
+    stage('terrain'); yield;
 
-    const st = buildStructures(scene, this.mats, proj);
+    const stSteps = buildStructuresSteps(scene, this.mats, proj); let stStep = stSteps.next();
+    while (!stStep.done) { yield; stStep = stSteps.next(); }
+    const st = stStep.value;
     for (const m of st.meshes) { m.parent = root; meshes.push(m); if (m.name.startsWith('walls') || m.name.startsWith('roof') || m.name.includes('struct')) this.atmosphere.addCaster(m); }
     for (const m of st.panes.values()) { m.parent = root; meshes.push(m); }
     lightList.push(...st.lights);
+    stage('structures'); yield;
 
     const cells = proj.structures?.runs.length ? decodeStructure(proj.structures.runs, proj.bounds.x0, proj.bounds.z0) : null;
     const sp = buildStaticProps(scene, this.mats, proj, cells, root);
     for (const m of sp.meshes) { meshes.push(m); this.atmosphere.addCaster(m); }
     lightList.push(...sp.lights);
+    stage('props'); yield;
 
     // Trees and rocks: canonical resources come from dynamics, decoration fills between them.
     const instances = new InstanceSet();
@@ -126,7 +161,11 @@ export class RegionManager {
       region: proj, terrain, density, canonical: this.lastDynamics?.resources.filter(r => this.regionOf(r.pos.x, r.pos.z) === proj.id) ?? [],
       exclusions: [...proj.dressingExclusions.map(e => e.bounds), ...proj.places.map(p => p.bounds), ...proj.settlements.map(s => s.bounds)],
     }, proj.decoration.seed);
-    instances.finish(this.vegetation, root, `veg-${proj.id}`, m => this.atmosphere.addCaster(m));
+    stage('scatter'); yield;
+    for (const _ of instances.finishSteps(this.vegetation, root, `veg-${proj.id}`, m => this.atmosphere.addCaster(m))) yield;
+    stage('instances');
+
+    this.disposeRegion(proj.id); // replace any earlier build of this region in one step, after the new one is ready
 
     const lightIds: string[] = [];
     lightList.forEach((l, i) => {
@@ -137,7 +176,7 @@ export class RegionManager {
     const dynamics = new RegionDynamics(scene, this.mats, this.props, this.vegetation, proj, terrain, this.lights, sp.doors, root, m => this.atmosphere.addCaster(m));
     const entry: RegionEntry = {
       id: proj.id, projection: proj, root, terrain, meshes, instances, lightIds, doors: sp.doors, dynamics, cells, pathCells: new Set(proj.paths.map(([x, , z]) => x * 100003 + z)), boxes: proj.places.filter(p => p.indoor).map(p => p.bounds),
-      stats: { cells: st.stats.cells, roofs: st.stats.roofsAnalytic, windows: st.stats.windows, trees, props: proj.furnishings.length, buildMs: performance.now() - t0 },
+      stats: { cells: st.stats.cells, roofs: st.stats.roofsAnalytic, windows: st.stats.windows, trees, props: proj.furnishings.length, buildMs: performance.now() - t0, stageMs },
     };
     this.regions.set(proj.id, entry); this.place(entry);
     for (const m of meshes) { m.freezeWorldMatrix?.(); m.unfreezeWorldMatrix(); }
@@ -159,7 +198,12 @@ export class RegionManager {
     for (const r of this.regions.values()) r.dynamics.apply(this.subset(d, r.id));
   }
 
+  /** The server no longer wants this region: drop it now, or as soon as an in-flight build of it finishes. */
   unload(id: string): void {
+    if (this.jobs.length) this.dropped.add(id);
+    this.disposeRegion(id);
+  }
+  private disposeRegion(id: string): void {
     const r = this.regions.get(id); if (!r) return;
     for (const lid of r.lightIds) this.lights.remove(lid);
     r.dynamics.dispose(); r.instances.dispose();

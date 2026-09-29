@@ -34,7 +34,7 @@ export class Atmosphere {
   sunDirection = new Vector3(0, -1, 0);
   hour = 12;
   /** Art-direction multipliers (tuned live with ?look=key:1.2,fill:1.3,exposure:1.4). */
-  readonly look = { key: 1, fill: 1, exposure: 1, fog: 1 };
+  readonly look = { key: 1.05, fill: 1.3, exposure: 1.18, fog: 1 };
   fogColor = new Color3(0.6, 0.66, 0.74);
 
   constructor(private readonly ctx: RenderContext) {
