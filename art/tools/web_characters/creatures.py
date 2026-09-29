@@ -122,31 +122,34 @@ def _tube(bm, pts, radii, segments=14, kind='limb'):
     return tube_mesh(bm, rings, segments=segments, kind=kind)
 
 
-def build_body(sp, voxel=None, target_tris=9000):
+def build_body(sp, voxel=None, target_tris=22000):
     j = joints(sp)
     S = sp
     k = S['sh'] / 0.74
     bm = bmesh.new()
     w, d = S['width'] * 0.5, S['depth'] * 0.5
     # Barrel: rump, hips, mid, ribs, chest, with the spine's gentle arch.
-    spine = [j['rump'] + Vector((0, 0.06, -0.02)), j['rump'], j['rump'].lerp(j['mid'], 0.5), j['mid'], j['mid'].lerp(j['withers'], 0.5), j['withers'], j['chest'] + Vector((0, 0.0, 0.04))]
-    rad = [(w * 0.62, d * 0.62), (w * 0.95, d * 0.80), (w * 1.02, d * 0.92), (w * 1.05, d), (w * 1.0, d * 0.98), (w * 0.9, d * 0.9), (w * 0.7, d * 0.7)]
+    spine = [j['rump'] + Vector((0, 0.13, -0.05)), j['rump'] + Vector((0, 0.06, -0.02)), j['rump'], j['rump'].lerp(j['mid'], 0.5), j['mid'], j['mid'].lerp(j['withers'], 0.5), j['withers'], j['chest'] + Vector((0, 0.0, 0.04))]
+    # Deep at the chest and withers, tucked at the flank, rounded at the haunch: a body, not a sausage.
+    rad = [(w * 0.30, d * 0.34), (w * 0.60, d * 0.66), (w * 0.94, d * 0.88), (w * 0.86, d * 0.74), (w * 0.96, d * 0.86), (w * 1.02, d * 1.04), (w * 0.98, d * 1.12), (w * 0.86, d * 1.0)]
     # Barrel cross-sections are taller than wide; the spine curve sits on the top line, so centre each ring lower.
     ctr = [p - Vector((0, 0, r[1] * 0.6)) for p, r in zip(spine, rad)]
     _tube(bm, ctr, [(r[0], r[1]) for r in rad], segments=18)
     # Neck into the shoulder.
     nr = S['neck_r']
-    _tube(bm, [j['neck_b'] - Vector((0, -0.04, 0.05)), j['neck_b'], j['neck_m'], j['neck_t']], [(nr * 1.35, nr * 1.4), (nr * 1.15, nr * 1.2), (nr * 0.95, nr), (nr * 0.75, nr * 0.8)], segments=14)
+    # The neck's first ring is buried inside the chest so its cap never shows as a collar.
+    _tube(bm, [j['neck_b'] + Vector((0, 0.14, -0.05)), j['neck_b'], j['neck_m'], j['neck_t']], [(nr * 1.15, nr * 1.2), (nr * 1.1, nr * 1.15), (nr * 0.95, nr), (nr * 0.75, nr * 0.8)], segments=14)
     # Head: skull and a tapering muzzle.
     hr = S['head_r']
     _tube(bm, [j['neck_t'] + Vector((0, 0.03, 0.0)), j['head_c'], j['head_c'].lerp(j['muzzle'], 0.6), j['muzzle']], [(hr * 1.0, hr * 1.05), (hr * 1.05, hr * 1.1), (hr * 0.72, hr * 0.68), (hr * 0.5, hr * 0.42)], segments=14)
     for s in ('l', 'r'):
         f, b = 'f' + s, 'b' + s
         lr = S['leg_r']
-        _tube(bm, [j[f + '_scap'] + Vector((0, 0.02, 0.05)), j[f + '_scap'], j[f + '_elbow'], j[f + '_knee'], j[f + '_fet'], j[f + '_toe'] + Vector((0, 0, 0.01))],
-              [(lr * 1.9, lr * 1.9), (lr * 1.8, lr * 1.8), (lr * 1.25, lr * 1.25), (lr * 0.8, lr * 0.9), (lr * 0.7, lr * 0.75), (lr * 0.85, lr * 0.85)], segments=10)
+        sgn = 1 if s == 'l' else -1   # first ring inside the ribcage, so no shoulder-blade disc shows on the surface
+        _tube(bm, [j[f + '_scap'] + Vector((-sgn * w * 0.7, 0.03, 0.08)), j[f + '_scap'], j[f + '_elbow'], j[f + '_knee'], j[f + '_fet'], j[f + '_toe'] + Vector((0, 0, 0.01))],
+              [(lr * 1.5, lr * 1.5), (lr * 1.7, lr * 1.7), (lr * 1.25, lr * 1.25), (lr * 0.8, lr * 0.9), (lr * 0.7, lr * 0.75), (lr * 0.85, lr * 0.85)], segments=10)
         hs = S.get('haunch', 1.0)
-        _tube(bm, [j[b + '_hip'] + Vector((0, -0.02, 0.08)), j[b + '_hip'], j[b + '_stifle'], j[b + '_hock'], j[b + '_fet'], j[b + '_toe'] + Vector((0, 0, 0.01))],
+        _tube(bm, [j[b + '_hip'] + Vector((-sgn * w * 0.6, 0.0, 0.10)), j[b + '_hip'], j[b + '_stifle'], j[b + '_hock'], j[b + '_fet'], j[b + '_toe'] + Vector((0, 0, 0.01))],
               [(lr * 2.3 * hs, lr * 2.4 * hs), (lr * 2.1 * hs, lr * 2.2 * hs), (lr * 1.35, lr * 1.45), (lr * 0.85, lr * 0.95), (lr * 0.7, lr * 0.75), (lr * 0.85, lr * 0.85)], segments=10)
     _tube(bm, [j['tail_b'], j['tail_b'].lerp(j['tail_t'], 0.5), j['tail_t']], [(0.02 * k, 0.02 * k), (0.022 * k, 0.022 * k), (0.008 * k, 0.008 * k)], segments=8)
     mesh = bpy.data.meshes.new('CreatureBase')
@@ -159,8 +162,8 @@ def build_body(sp, voxel=None, target_tris=9000):
     obj.data.remesh_voxel_adaptivity = 0.0
     bpy.ops.object.voxel_remesh()
     sm = obj.modifiers.new('Smooth', 'LAPLACIANSMOOTH')
-    sm.iterations = 10
-    sm.lambda_factor = 0.4
+    sm.iterations = 45
+    sm.lambda_factor = 0.5
     sm.use_volume_preserve = True
     bpy.ops.object.modifier_apply(modifier='Smooth')
     tris = sum(len(p.vertices) - 2 for p in obj.data.polygons)
