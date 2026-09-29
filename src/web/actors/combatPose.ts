@@ -125,8 +125,8 @@ export function combatPose(L: Pose, c: CombatContext, S: number): { weight: numb
     case 'guard': {
       const e = sstep(0, 0.12, c.age);
       stance(0.85 * e);
-      L.set('upperarm_l', chain(fwd(1.1 * e), out(-0.15, 1)), 1); L.set('lowerarm_l', Q.x(-(2.15 * e)), 1); L.set('hand_l', Q.x(-0.2), 1);
-      L.set('upperarm_r', chain(fwd(1.0 * e), out(-0.1, -1)), 1); L.set('lowerarm_r', Q.x(-(2.25 * e)), 1);
+      L.set('upperarm_l', chain(fwd(1.05 * e), out(0.55 * e, 1)), 1); L.set('lowerarm_l', Q.x(-(2.15 * e)), 1); L.set('hand_l', Q.x(-0.2), 1);
+      L.set('upperarm_r', chain(fwd(0.95 * e), out(0.5 * e, -1)), 1); L.set('lowerarm_r', Q.x(-(2.25 * e)), 1);
       L.set('spine_02', chain(turn(0.2 * e), lean(0.12 * e)), 1); L.set('head', lean(-0.12 * e), 1);
       weight = 1;
       break;

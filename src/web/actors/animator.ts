@@ -143,8 +143,8 @@ export class Animator {
     B.set('spine_03', chain(R.lean(breath * idleW + leanRun * 0.25 + crouch * 0.1), R.turn(sinP * 0.06 * walkAmp)));
     B.pelvis.x += shift * 0.008 * S; B.set('pelvis', chain(R.turn(-sinP * 0.16 * walkAmp * (0.6 + sr)), R.tilt(sinP * 0.05 * walkAmp + shift * 0.02), R.lean(0.05 * this.runW + crouch * 0.28 + sr * 0.05)));
     // arms
-    const armA = (0.14 + 0.22 * sp + 0.60 * sr) * walkAmp, armOut = 0.10 + 0.05 * (1 - this.moveW);
-    const elbowBase = 0.20 + 0.25 * sp + 1.0 * sr;
+    const armA = (0.14 + 0.22 * sp + 0.42 * sr) * walkAmp, armOut = 0.10 + 0.05 * (1 - this.moveW);
+    const elbowBase = 0.20 + 0.22 * sp + 0.55 * sr;
     B.set('clavicle_l', R.out(0.03 * (1 - this.runW), 1)); B.set('clavicle_r', R.out(0.03 * (1 - this.runW), -1));
     B.set('upperarm_l', chain(R.fwd(-sinP * armA + 0.04), R.out(-armOut + 0.0, 1)));
     B.set('upperarm_r', chain(R.fwd(sinP * armA + 0.04), R.out(-armOut, -1)));

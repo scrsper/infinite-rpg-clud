@@ -4,6 +4,7 @@ import { createRenderer, attachPipeline, QUALITY, type QualityTier, type RenderC
 import { Atmosphere } from './world/atmosphere';
 import { RegionManager } from './world/regionManager';
 import { GrassField } from './world/grass';
+import { WeatherFx } from './world/weatherFx';
 import { GameConnection, type CharacterChoice, type ClosedInfo, type GameLink } from './net/connection';
 import { ReplayConnection } from './net/replay';
 import type { BodyState, DialogueProjection, InteractionTarget, SnapshotMessage, Vec3 } from './net/messages';
@@ -58,6 +59,7 @@ export class App {
   characters = new CharacterFactory();
   creatures = new CreatureFactory();
   grass!: GrassField;
+  weatherFx!: WeatherFx;
   portrait!: PortraitRenderer;
   audio = new GameAudio();
   private stepDist = 0; private lastStepPos: { x: number; z: number } | null = null; private nextBlip = 0;
@@ -86,6 +88,7 @@ export class App {
     this.regions = new RegionManager(this.ctx, this.atmosphere);
     const gq = { high: { radius: 30, capacity: 90000 }, balanced: { radius: 24, capacity: 60000 }, low: { radius: 14, capacity: 16000 } }[this.ctx.quality.tier];
     this.grass = new GrassField(this.ctx.scene, this.regions, gq); this.regions.onOriginChange = () => this.grass.invalidate();
+    this.weatherFx = new WeatherFx(this.ctx.scene, this.ctx.quality.tier === 'low' ? 900 : 2600);
     this.camera = new FreeCamera('camera', new Vector3(0, 30, 0), this.ctx.scene);
     attachPipeline(this.ctx, this.camera);
     this.rig = new CameraRig(this.camera, () => this.settings, {
@@ -434,6 +437,7 @@ export class App {
     this.grass.update(this.camera.position.x + this.regions.origin.x, this.camera.position.z + this.regions.origin.z);
     this.regions.update(dt, this.camera.position, this.rig.forward, 1 - this.atmosphere.daylight);
     if (this.controller.lockedBodyId === null && now > this.combatUntil && this.rig.mode === 'combat') this.rig.setMode('explore');
+    this.weatherFx.update(this.camera.position, this.regions.weather.kind, this.regions.weather.intensity);
     this.audioFrame(dt, now);
     // HUD (10 Hz).
     if (now - this.lastHudAt > 100 && s) { this.lastHudAt = now; this.updateHud(s, own); }
