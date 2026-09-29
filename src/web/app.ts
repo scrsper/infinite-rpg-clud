@@ -12,7 +12,8 @@ import { InputManager } from './game/input';
 import { PlayerController, candidatesFrom, type CombatIntent } from './game/controller';
 import { DEFAULT_SETTINGS, codeLabel, loadSettings, saveSettings, type Settings } from './game/bindings';
 import { describeResult, TALK_REASON, titleCase } from './game/text';
-import { ActorManager } from './actors/actorManager';
+import { ActorManager, placeholderVisual, predictedTiming } from './actors/actorManager';
+import { CharacterFactory, makeRealization } from './actors/characterFactory';
 import { add, h } from './ui/dom';
 import { UiNav } from './ui/nav';
 import { ModalHost } from './ui/modal';
@@ -21,13 +22,14 @@ import { DialoguePanel } from './ui/dialoguePanel';
 import { abilitiesTab, itemsTab, journalTab, type PanelServices } from './ui/menuPanels';
 import { settingsTabs } from './ui/settingsPanel';
 import { banner, characterScreen, deathScreen, loadingScreen, noticeScreen, titleScreen } from './ui/screens';
+import { Showroom } from './showroom/showroom';
 import './ui/theme.css';
 
 /**
  * The browser client. It renders what the server projects and sends intentions; it never steps
  * the World. Phases: title -> connecting -> playing (menus and conversation are layers over playing).
  */
-type Phase = 'title' | 'connecting' | 'playing' | 'closed';
+type Phase = 'title' | 'connecting' | 'playing' | 'closed' | 'showroom';
 const REMEMBER_KEY = 'torn-veil-web.character.v1';
 
 export class App {
@@ -48,9 +50,13 @@ export class App {
   private readonly frameMs: number[] = []; private lastFrame = performance.now();
   private readyFrames = 0;
   ready = false;
+  showroom: Showroom | null = null;
+  characters = new CharacterFactory();
   private choice: CharacterChoice = { kind: 'auto' };
   private closedFinal = false;
   private hintsShown = new Set<string>();
+  private physTick = 0; private physAt = 0;
+  private lastMove = { id: '', atMs: -1e9 };
   private moveTimer = 0;
   private lastSnapAt = 0;
   hintState = { moved: false, looked: false, interacted: false, attacked: false };
@@ -75,6 +81,12 @@ export class App {
       ground: (x, z) => { const g = this.regions.groundAt(x + this.regions.origin.x, z + this.regions.origin.z); return g === null ? null : g - this.regions.origin.y; },
     });
     this.actors = new ActorManager(this.ctx, this.atmosphere, this.regions);
+    this.actors.env = {
+      physicalNow: () => this.physTick + (performance.now() - this.physAt) / 1000, speakerBodyId: () => (this.dialogue.isOpen ? this.dialogue.speaker : null), playerBodyId: () => this.ownBodyId,
+      playerLook: () => { const t = this.controller.lockedBodyId; return t ? this.actors.headPoint(t, new Vector3()) : null; },
+      onHit: (id, own) => { if (own) { this.rig.impact(0.8); this.input.vibrate(0.6, 0.3, 160); } },
+    };
+    this.actors.factory = (ctx, atmos, a) => (a.kind === 'person' ? this.characters.create(ctx.scene, atmos, a.body?.bodyId ?? 'x', makeRealization(a.body, a.body?.bodyId ?? 'x')) : null) ?? placeholderVisual(ctx, atmos, a);
     this.input = new InputManager(canvas, () => this.settings);
     this.nav = new UiNav(this.input);
     this.overlay = h('div', { class: 'tv-layer', style: 'pointer-events:none' }); this.modalLayer = h('div', { class: 'tv-layer', style: 'pointer-events:none' });
@@ -97,6 +109,10 @@ export class App {
     canvas.addEventListener('click', () => { if (this.phase === 'playing' && !this.modal.isOpen && this.input.device === 'keyboard') this.input.requestLock(); });
     (window as unknown as { __tv: unknown }).__tv = this;
     this.ctx.engine.runRenderLoop(() => this.frame());
+    const boot = loadingScreen(this.overlay, 'Preparing the people…'); this.screen = boot as { remove(): void };
+    await this.characters.load(this.ctx.scene, (d, t) => boot.set(`Preparing the people… ${d}/${t}`));
+    this.clearScreen();
+    if (this.params.has('showroom')) { this.phase = 'showroom'; this.showroom = new Showroom(this); await this.showroom.init(this.params.get('showroom') || 'kit_f'); this.ready = true; return; }
     this.showTitle();
     if (this.params.get('autoplay') || this.params.get('replay')) this.play(this.params.get('name') ? { kind: 'new', name: this.params.get('name')!, sex: 'f' } : { kind: 'auto' });
   }
@@ -168,8 +184,9 @@ export class App {
     l.on('scene', s => { this.regions.regionSize = s.geography?.regionSize ?? 256; this.regions.setOrigin(s.origin); });
     l.on('regions_state', s => { this.regions.setOrigin(s.origin); for (const id of s.unload) this.regions.unload(id); });
     l.on('presentation', p => { this.regions.applyPresentation(p.payload); requestAnimationFrame(() => requestAnimationFrame(() => p.applied())); });
-    l.on('local_state', s => { this.predictor.applyLocalState(s); if (s.bodyId) this.ownBodyId = s.bodyId; });
-    l.on('receipt', r => this.predictor.applyReceipt(r));
+    l.on('local_state', s => { this.predictor.applyLocalState(s); if (s.bodyId) this.ownBodyId = s.bodyId; this.physTick = s.tick; this.physAt = performance.now(); });
+    l.on('receipt', r => { this.predictor.applyReceipt(r); if (r.status === 'rejected' || r.status === 'cancelled') this.actors.cancelPredicted(this.ownBodyId, r.commandId); });
+    l.on('combat_frame', f => { void f; });
     l.on('snapshot', s => this.onSnapshot(s));
     l.on('maintenance', m => this.hud.toast(`Server maintenance in ${Math.round(m.inMs / 1000)} s: ${m.message}`, 'bad', 9000));
     l.on('status', st => this.onStatus(st));
@@ -249,7 +266,23 @@ export class App {
     const t = this.controller.aimTarget(); if (!t) { this.hud.toast('Nothing to hush.', 'bad'); return; }
     const r = await this.link.intent({ type: 'hush', targetBodyId: t.bodyId }); const d = describeResult(r.result); this.hud.toast(d.text, d.tone === 'info' ? 'info' : d.tone);
   }
-  private onCombatCommand(c: CombatIntent): void { void c; this.hintState.attacked = true; this.rig.setMode('combat'); this.combatUntil = performance.now() + 5000; }
+  private onCombatCommand(c: CombatIntent): void {
+    this.hintState.attacked = true; this.rig.setMode('combat'); const now = performance.now(); this.combatUntil = now + 5000;
+    // Anticipation begins on this very frame; the server's own action (same command id) takes over once it exists.
+    let moveId: string, weight: 'light' | 'heavy' = c.weight ?? 'light';
+    if (c.kind === 'attack') {
+      const chained = now - this.lastMove.atMs < 900;
+      moveId = weight === 'heavy' ? (chained && this.lastMove.id === 'front_kick' ? 'round_kick' : 'front_kick') : (chained && this.lastMove.id === 'jab' ? 'cross' : 'jab');
+      this.lastMove = { id: moveId, atMs: now };
+    } else moveId = c.defend ?? 'sidestep';
+    const t = predictedTiming(moveId, weight === 'heavy' && c.kind === 'attack');
+    const own = this.actors.get(this.ownBodyId); const yaw = this.predictor.predicted?.yaw ?? 0;
+    let dirLocal: { x: number; z: number } | undefined;
+    if (c.direction) { const fx = -Math.sin(yaw), fz = -Math.cos(yaw), lx = -Math.cos(yaw), lz = Math.sin(yaw); dirLocal = { x: c.direction.x * lx + c.direction.z * lz, z: c.direction.x * fx + c.direction.z * fz }; }
+    const defTotal = 0.24 + 0.12;
+    this.actors.predict(this.ownBodyId, { commandId: c.commandId, moveId, weight, startedAtMs: now, kind: c.kind, ...(c.kind === 'attack' ? t : { prep: 0.06, active: defTotal - 0.06 - 0.12, recovery: 0.12 }), dirLocal, side: c.side });
+    void own;
+  }
   private combatUntil = 0;
   private onLock(id: string | null): void { this.rig.setLock(null); void id; }
 
@@ -316,6 +349,7 @@ export class App {
     const wasOpen = this.modal.isOpen;
     if (this.nav.open) this.nav.update();
     if (this.phase === 'connecting') this.tryEnter();
+    if (this.showroom) { this.showroom.update(dt); this.ctx.scene.render(); return; }
     if (this.phase === 'playing') this.gameFrame(dt, now, wasOpen);
     else this.backdropFrame(dt);
     this.ctx.scene.render();

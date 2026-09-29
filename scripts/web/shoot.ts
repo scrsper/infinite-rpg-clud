@@ -33,8 +33,9 @@ if (flag('gateway')) {
   const st = JSON.parse(readFileSync(join(homedir(), 'TornVeilAlpha', 'web-gateway', 'gateway.json'), 'utf8')) as { origin: string; operator: string };
   const r = await fetch(`${st.origin}/api/operator/launch`, { method: 'POST', headers: { 'x-torn-veil-gateway-operator': st.operator } });
   const { url: launch } = await r.json() as { url: string };
-  await page.goto(launch);
-  await page.goto(`${st.origin}${flag('gateway')}`);
+  const front = flag('devhost') ?? st.origin;          // --devhost http://127.0.0.1:5180 reaches the gateway through Vite's proxy
+  await page.goto(launch.replace(st.origin, front));
+  await page.goto(`${front}${flag('gateway')}`);
 } else await page.goto(url);
 await page.waitForFunction(() => (window as any).__tv?.ready === true, undefined, { timeout: Number(flag('timeout', '90000')) }).catch(() => logs.push('timeout waiting for __tv.ready'));
 await page.waitForTimeout(Number(flag('wait', '3000')));

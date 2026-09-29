@@ -41,3 +41,4 @@ art/tools/**/__pycache__/
 
 # Web client build output
 dist-web
+web/public/models/*.glb

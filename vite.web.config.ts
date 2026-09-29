@@ -35,6 +35,7 @@ export default defineConfig({
     sourcemap: false,
     rollupOptions: { output: { manualChunks: { babylon: ['@babylonjs/core'] } } },
   },
-  server: { port: 5180, host: '127.0.0.1', strictPort: true },
+  // In development the page is served by Vite; the session, health and socket routes are the gateway's, proxied so one origin serves both.
+  server: { port: 5180, host: '127.0.0.1', strictPort: true, proxy: { '/ws': { target: 'ws://127.0.0.1:7470', ws: true, changeOrigin: true }, '/api': { target: 'http://127.0.0.1:7470', changeOrigin: true }, '/launch': { target: 'http://127.0.0.1:7470', changeOrigin: true } } },
   esbuild: { legalComments: 'none' },
 });
