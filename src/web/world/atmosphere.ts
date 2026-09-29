@@ -33,6 +33,8 @@ export class Atmosphere {
   daylight = 1;
   sunDirection = new Vector3(0, -1, 0);
   hour = 12;
+  /** Art-direction multipliers (tuned live with ?look=key:1.2,fill:1.3,exposure:1.4). */
+  readonly look = { key: 1, fill: 1, exposure: 1, fog: 1 };
   fogColor = new Color3(0.6, 0.66, 0.74);
 
   constructor(private readonly ctx: RenderContext) {
@@ -103,24 +105,24 @@ export class Atmosphere {
     const moonColor: RGB = [0.5, 0.6, 0.85];
     const kc = keyFromSun ? sunColor : moonColor;
     this.key.diffuse = new Color3(...kc); this.key.specular = new Color3(kc[0], kc[1], kc[2]);
-    this.key.intensity = keyFromSun ? lerp(0.3, 2.9, S(-0.06, 0.4, elev)) * (1 - overcast * 0.55) : 0.55 * (1 - overcast * 0.3);
+    this.key.intensity = (keyFromSun ? lerp(0.3, 2.9, S(-0.06, 0.4, elev)) * (1 - overcast * 0.55) : 0.55 * (1 - overcast * 0.3)) * this.look.key;
     this.sunDirection.copyFrom(sunPos);
 
     // Ambient: pale slate sky light, warm ground bounce; never dark enough to lose the path.
     const skyAmbient = mix(mix([0.16, 0.2, 0.36], [0.5, 0.58, 0.72], day), [0.6, 0.66, 0.76], overcast * 0.5);
     this.fill.diffuse = new Color3(...skyAmbient);
     this.fill.groundColor = new Color3(...mix([0.06, 0.07, 0.11], [0.3, 0.26, 0.2], day));
-    this.fill.intensity = lerp(0.5, 0.78, day) * (1 - overcast * 0.1);
+    this.fill.intensity = lerp(0.5, 0.78, day) * (1 - overcast * 0.1) * this.look.fill;
 
     // Fog: exponential haze coloured like the horizon.
     const horizon = mix(mix(mix([0.06, 0.08, 0.16], [0.63, 0.7, 0.8], day), [1.0, 0.62, 0.4], dusk * 0.85), [0.58, 0.62, 0.68], overcast * 0.6);
     this.fogColor = new Color3(...horizon);
     const s = this.ctx.scene; s.fogColor = this.fogColor;
-    s.fogDensity = (0.00075 + overcast * 0.0011 + fog * 0.0075) * this.ctx.quality.fogDensityScale * lerp(1.25, 1, day);
+    s.fogDensity = (0.00075 + overcast * 0.0011 + fog * 0.0075) * this.ctx.quality.fogDensityScale * lerp(1.25, 1, day) * this.look.fog;
     s.clearColor = new Color4(horizon[0], horizon[1], horizon[2], 1);
 
     // Exposure keeps night readable and noon from clipping.
-    if (this.ctx.pipeline) this.ctx.pipeline.imageProcessing.exposure = lerp(1.55, 1.02, day) * (1 + overcast * 0.06);
+    if (this.ctx.pipeline) this.ctx.pipeline.imageProcessing.exposure = lerp(1.55, 1.02, day) * (1 + overcast * 0.06) * this.look.exposure;
 
     // Celestial bodies and gradient.
     const camera = s.activeCamera;

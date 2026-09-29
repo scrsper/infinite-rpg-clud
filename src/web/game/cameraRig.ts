@@ -105,7 +105,7 @@ export class CameraRig {
     this.position.set(cx, cyv, cz);
     this.camera.position.copyFrom(this.position);
     // Look at a point slightly ahead of the pivot so the player sits low in frame.
-    const tx = px + rx * this.shoulderNow * 0.6, ty = py + 0.05, tz = pz + rz * this.shoulderNow * 0.6;
+    const tx = px + rx * this.shoulderNow * 0.6, ty = py + 0.05 - (this.mode === 'talk' ? 0.55 : 0), tz = pz + rz * this.shoulderNow * 0.6;
     this.camera.setTarget(new Vector3(tx, ty, tz));
     this.forward.set(tx - cx, ty - cyv, tz - cz).normalize();
     void playerYaw; void TAU;

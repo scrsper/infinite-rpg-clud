@@ -19,11 +19,11 @@ export interface TerrainBuild {
 type RGB = [number, number, number];
 /** Painterly ground palette: muted, warm-cool broken colour rather than saturated voxel primaries. */
 const GROUND: Record<number, RGB> = {
-  [B.Grass]: [0.36, 0.47, 0.24], [B.Dirt]: [0.42, 0.32, 0.21], [B.Stone]: [0.46, 0.47, 0.47], [B.Cobble]: [0.5, 0.48, 0.45],
+  [B.Grass]: [0.42, 0.56, 0.26], [B.Dirt]: [0.42, 0.32, 0.21], [B.Stone]: [0.46, 0.47, 0.47], [B.Cobble]: [0.5, 0.48, 0.45],
   [B.Sand]: [0.78, 0.71, 0.5], [B.Farmland]: [0.27, 0.19, 0.12], [B.Path]: [0.58, 0.48, 0.32], [B.Gravel]: [0.52, 0.5, 0.47],
   [B.Mud]: [0.3, 0.23, 0.16], [B.Snow]: [0.9, 0.93, 0.98],
 };
-const GRASS_WARM: RGB = [0.5, 0.5, 0.26], GRASS_COOL: RGB = [0.27, 0.42, 0.28], FOREST_FLOOR: RGB = [0.19, 0.3, 0.17];
+const GRASS_WARM: RGB = [0.60, 0.60, 0.30], GRASS_COOL: RGB = [0.30, 0.52, 0.30], FOREST_FLOOR: RGB = [0.22, 0.36, 0.20];
 const mix = (a: RGB, b: RGB, t: number): RGB => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
 
 export function buildTerrain(scene: Scene, mats: MaterialLibrary, r: RegionProjection): TerrainBuild {
@@ -52,7 +52,7 @@ export function buildTerrain(scene: Scene, mats: MaterialLibrary, r: RegionProje
       const j2 = (patch - 0.5) * 0.12; col = [col[0] + j2, col[1] + j2 * 1.2, col[2] + j2 * 0.4];
     }
     const grain = (hash2(wx, wz, 5) - 0.5) * 0.05;
-    colors[k * 4] = clamp01(col[0] + grain); colors[k * 4 + 1] = clamp01(col[1] + grain); colors[k * 4 + 2] = clamp01(col[2] + grain); colors[k * 4 + 3] = 1;
+    colors[k * 4] = Math.pow(clamp01(col[0] + grain), 2.2); colors[k * 4 + 1] = Math.pow(clamp01(col[1] + grain), 2.2); colors[k * 4 + 2] = Math.pow(clamp01(col[2] + grain), 2.2); colors[k * 4 + 3] = 1;
   }
   const idx: number[] = [];
   for (let i = 0; i < n - 1; i++) for (let j = 0; j < n - 1; j++) {

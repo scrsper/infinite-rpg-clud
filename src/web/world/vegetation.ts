@@ -130,8 +130,8 @@ export class VegetationLibrary {
     const { bark, leaf } = buildSpecies(species, variant % VARIANTS + 1, lod);
     const meshes: Mesh[] = [];
     const barkMat: Material = this.mats.get('bark'), leafMat: Material = this.mats.get(species === 'rock' ? 'rock' : 'leaf');
-    const bm = bark.build(`veg-${key}-bark`, this.scene, barkMat, { receiveShadow: true }); if (bm) meshes.push(bm);
-    const lm = leaf.build(`veg-${key}-leaf`, this.scene, leafMat, { receiveShadow: true }); if (lm) meshes.push(lm);
+    const bm = bark.linearize().build(`veg-${key}-bark`, this.scene, barkMat, { receiveShadow: true }); if (bm) meshes.push(bm);
+    const lm = leaf.linearize().build(`veg-${key}-leaf`, this.scene, leafMat, { receiveShadow: true }); if (lm) meshes.push(lm);
     m = meshes.length > 1 ? Mesh.MergeMeshes(meshes, true, true, undefined, false, true)! : meshes[0];
     m.name = `proto-${key}`; m.setEnabled(false); m.isPickable = false; this.protos.set(key, m);
     return m;

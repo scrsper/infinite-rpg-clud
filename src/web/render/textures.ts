@@ -63,7 +63,7 @@ const painters: Record<TextureKind, { size: number; strength: number; roughness:
   } },
   ground: { size: 256, strength: 1.2, roughness: 0.95, paint: (x, y, n, s) => {
     const a = fbm(x / n * 10, y / n * 10, 10, 4, s), b = valueNoise(x / 1.6, y / 1.6, (n / 1.6) | 0 || 1, s + 3);
-    return { v: .52 + (a - .5) * .5 + (b - .5) * .18, h: a * .5 + b * .3 };
+    return { v: .90 + (a - .5) * .16 + (b - .5) * .09, h: a * .5 + b * .3 };
   } },
   cloth: { size: 256, strength: 1.6, roughness: 0.9, paint: (x, y, n, s) => {
     const p = 8, warp = Math.sin(x / n * Math.PI * 2 * p) * .5 + .5, weft = Math.sin(y / n * Math.PI * 2 * p) * .5 + .5;

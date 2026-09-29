@@ -199,7 +199,8 @@ function fitRoof(cells: Cells, p: PlaceProjection): RoofFit | null {
     if (!ROOF_MATERIAL[cells.get(x, y, z)]) continue;
     if (expect.has(`${x},${y},${z}`)) matches++; else extra++;
   }
-  if (extra > 0 || matches !== expect.size) return null;
+  // A chimney or torch may stand where one roof cell would be; a few missing cells are fine, foreign cells are not.
+  if (extra > 0 || expect.size - matches > Math.max(3, expect.size * 0.04)) return null;
   // The wall material is whatever stands in the footprint ring just under the roof.
   let wall: MatName = 'plaster';
   scan: for (let y = roofY - 2; y >= roofY - 4; y--) for (const [x, z] of [[x0, z0 + 2], [x0 + 2, z0], [x1, z1 - 2], [x1 - 2, z1]]) {

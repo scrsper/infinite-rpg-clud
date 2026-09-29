@@ -40,9 +40,11 @@ if (flag('gateway')) {
 await page.waitForFunction(() => (window as any).__tv?.ready === true, undefined, { timeout: Number(flag('timeout', '90000')) }).catch(() => logs.push('timeout waiting for __tv.ready'));
 await page.waitForTimeout(Number(flag('wait', '3000')));
 for (const code of all('eval')) { try { await page.evaluate(code); } catch (e) { logs.push(`eval failed: ${String(e).slice(0, 200)}`); } await page.waitForTimeout(Number(flag('after', '1500'))); }
+const printed: unknown[] = [];
+for (const code of all('print')) { try { printed.push(await page.evaluate(code)); } catch (e) { printed.push(`print failed: ${String(e).slice(0, 200)}`); } }
 let perf: unknown = null;
 if (flag('perf')) { await page.evaluate(() => (window as any).__tv.perfReset?.()); await page.waitForTimeout(Number(flag('perf'))); perf = await page.evaluate(() => (window as any).__tv.perfReport?.()); }
 await page.screenshot({ path: out });
 const info = await page.evaluate(() => { const t = (window as any).__tv; return t ? { renderer: t.ctx?.kind, fallback: t.ctx?.fallbackReason, gpu: (t.ctx?.engine as any)?.getGlInfo?.() } : null; }).catch(() => null);
-console.log(JSON.stringify({ out, info, perf, logs: logs.slice(0, 12) }, null, 2));
+console.log(JSON.stringify({ out, info, perf, printed, logs: logs.slice(0, 12) }, null, 2));
 await browser.close();

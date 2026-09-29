@@ -3,6 +3,7 @@ import { INTERACTION_SPEC } from '../sim/physical/prediction';
 import { createRenderer, attachPipeline, QUALITY, type QualityTier, type RenderContext } from './render/engine';
 import { Atmosphere } from './world/atmosphere';
 import { RegionManager } from './world/regionManager';
+import { GrassField } from './world/grass';
 import { GameConnection, type CharacterChoice, type ClosedInfo, type GameLink } from './net/connection';
 import { ReplayConnection } from './net/replay';
 import type { BodyState, DialogueProjection, InteractionTarget, SnapshotMessage, Vec3 } from './net/messages';
@@ -16,6 +17,7 @@ import { ActorManager, placeholderVisual, predictedTiming } from './actors/actor
 import { CharacterFactory, makeRealization } from './actors/characterFactory';
 import { add, h } from './ui/dom';
 import { UiNav } from './ui/nav';
+import { PortraitRenderer } from './ui/portrait';
 import { ModalHost } from './ui/modal';
 import { Hud } from './ui/hud';
 import { DialoguePanel } from './ui/dialoguePanel';
@@ -52,6 +54,8 @@ export class App {
   ready = false;
   showroom: Showroom | null = null;
   characters = new CharacterFactory();
+  grass!: GrassField;
+  portrait!: PortraitRenderer;
   private choice: CharacterChoice = { kind: 'auto' };
   private closedFinal = false;
   private hintsShown = new Set<string>();
@@ -73,7 +77,10 @@ export class App {
     const tier: QualityTier | undefined = q && q in QUALITY ? q : this.settings.quality !== 'auto' ? this.settings.quality : undefined;
     this.ctx = await createRenderer(canvas, { prefer: this.params.get('renderer') === 'webgl2' ? 'webgl2' : undefined, quality: tier });
     this.atmosphere = new Atmosphere(this.ctx);
+    for (const kv of (this.params.get('look') ?? '').split(',')) { const [k, v] = kv.split(':'); if (k in this.atmosphere.look && Number.isFinite(Number(v))) (this.atmosphere.look as Record<string, number>)[k] = Number(v); }
     this.regions = new RegionManager(this.ctx, this.atmosphere);
+    const gq = { high: { radius: 30, capacity: 90000 }, balanced: { radius: 24, capacity: 60000 }, low: { radius: 14, capacity: 16000 } }[this.ctx.quality.tier];
+    this.grass = new GrassField(this.ctx.scene, this.regions, gq); this.regions.onOriginChange = () => this.grass.invalidate();
     this.camera = new FreeCamera('camera', new Vector3(0, 30, 0), this.ctx.scene);
     attachPipeline(this.ctx, this.camera);
     this.rig = new CameraRig(this.camera, () => this.settings, {
@@ -92,10 +99,11 @@ export class App {
     this.overlay = h('div', { class: 'tv-layer', style: 'pointer-events:none' }); this.modalLayer = h('div', { class: 'tv-layer', style: 'pointer-events:none' });
     this.hud = new Hud(this.ui); this.ui.append(this.overlay, this.modalLayer);
     this.modal = new ModalHost(this.modalLayer, this.nav);
+    this.portrait = new PortraitRenderer(this.ctx.scene, this.actors);
     this.dialogue = new DialoguePanel(this.overlay, {
       choose: async (id, label) => { const r = await this.link.intent({ type: 'dialogue_option', optionId: id }); void label; return { result: r.result }; },
       close: () => void this.link.intent({ type: 'dialogue_close' }),
-      portrait: { attach: () => () => undefined },
+      portrait: this.portrait,
       keyLabel: n => String(n), toast: (t, tone) => this.hud.toast(t, tone), describe: r => describeResult(r).text,
     });
     this.link = this.params.get('replay') ? new ReplayConnection(this.params.get('replay')!) : new GameConnection();
@@ -242,7 +250,9 @@ export class App {
       const dx = t.pos.x - p.x, dz = t.pos.z - p.z, d = Math.hypot(dx, dz);
       if (d > 3.4) continue;
       const cos = d > 0.05 ? (dx * fx + dz * fz) / d : 1;
-      const score = d + (1 - cos) * 1.4 - (this.focus.target?.actionId === t.actionId ? 0.45 : 0);
+      // A locked target the player is already attending to wins; people are preferred over things at similar range.
+      const locked = this.controller.lockedBodyId !== null && t.targetId === this.controller.lockedBodyId ? 4 : 0;
+      const score = d + (1 - cos) * 1.4 - (this.focus.target?.actionId === t.actionId ? 0.45 : 0) - (t.kind === 'person' ? 0.35 : 0) - locked;
       if (score < bestScore) { bestScore = score; best = t; }
     }
     let refusal: string | null = null;
@@ -350,7 +360,7 @@ export class App {
     if (this.nav.open) this.nav.update();
     if (this.phase === 'connecting') this.tryEnter();
     if (this.showroom) { this.showroom.update(dt); this.ctx.scene.render(); return; }
-    if (this.phase === 'playing') this.gameFrame(dt, now, wasOpen);
+    if (this.phase === 'playing') { this.gameFrame(dt, now, wasOpen); this.portrait.update(dt); }
     else this.backdropFrame(dt);
     this.ctx.scene.render();
     if (!this.ready && this.phase === 'playing' && this.regions.regions.size >= 5 && ++this.readyFrames > 30) this.ready = true;
@@ -409,6 +419,7 @@ export class App {
     // World.
     const hour = this.params.get('hour') ? Number(this.params.get('hour')) : ((this.regions.worldTime / 3600) % 24 + 24) % 24;
     this.atmosphere.update(hour, this.regions.weather, dt); this.atmosphere.follow(this.camera.position);
+    this.grass.update(this.camera.position.x + this.regions.origin.x, this.camera.position.z + this.regions.origin.z);
     this.regions.update(dt, this.camera.position, this.rig.forward, 1 - this.atmosphere.daylight);
     if (this.controller.lockedBodyId === null && now > this.combatUntil && this.rig.mode === 'combat') this.rig.setMode('explore');
     // HUD (10 Hz).

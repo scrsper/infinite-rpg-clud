@@ -68,6 +68,8 @@ export class MeshBatch {
       this.polygon(top.slice().reverse(), [0, 1, 0], tint, tpm); this.polygon(bottom, [0, -1, 0], tint, tpm);
     }
   }
+  /** Vertex colours are authored in sRGB; the PBR shader multiplies them as linear values, so convert once before building. */
+  linearize(): this { for (let i = 0; i < this.colors.length; i += 4) { this.colors[i] = Math.pow(this.colors[i], 2.2); this.colors[i + 1] = Math.pow(this.colors[i + 1], 2.2); this.colors[i + 2] = Math.pow(this.colors[i + 2], 2.2); } return this; }
   build(name: string, scene: Scene, material: Material, options: { castShadow?: boolean; receiveShadow?: boolean } = {}): Mesh | null {
     if (this.empty) return null;
     const mesh = new Mesh(name, scene), vd = new VertexData();

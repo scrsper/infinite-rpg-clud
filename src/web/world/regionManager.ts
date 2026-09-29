@@ -21,7 +21,7 @@ import { InstanceSet, VegetationLibrary, scatterVegetation } from './vegetation'
  */
 interface RegionEntry {
   id: string; projection: RegionProjection; root: TransformNode; terrain: TerrainBuild; meshes: Mesh[]; instances: InstanceSet; lightIds: string[];
-  doors: DoorHandle[]; dynamics: RegionDynamics; cells: Cells | null; stats: { cells: number; roofs: number; windows: number; trees: number; props: number; buildMs: number };
+  doors: DoorHandle[]; dynamics: RegionDynamics; cells: Cells | null; pathCells: Set<number>; boxes: { x0: number; z0: number; x1: number; z1: number }[]; stats: { cells: number; roofs: number; windows: number; trees: number; props: number; buildMs: number };
 }
 
 export class RegionManager {
@@ -32,6 +32,7 @@ export class RegionManager {
   readonly regions = new Map<string, RegionEntry>();
   readonly origin = { x: 0, y: 0, z: 0 };
   regionSize = 256;
+  onOriginChange: (() => void) | null = null;
   private lastDynamics: DynamicsProjection | null = null;
   worldTime = 0;
   weather = { kind: 'clear', intensity: 0, wind: 0 };
@@ -48,7 +49,7 @@ export class RegionManager {
   regionOf(x: number, z: number): string { return `${Math.floor(x / this.regionSize)},${Math.floor(z / this.regionSize)}`; }
 
   setOrigin(o: Vec3): void {
-    this.origin.x = o.x; this.origin.y = o.y ?? 0; this.origin.z = o.z;
+    this.origin.x = o.x; this.origin.y = o.y ?? 0; this.origin.z = o.z; this.onOriginChange?.();
     for (const r of this.regions.values()) this.place(r);
   }
   private place(r: RegionEntry): void { r.root.position.set(r.projection.bounds.x0 - this.origin.x, -this.origin.y, r.projection.bounds.z0 - this.origin.z); }
@@ -64,6 +65,19 @@ export class RegionManager {
     for (const p of reg.projection.places) { const b = p.bounds; if (x >= b.x0 && x <= b.x1 + 1 && z >= b.z0 && z <= b.z1 + 1 && y >= b.y0 - 1 && y <= b.y1 + 1) return { kind: 'building', type: p.type, id: p.id }; }
     for (const s of reg.projection.settlements) { const b = s.bounds; if (x >= b.x0 && x <= b.x1 && z >= b.z0 && z <= b.z1) return { kind: 'settlement', type: 'settlement', id: s.id }; }
     return { kind: 'wild', type: 'open country', id: '' };
+  }
+
+  /** Open grass at a simulation position (for the grass field), with the drawn ground height; null on paths, water, structures, buildings or other ground. */
+  grassAt(x: number, z: number): { y: number; height: number } | null {
+    const reg = this.regions.get(this.regionOf(x, z)); if (!reg) return null;
+    const g = reg.terrain.grid, i = Math.max(0, Math.min(g.n - 1, Math.round((x - g.x0) / g.stride))), j = Math.max(0, Math.min(g.n - 1, Math.round((z - g.z0) / g.stride))), k = i * g.n + j;
+    if (g.block[k] !== 1 || g.water[k] >= 0) return null;
+    const fx = Math.floor(x), fz = Math.floor(z);
+    if (reg.pathCells.has(fx * 100003 + fz)) return null;
+    for (const b of reg.boxes) if (fx >= b.x0 - 1 && fx <= b.x1 + 1 && fz >= b.z0 - 1 && fz <= b.z1 + 1) return null;
+    const y = reg.terrain.heightAt(x, z);
+    if (reg.cells && reg.cells.get(fx, Math.floor(y) + 1, fz) !== 0) return null;
+    return { y, height: 1 - 0.5 * Math.max(0, Math.min(1, (g.forest[k] - 0.5) * 2)) };
   }
 
   /** Whether built structure occupies the simulation-space point (used by the camera). */
@@ -112,7 +126,7 @@ export class RegionManager {
 
     const dynamics = new RegionDynamics(scene, this.mats, this.props, this.vegetation, proj, terrain, this.lights, sp.doors, root, m => this.atmosphere.addCaster(m));
     const entry: RegionEntry = {
-      id: proj.id, projection: proj, root, terrain, meshes, instances, lightIds, doors: sp.doors, dynamics, cells,
+      id: proj.id, projection: proj, root, terrain, meshes, instances, lightIds, doors: sp.doors, dynamics, cells, pathCells: new Set(proj.paths.map(([x, , z]) => x * 100003 + z)), boxes: proj.places.filter(p => p.indoor).map(p => p.bounds),
       stats: { cells: st.stats.cells, roofs: st.stats.roofsAnalytic, windows: st.stats.windows, trees, props: proj.furnishings.length, buildMs: performance.now() - t0 },
     };
     this.regions.set(proj.id, entry); this.place(entry);

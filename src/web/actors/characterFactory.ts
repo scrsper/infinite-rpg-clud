@@ -64,8 +64,10 @@ export class CharacterVisual implements BodyVisual {
   readonly root: TransformNode;
   readonly animator: Animator;
   headHeight: number;
+  /** Height of the eyes above the feet (portrait and look-at framing). */
+  readonly eyeHeight: number; readonly bodyHeight: number;
   constructor(readonly rig: CharacterRig, readonly mats: CharacterMaterials, readonly realization: Realization, private readonly atmosphere: Atmosphere, height: number) {
-    this.root = rig.root; this.headHeight = height + 0.18;
+    this.root = rig.root; this.headHeight = height + 0.18; this.eyeHeight = height * 0.925; this.bodyHeight = height;
     this.animator = new Animator(rig, realization);
   }
   update(dt: number, s: ActorState): void { this.animator.update(dt, s); }

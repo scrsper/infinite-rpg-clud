@@ -1,5 +1,5 @@
 import {
-  AbstractEngine, Color3, Color4, ColorCurves, DefaultRenderingPipeline, Engine, ImageProcessingConfiguration, Scene, ScenePerformancePriority, Vector3, WebGPUEngine,
+  AbstractEngine, SSAO2RenderingPipeline, Color3, Color4, ColorCurves, DefaultRenderingPipeline, Engine, ImageProcessingConfiguration, Scene, ScenePerformancePriority, Vector3, WebGPUEngine,
 } from '@babylonjs/core';
 
 export type RendererKind = 'webgpu' | 'webgl2';
@@ -36,6 +36,7 @@ export interface RenderContext {
   kind: RendererKind;
   quality: QualityProfile;
   pipeline: DefaultRenderingPipeline | null;
+  ssao?: SSAO2RenderingPipeline;
   /** Why WebGPU was not used, if it was not. */
   fallbackReason: string | null;
   setQuality(tier: QualityTier): void;
@@ -112,6 +113,15 @@ export function attachPipeline(ctx: RenderContext, camera: import('@babylonjs/co
   grade.midtonesHue = 200; grade.midtonesDensity = 6; grade.globalSaturation = -6;
   p.imageProcessing.colorCurves = grade;
   ctx.pipeline = p;
+  // SSAO is opt-in (?ssao=1): its prepass cannot coexist with the portrait render target, and contact shadowing comes from baked vertex AO and shadow maps instead.
+  if (ctx.quality.tier !== 'low' && new URLSearchParams(location.search).has('ssao')) {
+    try {
+      // Contact shadowing under characters, props and eaves; the single biggest 'grounding' gain for a stylised scene.
+      const ssao = new SSAO2RenderingPipeline('tv-ssao', ctx.scene, { ssaoRatio: 0.5, blurRatio: 1 }, [camera]);
+      ssao.radius = 1.5; ssao.totalStrength = 0.5; ssao.expensiveBlur = false; ssao.samples = ctx.quality.tier === 'high' ? 16 : 10; ssao.maxZ = 110; ssao.minZAspect = 0.5;
+      ctx.ssao = ssao;
+    } catch (e) { console.warn('[tv] SSAO unavailable', e); }
+  }
   return p;
 }
 
