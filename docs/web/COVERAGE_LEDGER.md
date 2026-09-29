@@ -17,7 +17,7 @@ intentions. Statuses use the mandate's words:
 
 | ID | Source → command | Observation → web UI | Animation / audio | Persistence | Status | Evidence / gap |
 |---|---|---|---|---|---|---|
-| EMB-ENTRY | sign-in, create/continue → gateway `character=auto|new|<id>` | Title (Play / Continue), character screen (name, sex), loading progress | — / UI ticks | character persists on the server | SCENARIO_ENTRY | Autoplay path exercised every run; the title and new-character screens are captured by the UI check; character creation was not repeated on a fresh account through the UI |
+| EMB-ENTRY | sign-in, create/continue → gateway `character=auto|new|<id>` | Title (Play / Continue), character screen (name, sex), loading progress | — / UI ticks | character persists on the server | VERIFIED (automated) for continue; PARTIAL for create | Continue exercised in every run; a *new* character by name was created and played (`name=` path); the character-limit refusal screen was seen; the title and character screens are captured by the UI check. The character-creation form itself was not driven by typing |
 | EMB-APPEAR | canonical appearance tokens → cosmetic realisation | People drawn from their own tokens on shared kits (skin, hair, garments, footwear, accessories) | rig, faces (blink, mouth) | none (cosmetic) | PARTIAL | Lineup and villagers captured; art quality is prototype-level (`KNOWN_DEFECTS.md` A1–A3) |
 | EMB-MOVE | `move` commands + shared prediction kernel | Third-person camera, smoothing offset, HUD | distance-driven gait, layering, footsteps | server position | VERIFIED (automated) | prediction corrections stayed at 0–0.07 m, RTT ≈ 1–6 ms over the soak; `PERFORMANCE.md`, `EVIDENCE.md` |
 | EMB-CROUCH | crouch flag on `move` | C / Ctrl and Abilities row | crouch pose | server posture | IMPLEMENTED BUT UNVERIFIED | |
@@ -30,11 +30,11 @@ intentions. Statuses use the mandate's words:
 
 | ID | Source → command | Observation → web UI | Animation / audio | Persistence | Status | Evidence / gap |
 |---|---|---|---|---|---|---|
-| SURV-EAT / DRINK | hand `consume:` / `drink:` via `person_action` | Items tab: only offered rows, refusal reasons | eat/drink poses | hunger, purse | SCENARIO_ITEMS | |
-| SURV-CARRY | inventory, drop | Items tab (load, fatigue, rows); carried item shown in hand pose (light: one hand; heavy: two) | carry poses | server | SCENARIO_ITEMS | |
+| SURV-EAT / DRINK | hand `consume:` / `drink:` via `interact` | Items tab: only offered rows, refusal reasons | eat/drink poses | hunger, purse | VERIFIED (eat); drink IMPLEMENTED BUT UNVERIFIED | bought bread, Items → *Eat bread*: consumed and Energy rose to 100 % (`EVIDENCE.md` §3) |
+| SURV-CARRY | inventory, drop | Items tab (load, fatigue, rows); carried item shown in hand pose (light: one hand; heavy: two) | carry poses | server | VERIFIED (carry, list, drop) | grain carried across save and reconnect; *Drop grain* was executed (incidentally, by the injected-pad check) and the row disappeared |
 | SURV-READ | `read_record` | Items row when allowed | — | knowledge | IMPLEMENTED BUT UNVERIFIED | |
 | SURV-CONTAINER | `container_transfer` | Items tab container panel, store/take | — | container contents | IMPLEMENTED BUT UNVERIFIED | |
-| SURV-BUY / SELL / GIVE | dialogue options (revision-fenced) | Trade group with prices, confirmation dialog before anything that spends silver; a stale offer is refused | coin cue | purse, stock | SCENARIO_TRADE | |
+| SURV-BUY / SELL / GIVE | dialogue options (revision-fenced) | Trade group with price and stock columns, confirmation dialog before anything that spends silver; a stale offer is refused | coin cue | purse, stock | VERIFIED (buy); SELL and GIVE IMPLEMENTED BUT UNVERIFIED | purchase asked for confirmation, purse 16 → 14, item arrived, persisted through save and reconnect. Found and fixed: rows worded "(4s each, 9 to be had)" were not recognised (no price, no confirmation) |
 | SURV-BUYDISPLAY, SURV-THEFT | hand `buy:` / `steal:` | Interact prompt ("… anyway — this is theft") | — | ownership, reputation | IMPLEMENTED BUT UNVERIFIED | |
 | SURV-INJURY | physiology, combat | HUD health/effort/needs; hit reaction; downed/dead screen; Journal → Injuries | hit recoil, limp, collapse; hurt cue | injuries, death (permanent) | PARTIAL | HUD, death screen and animation states exist; not driven through a real injury/recovery arc |
 | SURV-SLEEPACT | `canAct` | refusal wording from result codes | — | — | IMPLEMENTED BUT UNVERIFIED | |
@@ -57,8 +57,8 @@ intentions. Statuses use the mandate's words:
 
 | ID | Source → command | Observation → web UI | Animation / audio | Persistence | Status | Evidence / gap |
 |---|---|---|---|---|---|---|
-| SOC-TALK / ASK / TELL / TEACH / DEBT | `talk`, `dialogue_option`, `dialogue_close` | Conversation panel: live portrait, transcript, options grouped into intentions, number keys, Esc | gesture/talk poses, voice babble | knowledge, debts | SCENARIO_TALK | |
-| SOC-JOURNAL | `playerJournal` projection | Journal tab (condition, foundations, commitments, obligations, injuries, skills, veil, breakthrough) | — | server | SCENARIO_MENUS | text-heavy; no topic navigation |
+| SOC-TALK / ASK / TELL / TEACH / DEBT | `talk`, `dialogue_option`, `dialogue_close` | Conversation panel: live portrait, transcript, options grouped into intentions, number keys, Esc | gesture/talk poses, voice babble | knowledge, debts | VERIFIED (talk, news, leave); ASK, TELL, TEACH, DEBT IMPLEMENTED BUT UNVERIFIED | talk prompt → panel → news reply in the transcript (`scenario/03-conversation.png`); the portrait rendered in one run and stayed blank for the first moments in another (see `KNOWN_DEFECTS.md` A7) |
+| SOC-JOURNAL | `playerJournal` projection | Journal tab (condition, foundations, commitments, obligations, injuries, skills, veil, breakthrough) | — | server | VERIFIED (opens with the person's real values) | text-heavy; no topic navigation |
 | SOC-HUNTWITNESS / CUSTODY | server rules | seen through consequences only | — | — | EXCLUDED (server-side) | |
 
 ## 6. Combat and development
@@ -81,7 +81,7 @@ intentions. Statuses use the mandate's words:
 
 | ID | Source → command | Observation → web UI | Persistence | Status | Evidence / gap |
 |---|---|---|---|---|---|
-| CONT-RECONNECT | reconnect, `character=<id>` | Pause → Reconnect; automatic re-connect with back-off; "Signed in elsewhere" screen with an explicit take-back | same person, purse and belongings | SCENARIO_RECONNECT | takeover parity with a native client is a unit test (`web-gateway.test.ts`) |
+| CONT-RECONNECT | reconnect, `character=<id>` | Pause → Reconnect; automatic re-connect with back-off; "Signed in elsewhere" screen with an explicit take-back | same person, purse and belongings | VERIFIED (automated: same person, purse and belongings after Reconnect) | takeover parity with a native client is a unit test (`web-gateway.test.ts`); quitting and relaunching the browser was not run |
 | CONT-SHARED | multiple bodies in snapshots | other people drawn, named plates | server | IMPLEMENTED BUT UNVERIFIED | two browsers cannot share one account (takeover, by design); a second account was not driven |
 | CONT-OFFLINE | scheduler | world continues while the page is closed | server | VERIFIED (by design) | the client is not part of the simulation; differential test shows identical admission with or without it |
 
@@ -93,4 +93,4 @@ intentions. Statuses use the mandate's words:
 | Settings, rebinding, accessibility | PARTIAL | persisted and sanitised (unit-tested); reduced motion, large text, high contrast, colour assist, subtitles exist; UI legibility measured at 720p/1080p/1440p; rebinding and every setting were not each exercised by a human |
 | Keyboard/mouse navigation of menus | VERIFIED (automated) | scenario opens Items/Abilities/Journal/Pause with keys |
 | Gamepad | IMPLEMENTED BUT UNVERIFIED on hardware | injected-pad check only, clearly labelled (`EVIDENCE.md`); **no physical controller test** |
-| Save / checkpoint | SCENARIO_SAVE | |
+| Save / checkpoint | VERIFIED (automated) | Pause → *Save the world now* returns "The world is saved." |
