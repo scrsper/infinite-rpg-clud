@@ -19,6 +19,7 @@ const renderer = flag('renderer', 'webgpu');
 const [w, h] = flag('size', '1920x1080').split('x').map(Number);
 const scale = Number(flag('seconds', '1'));
 const quality = flag('quality', '');
+const uncapped = argv.includes('--uncapped');   // lift the display's frame-rate cap so frame time reflects real cost instead of the refresh rate
 const throttle = Number(flag('throttle', '0'));   // CDP CPU throttling factor, to prove the quality governor reacts to a slow machine
 const outFile = resolve(flag('out', `.debug/web/perf/${renderer}-${w}x${h}.json`));
 mkdirSync(join(outFile, '..'), { recursive: true });
@@ -26,6 +27,7 @@ mkdirSync(join(outFile, '..'), { recursive: true });
 const st = JSON.parse(readFileSync(join(homedir(), 'TornVeilAlpha', 'web-gateway', 'gateway.json'), 'utf8')) as { origin: string; operator: string };
 if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(st.origin)) throw new Error('gateway must be loopback');
 const args = ['--disable-renderer-backgrounding', '--disable-background-timer-throttling', '--disable-backgrounding-occluded-windows', `--window-size=${w + 16},${h + 130}`];
+if (uncapped) args.push('--disable-frame-rate-limit', '--disable-gpu-vsync');
 if (renderer === 'webgpu') args.push('--enable-unsafe-webgpu', '--ignore-gpu-blocklist');
 const browser = await chromium.launch({ channel: 'chrome', headless: false, args });
 const page = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 1 });
@@ -80,7 +82,7 @@ const overall = stats(allSamples);
 const loaf = await page.evaluate('window.__loaf') as unknown[];
 const slow = await page.evaluate('window.__tv.slowEvents') as { label: string; ms: number; at: number }[];
 const tierEnd = await page.evaluate('window.__tv.ctx.quality.tier') as string;
-const result = { at: new Date().toISOString(), renderer, throttle, tierStart, tierEnd, requested: { width: w, height: h }, info, phases, overall, slow: slow.sort((a, b) => b.ms - a.ms).slice(0, 25), longFrames: (loaf as { dur: number }[]).filter(x => x.dur >= 50).slice(0, 40), logs: logs.slice(0, 8), note: 'Automated ordinary-input run against the isolated preview world; not a human playtest.' };
+const result = { at: new Date().toISOString(), renderer, uncapped, throttle, tierStart, tierEnd, requested: { width: w, height: h }, info, phases, overall, slow: slow.sort((a, b) => b.ms - a.ms).slice(0, 25), longFrames: (loaf as { dur: number }[]).filter(x => x.dur >= 50).slice(0, 40), logs: logs.slice(0, 8), note: 'Automated ordinary-input run against the isolated preview world; not a human playtest.' };
 writeFileSync(outFile, JSON.stringify(result, null, 1));
 console.log(JSON.stringify({ renderer, size: `${w}x${h}`, engine: info.engine, phases: Object.fromEntries(Object.entries(phases).map(([k, v]) => [k, `${v.medianMs} / ${v.p95Ms} / ${v.p99Ms} ms (max ${v.maxMs}, >50: ${v.over50}, n=${v.frames})`])), logs: logs.slice(0, 4) }, null, 1));
 await browser.close();
