@@ -52,7 +52,7 @@ describe('web region detail: exact built structure, additive and opt-in', () => 
   }, 120_000);
 
   it('describes the walls, door gap and roof of every house from the real voxel grid', () => {
-    const cols = decode(web.structures.runs);
+    const cols = decode(web.structures!.runs);
     const houses = web.places.filter((p: any) => p.type === 'house' && p.indoor);
     expect(houses.length).toBeGreaterThan(0);
     for (const p of houses as any[]) {
@@ -74,7 +74,7 @@ describe('web region detail: exact built structure, additive and opt-in', () => 
   });
 
   it('keeps the projection bounded: structure data is a small fraction of a region transfer', () => {
-    const structureBytes = JSON.stringify(web.structures).length, whole = JSON.stringify(web).length;
+    const structureBytes = JSON.stringify(web.structures!).length, whole = JSON.stringify(web).length;
     expect(structureBytes).toBeLessThan(400_000);
     expect(structureBytes).toBeLessThan(whole);
   });

@@ -38,3 +38,6 @@ tests/browser/artifacts/
 
 # Python bytecode from the Blender-side garment tools.
 art/tools/**/__pycache__/
+
+# Web client build output
+dist-web
