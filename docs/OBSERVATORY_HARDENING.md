@@ -623,6 +623,14 @@ Revision 19 is preserved as intermediate evidence. Commit `f5eb319` starts revis
 
 ## Limits that remain AMBER
 
+The final saved-state comparator also audits object property enumeration order. Earlier
+content fingerprints sort object keys, which alone cannot certify future iteration behavior
+of knowledge tables. A synthetic two-key reversal passed the old comparator and fails the
+strengthened one; identical input still passes. Final comparisons report value and order
+differences separately, and count either as a divergence. Only envelope `savedAt` is omitted.
+This verification change does not alter simulation behavior. The fingerprint source comment
+changed after revision 20 started; its algorithm and all simulation source remain unchanged.
+
 - Activity-rate alerts retain their original thresholds. Distinct reports, timed hiding,
   ordinary observations and repeated care can cross them. Complete worst-window receipts
   are available, but passing the concrete progress checks is not proof that every future
