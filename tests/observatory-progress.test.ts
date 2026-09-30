@@ -18,6 +18,31 @@ import { MAX_TESTIMONY_HOPS } from '../src/sim/mind/knowledge';
 import { syncNeeds } from '../src/sim/core/physiology';
 
 describe('progress defects exposed by every-hour 30-day review', () => {
+  it.each(['eat', 'harvest'] as const)('keeps an unfinished %s trip when its proposal disappears, but releases terminal plans and admits stronger needs', type => {
+    const tw = createTestWorld(), w = tw.world;
+    const p = addPerson(tw, 'Worker', 'villager', v(10, 1, 10)), body = w.primaryBody(p.id)!;
+    p.schedule = []; p.wealth = 0;
+    p.needs = { hunger: 0, thirst: 0, energy: 0, social: 1, comfort: 0 };
+    const attempt = { type, key: `${type}:observed-source`, utility: .8, createdAt: w.now - 1000, reasons: ['previous local observation'], targetPos: v(20, 1, 20) };
+    p.mind.goal = attempt;
+    p.mind.plan = [{ type: 'goto', pos: v(20, 1, 20), status: 'active' }, { type, status: 'pending', duration: 1800 }];
+    (tw.sim as any).think(p, body);
+    expect(p.mind.decision?.candidates.some(c => c.key === attempt.key)).toBe(false);
+    expect(p.mind.goal?.key).toBe(attempt.key);
+    expect(p.mind.plan[0].status).toBe('active');
+    // A failed physical attempt is not retained merely because its old assessment was high.
+    p.mind.plan.forEach(a => { a.status = 'failed'; });
+    (tw.sim as any).think(p, body);
+    expect(p.mind.goal?.key).not.toBe(attempt.key);
+    // Commitment is a comparison, not immunity from stronger needs.
+    p.mind.goal = attempt;
+    p.mind.plan = [{ type: 'goto', pos: v(20, 1, 20), status: 'active' }, { type, status: 'pending', duration: 1800 }];
+    makePlace(w, 'well', 'well', { x0: 9, x1: 11, z0: 19, z1: 21, y0: 1, y1: 3 }, { inside: v(10, 1, 20) });
+    p.needs.thirst = 1;
+    (tw.sim as any).think(p, body);
+    expect(p.mind.goal?.type).toBe('drink_water');
+  });
+
   it('lets an invested critical water attempt compete with proximity fear, while an actual immediate attack interrupts', () => {
     const tw = createTestWorld(), w = tw.world;
     const p = addPerson(tw, 'Parched', 'villager', v(10, 1, 10), { traits: { courage: 0, sociability: 0 } });

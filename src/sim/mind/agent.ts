@@ -1438,21 +1438,15 @@ export class Simulation {
       // disengage step mid-plan, exactly the kind of "goal completes on paper but never really
       // finishes" defect this stabilization pass exists to close.
       const inFlightPipeline = cur.type === 'rob' || cur.type === 'attack' || cur.type === 'confront';
-      // Turning away naturally removes a threat from the facing cone. That is not evidence
-      // of safety. Retain the assessed urgency while this finite escape (travel + hide) is
-      // unfinished; completed/failed attempts and stronger competing needs remain ordinary
-      // decisions under the same hysteresis rule.
-      // Threat awareness suppresses several NEW routine proposals. It does not make an
-      // already-started, unfinished trip worthless: otherwise merely turning toward a
-      // distant threat lets a weaker social/shelter goal cancel water, cargo or care,
-      // then looking away resumes it. Retain the last assessed value for this finite
-      // attempt. Its actions still enforce prerequisites and fail normally; a winning
-      // emergency or a materially stronger need still interrupts through the same rules.
-      // A newly proposed destination for the same need is also not evidence that the
-      // current trip failed (e.g. food at the edge of perception). Apply the ordinary
-      // margin to its last assessment until the finite attempt succeeds or fails.
-      const assessedAttempt = curInProgress && (cur.type === 'flee' || !!threat || cur.type === best.type);
-      const curU = curCand?.utility ?? (assessedAttempt ? cur.utility : inFlightPipeline ? 0.9 : 0);
+      // New proposals depend on current perception, location and evidence freshness.
+      // Leaving a food source's bounds, losing sight of a field, or turning away from
+      // danger does not invalidate the finite trip already undertaken on that evidence.
+      // Preserve its last assessment when no fresh candidate reassesses it. Otherwise
+      // a weaker routine wins against an artificial zero, reverses the actor, and
+      // regenerates the stronger proposal at the same boundary every think tick.
+      // Actions still enforce prerequisites and finish/fail normally. Fresh candidate
+      // utility, stronger needs, and immediate danger still compete below.
+      const curU = curCand?.utility ?? (curInProgress ? cur.utility : inFlightPipeline ? 0.9 : 0);
       // v0.5 §III: a 'committed' goal (haul/build) whose deliverable is still open must NOT lose
       // hysteresis protection just because THIS particular leg's plan finished (goto+load+goto+
       // unload is one leg of a possibly-many-trip haul) — that reset-to-unprotected-at-every-
