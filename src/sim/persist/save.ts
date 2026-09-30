@@ -387,7 +387,6 @@ export function deserialize(raw: string): { world: World; gen: ReturnType<typeof
     for (const s of data.places) { const p = world.place(s.id); if (!p) continue; p.ownerId = s.ownerId; s.anchors.forEach((o: string | null, i: number) => { if (p.anchors[i]) p.anchors[i].ownerId = o ?? undefined; }); }
     for (const s of data.factions ?? []) { const f = world.faction(s.id); if (!f) continue; f.leaderId = s.leaderId; f.knowledge = s.knowledge; }
     if (data.diffs?.length) { world.grid.recording = false; world.grid.applyDiffs(data.diffs); world.grid.initCaches(); world.nav.rebuildAll(); world.grid.dirtyChunks.clear(); }
-    if (data.doors?.length) world.grid.restoreDoorStates(data.doors);
     // v0.2.4: canonical plot state is authoritative — re-project it onto the grid (harmless if
     // the diffs already restored the same blocks; corrects any drift).
     if (world.fields.length) syncFieldBlocks(world);
@@ -396,6 +395,9 @@ export function deserialize(raw: string): { world: World; gen: ReturnType<typeof
     // blocks, this restores the Place's identity/anchors). Idempotent.
     if (world.resourceNodes.length) syncResourceNodeBlocks(world);
     for (const proj of world.constructionProjects) if (proj.status === 'complete') materializeStructure(world, proj);
+    // Reconstructing a completed structure clears and rebuilds its door voxel. Restore
+    // the saved open/closed state after that projection, so loading is not a door action.
+    if (data.doors?.length) world.grid.restoreDoorStates(data.doors);
     if (world.resourceNodes.length || world.constructionProjects.some(p => p.status === 'complete')) { world.grid.dirtyChunks.clear(); world.nav.rebuildAll(); }
     world.grid.recording = true;
     world.rebuildLivingIndices();

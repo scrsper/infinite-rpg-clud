@@ -106,7 +106,9 @@ export function refreshReport(world: World, p: Person, k: KnowledgeItem, authori
   // ---- gave up for now, but an authority in plain sight reopens it: standing in front of a
   // guard and saying nothing because of a back-off timer would be the model failing, not working.
   if (r.status === 'unavailable' || r.status === 'no_authority') {
-    const inSight = p.mind.percepts.some(pc => authorities.some(g => g.id === pc.entityId));
+    // Merely seeing the same unreachable guard across a gap is not evidence that the
+    // failed approach can now succeed. Reopen when ordinary conversation is in reach.
+    const inSight = p.mind.percepts.some(pc => pc.distance <= 3.5 && authorities.some(g => g.id === pc.entityId));
     if (inSight) { r.status = 'seeking'; r.deferUntil = undefined; r.note = undefined; }
   }
   if (r.status === 'moot' || r.status === 'delivered') { r.status = 'seeking'; r.note = undefined; }

@@ -3,6 +3,7 @@ import type { World } from '../core/world';
 import { appraiseClaim, proposeConcerns, type Appraisal } from '../social/appraisal';
 import { personalSituationView, situationById, situationForEvent } from '../social/situation';
 import { tradeMakes } from '../world/supply';
+import { woundSeverity, CARE_WOUND_THRESHOLD } from '../core/attributes';
 
 /**
  * CONCERNS — the mechanism by which knowledge acquires behavioural force (v0.9 §B).
@@ -195,9 +196,9 @@ export function maintainConcerns(world: World, p: Person, hours: number): void {
     // A welfare concern about someone I can see up and about, who is not hurt, is discharged.
     if ((c.kind === 'welfare' || c.kind === 'work') && c.subjectId) {
       const subject = world.person(c.subjectId);
-      const body = subject ? world.primaryBody(subject.id) : undefined;
-      const seenNow = p.mind.percepts.some(pc => pc.entityId === c.subjectId);
-      if (subject && subject.alive && body && seenNow && body.health >= body.maxHealth * 0.9 && body.pose !== 'downed') {
+      const seen = p.mind.percepts.find(pc => pc.entityId === c.subjectId);
+      const body = seen && world.body(seen.bodyId);
+      if (subject && subject.alive && body && !body.dead && (c.kind === 'welfare' ? woundSeverity(body) <= CARE_WOUND_THRESHOLD : body.health >= body.maxHealth * 0.9) && body.pose !== 'downed') {
         resolveConcern(world, p, c, 'seen_well'); continue;
       }
       if (subject && !subject.alive && c.kind === 'work') { resolveConcern(world, p, c, 'died'); continue; }

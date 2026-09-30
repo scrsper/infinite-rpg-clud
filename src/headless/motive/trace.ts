@@ -269,7 +269,8 @@ function familyTrace(world: World, sim: Simulation, spec: MotiveSpec): MotiveTra
   // or pretend an assault occurred. Select a free pair with a still-injurable subject.
   const available = (p: Person): boolean => {
     const b = world.primaryBody(p.id);
-    return !!b && !b.dead && !p.surrender && !p.custody?.active && b.subduedUntil <= world.physicalTime;
+    return !!b && b.present && !b.dead && !['sleep', 'downed'].includes(b.pose)
+      && !p.surrender && !p.custody?.active && b.subduedUntil <= world.physicalTime;
   };
   const candidates = ordinaryVillagers(world).filter(p => {
     const spouse = spouseOf(world, p);
@@ -288,7 +289,7 @@ function familyTrace(world: World, sim: Simulation, spec: MotiveSpec): MotiveTra
   // The multi-step acceptance case requires timely news, not a lucky next-day encounter.
   // Stage a messenger who hears from the victim, then reports through the ordinary knowledge/tell pipeline.
   const messenger = world.persons().filter(p => p.alive && !isExternallyControlled(p) && !p.hostile
-    && ![subject.id, partner.id, aggressor.id].includes(p.id))
+    && available(p) && ![subject.id, partner.id, aggressor.id].includes(p.id))
     .sort((a, b) => getRel(partner, b.id).trust - getRel(partner, a.id).trust || a.id.localeCompare(b.id))[0];
   const messengerBody = world.primaryBody(messenger.id)!;
   const messengerHome = { ...messengerBody.pos };
@@ -310,9 +311,9 @@ function familyTrace(world: World, sim: Simulation, spec: MotiveSpec): MotiveTra
   const report = Object.values(subject.knowledge).find(k => k.claim.type === 'attack'
     && k.claim.actor === aggressor.id && k.claim.target === subject.id && k.source.type === 'witnessed');
   if (!report) throw new Error('Family trace requires the victim to know the assault before reporting it');
-  sim.tell(subject, messenger, report);
+  if (!sim.tell(subject, messenger, report)) throw new Error('Family fixture failed to deliver the victim report to its messenger');
   placeBeside(world, messenger, partner);
-  sim.tell(messenger, partner, messenger.knowledge[report.key]);
+  if (!sim.tell(messenger, partner, messenger.knowledge[report.key])) throw new Error('Family fixture failed to deliver timely news to the spouse');
   messengerBody.pos = messengerHome;
   const partnerBody = world.primaryBody(partner.id)!;
   const gap = Math.hypot(partnerBody.pos.x - subjectBody.pos.x, partnerBody.pos.z - subjectBody.pos.z);

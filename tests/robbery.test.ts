@@ -193,9 +193,13 @@ describe('robbery causal loop (Priority 1 stabilization)', () => {
     tw.world.rng = new FixedRNG(0.0) as unknown as RNG; // force the resistance path so the victim is actually downed
     makeItem(tw.world, 'sword', 'a notched sword', { owner: bandit.id, holder: bandit.id, damage: 26 });
     makeItem(tw.world, 'coins', 'silver coins', { owner: villager.id, holder: villager.id, quantity: 10 });
-    // Run well past the ~45s downed-recovery window so the victim stands back up while still
-    // within the bandit's perception range, which is exactly the scenario the old code looped on.
-    step(tw, 90);
+    // This fixture specifically tests recovery after defeat. A healthy victim can now
+    // escape on reachable routes, so start this resisting victim badly injured and
+    // require an actual downing before checking the post-recovery interval.
+    tw.world.primaryBody(villager.id)!.health = 1;
+    for (let i = 0; i < 720 && !tw.world.conflicts.some(c => c.downed?.who === villager.id); i++) step(tw, .25);
+    expect(tw.world.conflicts.some(c => c.downed?.who === villager.id)).toBe(true);
+    step(tw, 90); // well beyond the ~45-second recovery window
     const attacksOnVictim = tw.world.events.filter(e => e.type === 'attack' && e.actor === bandit.id && e.target === villager.id);
     // A single robbery may land a couple of hits while subduing, but must not keep re-engaging
     // once the target has been downed and the robbery has completed.

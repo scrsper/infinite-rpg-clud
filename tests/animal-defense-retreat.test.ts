@@ -10,7 +10,10 @@ import { senseDefense } from '../src/sim/ecology/defense';
  */
 describe('animal defence after a retreat', () => {
   it('a boar whose retreat has ended warns the same nearby person again instead of crashing', () => {
-    const s = new BridgeSession(918271, { playable: true }), w = s.world;
+    // This regression exercises one embodied animal's state transition. The ordinary
+    // bridge world has the same wildlife mechanics; generating the entire playable
+    // region made setup alone exceed the five-second test budget under audit load.
+    const s = new BridgeSession(918271), w = s.world;
     const person = w.person(w.playerId!)!, pb = w.primaryBody(person.id)!;
     const boar = w.creatures().find(c => c.species === 'woodland_boar' && c.wildlife!.sex === 'male' && !c.wildlife!.parentIds.length) as Creature;
     const bb = w.primaryBody(boar.id)!, spec = w.ecology!.species[boar.species], d = spec.defense!;

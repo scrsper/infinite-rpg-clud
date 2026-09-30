@@ -8,7 +8,9 @@ describe('crime information flow', () => {
     const player = addPerson(tw, 'the Traveler', 'traveler', v(6.5, 1, 6.5), { controlled: true });
     const tomas = addPerson(tw, 'Tomas Reed', 'apprentice', v(5.5, 1, 6.5));
     const mara = addPerson(tw, 'Mara Bramble', 'baker', v(5.5, 1, 10.5), { traits: { courage: 0.35, honesty: 0.9 } });
-    const guard = addPerson(tw, 'Hale Dorn', 'guard', v(34.5, 1, 10.5), { workId: tw.places.guardhouse, traits: { courage: 0.8 } });
+    // The witness knows the public post, not an unseen guard's arbitrary live position.
+    const guardPos = tw.world.place(tw.places.guardhouse)!.inside;
+    const guard = addPerson(tw, 'Hale Dorn', 'guard', { ...guardPos }, { workId: tw.places.guardhouse, traits: { courage: 0.8 } });
     guard.mind.thinkInterval = Number.POSITIVE_INFINITY;
     setRelTags(mara, tomas.id, 'sweetheart');
     getRel(mara, tomas.id).affection = 0.9;
@@ -32,7 +34,10 @@ describe('crime information flow', () => {
     expect(tw.world.events.some(e => e.type === 'goal_changed' && e.actor === mara.id && ['report', 'flee'].includes(e.data.to))).toBe(true);
     expect(tw.world.primaryBody(mara.id)!.pos.x).toBeGreaterThan(maraStartX + 2);
 
-    const told = tw.world.events.find(e => e.type === 'told' && e.actor === mara.id && e.target === guard.id && e.data.key === `ev:${attack.id}`);
+    const report = () => tw.world.events.find(e => e.type === 'told' && e.actor === mara.id && e.target === guard.id && e.data.key === `ev:${attack.id}`);
+    // Allow the real trip to the known post, stopping at the information transfer.
+    for (let elapsed = 8; !report() && elapsed < 24; elapsed += .25) step(tw, .25);
+    const told = report();
     expect(told).toBeDefined();
     const guardKnowledge = guard.knowledge[`ev:${attack.id}`];
     expect(guardKnowledge?.source).toMatchObject({ type: 'told', from: mara.id, viaEvent: told?.id });
@@ -42,7 +47,7 @@ describe('crime information flow', () => {
     expect(attack.perceivedBy.some(p => p.who === guard.id)).toBe(false);
     expect(['investigate', 'confront']).toContain(guard.mind.goal?.type);
 
-    const guardStartX = 34.5;
+    const guardStartX = guardPos.x;
     step(tw, 1);
     expect(tw.world.primaryBody(guard.id)!.pos.x).toBeLessThan(guardStartX - 0.5);
   });

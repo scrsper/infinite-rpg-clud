@@ -15,6 +15,7 @@ import { householdOwns, householdOf, householdMembers } from './household';
 import { practiceSkill, skillOf, tradeYield } from '../core/skills';
 import { learnPlace } from '../mind/knowledge';
 import { remember } from '../mind/memory';
+import { noteWorkBlocked, clearShortfall } from './shortfall';
 
 // Re-exported for existing callers/tests that import stock helpers from metabolism (v0.3 moved
 // the generalized implementations to sim/world/stock.ts — Priority 1).
@@ -227,9 +228,11 @@ export function plantPlot(world: World, field: Field, plot: CropPlot, farmer: Pe
       actor: farmer.id, placeId: field.placeId, pos: { x: plot.x + 0.5, y: plot.y, z: plot.z + 0.5 }, significance: 0.2,
       data: { need: 'grain', reason: 'seed', have: took }, summary: `${farmer.name} had no seed grain to sow in ${world.nameOf(field.placeId)}`,
     });
+    noteWorkBlocked(world, farmer, field.placeId, 'grain', 'wheat');
     return false;
   }
   plot.state = 'planted'; plot.growth = 0; plot.plantedAt = world.now; plot.maturedAt = undefined; plot.harvestedAt = undefined;
+  clearShortfall(world, farmer, field.placeId, 'grain');
   projectCrop(world, plot);
   world.emit('crop_planted', {
     actor: farmer.id, placeId: field.placeId, pos: { x: plot.x + 0.5, y: plot.y, z: plot.z + 0.5 }, significance: 0.15,
@@ -252,6 +255,7 @@ export function harvestPlot(world: World, field: Field, plot: CropPlot, farmer: 
     data: { fieldId: field.id, crop: plot.crop, yield: yield_ }, summary: `${farmer.name} harvested wheat in ${world.nameOf(field.placeId)} (+${yield_} grain)`,
   });
   addPlaceStock(world, 'grain', yield_, field.placeId, field.ownerId ?? farmer.id, ev.id, 'harvested');
+  clearShortfall(world, farmer, field.placeId, 'grain');
   payWage(world, field.ownerId, farmer, 1);
   return yield_;
 }

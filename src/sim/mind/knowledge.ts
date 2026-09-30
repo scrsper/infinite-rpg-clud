@@ -476,6 +476,20 @@ export function locationKnowledge(world: World, p: Person, entityId: EntityId, p
   p.knowledge[key] = { key, kind: 'location', claim: { entityId, pos: { ...pos }, placeId: place?.id }, confidence: 1, learnedAt: world.now, source, hops: 0, sharedWith: [] };
   pruneKnowledge(world, p);
 }
+
+/** An unsuccessful local search refutes a location, not the person's existence or their
+ * whereabouts elsewhere. A later sighting replaces this same location belief normally. */
+export function locationNotFound(world: World, p: Person, entityId: EntityId, pos: Vec3, eventId: string): void {
+  const key = `loc:${entityId}`, old = p.knowledge[key];
+  const remembered = old?.claim.pos as Vec3 | undefined;
+  // A newer sighting/testimony elsewhere is not disproved by reaching an old destination.
+  if (remembered && Math.hypot(remembered.x - pos.x, remembered.y - pos.y, remembered.z - pos.z) >= 3.5) return;
+  const searched: Vec3[] = [...(old?.claim.searched ?? [])];
+  if (!searched.some(q => Math.hypot(q.x - pos.x, q.y - pos.y, q.z - pos.z) < 3.5)) searched.push({ ...pos });
+  p.knowledge[key] = { key, kind: 'location', claim: { entityId, searched }, confidence: 1,
+    learnedAt: world.now, source: { type: 'witnessed', viaEvent: eventId }, hops: 0, sharedWith: [] };
+  pruneKnowledge(world, p);
+}
 // Conflict intents that represent lawful or defensive force rather than criminal aggression
 // (Constitution §11: hostile force is not automatically a crime, and a guard's own arrest
 // cannot be indistinguishable from the crime it's answering — without this, every witnessed

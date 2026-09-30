@@ -8,6 +8,7 @@ import { introduce } from '../sim/mind/people';
 import { createAnimal, enableEcology } from '../sim/ecology/animals';
 import { registerEcologyResources } from '../sim/world/ecologyResources';
 
+export const SCENARIO_VERSION = 2; // v1 left terrain-edit recording disabled after generation.
 export const SCENARIOS = [
   ['ordinary', 'Ordinary settlement', 'Authored Ashford reference settlement, generated from seed; all inhabitants autonomous.'],
   ['food-shortage', 'Food shortage', 'Initial edible stocks reduced to 5%; needs and production rates unchanged.'],
@@ -31,6 +32,7 @@ export const SCENARIOS = [
 export function createScenario(id = 'ordinary', seed = 918271) {
   if (!SCENARIOS.some(s => s.id === id) || !Number.isInteger(seed) || seed < 0 || seed > 2147483647) throw new Error('Invalid scenario or seed');
   const world = new World(seed), gen = generateVillage(world), sim = new Simulation(world);
+  world.grid.recording = true;
   for (const p of world.persons()) setExternalControl(p, false);
   const adults = world.persons().filter(p => p.alive && p.age >= 18 && !p.hostile);
   const center = gen.places.square.inside;

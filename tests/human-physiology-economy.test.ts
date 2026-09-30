@@ -381,9 +381,13 @@ describe('v0.4 disclosed hysteresis pathology — regression (v0.5 §III.13)', (
       if (e.type === 'goal_committed') commitEvents.push(e.id);
       if (e.type === 'resource_delivered' && e.data.haulId === task.id) deliveries.push(Number(e.data.quantity));
     });
-    let seconds = 0; const maxSeconds = 10 * SECONDS_PER_HOUR;
-    while (task.status !== 'delivered' && seconds < maxSeconds) {
-      const dt = 0.15; const wdt = world.clock.advance(dt); world.physicalTime += dt; sim.step(dt, wdt); sim.flushSpeech(); seconds += dt;
+    // This asserts multi-trip progress, which is already established after the second
+    // delivery. Waiting for the entire order used to continue for 25 world-days after
+    // real progress when a later fight interrupted the final trip (seed 5502: 9/10
+    // delivered before defending against bandits). Do not demand immunity to later life.
+    const until = world.now + 10 * SECONDS_PER_HOUR;
+    while (task.delivered <= perTrip && !['failed', 'cancelled'].includes(task.status) && world.now < until) {
+      const dt = 0.15; const wdt = world.clock.advance(dt); world.physicalTime += dt; sim.step(dt, wdt); sim.flushSpeech();
     }
     expect(task.delivered).toBeGreaterThan(perTrip);
     expect(commitEvents.length).toBeGreaterThan(0);
