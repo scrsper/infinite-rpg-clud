@@ -1,0 +1,60 @@
+import { chromium } from 'playwright';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { createObservatoryServer } from '../../src/observatory/server';
+
+const output = '.debug/observatory'; await mkdir(output, { recursive: true });
+const { server, runtime } = createObservatoryServer();
+await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve)); runtime.startLoop();
+const port = (server.address() as { port: number }).port;
+const browser = await chromium.launch({ channel: 'chrome', headless: false });
+const page = await browser.newPage({ viewport: { width: 1600, height: 1000 }, deviceScaleFactor: 1 });
+const errors: string[] = []; page.on('pageerror', e => errors.push(e.message)); page.on('console', m => { if (m.type() === 'error' && !m.text().includes('favicon')) errors.push(m.text()); });
+const check = (condition: unknown, message: string) => { if (!condition) throw new Error(message); };
+try {
+  await page.goto(`http://127.0.0.1:${port}`); await page.locator('.person').first().waitFor();
+  await page.locator('#scenario').selectOption('testimony'); await page.locator('#reset').click(); await page.waitForTimeout(800);
+  await page.locator('.person', { hasText: 'Edda Ironhand' }).click();
+  await page.locator('.belief', { hasText: 'old road' }).waitFor();
+  check(await page.locator('.truth-label').textContent() === 'CANONICAL TRUTH', 'Truth panel missing');
+  check(await page.locator('.belief-label').textContent() === 'WHAT THIS PERSON BELIEVES', 'Belief panel missing');
+  await page.evaluate(() => scrollTo(0, 0)); await page.screenshot({ path: `${output}/observatory-overview.png` });
+  await page.locator('.metric', { hasText: 'Knowledge propagation' }).click();
+  await page.locator('#metric-detail .event').first().click();
+  await page.locator('#cause-detail .cause-node').first().waitFor();
+  check((await page.locator('#cause-detail').textContent())?.includes('CANONICAL TRUTH'), 'Aggregate did not open its source event');
+  await page.locator('#event-search').fill('Tam Reed drowned');
+  await page.locator('#event-list .event', { hasText: 'Tam Reed drowned' }).click();
+  await page.locator('#cause-detail .cause-edge').first().waitFor();
+  check((await page.locator('#cause-detail').textContent())?.includes('stored event.causes'), 'Stored flood/death causality missing');
+  await page.locator('.person', { hasText: 'Edda Ironhand' }).click();
+  await page.locator('#ai-enabled').uncheck(); await page.locator('#config-form button[type=submit]').click();
+  await page.locator('#player-text').fill('What did you hear about the old road?'); await page.locator('#ask').click();
+  await page.waitForFunction(() => document.getElementById('speech')?.textContent?.includes('cannot be certain'));
+  check((await page.locator('#language-debug').textContent())?.includes('DETERMINISTIC FALLBACK'), 'Offline mode missing');
+  await page.locator('.language-panel').scrollIntoViewIfNeeded(); await page.screenshot({ path: `${output}/observatory-language.png` });
+  if (process.argv.includes('--live')) {
+    await page.locator('#ai-enabled').check(); await page.locator('#config-form button[type=submit]').click();
+    await page.locator('#player-text').fill('Who are you?'); await page.locator('#ask').click();
+    await page.waitForFunction(() => document.getElementById('language-debug')?.textContent?.includes('VALIDATED LOCAL MODEL'), undefined, { timeout: 120000 });
+    await page.locator('.language-panel').scrollIntoViewIfNeeded(); await page.screenshot({ path: `${output}/observatory-local-model.png` });
+    await page.locator('#thought').click();
+    await page.waitForFunction(() => document.getElementById('language-debug')?.textContent?.includes('Read-only expression of current self state'), undefined, { timeout: 120000 });
+  }
+  await page.locator('#checkpoint').click(); await page.locator('[data-advance="3600"]').click();
+  await page.waitForFunction(() => document.getElementById('report')?.textContent?.includes('Completed'), undefined, { timeout: 120000 });
+  const acting = runtime.world.livingPersons().find(p => p.mind.goal);
+  check(acting, 'No active goal to inspect after advancing');
+  await page.locator('.person', { hasText: acting!.name }).click();
+  await page.getByRole('button', { name: 'Explore the recorded goal adoption' }).click();
+  await page.locator('#cause-detail .cause-node').first().waitFor();
+  check((await page.locator('#person-inspector').textContent())?.includes('Current goal:'), 'Current goal reasons missing');
+  await page.evaluate(() => scrollTo(0, 0)); await page.screenshot({ path: `${output}/observatory-goal.png` });
+  await page.locator('#restore').click();
+  await page.locator('#verify').click(); await page.waitForTimeout(2000);
+  check((await page.locator('#health-checks').textContent())?.includes('two independent initializations'), 'Replay evidence not displayed');
+  await page.setViewportSize({ width: 1100, height: 800 }); await page.evaluate(() => scrollTo(0, 0)); await page.screenshot({ path: `${output}/observatory-1100.png` });
+  check(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'Horizontal page overflow');
+  check(errors.length === 0, 'Browser errors: ' + errors.join('; '));
+  await writeFile(`${output}/browser-evidence.json`, JSON.stringify({ passed: true, liveModel: process.argv.includes('--live'), viewport: [1600, 1000], secondViewport: [1100, 800], errors, checks: ['select person', 'truth/belief separation', 'causal event source', 'click aggregate', 'offline free text', 'uncertain testimony', 'advance 1 hour', 'current goal reasons and adoption cause', 'checkpoint restore', 'replay check', 'no horizontal overflow', ...(process.argv.includes('--live') ? ['local model UI response', 'read-only thought UI'] : [])] }, null, 2));
+  console.log('Observatory browser acceptance passed; screenshots saved in ' + output);
+} finally { await browser.close(); runtime.close(); await new Promise<void>(resolve => server.close(() => resolve())); }

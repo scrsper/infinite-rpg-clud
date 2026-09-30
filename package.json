@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "observatory": "tsx src/observatory/server.ts",
+    "observatory:benchmark": "tsx scripts/observatory/benchmark.ts",
+    "observatory:check": "vitest run tests/observatory.test.ts tests/observatory-language.test.ts",
     "bridge": "tsx src/bridge/server.ts",
     "bridge:verify": "tsx src/headless/bridge/livecheck.ts",
     "dev": "vite --host",
