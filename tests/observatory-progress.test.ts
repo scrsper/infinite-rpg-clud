@@ -274,6 +274,34 @@ describe('progress defects exposed by every-hour 30-day review', () => {
     expect(p.mind.decision?.candidates.some(g => g.type === 'attack')).toBe(true);
   });
 
+  it('executes a response to observed fresh aggression instead of completing an old defeat again', () => {
+    const tw = createTestWorld(), w = tw.world;
+    const p = addPerson(tw, 'Defender', 'guard', v(10, 1, 10));
+    const t = addPerson(tw, 'Opponent', 'villager', v(11, 1, 10));
+    const pb = w.primaryBody(p.id)!, tb = w.primaryBody(t.id)!;
+    const c = beginConflict(w, { initiator: p.id, target: t.id, cause: 'self_defense', intent: 'subdue' });
+    recordDowning(w, c, t.id, p.id);
+    tb.pose = 'attack'; tb.attackTarget = p.id;
+    p.mind.percepts = [{ entityId: t.id, bodyId: tb.id, pos: { ...tb.pos }, distance: 1, how: 'saw', tick: w.now }];
+    p.mind.goal = { type: 'attack', key: `attack:${t.id}`, targetEntity: t.id, createdAt: w.now, utility: 1, reasons: [] };
+    p.mind.plan = [{ type: 'attack', targetEntity: t.id, status: 'pending', data: { intent: 'defend' } }];
+    (tw.sim as any).act(p, pb, .15, 9);
+    expect(p.mind.plan[0].status).toBe('active');
+    expect(pb.combatAction?.kind).toBe('attack');
+    expect(w.events.some(e => e.type === 'goal_completed' && e.actor === p.id)).toBe(false);
+    // Actual incapacity remains terminal, regardless of the previous sensory cue.
+    w.physicalTime = pb.combatAction!.completeAt + 1; tb.pose = 'downed';
+    (tw.sim as any).act(p, pb, .15, 9);
+    expect(p.mind.plan[0].status).toBe('done');
+    // Unseen activity is not permission to reopen the old defeat.
+    const previousAction = pb.combatAction!.id;
+    tb.pose = 'attack'; p.mind.percepts = [];
+    p.mind.plan = [{ type: 'attack', targetEntity: t.id, status: 'pending', data: { intent: 'defend' } }];
+    (tw.sim as any).act(p, pb, .15, 9);
+    expect(p.mind.plan[0].status).toBe('done');
+    expect(pb.combatAction!.id).toBe(previousAction);
+  });
+
   it('distinguishes fresh observed aggression from reprocessing the same defeat', () => {
     const tw = createTestWorld(), w = tw.world;
     const p = addPerson(tw, 'Defender', 'guard', v(10, 1, 10));

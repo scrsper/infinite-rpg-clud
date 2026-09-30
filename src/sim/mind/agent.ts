@@ -2452,7 +2452,12 @@ export class Simulation {
         // record as well as the live pose means the same fight ends the same way whether the
         // world is stepped sixty times a second or once a calendar day.
         const liveConflict = a.targetEntity ? conflictBetween(w, p.id, a.targetEntity) : undefined;
-        if (tb.pose === 'downed' || liveConflict?.downed?.who === a.targetEntity
+        // Deliberation permits responding to newly witnessed aggression after an
+        // earlier defeat. Execution must honor that same evidence: otherwise it
+        // immediately completes the old defeat, then reselects this response while
+        // the observed strike is still in progress. Present incapacity still wins.
+        const witnessedAggression = tb.pose === 'attack' && m.percepts.some(pc => pc.entityId === a.targetEntity && pc.bodyId === tb.id && pc.how === 'saw');
+        if (tb.pose === 'downed' || (liveConflict?.downed?.who === a.targetEntity && !witnessedAggression)
           || (tp && (tp.surrender || tp.custody?.active || tb.subduedUntil > w.physicalTime))) {
           const intent = a.data?.intent as ConflictIntent | undefined;
           const isGuard = p.occupation === 'guard' || p.occupation === 'captain';
