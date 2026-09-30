@@ -16,14 +16,16 @@ import { buildChronicle } from '../src/sim/history/chronicle';
 import { RESOURCE_MASS_KG } from '../src/sim/world/factory';
 import { energyBalanceError } from '../src/sim/kernel/environment';
 
-// Explicit steady wind isolates productive power from procedural weather timing. Observe a
-// fixed 40 minutes: autonomous social/need choices can postpone the baker's next work period
-// beyond the former 30-minute cutoff even after real mechanical flour has been delivered.
-const OBSERVATION_SECONDS = 2400;
+// Explicit steady wind isolates productive power from procedural weather timing. Observe
+// five world days at the fixture's 60:1 clock, covering several ordinary work/rest cycles.
+// The old 40-physical-minute deadline cut off real progress: flour was delivered, but the
+// baker pursued meals, sleep, conversation and temporary mill work before baking. Preserve
+// all output, control, conservation and teaching assertions without forcing those choices.
+const OBSERVATION_SECONDS = 5 * 86400 / 60;
 const run = (conditions = {}, seconds = OBSERVATION_SECONDS) => { const lab = createLivingPressure(17, undefined, { steadyWind: 0.6, ...conditions }); advanceLiving(lab.world, lab.sim, seconds); return lab; };
 let ordinary: ReturnType<typeof run>, calm: ReturnType<typeof run>, manual: ReturnType<typeof run>;
 describe('living universe integration', () => {
-  beforeAll(() => { ordinary = run(); calm = run({ calm: true }); manual = run({ manualSkill: 0.95 }); }, 60000);
+  beforeAll(() => { ordinary = run(); calm = run({ calm: true }); manual = run({ manualSkill: 0.95 }); }, 120000);
   it('starts procedural towns with primitive education and resources but no components or methods', () => {
     const lab = createLivingWorld(17);
     expect(lab.world.kernel.components).toEqual([]); expect(lab.world.kernel.assemblies).toEqual([]);
@@ -85,7 +87,7 @@ describe('living universe integration', () => {
   });
   it('replays the same seed and initial conditions exactly', () => {
     expect(livingSnapshot(run().world)).toEqual(livingSnapshot(ordinary.world));
-  }, 30000);
+  }, 60000);
   it('substitutes shaped timber for rough timber through the same manufacture and execution path', () => {
     const lab = run({ sawnOnly: true }), [report] = livingSnapshot(lab.world);
     expect(report.mechanicalOutput).toBeGreaterThan(0); expect(report.breadWithMechanicalAncestry).toBeGreaterThan(0);
@@ -94,7 +96,7 @@ describe('living universe integration', () => {
     expect(woodParts.every(c => lab.world.kernel.ruleset.components.find(d => d.id === c.definition)?.material.endsWith('/stock-plank'))).toBe(true);
     expect(lab.world.events.some(e => e.type === 'resource_delivered' && e.data.resource === 'plank')).toBe(true);
     expect(report.methods.length).toBeGreaterThan(1);
-  }, 30000);
+  }, 60000);
   it('preserves unfinished manufacture, sources, methods and their ancestry through save/load continuation', () => {
     const lab = run({}, 90), kernel = structuredClone(lab.world.kernel);
     expect(kernel.assemblies.length).toBeGreaterThan(0);
@@ -112,7 +114,7 @@ describe('living universe integration', () => {
     expect(restored.kernel).toEqual(ordinary.world.kernel);
     expect(restored.persons().map(p => p.knowledge)).toEqual(ordinary.world.persons().map(p => p.knowledge));
     expect(restored.events.every(e => e.causes.every(id => !!restored.event(id)))).toBe(true);
-  }, 30000);
+  }, 90000);
   it('loses living access if the sole holder dies before teaching', () => {
     const lab = createLivingPressure(17);
     while (lab.world.physicalTime < 1800 && !lab.world.livingPersons().some(p => methodsHeld(p).length)) advanceLiving(lab.world, lab.sim, 1);

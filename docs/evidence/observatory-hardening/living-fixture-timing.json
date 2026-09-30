@@ -1,0 +1,1748 @@
+{
+  "classification": "E",
+  "scope": "Existing seed-17 invention integration fixture ended after 2400 physical seconds (1.667 world days). Evidence of later autonomous progress, with the same seed, initial stock, skills and explicit wind controls. No runtime repair or output threshold change.",
+  "variants": [
+    {
+      "name": "ordinary",
+      "samples": [
+        {
+          "elapsed": 2400,
+          "worldTime": 8810400,
+          "timeScale": 60,
+          "mechanicalOutput": 5.886487237694538,
+          "baked": 0,
+          "breadWithMechanicalAncestry": 0,
+          "flourDelivered": 7,
+          "methods": 1
+        },
+        {
+          "elapsed": 3600,
+          "worldTime": 8882400,
+          "timeScale": 60,
+          "mechanicalOutput": 11.770855530705692,
+          "baked": 0,
+          "breadWithMechanicalAncestry": 0,
+          "flourDelivered": 10,
+          "methods": 2
+        },
+        {
+          "elapsed": 6600,
+          "worldTime": 9062400,
+          "timeScale": 60,
+          "mechanicalOutput": 32.34946887660963,
+          "baked": 20,
+          "breadWithMechanicalAncestry": 20,
+          "flourDelivered": 23,
+          "methods": 2
+        },
+        {
+          "elapsed": 7200,
+          "worldTime": 9098400,
+          "timeScale": 60,
+          "mechanicalOutput": 32.34946887660963,
+          "baked": 20,
+          "breadWithMechanicalAncestry": 20,
+          "flourDelivered": 23,
+          "methods": 2
+        }
+      ],
+      "firstBread": {
+        "physicalTime": 6259,
+        "event": {
+          "id": "e_9935",
+          "tick": 9041940,
+          "type": "resource_transformed",
+          "category": "world",
+          "actor": "p_1",
+          "placeId": "pl_5",
+          "data": {
+            "from": "flour",
+            "fromQty": 2,
+            "to": "bread",
+            "toQty": 5,
+            "how": "baked"
+          },
+          "causes": [
+            "e_7971"
+          ],
+          "effects": [],
+          "perceivedBy": [],
+          "significance": 0.15,
+          "summary": "Wren Alder turned 2 flour into 5 bread (baked)"
+        }
+      },
+      "firstFlour": {
+        "physicalTime": 1346.5,
+        "event": {
+          "id": "e_1992",
+          "tick": 8747190,
+          "type": "resource_transformed",
+          "category": "world",
+          "actor": "p_1",
+          "placeId": "pl_6",
+          "data": {
+            "from": "grain",
+            "fromQty": 3,
+            "to": "flour",
+            "toQty": 2,
+            "how": "milled"
+          },
+          "causes": [
+            "e_346"
+          ],
+          "effects": [],
+          "perceivedBy": [],
+          "significance": 0.15,
+          "summary": "Wren Alder turned 3 grain into 2 flour (milled)"
+        }
+      },
+      "bakerGoalSequence": [
+        {
+          "physicalTime": 1.5,
+          "event": "e_53",
+          "key": "worship:pl_4",
+          "reasons": [
+            "my religious devotion",
+            "service is being held"
+          ]
+        },
+        {
+          "physicalTime": 111,
+          "event": "e_334",
+          "key": "drink_water:pl_2",
+          "reasons": [
+            "thirst 0.40"
+          ]
+        },
+        {
+          "physicalTime": 174.25,
+          "event": "e_470",
+          "key": "work:pl_5",
+          "reasons": [
+            "I normally bake at this time; other concerns may matter more",
+            "",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 280.75,
+          "event": "e_764",
+          "key": "eat:pl_16",
+          "reasons": [
+            "hunger 0.57",
+            "meal time",
+            "must find food"
+          ]
+        },
+        {
+          "physicalTime": 360.25,
+          "event": "e_934",
+          "key": "socialize:pl_1",
+          "reasons": [
+            "social need 0.70",
+            "my appetite for company",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 447.25,
+          "event": "e_1374",
+          "key": "drink_water:pl_2",
+          "reasons": [
+            "thirst 0.53"
+          ]
+        },
+        {
+          "physicalTime": 502.25,
+          "event": "e_1517",
+          "key": "socialize:pl_1",
+          "reasons": [
+            "social need 0.75",
+            "my appetite for company",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 593.5,
+          "event": "e_1667",
+          "key": "sleep:pl_16",
+          "reasons": [
+            "energy need 0.65",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 1300.75,
+          "event": "e_1957",
+          "key": "drink_water:pl_2",
+          "reasons": [
+            "thirst 0.60"
+          ]
+        },
+        {
+          "physicalTime": 1323.25,
+          "event": "e_1974",
+          "key": "work:pl_6",
+          "reasons": [
+            "Juniperstead mill is standing idle and flour is wanted",
+            "I am short of flour (worry 0.53)",
+            "there is no flour at Juniperstead bakery",
+            "my own trade is not far from it (0.17 of the way there)",
+            "my own work is stopped for want of it",
+            "concern: short of flour at them (0.53)",
+            "there is no flour at Juniperstead bakery",
+            "it happened at Juniperstead bakery"
+          ]
+        },
+        {
+          "physicalTime": 1350.25,
+          "event": "e_2008",
+          "key": "haul:pl_6",
+          "reasons": [
+            "flour is needed at Juniperstead bakery",
+            "the bakery is low on flour",
+            "",
+            "",
+            "though I am not short of coin",
+            "concern: short of flour at them (0.52)",
+            "there is no flour at Juniperstead bakery",
+            "it happened at Juniperstead bakery"
+          ]
+        },
+        {
+          "physicalTime": 1418.5,
+          "event": "e_2087",
+          "key": "eat:pl_16",
+          "reasons": [
+            "hunger 0.97",
+            "",
+            "must find food"
+          ]
+        },
+        {
+          "physicalTime": 1501,
+          "event": "e_2278",
+          "key": "socialize:pl_1",
+          "reasons": [
+            "social need 1.00",
+            "my appetite for company",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 1597,
+          "event": "e_2811",
+          "key": "drink_water:pl_2",
+          "reasons": [
+            "thirst 0.60"
+          ]
+        },
+        {
+          "physicalTime": 1651.5,
+          "event": "e_3040",
+          "key": "socialize:pl_1",
+          "reasons": [
+            "social need 0.94",
+            "my appetite for company",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 1720.5,
+          "event": "e_3362",
+          "key": "eat:pl_16",
+          "reasons": [
+            "hunger 0.72",
+            "meal time",
+            "must find food"
+          ]
+        },
+        {
+          "physicalTime": 1791,
+          "event": "e_3556",
+          "key": "socialize:pl_1",
+          "reasons": [
+            "social need 1.00",
+            "my appetite for company",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 1924.75,
+          "event": "e_3999",
+          "key": "drink_water:pl_2",
+          "reasons": [
+            "thirst 0.50"
+          ]
+        },
+        {
+          "physicalTime": 1979.25,
+          "event": "e_4090",
+          "key": "socialize:pl_3",
+          "reasons": [
+            "social need 0.78",
+            "my appetite for company",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 2094,
+          "event": "e_4265",
+          "key": "worship:pl_4",
+          "reasons": [
+            "my religious devotion",
+            "service is being held"
+          ]
+        },
+        {
+          "physicalTime": 2183.75,
+          "event": "e_4340",
+          "key": "eat:pl_16",
+          "reasons": [
+            "hunger 0.72",
+            "",
+            "must find food"
+          ]
+        },
+        {
+          "physicalTime": 2256,
+          "event": "e_4407",
+          "key": "sleep:pl_16",
+          "reasons": [
+            "energy need 0.62",
+            "it is my time to sleep"
+          ]
+        },
+        {
+          "physicalTime": 2802.5,
+          "event": "e_4591",
+          "key": "drink_water:pl_2",
+          "reasons": [
+            "thirst 0.77"
+          ]
+        },
+        {
+          "physicalTime": 2825,
+          "event": "e_4621",
+          "key": "socialize:pl_1",
+          "reasons": [
+            "social need 1.00",
+            "my appetite for company",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 2966.75,
+          "event": "e_4935",
+          "key": "eat:pl_16",
+          "reasons": [
+            "hunger 0.61",
+            "",
+            "must find food"
+          ]
+        },
+        {
+          "physicalTime": 3036.25,
+          "event": "e_5207",
+          "key": "socialize:pl_1",
+          "reasons": [
+            "social need 0.69",
+            "my appetite for company",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 3118.75,
+          "event": "e_5602",
+          "key": "drink_water:pl_2",
+          "reasons": [
+            "thirst 0.53"
+          ]
+        },
+        {
+          "physicalTime": 3172.5,
+          "event": "e_5730",
+          "key": "haul:pl_6",
+          "reasons": [
+            "flour is needed at Juniperstead bakery",
+            "the bakery is low on flour",
+            "",
+            "",
+            "though I am not short of coin"
+          ]
+        },
+        {
+          "physicalTime": 3264,
+          "event": "e_5929",
+          "key": "socialize:pl_1",
+          "reasons": [
+            "social need 0.85",
+            "my appetite for company",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 3361,
+          "event": "e_6185",
+          "key": "drink_water:pl_2",
+          "reasons": [
+            "thirst 0.42"
+          ]
+        },
+        {
+          "physicalTime": 3414.25,
+          "event": "e_6338",
+          "key": "haul:pl_6",
+          "reasons": [
+            "flour is needed at Juniperstead bakery",
+            "the bakery is low on flour",
+            "",
+            "",
+            "though I am not short of coin"
+          ]
+        },
+        {
+          "physicalTime": 3487.75,
+          "event": "e_6466",
+          "key": "eat:pl_16",
+          "reasons": [
+            "hunger 0.90",
+            "",
+            "must find food"
+          ]
+        },
+        {
+          "physicalTime": 3553.25,
+          "event": "e_6543",
+          "key": "haul:pl_6",
+          "reasons": [
+            "flour is needed at Juniperstead bakery",
+            "the bakery is low on flour",
+            "",
+            "",
+            "though I am not short of coin"
+          ]
+        },
+        {
+          "physicalTime": 3634.25,
+          "event": "e_6618",
+          "key": "drink_water:pl_2",
+          "reasons": [
+            "thirst 0.66"
+          ]
+        },
+        {
+          "physicalTime": 3640.25,
+          "event": "e_6626",
+          "key": "sleep:pl_16",
+          "reasons": [
+            "energy need 0.84",
+            "it is my time to sleep"
+          ]
+        },
+        {
+          "physicalTime": 4120.25,
+          "event": "e_6811",
+          "key": "eat:pl_16",
+          "reasons": [
+            "hunger 1.00",
+            "",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 4127.25,
+          "event": "e_6817",
+          "key": "drink_water:pl_2",
+          "reasons": [
+            "thirst 1.00"
+          ]
+        },
+        {
+          "physicalTime": 4144.5,
+          "event": "e_6824",
+          "key": "sleep:pl_16",
+          "reasons": [
+            "energy need 0.55",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 4229.5,
+          "event": "e_6848",
+          "key": "socialize:pl_1",
+          "reasons": [
+            "social need 1.00",
+            "my appetite for company",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 4342,
+          "event": "e_6999",
+          "key": "worship:pl_4",
+          "reasons": [
+            "my religious devotion",
+            "service is being held"
+          ]
+        },
+        {
+          "physicalTime": 4429,
+          "event": "e_7213",
+          "key": "drink_water:pl_2",
+          "reasons": [
+            "thirst 0.58"
+          ]
+        },
+        {
+          "physicalTime": 4493.25,
+          "event": "e_7396",
+          "key": "eat:pl_16",
+          "reasons": [
+            "hunger 0.84",
+            "",
+            "must find food"
+          ]
+        },
+        {
+          "physicalTime": 4510.75,
+          "event": "e_7481",
+          "key": "socialize:pl_1",
+          "reasons": [
+            "social need 1.00",
+            "my appetite for company",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 4606,
+          "event": "e_7647",
+          "key": "eat:pl_16",
+          "reasons": [
+            "hunger 0.42",
+            "meal time",
+            "must find food"
+          ]
+        },
+        {
+          "physicalTime": 4675,
+          "event": "e_7821",
+          "key": "socialize:pl_1",
+          "reasons": [
+            "social need 0.92",
+            "my appetite for company",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 4778.5,
+          "event": "e_8037",
+          "key": "drink_water:pl_2",
+          "reasons": [
+            "thirst 0.53"
+          ]
+        },
+        {
+          "physicalTime": 4832.5,
+          "event": "e_8147",
+          "key": "socialize:pl_1",
+          "reasons": [
+            "social need 0.90",
+            "my appetite for company",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 4912.5,
+          "event": "e_8260",
+          "key": "socialize:pl_3",
+          "reasons": [
+            "social need 0.80",
+            "my appetite for company",
+            "",
+            "I normally evening at this time; other concerns may matter more"
+          ]
+        },
+        {
+          "physicalTime": 4971.25,
+          "event": "e_8329",
+          "key": "worship:pl_4",
+          "reasons": [
+            "my religious devotion",
+            "service is being held"
+          ]
+        },
+        {
+          "physicalTime": 5061.75,
+          "event": "e_8409",
+          "key": "socialize:pl_3",
+          "reasons": [
+            "social need 0.80",
+            "my appetite for company",
+            "",
+            "I normally evening at this time; other concerns may matter more"
+          ]
+        },
+        {
+          "physicalTime": 5081.25,
+          "event": "e_8434",
+          "key": "sleep:pl_16",
+          "reasons": [
+            "energy need 0.56",
+            "it is my time to sleep"
+          ]
+        },
+        {
+          "physicalTime": 5621.25,
+          "event": "e_8570",
+          "key": "drink_water:pl_2",
+          "reasons": [
+            "thirst 0.81"
+          ]
+        },
+        {
+          "physicalTime": 5643.75,
+          "event": "e_8579",
+          "key": "eat:pl_16",
+          "reasons": [
+            "hunger 0.75",
+            "",
+            "must find food"
+          ]
+        },
+        {
+          "physicalTime": 5661,
+          "event": "e_8587",
+          "key": "socialize:pl_1",
+          "reasons": [
+            "social need 1.00",
+            "my appetite for company",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 5794.75,
+          "event": "e_8784",
+          "key": "worship:pl_4",
+          "reasons": [
+            "my religious devotion",
+            "service is being held"
+          ]
+        },
+        {
+          "physicalTime": 5890,
+          "event": "e_8984",
+          "key": "socialize:pl_1",
+          "reasons": [
+            "social need 0.81",
+            "my appetite for company",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 5971,
+          "event": "e_9271",
+          "key": "drink_water:pl_2",
+          "reasons": [
+            "thirst 0.58"
+          ]
+        },
+        {
+          "physicalTime": 6024.75,
+          "event": "e_9440",
+          "key": "socialize:pl_1",
+          "reasons": [
+            "social need 0.82",
+            "my appetite for company",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 6041.25,
+          "event": "e_9472",
+          "key": "eat:pl_16",
+          "reasons": [
+            "hunger 0.66",
+            "meal time",
+            "must find food"
+          ]
+        },
+        {
+          "physicalTime": 6075.25,
+          "event": "e_9528",
+          "key": "socialize:pl_1",
+          "reasons": [
+            "social need 0.87",
+            "my appetite for company",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 6234,
+          "event": "e_9883",
+          "key": "work:pl_5",
+          "reasons": [
+            "I normally bake at this time; other concerns may matter more",
+            "",
+            ""
+          ]
+        }
+      ]
+    },
+    {
+      "name": "calm",
+      "samples": [
+        {
+          "elapsed": 2400,
+          "worldTime": 8810400,
+          "timeScale": 60,
+          "mechanicalOutput": 0,
+          "baked": 0,
+          "breadWithMechanicalAncestry": 0,
+          "flourDelivered": 2,
+          "methods": 0
+        },
+        {
+          "elapsed": 3600,
+          "worldTime": 8882400,
+          "timeScale": 60,
+          "mechanicalOutput": 0,
+          "baked": 5,
+          "breadWithMechanicalAncestry": 0,
+          "flourDelivered": 2,
+          "methods": 0
+        },
+        {
+          "elapsed": 6600,
+          "worldTime": 9062400,
+          "timeScale": 60,
+          "mechanicalOutput": 0,
+          "baked": 10,
+          "breadWithMechanicalAncestry": 0,
+          "flourDelivered": 8,
+          "methods": 0
+        },
+        {
+          "elapsed": 7200,
+          "worldTime": 9098400,
+          "timeScale": 60,
+          "mechanicalOutput": 0,
+          "baked": 10,
+          "breadWithMechanicalAncestry": 0,
+          "flourDelivered": 8,
+          "methods": 0
+        }
+      ],
+      "firstBread": {
+        "physicalTime": 3344.75,
+        "event": {
+          "id": "e_6126",
+          "tick": 8867085,
+          "type": "resource_transformed",
+          "category": "world",
+          "actor": "p_1",
+          "placeId": "pl_5",
+          "data": {
+            "from": "flour",
+            "fromQty": 2,
+            "to": "bread",
+            "toQty": 5,
+            "how": "baked"
+          },
+          "causes": [
+            "e_2089"
+          ],
+          "effects": [],
+          "perceivedBy": [],
+          "significance": 0.15,
+          "summary": "Wren Alder turned 2 flour into 5 bread (baked)"
+        }
+      },
+      "firstFlour": {
+        "physicalTime": 1346.5,
+        "event": {
+          "id": "e_1997",
+          "tick": 8747190,
+          "type": "resource_transformed",
+          "category": "world",
+          "actor": "p_1",
+          "placeId": "pl_6",
+          "data": {
+            "from": "grain",
+            "fromQty": 3,
+            "to": "flour",
+            "toQty": 2,
+            "how": "milled"
+          },
+          "causes": [
+            "e_346"
+          ],
+          "effects": [],
+          "perceivedBy": [],
+          "significance": 0.15,
+          "summary": "Wren Alder turned 3 grain into 2 flour (milled)"
+        }
+      },
+      "bakerGoalSequence": [
+        {
+          "physicalTime": 1.5,
+          "event": "e_53",
+          "key": "worship:pl_4",
+          "reasons": [
+            "my religious devotion",
+            "service is being held"
+          ]
+        },
+        {
+          "physicalTime": 111,
+          "event": "e_334",
+          "key": "drink_water:pl_2",
+          "reasons": [
+            "thirst 0.40"
+          ]
+        },
+        {
+          "physicalTime": 174.25,
+          "event": "e_470",
+          "key": "work:pl_5",
+          "reasons": [
+            "I normally bake at this time; other concerns may matter more",
+            "",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 280.75,
+          "event": "e_764",
+          "key": "eat:pl_16",
+          "reasons": [
+            "hunger 0.57",
+            "meal time",
+            "must find food"
+          ]
+        },
+        {
+          "physicalTime": 360.25,
+          "event": "e_934",
+          "key": "socialize:pl_1",
+          "reasons": [
+            "social need 0.70",
+            "my appetite for company",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 447.25,
+          "event": "e_1374",
+          "key": "drink_water:pl_2",
+          "reasons": [
+            "thirst 0.53"
+          ]
+        },
+        {
+          "physicalTime": 502.25,
+          "event": "e_1517",
+          "key": "socialize:pl_1",
+          "reasons": [
+            "social need 0.75",
+            "my appetite for company",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 593.5,
+          "event": "e_1667",
+          "key": "sleep:pl_16",
+          "reasons": [
+            "energy need 0.65",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 1300.75,
+          "event": "e_1959",
+          "key": "drink_water:pl_2",
+          "reasons": [
+            "thirst 0.60"
+          ]
+        },
+        {
+          "physicalTime": 1323.25,
+          "event": "e_1979",
+          "key": "work:pl_6",
+          "reasons": [
+            "Juniperstead mill is standing idle and flour is wanted",
+            "I am short of flour (worry 0.53)",
+            "there is no flour at Juniperstead bakery",
+            "my own trade is not far from it (0.17 of the way there)",
+            "my own work is stopped for want of it",
+            "concern: short of flour at them (0.53)",
+            "there is no flour at Juniperstead bakery",
+            "it happened at Juniperstead bakery"
+          ]
+        },
+        {
+          "physicalTime": 1350.25,
+          "event": "e_2013",
+          "key": "haul:pl_6",
+          "reasons": [
+            "flour is needed at Juniperstead bakery",
+            "the bakery is low on flour",
+            "",
+            "",
+            "though I am not short of coin",
+            "concern: short of flour at them (0.52)",
+            "there is no flour at Juniperstead bakery",
+            "it happened at Juniperstead bakery"
+          ]
+        },
+        {
+          "physicalTime": 1418.5,
+          "event": "e_2092",
+          "key": "eat:pl_16",
+          "reasons": [
+            "hunger 0.97",
+            "",
+            "must find food"
+          ]
+        },
+        {
+          "physicalTime": 1501,
+          "event": "e_2277",
+          "key": "socialize:pl_1",
+          "reasons": [
+            "social need 1.00",
+            "my appetite for company",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 1597,
+          "event": "e_2783",
+          "key": "drink_water:pl_2",
+          "reasons": [
+            "thirst 0.60"
+          ]
+        },
+        {
+          "physicalTime": 1652,
+          "event": "e_3039",
+          "key": "socialize:pl_1",
+          "reasons": [
+            "social need 0.94",
+            "my appetite for company",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 1721,
+          "event": "e_3321",
+          "key": "eat:pl_16",
+          "reasons": [
+            "hunger 0.72",
+            "meal time",
+            "must find food"
+          ]
+        },
+        {
+          "physicalTime": 1791.75,
+          "event": "e_3462",
+          "key": "socialize:pl_1",
+          "reasons": [
+            "social need 1.00",
+            "my appetite for company",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 1925,
+          "event": "e_3857",
+          "key": "drink_water:pl_2",
+          "reasons": [
+            "thirst 0.50"
+          ]
+        },
+        {
+          "physicalTime": 1980,
+          "event": "e_4023",
+          "key": "socialize:pl_3",
+          "reasons": [
+            "social need 0.78",
+            "my appetite for company",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 2094.25,
+          "event": "e_4323",
+          "key": "worship:pl_4",
+          "reasons": [
+            "my religious devotion",
+            "service is being held"
+          ]
+        },
+        {
+          "physicalTime": 2182.75,
+          "event": "e_4435",
+          "key": "eat:pl_16",
+          "reasons": [
+            "hunger 0.72",
+            "",
+            "must find food"
+          ]
+        },
+        {
+          "physicalTime": 2252.5,
+          "event": "e_4492",
+          "key": "sleep:pl_16",
+          "reasons": [
+            "energy need 0.62",
+            "it is my time to sleep"
+          ]
+        },
+        {
+          "physicalTime": 2799,
+          "event": "e_4672",
+          "key": "drink_water:pl_2",
+          "reasons": [
+            "thirst 0.76"
+          ]
+        },
+        {
+          "physicalTime": 2821.5,
+          "event": "e_4690",
+          "key": "socialize:pl_1",
+          "reasons": [
+            "social need 1.00",
+            "my appetite for company",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 2967.5,
+          "event": "e_4949",
+          "key": "eat:pl_16",
+          "reasons": [
+            "hunger 0.61",
+            "",
+            "must find food"
+          ]
+        },
+        {
+          "physicalTime": 3036.5,
+          "event": "e_5173",
+          "key": "socialize:pl_1",
+          "reasons": [
+            "social need 0.66",
+            "my appetite for company",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 3114.5,
+          "event": "e_5599",
+          "key": "drink_water:pl_2",
+          "reasons": [
+            "thirst 0.53"
+          ]
+        },
+        {
+          "physicalTime": 3168,
+          "event": "e_5732",
+          "key": "eat:pl_16",
+          "reasons": [
+            "hunger 0.32",
+            "meal time",
+            "must find food"
+          ]
+        },
+        {
+          "physicalTime": 3185.75,
+          "event": "e_5791",
+          "key": "socialize:pl_1",
+          "reasons": [
+            "social need 0.77",
+            "my appetite for company",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 3319.75,
+          "event": "e_6097",
+          "key": "work:pl_5",
+          "reasons": [
+            "I normally bake at this time; other concerns may matter more",
+            "",
+            ""
+          ]
+        }
+      ]
+    },
+    {
+      "name": "manual",
+      "samples": [
+        {
+          "elapsed": 2400,
+          "worldTime": 8810400,
+          "timeScale": 60,
+          "mechanicalOutput": 0,
+          "baked": 30,
+          "breadWithMechanicalAncestry": 0,
+          "flourDelivered": 28,
+          "methods": 0
+        },
+        {
+          "elapsed": 3600,
+          "worldTime": 8882400,
+          "timeScale": 60,
+          "mechanicalOutput": 0,
+          "baked": 30,
+          "breadWithMechanicalAncestry": 0,
+          "flourDelivered": 28,
+          "methods": 0
+        },
+        {
+          "elapsed": 6600,
+          "worldTime": 9062400,
+          "timeScale": 60,
+          "mechanicalOutput": 0,
+          "baked": 40,
+          "breadWithMechanicalAncestry": 0,
+          "flourDelivered": 30,
+          "methods": 0
+        },
+        {
+          "elapsed": 7200,
+          "worldTime": 9098400,
+          "timeScale": 60,
+          "mechanicalOutput": 0,
+          "baked": 40,
+          "breadWithMechanicalAncestry": 0,
+          "flourDelivered": 31,
+          "methods": 0
+        }
+      ],
+      "firstBread": {
+        "physicalTime": 1770.25,
+        "event": {
+          "id": "e_3764",
+          "tick": 8772615,
+          "type": "resource_transformed",
+          "category": "world",
+          "actor": "p_1",
+          "placeId": "pl_5",
+          "data": {
+            "from": "flour",
+            "fromQty": 2,
+            "to": "bread",
+            "toQty": 5,
+            "how": "baked"
+          },
+          "causes": [
+            "e_347"
+          ],
+          "effects": [],
+          "perceivedBy": [],
+          "significance": 0.15,
+          "summary": "Wren Alder turned 2 flour into 5 bread (baked)"
+        }
+      },
+      "firstFlour": {
+        "physicalTime": 9.75,
+        "event": {
+          "id": "e_118",
+          "tick": 8666985,
+          "type": "resource_transformed",
+          "category": "world",
+          "actor": "p_2",
+          "placeId": "pl_6",
+          "data": {
+            "from": "grain",
+            "fromQty": 3,
+            "to": "flour",
+            "toQty": 4,
+            "how": "milled",
+            "laborSeconds": 8
+          },
+          "causes": [
+            "e_55"
+          ],
+          "effects": [],
+          "perceivedBy": [],
+          "significance": 0.15,
+          "summary": "Perrin Nettle turned 3 grain into 4 flour (milled)"
+        }
+      },
+      "bakerGoalSequence": [
+        {
+          "physicalTime": 1.5,
+          "event": "e_53",
+          "key": "worship:pl_4",
+          "reasons": [
+            "my religious devotion",
+            "service is being held"
+          ]
+        },
+        {
+          "physicalTime": 111,
+          "event": "e_382",
+          "key": "haul:pl_6",
+          "reasons": [
+            "flour is needed at Juniperstead bakery",
+            "the bakery is low on flour",
+            "",
+            "",
+            "though I am not short of coin"
+          ]
+        },
+        {
+          "physicalTime": 225.25,
+          "event": "e_641",
+          "key": "drink_water:pl_2",
+          "reasons": [
+            "thirst 0.70"
+          ]
+        },
+        {
+          "physicalTime": 295.75,
+          "event": "e_837",
+          "key": "eat:pl_16",
+          "reasons": [
+            "hunger 0.68",
+            "meal time",
+            "must find food"
+          ]
+        },
+        {
+          "physicalTime": 313.5,
+          "event": "e_853",
+          "key": "socialize:pl_1",
+          "reasons": [
+            "social need 0.64",
+            "my appetite for company",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 436.25,
+          "event": "e_1462",
+          "key": "work:pl_5",
+          "reasons": [
+            "I normally bake at this time; other concerns may matter more",
+            "",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 451.25,
+          "event": "e_1497",
+          "key": "haul:pl_9",
+          "reasons": [
+            "log is needed at Juniperstead sawpit",
+            "the sawpit is short of logs",
+            "",
+            "",
+            "and I could use the silver"
+          ]
+        },
+        {
+          "physicalTime": 526,
+          "event": "e_1654",
+          "key": "drink_water:pl_2",
+          "reasons": [
+            "thirst 0.47"
+          ]
+        },
+        {
+          "physicalTime": 576.5,
+          "event": "e_1745",
+          "key": "sleep:pl_16",
+          "reasons": [
+            "energy need 0.72",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 1113.5,
+          "event": "e_1888",
+          "key": "eat:pl_16",
+          "reasons": [
+            "hunger 0.73",
+            "",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 1120.75,
+          "event": "e_1894",
+          "key": "sleep:pl_16",
+          "reasons": [
+            "energy need 0.03",
+            "it is my time to sleep"
+          ]
+        },
+        {
+          "physicalTime": 1308.25,
+          "event": "e_1995",
+          "key": "socialize:pl_1",
+          "reasons": [
+            "social need 1.00",
+            "my appetite for company",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 1409.25,
+          "event": "e_2146",
+          "key": "drink_water:pl_2",
+          "reasons": [
+            "thirst 0.57"
+          ]
+        },
+        {
+          "physicalTime": 1462.5,
+          "event": "e_2275",
+          "key": "socialize:pl_1",
+          "reasons": [
+            "social need 0.90",
+            "my appetite for company",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 1619,
+          "event": "e_3148",
+          "key": "eat:pl_16",
+          "reasons": [
+            "hunger 0.60",
+            "",
+            "must find food"
+          ]
+        },
+        {
+          "physicalTime": 1688.25,
+          "event": "e_3582",
+          "key": "drink_water:pl_2",
+          "reasons": [
+            "thirst 0.40"
+          ]
+        },
+        {
+          "physicalTime": 1705.5,
+          "event": "e_3631",
+          "key": "work:pl_5",
+          "reasons": [
+            "I normally bake at this time; other concerns may matter more",
+            "",
+            ""
+          ]
+        }
+      ]
+    },
+    {
+      "name": "sawn",
+      "samples": [
+        {
+          "elapsed": 2400,
+          "worldTime": 8810400,
+          "timeScale": 60,
+          "mechanicalOutput": 14.71224531132555,
+          "baked": 0,
+          "breadWithMechanicalAncestry": 0,
+          "flourDelivered": 16,
+          "methods": 1
+        },
+        {
+          "elapsed": 3600,
+          "worldTime": 8882400,
+          "timeScale": 60,
+          "mechanicalOutput": 20.593436617384757,
+          "baked": 20,
+          "breadWithMechanicalAncestry": 20,
+          "flourDelivered": 22,
+          "methods": 2
+        },
+        {
+          "elapsed": 6600,
+          "worldTime": 9062400,
+          "timeScale": 60,
+          "mechanicalOutput": 32.34946887660963,
+          "baked": 20,
+          "breadWithMechanicalAncestry": 20,
+          "flourDelivered": 26,
+          "methods": 2
+        },
+        {
+          "elapsed": 7200,
+          "worldTime": 9098400,
+          "timeScale": 60,
+          "mechanicalOutput": 32.34946887660963,
+          "baked": 20,
+          "breadWithMechanicalAncestry": 20,
+          "flourDelivered": 26,
+          "methods": 2
+        }
+      ],
+      "firstBread": {
+        "physicalTime": 3400,
+        "event": {
+          "id": "e_6008",
+          "tick": 8870400,
+          "type": "resource_transformed",
+          "category": "world",
+          "actor": "p_1",
+          "placeId": "pl_5",
+          "data": {
+            "from": "flour",
+            "fromQty": 2,
+            "to": "bread",
+            "toQty": 5,
+            "how": "baked"
+          },
+          "causes": [
+            "e_5561"
+          ],
+          "effects": [],
+          "perceivedBy": [],
+          "significance": 0.15,
+          "summary": "Wren Alder turned 2 flour into 5 bread (baked)"
+        }
+      },
+      "firstFlour": {
+        "physicalTime": 1324.75,
+        "event": {
+          "id": "e_1885",
+          "tick": 8745885,
+          "type": "resource_transformed",
+          "category": "world",
+          "actor": "p_1",
+          "placeId": "pl_6",
+          "data": {
+            "from": "grain",
+            "fromQty": 3,
+            "to": "flour",
+            "toQty": 2,
+            "how": "milled"
+          },
+          "causes": [
+            "e_346"
+          ],
+          "effects": [],
+          "perceivedBy": [],
+          "significance": 0.15,
+          "summary": "Wren Alder turned 3 grain into 2 flour (milled)"
+        }
+      },
+      "bakerGoalSequence": [
+        {
+          "physicalTime": 1.5,
+          "event": "e_53",
+          "key": "worship:pl_4",
+          "reasons": [
+            "my religious devotion",
+            "service is being held"
+          ]
+        },
+        {
+          "physicalTime": 111,
+          "event": "e_334",
+          "key": "drink_water:pl_2",
+          "reasons": [
+            "thirst 0.40"
+          ]
+        },
+        {
+          "physicalTime": 174.25,
+          "event": "e_470",
+          "key": "work:pl_5",
+          "reasons": [
+            "I normally bake at this time; other concerns may matter more",
+            "",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 280.75,
+          "event": "e_760",
+          "key": "eat:pl_16",
+          "reasons": [
+            "hunger 0.57",
+            "meal time",
+            "must find food"
+          ]
+        },
+        {
+          "physicalTime": 360.25,
+          "event": "e_905",
+          "key": "socialize:pl_1",
+          "reasons": [
+            "social need 0.70",
+            "my appetite for company",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 447.25,
+          "event": "e_1292",
+          "key": "drink_water:pl_2",
+          "reasons": [
+            "thirst 0.53"
+          ]
+        },
+        {
+          "physicalTime": 503,
+          "event": "e_1441",
+          "key": "socialize:pl_1",
+          "reasons": [
+            "social need 0.76",
+            "my appetite for company",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 586.75,
+          "event": "e_1566",
+          "key": "sleep:pl_16",
+          "reasons": [
+            "energy need 0.66",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 1294,
+          "event": "e_1857",
+          "key": "work:pl_6",
+          "reasons": [
+            "Juniperstead mill is standing idle and flour is wanted",
+            "I am short of flour (worry 0.54)",
+            "there is no flour at Juniperstead bakery",
+            "my own trade is not far from it (0.17 of the way there)",
+            "my own work is stopped for want of it",
+            "concern: short of flour at them (0.54)",
+            "there is no flour at Juniperstead bakery",
+            "it happened at Juniperstead bakery"
+          ]
+        },
+        {
+          "physicalTime": 1327,
+          "event": "e_1895",
+          "key": "drink_water:pl_2",
+          "reasons": [
+            "thirst 0.65"
+          ]
+        },
+        {
+          "physicalTime": 1351.75,
+          "event": "e_1936",
+          "key": "haul:pl_6",
+          "reasons": [
+            "flour is needed at Juniperstead bakery",
+            "the bakery is low on flour",
+            "",
+            "",
+            "though I am not short of coin",
+            "concern: short of flour at them (0.52)",
+            "there is no flour at Juniperstead bakery",
+            "it happened at Juniperstead bakery"
+          ]
+        },
+        {
+          "physicalTime": 1434.25,
+          "event": "e_2042",
+          "key": "eat:pl_16",
+          "reasons": [
+            "hunger 0.98",
+            "",
+            "must find food"
+          ]
+        },
+        {
+          "physicalTime": 1509,
+          "event": "e_2262",
+          "key": "haul:pl_6",
+          "reasons": [
+            "flour is needed at Juniperstead bakery",
+            "the bakery is low on flour",
+            "",
+            "",
+            "though I am not short of coin",
+            "concern: short of flour at them (0.48)",
+            "there is no flour at Juniperstead bakery",
+            "it happened at Juniperstead bakery"
+          ]
+        },
+        {
+          "physicalTime": 1590.75,
+          "event": "e_2612",
+          "key": "drink_water:pl_2",
+          "reasons": [
+            "thirst 0.72"
+          ]
+        },
+        {
+          "physicalTime": 1662.75,
+          "event": "e_2887",
+          "key": "eat:pl_16",
+          "reasons": [
+            "hunger 0.79",
+            "",
+            "must find food"
+          ]
+        },
+        {
+          "physicalTime": 1680.75,
+          "event": "e_2919",
+          "key": "socialize:pl_1",
+          "reasons": [
+            "social need 1.00",
+            "my appetite for company",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 1749.75,
+          "event": "e_3068",
+          "key": "eat:pl_16",
+          "reasons": [
+            "hunger 0.36",
+            "meal time",
+            "must find food"
+          ]
+        },
+        {
+          "physicalTime": 1781.25,
+          "event": "e_3180",
+          "key": "sleep:pl_16",
+          "reasons": [
+            "energy need 0.81",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 1887.5,
+          "event": "e_3398",
+          "key": "socialize:pl_1",
+          "reasons": [
+            "social need 1.00",
+            "my appetite for company",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 1991.25,
+          "event": "e_3605",
+          "key": "drink_water:pl_2",
+          "reasons": [
+            "thirst 0.55"
+          ]
+        },
+        {
+          "physicalTime": 2045,
+          "event": "e_3692",
+          "key": "eat:pl_16",
+          "reasons": [
+            "hunger 0.67",
+            "",
+            "must find food"
+          ]
+        },
+        {
+          "physicalTime": 2062.75,
+          "event": "e_3738",
+          "key": "socialize:pl_3",
+          "reasons": [
+            "social need 0.94",
+            "my appetite for company",
+            "",
+            "I normally evening at this time; other concerns may matter more"
+          ]
+        },
+        {
+          "physicalTime": 2200.5,
+          "event": "e_4086",
+          "key": "sleep:pl_16",
+          "reasons": [
+            "energy need 0.56",
+            "it is my time to sleep"
+          ]
+        },
+        {
+          "physicalTime": 2831.5,
+          "event": "e_4328",
+          "key": "drink_water:pl_2",
+          "reasons": [
+            "thirst 0.71"
+          ]
+        },
+        {
+          "physicalTime": 2854,
+          "event": "e_4353",
+          "key": "socialize:pl_1",
+          "reasons": [
+            "social need 1.00",
+            "my appetite for company",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 2939.5,
+          "event": "e_4588",
+          "key": "eat:pl_16",
+          "reasons": [
+            "hunger 0.73",
+            "",
+            "must find food"
+          ]
+        },
+        {
+          "physicalTime": 3008.25,
+          "event": "e_4832",
+          "key": "socialize:pl_1",
+          "reasons": [
+            "social need 0.93",
+            "my appetite for company",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 3131.75,
+          "event": "e_5365",
+          "key": "drink_water:pl_2",
+          "reasons": [
+            "thirst 0.51"
+          ]
+        },
+        {
+          "physicalTime": 3185,
+          "event": "e_5482",
+          "key": "eat:pl_16",
+          "reasons": [
+            "hunger 0.47",
+            "meal time",
+            "must find food"
+          ]
+        },
+        {
+          "physicalTime": 3202.75,
+          "event": "e_5541",
+          "key": "socialize:pl_1",
+          "reasons": [
+            "social need 0.83",
+            "my appetite for company",
+            ""
+          ]
+        },
+        {
+          "physicalTime": 3374.25,
+          "event": "e_5903",
+          "key": "work:pl_5",
+          "reasons": [
+            "I normally bake at this time; other concerns may matter more",
+            "",
+            ""
+          ]
+        }
+      ]
+    }
+  ]
+}
