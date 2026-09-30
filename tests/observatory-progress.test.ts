@@ -15,8 +15,26 @@ import { formPursuits, livePursuits, pursuitSteps, resolvePursuit, satisfiedNow 
 import { materializeStructure } from '../src/sim/world/construction';
 import { RunDiagnostics } from '../src/observatory/diagnostics';
 import { MAX_TESTIMONY_HOPS } from '../src/sim/mind/knowledge';
+import { syncNeeds } from '../src/sim/core/physiology';
 
 describe('progress defects exposed by every-hour 30-day review', () => {
+  it('lets an invested critical water attempt compete with proximity fear, while an actual immediate attack interrupts', () => {
+    const tw = createTestWorld(), w = tw.world;
+    const p = addPerson(tw, 'Parched', 'villager', v(10, 1, 10), { traits: { courage: 0, sociability: 0 } });
+    const feared = addPerson(tw, 'Feared', 'villager', v(15, 1, 10)), fb = w.primaryBody(feared.id)!;
+    p.schedule = []; p.physiology.hydration = .02; syncNeeds(p); getRel(p, feared.id).fear = .4;
+    p.mind.goal = { type: 'drink_water', key: 'drink_water:well', targetPos: v(14, 1, 10), utility: 1, createdAt: w.now, reasons: ['critical thirst'] };
+    p.mind.plan = [{ type: 'goto', pos: v(14, 1, 10), status: 'active' }, { type: 'use', status: 'pending', data: { water: true } }];
+    p.mind.percepts = [{ entityId: feared.id, bodyId: fb.id, how: 'saw', distance: 5, pos: { ...fb.pos }, tick: w.now }];
+    (tw.sim as any).think(p, w.primaryBody(p.id));
+    expect(p.mind.goal?.type).toBe('drink_water');
+    expect(p.mind.decision?.note).toContain('hysteresis');
+    fb.pos = v(12, 1, 10); fb.pose = 'attack'; fb.attackTarget = p.id;
+    p.mind.percepts[0] = { ...p.mind.percepts[0], pos: { ...fb.pos }, distance: 2 };
+    (tw.sim as any).think(p, w.primaryBody(p.id));
+    expect(['flee', 'attack', 'surrender']).toContain(p.mind.goal?.type);
+  });
+
   it('delivery to a different watchman does not erase the failed listener evidence', () => {
     const tw = createTestWorld(), w = tw.world;
     const p = addPerson(tw, 'Witness', 'villager', v(10, 1, 10));

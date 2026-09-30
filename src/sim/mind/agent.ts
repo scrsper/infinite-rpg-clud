@@ -1475,11 +1475,17 @@ export class Simulation {
       const challenger = m.percepts.find(pc => pc.entityId === best.targetEntity && pc.how === 'saw');
       const challengerBody = challenger && w.body(challenger.bodyId);
       const directlyAttacked = !!challenger && challenger.distance < 3 && challengerBody?.pose === 'attack' && challengerBody.attackTarget === p.id;
+      // Critical physiology is also an emergency. Proximity fear still competes
+      // by utility, but cannot categorically cancel its invested attempt. An
+      // observed immediate attack remains fresh grounds to interrupt it.
+      const criticalAttempt = cur.type === 'drink_water' && severityAtLeast(needBands.thirst, 'critical')
+        || cur.type === 'eat' && severityAtLeast(needBands.hunger, 'critical')
+        || cur.type === 'sleep' && severityAtLeast(needBands.sleep, 'critical');
       // A distant feared face is a scored concern, not an unconditional interruption.
       // Likewise two equally urgent attack targets cannot reset each other's approach
       // every think tick. Fresh immediate danger still overrides commitment.
       const emergency = (best.type === 'attack' || best.type === 'confront' || best.type === 'rob') && (cur.type !== best.type || directlyAttacked)
-        || best.type === 'flee' && (cur.type === 'flee' ? refugeThreatened : !!newThreat && newThreat.distance < 8);
+        || best.type === 'flee' && (cur.type === 'flee' ? refugeThreatened : !!newThreat && newThreat.distance < 8 && (!criticalAttempt || directlyAttacked));
       if (!done && best.utility < curU + GOAL_HYSTERESIS && !emergency) { chosen = { ...cur, utility: curU }; note = `kept ${cur.type} (hysteresis)`; }
       else { switched = true; note = best === best0 ? `switched from ${cur.type} to ${best.type}` : `resumed ${best.type} (committed)`; }
     } else if (!cur) { switched = true; note = `adopted ${best.type}`; }
