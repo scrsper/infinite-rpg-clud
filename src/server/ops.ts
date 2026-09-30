@@ -20,7 +20,7 @@ import { releaseStoppedWriter } from './stoppedWriter';
 const argv = process.argv.slice(2);
 const flag = (name: string) => { const i = argv.indexOf(`--${name}`); return i >= 0 ? argv[i + 1] : undefined; };
 const has = (name: string) => argv.includes(`--${name}`);
-const positional = argv.filter((a, i) => !a.startsWith('--') && !(i > 0 && argv[i - 1].startsWith('--') && !['--developer', '--force', '--no-start'].includes(argv[i - 1])));
+const positional = argv.filter((a, i) => !a.startsWith('--') && !(i > 0 && argv[i - 1].startsWith('--') && !['--developer', '--force', '--no-start', '--web-gateway'].includes(argv[i - 1])));
 // Not %LOCALAPPDATA%: Windows silently redirects AppData writes made by processes launched from a
 // packaged (MSIX) app into that app's private store, invisible to scheduled tasks and other sessions.
 const base = process.env.TORN_VEIL_ALPHA_HOME ?? join(homedir(), 'TornVeilAlpha');
@@ -98,7 +98,7 @@ function writeConfig(root: string, env: AlphaEnv, extra: Record<string, unknown>
 const commands: Record<string, () => Promise<void>> = {
   async help() {
     out(`Torn Veil Living Alpha ops
-  init --env <live|staging|dev> [--bind 127.0.0.1,100.x.y.z] [--port N] [--seed N] [--backup-dir D] [--catalogue F]
+  init --env <live|staging|dev> [--bind 127.0.0.1,100.x.y.z] [--port N] [--seed N] [--backup-dir D] [--catalogue F] [--web-gateway]
        creates the environment, its credentials and (unless --no-world) its world
   install --env E --release <dir>          set the release an environment runs (first install only)
   switch --env dev --release <dir>         (dev only, service stopped) back up, then run a newer release on the same world
@@ -121,6 +121,8 @@ const commands: Record<string, () => Promise<void>> = {
     const bind = (flag('bind') ?? '127.0.0.1').split(',').map(s => s.trim()).filter(Boolean);
     const backupDir = flag('backup-dir') ?? join(root, 'backups');
     const extra: Record<string, unknown> = { port, bind, seed: Number(flag('seed') ?? 918271), backupDir, checkpointSeconds: Number(flag('checkpoint-seconds') ?? 60), backupMinutes: Number(flag('backup-minutes') ?? 60), disconnectGraceSeconds: Number(flag('grace-seconds') ?? 120), createWorldIfMissing: false };
+    // Opt this environment in to the loopback browser gateway (client kind web). Off unless asked for.
+    if (has('web-gateway')) extra.webGateway = true;
     const catalogue = flag('catalogue');
     if (catalogue) { mkdirSync(join(root, 'content'), { recursive: true }); copyFileSync(catalogue, join(root, 'content', 'character-catalogue.json')); extra.characterCatalogue = 'content/character-catalogue.json'; }
     writeConfig(root, env, extra);

@@ -1,5 +1,5 @@
 import type { World } from '../sim/core/world';
-import { projectRegionSteps, projectVista, regionDynamics, RegionStream } from './regions';
+import { projectRegionSteps, projectVista, regionDynamics, RegionStream, type RegionProjectionOptions } from './regions';
 
 export const REGION_PROTOCOL = 2;
 export const MAX_PRESENTATION_MESSAGE_BYTES = 128 * 1024;
@@ -23,7 +23,7 @@ export class RegionalTransport {
   private dynamicSignature = '';
   private building?:{id:string;steps:ReturnType<typeof projectRegionSteps>;started:number;cpuMs:number;slices:number;maxSliceMs:number};
   /** `observer` names the Person whose body anchors this connection's residency (null: legacy single player). */
-  constructor(private log: (event: Record<string, unknown>) => void = () => {}, private readonly observer: () => string | null = () => null) {
+  constructor(private log: (event: Record<string, unknown>) => void = () => {}, private readonly observer: () => string | null = () => null, private readonly projection: RegionProjectionOptions = {}) {
     this.planner = new RegionStream(observer);
   }
 
@@ -52,7 +52,7 @@ export class RegionalTransport {
       const start=performance.now(), id=this.building?.id??this.wanted.find(id=>this.pending.has(id));
       let payload: unknown;
       if(id) {
-        if(!this.building){const [x,z]=id.split(',').map(Number);this.building={id,steps:projectRegionSteps(w,x,z),started:start,cpuMs:0,slices:0,maxSliceMs:0};this.pending.delete(id);}
+        if(!this.building){const [x,z]=id.split(',').map(Number);this.building={id,steps:projectRegionSteps(w,x,z,this.projection),started:start,cpuMs:0,slices:0,maxSliceMs:0};this.pending.delete(id);}
         const job=this.building;
         do {
           const result=job.steps.next();

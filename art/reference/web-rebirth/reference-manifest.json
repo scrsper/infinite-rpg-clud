@@ -1,0 +1,16 @@
+[
+  {
+    "path": "references/01-world-and-creatures.png",
+    "width": 1536,
+    "height": 1024,
+    "bytes": 2420145,
+    "sha256": "122facda4c40862f11fca7f7b9ef7e9de51bf9439c2bbfc5b495d928d47d9344"
+  },
+  {
+    "path": "references/02-ice-character.png",
+    "width": 1122,
+    "height": 1402,
+    "bytes": 2929222,
+    "sha256": "66fe9defb50e4851db37ef2578256db0871947f82900525714def003f028fe63"
+  }
+]

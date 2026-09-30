@@ -1,3 +1,10 @@
+# Also in progress: web client (Babylon.js) — branch `claude/web-rebirth` (2026-09-29)
+
+User mandate: a browser client over the unchanged simulation, plus a separate `Play Torn Veil Web.cmd`. Lane A only
+(no simulation change; `src/sim` untouched); Lane B (vault/dive) not started. Status, evidence, known defects and the
+human test guide (all human verdicts pending): `docs/web/README.md`, `docs/web/PROGRESS.md`. Isolated preview world
+on ports 7460 (world) / 7470 (gateway); live, staging and the accepted package are untouched.
+
 # Current: human checkpoint 1 — STOPPED for human review (2026-09-28)
 
 Course correction (user, 2026-09-28): human experience first; no simulation breadth. Delivered and
