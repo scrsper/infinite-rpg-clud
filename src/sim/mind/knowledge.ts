@@ -147,12 +147,17 @@ function relationalWeight(p: Person, k: KnowledgeItem): number {
   return Math.min(1.7, r.familiarity + Math.abs(r.affection) * 0.4 + Math.abs(r.respect) * 0.3 + r.fear * 0.5 + r.grudge * 0.4);
 }
 
-function knowledgeScore(p: Person, k: KnowledgeItem, now: number, obligationBases: ReadonlySet<string>): number {
+function knowledgeScore(p: Person, k: KnowledgeItem, now: number, obligationBases: ReadonlySet<string>, activeSpatialKeys: ReadonlySet<string>): number {
   if (k.source.type === 'prior') return FOUNDATIONAL_SCORE + k.confidence;
   // The bounded obligation ledger still relies on this experience to explain a debt
   // or its recent resolution. Retain its evidence above routine episodes, without
   // expanding the knowledge budget or manufacturing a replacement when forgotten.
   if (obligationBases.has(k.key)) return PRACTICAL_BASE + k.confidence;
+  // A route failure or an unsuccessful search is practical evidence for the errand
+  // still being attempted. Evicting it beneath older crime episodes resurrected a
+  // disproved home destination every think. Relevance comes from the existing goal
+  // and purposes; the evidence is neither permanent nor exempt from the memory cap.
+  if (activeSpatialKeys.has(k.key)) return PRACTICAL_BASE + k.confidence;
   if (practicalKnowledge(k, now)) return PRACTICAL_BASE + k.confidence - (now - (k.lastConfirmedAt ?? k.learnedAt)) / 86400 * 0.002;
   const significance = k.claim.significance ?? 0.2;
   const unresolvedCrime = k.kind === 'event' && isCrime(k.claim.type, k.claim.intent) && !k.handled;
@@ -199,13 +204,19 @@ function pruneKnowledge(world: World, p: Person): void {
   if (keys.length <= MAX_KNOWLEDGE + PRUNE_MARGIN) return;
   const now = world.now;
   const obligationBases = new Set((p.mind.obligations ?? []).flatMap(o => o.basisKey ? [o.basisKey] : []));
+  const activeSpatialKeys = new Set<string>();
+  if (p.mind.goal) {
+    activeSpatialKeys.add(`route:${p.mind.goal.key}`);
+    if (p.mind.goal.targetEntity) activeSpatialKeys.add(`loc:${p.mind.goal.targetEntity}`);
+  }
+  for (const pu of p.mind.pursuits ?? []) if ((pu.status === 'active' || pu.status === 'deferred') && pu.subjectId) activeSpatialKeys.add(`loc:${pu.subjectId}`);
   // Scores are pure and fixed for this synchronous prune. Evaluate each once rather than
   // rebuilding relationship/evidence weights for every comparison in the sort.
-  const ranked = keys.map(key => ({ key, score: knowledgeScore(p, p.knowledge[key], now, obligationBases) }));
+  const ranked = keys.map(key => ({ key, score: knowledgeScore(p, p.knowledge[key], now, obligationBases, activeSpatialKeys) }));
   ranked.sort((a, b) => b.score - a.score);
   for (const { key } of ranked.slice(MAX_KNOWLEDGE)) {
     const k = p.knowledge[key];
-    if (k.claim.method || isActivelyRelevant(p, key, k, now)) {
+    if (k.claim.method || activeSpatialKeys.has(key) || isActivelyRelevant(p, key, k, now)) {
       world.emit('knowledge_forgotten', {
         actor: p.id, significance: k.claim.method ? 0.6 : 0, category: k.claim.method ? 'history' : 'cognition', causes: k.source.viaEvent ? [k.source.viaEvent] : [],
         data: { key, kind: k.kind, wasUnresolvedCrime: k.kind === 'event' && isCrime(k.claim.type, k.claim.intent) && !k.handled },
@@ -327,7 +338,8 @@ export function describeClaim(world: World, k: KnowledgeItem, observer?: Person)
         default: return c.text ?? `${c.type}${where}`;
       }
     }
-    case 'location': return `${perceivedName(world, observer, c.entityId)} is at ${c.placeId ? perceivedName(world, observer, c.placeId) : `(${Math.round(c.pos?.x)}, ${Math.round(c.pos?.z)})`}`;
+    case 'location': return c.pos ? `${perceivedName(world, observer, c.entityId)} is at ${c.placeId ? perceivedName(world, observer, c.placeId) : `(${Math.round(c.pos.x)}, ${Math.round(c.pos.z)})`}`
+      : `${perceivedName(world, observer, c.entityId)} was not found at the searched locations`;
     case 'ownership': return `${perceivedName(world, observer, c.itemId)} belongs to ${perceivedName(world, observer, c.ownerId)}`;
     case 'state': return c.text ?? `${perceivedName(world, observer, c.entityId)} is ${c.state}`;
     case 'fact': return c.text ?? k.key;

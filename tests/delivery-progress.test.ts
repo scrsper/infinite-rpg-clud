@@ -5,6 +5,7 @@ import { startCommitment } from '../src/sim/mind/commitment';
 import { locationKnowledge, locationNotFound } from '../src/sim/mind/knowledge';
 import { believedPosition } from '../src/sim/mind/pursuit';
 import type { Body, Person } from '../src/sim/core/types';
+import { RunDiagnostics } from '../src/observatory/diagnostics';
 
 describe('material delivery progress', () => {
   function fixture(remote = false) {
@@ -44,6 +45,23 @@ describe('material delivery progress', () => {
     expect(w.events.filter(e => e.type === 'goal_completed')).toHaveLength(1);
     expect(p.mind.commitment).toBeNull();
     expect(p.mind.goal).toBeNull();
+  });
+
+  it('diagnoses repeated autonomous handoff failure with unchanged material and spatial evidence', () => {
+    const { w, p, to, it, act } = fixture(true), diagnostics = new RunDiagnostics(w);
+    const retry = () => {
+      // Reproduce the broken selector repeatedly forgetting its failed search.
+      delete p.knowledge[`loc:${to.id}`];
+      p.mind.goal = { type: 'provide', key: `provide:${to.id}`, targetEntity: to.id, targetPos: v(10, 1, 10), data: { itemId: it.id }, utility: .8, reasons: [], createdAt: w.now };
+      p.mind.plan = [{ type: 'give', targetEntity: to.id, data: { item: it.id, provision: true }, status: 'pending' }];
+      act();
+    };
+    for (let i = 0; i < 4; i++) retry();
+    expect(diagnostics.checks().find(c => c.id === 'failed-handoff-retry')?.status).toBe('PASS');
+    retry();
+    expect(diagnostics.checks().find(c => c.id === 'failed-handoff-retry')?.status).toBe('FAIL');
+    expect(it.holderId).toBe(p.id);
+    expect(w.events.filter(e => e.type === 'perceived' && e.data.kind === 'failed_handoff')).toHaveLength(5);
   });
 
   it('overlapping searches still record the newly checked home destination', () => {

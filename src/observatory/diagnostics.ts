@@ -11,6 +11,8 @@ export class RunDiagnostics {
   readonly food = { initial: 0, production: 0, consumption: 0, spoilage: 0, transformationInput: 0 };
   private timelines = new Map<string, unknown[]>();
   private falseDeliveries: unknown[] = [];
+  private handoffAttempts = new Map<string, { signature: string; actor: string; target?: string; first: string; last: string; firstAt: number; lastAt: number; count: number }>();
+  private handoffLoops: unknown[] = [];
   private attackGrounds = new Map<string, { adoptedAt: number; event: string }>();
   private defeatedCompletions = new Map<string, { first: string; last: string; count: number; actor: string; target: string; downedAt: number; renewedAggression?: string }>();
   private completions = new Map<string, { first: string; firstAt: number; last: string; lastAt: number; count: number; actor: string; goal: unknown }>();
@@ -47,6 +49,20 @@ export class RunDiagnostics {
       if (list.length > 250) list.shift(); this.timelines.set(p.id, list);
     }
     const g = p.mind.goal;
+    if (e.type === 'gift') this.handoffAttempts.delete(p.id);
+    if (e.type === 'perceived' && d.kind === 'failed_handoff' && g?.type === 'provide') {
+      const b = w.primaryBody(p.id), seen = p.mind.percepts.find(pc => pc.entityId === e.target);
+      const signature = JSON.stringify({ target: e.target, item: d.itemId, holder: w.item(d.itemId)?.holderId, reason: d.reason,
+        position: b && [b.pos.x, b.pos.y, b.pos.z].map(n => Number(n.toFixed(2))),
+        destination: g.targetPos, locationClaim: p.knowledge[`loc:${e.target}`]?.claim, observedTarget: seen?.pos });
+      const old = this.handoffAttempts.get(p.id);
+      if (old?.signature === signature && e.tick - old.firstAt <= 10800) {
+        old.count++; old.last = e.id; old.lastAt = e.tick;
+        // Same five-attempt trigger as the path-failure lead, with an additional
+        // unchanged material/position/evidence signature: an actual failed retry loop.
+        if (old.count === 5) this.handoffLoops.push(old);
+      } else this.handoffAttempts.set(p.id, { signature, actor: p.id, target: e.target, first: e.id, last: e.id, firstAt: e.tick, lastAt: e.tick, count: 1 });
+    }
     if (e.type === 'goal_changed' && g?.type === 'attack' && g.targetEntity) {
       const seen = p.mind.percepts.find(pc => pc.entityId === g.targetEntity && pc.how === 'saw');
       const body = seen && w.body(seen.bodyId), event = body?.pose === 'attack' ? body.combatAction?.eventId : undefined;
@@ -76,6 +92,7 @@ export class RunDiagnostics {
     const ledger = this.ledger();
     const defeated = [...this.defeatedCompletions.values()].filter(v => v.count > 1);
     return [
+      { id: 'failed-handoff-retry', label: 'Failed handoff retried without progress', status: this.handoffLoops.length ? 'FAIL' : 'PASS', detail: 'Five autonomous provide failures within three hours with unchanged item holder, actor position, destination and recipient-location evidence. Actual transfers or new spatial evidence reset the attempt sequence.', evidence: this.handoffLoops },
       { id: 'defeated-target-reprocessed', label: 'Same recorded defeat completed repeatedly', status: defeated.length ? 'FAIL' : 'PASS', detail: 'Attack completed again against the same recorded downing without a distinct newly observed combat action. Separate responses to fresh aggression are separate evidence.', evidence: defeated },
       { id: 'delivery-progress', label: 'Completed delivery transferred its item', status: this.falseDeliveries.length ? 'FAIL' : 'PASS', detail: `Physical item holder checked at every provide completion since ${this.from}.`, evidence: this.falseDeliveries },
       { id: 'completed-case-reprocessed', label: 'Completed case processed again', status: repeated.length ? 'FAIL' : 'PASS', detail: `Same actor, case key and goal adoption completed more than once; continuous receipts since ${this.from}.`, evidence: repeated },
