@@ -1,16 +1,19 @@
 # Torn Veil Observatory and local language
 
+The original 30-day RED investigation and current validation evidence are documented in [OBSERVATORY_HARDENING.md](OBSERVATORY_HARDENING.md). The original verification below is preserved as baseline evidence. The integrity panel distinguishes confirmed invariant/loop failures (RED), incomplete evidence or performance warnings (AMBER), and passing configured checks (GREEN); hardship alone does not set health.
+
 The Observatory runs a **disposable development world** in a separate loopback process. It never opens live, staging, alpha, browser, or Unreal saves. Closing its browser does not stop its server; worlds and checkpoints disappear when that server exits. `Play Torn Veil Web.cmd` and the Unreal fallback are unchanged.
 
 ## Start and inspect
 
-1. Double-click **Torn Veil Observatory.cmd** in `C:\Users\green\Desktop\projects\torn-veil-online`. It opens `http://127.0.0.1:7480`. `-CheckOnly` checks the authoritative checkout and runtime without opening a world. No dependencies or models are installed automatically.
+1. Double-click **Torn Veil Observatory.cmd** in `C:\Users\green\Desktop\projects\torn-veil-online`. It uses loopback port 7480, or the next free port when preserving an older Observatory process. `-CheckOnly` checks the authoritative checkout and runtime without opening a world. No dependencies or models are installed automatically.
 2. The world starts paused. Choose a person in the list or click a body on the overhead map. The inspector shows every present/withdrawn body, physiology, current goal/action/plan, recorded candidate utilities and reasons, motivations, relationships, economy and history. Use **+1 hour** to let an initial world form decisions.
 3. **CANONICAL TRUTH** and **WHAT THIS PERSON BELIEVES** are separate panels. Expand Knowledge for confidence, source, hops, learned time and retained revision events. Follow acquisition/event links to the developer causal explorer. Beliefs can be wrong.
 4. Pause/resume and 1×/6×/60× change the wall-clock pacing of the existing headless quantum: 0.15 physical seconds, 9 world seconds at the existing 60:1 clock. They do not increase the quantum or change NPC scheduling. Long runs use the same quantum, yield to requests, and can be stopped. This does not claim identical trajectories to the finer realtime bridge quantum.
 5. Choose a scenario and seed in **Scenario lab**, then **Create isolated world**. This discards only the current in-memory Observatory world. All 15 scenarios disclose initial conditions. Theft/injury/testimony fixtures perform an initial ordinary action; subsequent outcomes are autonomous. The ordinary settlement is the authored Ashford regression world, not the large seven-settlement playable world.
 6. Click **Run world without player** for 1, 7 or 30 days. The report compares actual before/after population, resources, relationships and retained event measures, and highlights stored causal impact. Interrupted runs are labeled partial. No narrative is generated.
 7. **Save checkpoint / Restore checkpoint** uses the existing save serializer in memory only. **Check replay + save/load** creates independent disposable copies, checks 20-step replay and 20-step continuation with complete persisted-state hashes (excluding only the wall-clock `savedAt` envelope). This is bounded evidence, not a general proof of determinism.
+8. In **30-day integrity investigation**, **Original RED evidence** opens the unchanged seed-918271 receipts. Click a named finding for decisions, failed actions and repeated cases. The hourly finding selector also opens earlier worst windows and downloads their complete receipts. **Repaired run evidence** shows the new ledger and profiles; **Inspect repaired saved world** opens its final state paused. **Reproduce 30-day validation** starts the same ordinary seed using the current simulation in a new disposable world. It can be stopped with the existing stop control.
 
 ## Local AI
 
@@ -48,7 +51,7 @@ The present expression contract is deliberately constrained: the model selects a
 - The Observatory does not fix systemic problems merely because it can now expose them. Sampled failure observations are retained in the run report; they do not affect cognition or world truth.
 - Ordinary scenario setup is reproducible. A successful 30-day run establishes that it completed, not that every inhabitant or economic outcome is healthy.
 
-## Verification and measurements
+## Preserved verification before simulation hardening
 
 The full normal regression suite passed **1,361 tests across 159 files** in 1,808.38 seconds. The focused acceptance suite passes **35 tests**; its 14 language tests also passed after the final wording correction. Production build/typecheck passed. The delivered `.cmd` launcher was executed successfully and refreshed to the final code. Real headed Chrome acceptance passed at 1600×1000 and 1100×800 with no browser errors, including stored goal adoption, causal sources, real local-model dialogue, read-only thought expression, offline uncertainty, time advance and checkpoint restore. Screenshots were visually inspected.
 

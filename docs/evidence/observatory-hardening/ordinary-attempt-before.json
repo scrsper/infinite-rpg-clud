@@ -1,0 +1,2403 @@
+{
+  "seed": 918273,
+  "commit": "7c55be6",
+  "classification": "A",
+  "groups": [
+    {
+      "key": "goal_churn:p_27:",
+      "samples": 1,
+      "first": 9991200,
+      "last": 9991200,
+      "worst": {
+        "type": "goal_churn",
+        "entity": "p_27",
+        "occurrences": 40,
+        "firstSeen": 9980463,
+        "lastSeen": 9991173,
+        "relatedEvents": [
+          "e_238844",
+          "e_238860",
+          "e_238907",
+          "e_238935",
+          "e_238951",
+          "e_238974",
+          "e_238996",
+          "e_239012",
+          "e_239033",
+          "e_239045",
+          "e_239064",
+          "e_239076",
+          "e_239089",
+          "e_239098",
+          "e_239109",
+          "e_239145",
+          "e_239153",
+          "e_239167",
+          "e_239194",
+          "e_239201"
+        ],
+        "data": {
+          "windowHours": 3
+        }
+      },
+      "rows": [
+        {
+          "event": {
+            "id": "e_238844",
+            "tick": 9980463,
+            "type": "goal_changed",
+            "category": "cognition",
+            "actor": "p_27",
+            "placeId": "pl_25",
+            "data": {
+              "from": "eat",
+              "fromUtility": 0.8,
+              "to": "work",
+              "utility": 0.39824315768128193,
+              "reasons": [
+                "I normally brew at this time; other concerns may matter more",
+                "",
+                ""
+              ],
+              "key": "work:pl_25"
+            },
+            "causes": [],
+            "effects": [],
+            "perceivedBy": [],
+            "significance": 0.12,
+            "summary": "Old Wyn: goal eat → work @ Old Wyn's hut (u=0.40)"
+          },
+          "actorAtEmission": {
+            "id": "p_27",
+            "name": "Old Wyn",
+            "alive": true,
+            "needs": {
+              "hunger": 1,
+              "energy": 0.4085973422795222,
+              "social": 1,
+              "comfort": 1,
+              "thirst": 0.27547045454545327
+            },
+            "wealth": 1,
+            "homeId": "pl_15",
+            "workId": "pl_35",
+            "householdId": "hh_17",
+            "inventory": [],
+            "bodies": [
+              {
+                "id": "b_27",
+                "pos": {
+                  "x": 51.846255323720555,
+                  "y": 14,
+                  "z": 157.49999999993258
+                },
+                "health": 80,
+                "maxHealth": 80,
+                "dead": false,
+                "present": true,
+                "path": [
+                  {
+                    "x": 50.5,
+                    "y": 14,
+                    "z": 157.5
+                  },
+                  {
+                    "x": 55.5,
+                    "y": 14,
+                    "z": 157.5
+                  },
+                  {
+                    "x": 55.5,
+                    "y": 14,
+                    "z": 155.5
+                  },
+                  {
+                    "x": 49.5,
+                    "y": 14,
+                    "z": 155.5
+                  },
+                  {
+                    "x": 46.5,
+                    "y": 14,
+                    "z": 151.5
+                  },
+                  {
+                    "x": 45.5,
+                    "y": 14,
+                    "z": 149.5
+                  }
+                ],
+                "pathGoal": {
+                  "x": 45,
+                  "y": 14,
+                  "z": 149
+                }
+              }
+            ],
+            "goal": {
+              "type": "work",
+              "utility": 0.39824315768128193,
+              "reasons": [
+                "I normally brew at this time; other concerns may matter more",
+                "",
+                ""
+              ],
+              "createdAt": 9980463,
+              "key": "work:pl_25",
+              "targetPlace": "pl_25",
+              "data": {
+                "label": "brew"
+              }
+            },
+            "plan": [
+              {
+                "status": "pending",
+                "type": "goto",
+                "pos": {
+                  "x": 43,
+                  "y": 13,
+                  "z": 161
+                },
+                "placeId": "pl_25"
+              },
+              {
+                "status": "pending",
+                "type": "work",
+                "pos": {
+                  "x": 43,
+                  "y": 13,
+                  "z": 161
+                },
+                "duration": 3184.873924171552,
+                "placeId": "pl_25"
+              }
+            ],
+            "decision": {
+              "tick": 9980463,
+              "candidates": [
+                {
+                  "type": "work",
+                  "key": "work:pl_25",
+                  "utility": 0.39824315768128193,
+                  "reasons": [
+                    "I normally brew at this time; other concerns may matter more"
+                  ]
+                },
+                {
+                  "type": "sleep",
+                  "key": "sleep:pl_15",
+                  "utility": 0.26773760805157,
+                  "reasons": [
+                    "energy need 0.41"
+                  ]
+                },
+                {
+                  "type": "socialize",
+                  "key": "socialize:pl_1",
+                  "utility": 0.1813,
+                  "reasons": [
+                    "social need 1.00",
+                    "my appetite for company",
+                    "my body leaves little room for company"
+                  ]
+                },
+                {
+                  "type": "check_on",
+                  "key": "check_on:p_24",
+                  "utility": 0.1642037317633765,
+                  "reasons": [
+                    "purpose: see to Maud Penny (priority 0.11)",
+                    "I have not seen Maud Penny and I want to know how they are",
+                    "I am worried about Maud Penny",
+                    "but my own body is telling me otherwise (critical need)",
+                    "purpose: see to them (0.11)",
+                    "I am worried about Maud Penny",
+                    "concern: worried about them (0.17)",
+                    "I know Maud Penny"
+                  ]
+                },
+                {
+                  "type": "idle",
+                  "key": "idle:",
+                  "utility": 0.1,
+                  "reasons": [
+                    "nothing better to do"
+                  ]
+                }
+              ],
+              "chosen": "work:pl_25",
+              "switched": true,
+              "note": "switched from eat to work"
+            },
+            "commitment": null,
+            "investigated": [],
+            "noFoodUntil": 9964083,
+            "percepts": []
+          }
+        },
+        {
+          "event": {
+            "id": "e_238860",
+            "tick": 9980562,
+            "type": "goal_changed",
+            "category": "cognition",
+            "actor": "p_27",
+            "placeId": "pl_35",
+            "data": {
+              "from": "work",
+              "fromUtility": 0.39824315768128193,
+              "to": "eat",
+              "utility": 0.8,
+              "reasons": [
+                "hunger 1.00",
+                "",
+                ""
+              ],
+              "key": "eat:pl_35"
+            },
+            "causes": [],
+            "effects": [],
+            "perceivedBy": [],
+            "significance": 0.12,
+            "summary": "Old Wyn: goal work → eat @ the river woods (u=0.80)"
+          },
+          "actorAtEmission": {
+            "id": "p_27",
+            "name": "Old Wyn",
+            "alive": true,
+            "needs": {
+              "hunger": 1,
+              "energy": 0.41174630343580043,
+              "social": 1,
+              "comfort": 1,
+              "thirst": 0.27907499999999874
+            },
+            "wealth": 1,
+            "homeId": "pl_15",
+            "workId": "pl_35",
+            "householdId": "hh_17",
+            "inventory": [],
+            "bodies": [
+              {
+                "id": "b_27",
+                "pos": {
+                  "x": 49.605716430734226,
+                  "y": 14,
+                  "z": 157.49999999999267
+                },
+                "health": 80,
+                "maxHealth": 80,
+                "dead": false,
+                "present": true,
+                "path": [
+                  {
+                    "x": 50.5,
+                    "y": 14,
+                    "z": 157.5
+                  },
+                  {
+                    "x": 47.5,
+                    "y": 14,
+                    "z": 157.5
+                  },
+                  {
+                    "x": 43.5,
+                    "y": 13,
+                    "z": 159.5
+                  },
+                  {
+                    "x": 43.5,
+                    "y": 13,
+                    "z": 161.5
+                  }
+                ],
+                "pathGoal": {
+                  "x": 43,
+                  "y": 13,
+                  "z": 161
+                }
+              }
+            ],
+            "goal": {
+              "type": "eat",
+              "utility": 0.8,
+              "reasons": [
+                "hunger 1.00",
+                "",
+                ""
+              ],
+              "createdAt": 9980562,
+              "key": "eat:pl_35",
+              "targetPlace": "pl_35",
+              "data": {
+                "food": "i_89",
+                "intentionReason": "have food on hand or at home",
+                "grounded": true
+              }
+            },
+            "plan": [
+              {
+                "status": "pending",
+                "type": "goto",
+                "pos": {
+                  "x": 45,
+                  "y": 14,
+                  "z": 149
+                },
+                "placeId": "pl_35"
+              },
+              {
+                "status": "pending",
+                "type": "eat",
+                "pos": {
+                  "x": 45,
+                  "y": 14,
+                  "z": 149
+                },
+                "placeId": "pl_35",
+                "duration": 1500
+              }
+            ],
+            "decision": {
+              "tick": 9980562,
+              "candidates": [
+                {
+                  "type": "eat",
+                  "key": "eat:pl_35",
+                  "utility": 0.8,
+                  "reasons": [
+                    "hunger 1.00"
+                  ]
+                },
+                {
+                  "type": "work",
+                  "key": "work:pl_25",
+                  "utility": 0.3980355103756103,
+                  "reasons": [
+                    "I normally brew at this time; other concerns may matter more"
+                  ]
+                },
+                {
+                  "type": "sleep",
+                  "key": "sleep:pl_15",
+                  "utility": 0.2705716730922204,
+                  "reasons": [
+                    "energy need 0.41"
+                  ]
+                },
+                {
+                  "type": "socialize",
+                  "key": "socialize:pl_1",
+                  "utility": 0.1813,
+                  "reasons": [
+                    "social need 1.00",
+                    "my appetite for company",
+                    "my body leaves little room for company"
+                  ]
+                },
+                {
+                  "type": "check_on",
+                  "key": "check_on:p_24",
+                  "utility": 0.1642037317633765,
+                  "reasons": [
+                    "purpose: see to Maud Penny (priority 0.11)",
+                    "I have not seen Maud Penny and I want to know how they are",
+                    "I am worried about Maud Penny",
+                    "but my own body is telling me otherwise (critical need)",
+                    "purpose: see to them (0.11)",
+                    "I am worried about Maud Penny",
+                    "concern: worried about them (0.17)",
+                    "I know Maud Penny"
+                  ]
+                },
+                {
+                  "type": "idle",
+                  "key": "idle:",
+                  "utility": 0.1,
+                  "reasons": [
+                    "nothing better to do"
+                  ]
+                }
+              ],
+              "chosen": "eat:pl_35",
+              "switched": true,
+              "note": "switched from work to eat"
+            },
+            "commitment": null,
+            "investigated": [],
+            "noFoodUntil": 9964083,
+            "percepts": []
+          }
+        },
+        {
+          "event": {
+            "id": "e_238907",
+            "tick": 9980661,
+            "type": "goal_changed",
+            "category": "cognition",
+            "actor": "p_27",
+            "placeId": "pl_25",
+            "data": {
+              "from": "eat",
+              "fromUtility": 0.8,
+              "to": "work",
+              "utility": 0.39782786200942405,
+              "reasons": [
+                "I normally brew at this time; other concerns may matter more",
+                "",
+                ""
+              ],
+              "key": "work:pl_25"
+            },
+            "causes": [],
+            "effects": [],
+            "perceivedBy": [],
+            "significance": 0.12,
+            "summary": "Old Wyn: goal eat → work @ Old Wyn's hut (u=0.40)"
+          },
+          "actorAtEmission": {
+            "id": "p_27",
+            "name": "Old Wyn",
+            "alive": true,
+            "needs": {
+              "hunger": 1,
+              "energy": 0.41489526459207865,
+              "social": 1,
+              "comfort": 1,
+              "thirst": 0.2826795454545442
+            },
+            "wealth": 1,
+            "homeId": "pl_15",
+            "workId": "pl_35",
+            "householdId": "hh_17",
+            "inventory": [],
+            "bodies": [
+              {
+                "id": "b_27",
+                "pos": {
+                  "x": 51.84581602069616,
+                  "y": 14,
+                  "z": 157.49999999999878
+                },
+                "health": 80,
+                "maxHealth": 80,
+                "dead": false,
+                "present": true,
+                "path": [
+                  {
+                    "x": 50.5,
+                    "y": 14,
+                    "z": 157.5
+                  },
+                  {
+                    "x": 55.5,
+                    "y": 14,
+                    "z": 157.5
+                  },
+                  {
+                    "x": 55.5,
+                    "y": 14,
+                    "z": 155.5
+                  },
+                  {
+                    "x": 49.5,
+                    "y": 14,
+                    "z": 155.5
+                  },
+                  {
+                    "x": 46.5,
+                    "y": 14,
+                    "z": 151.5
+                  },
+                  {
+                    "x": 45.5,
+                    "y": 14,
+                    "z": 149.5
+                  }
+                ],
+                "pathGoal": {
+                  "x": 45,
+                  "y": 14,
+                  "z": 149
+                }
+              }
+            ],
+            "goal": {
+              "type": "work",
+              "utility": 0.39782786200942405,
+              "reasons": [
+                "I normally brew at this time; other concerns may matter more",
+                "",
+                ""
+              ],
+              "createdAt": 9980661,
+              "key": "work:pl_25",
+              "targetPlace": "pl_25",
+              "data": {
+                "label": "brew"
+              }
+            },
+            "plan": [
+              {
+                "status": "pending",
+                "type": "goto",
+                "pos": {
+                  "x": 43,
+                  "y": 13,
+                  "z": 161
+                },
+                "placeId": "pl_25"
+              },
+              {
+                "status": "pending",
+                "type": "work",
+                "pos": {
+                  "x": 43,
+                  "y": 13,
+                  "z": 161
+                },
+                "duration": 4035.6901661027223,
+                "placeId": "pl_25"
+              }
+            ],
+            "decision": {
+              "tick": 9980661,
+              "candidates": [
+                {
+                  "type": "work",
+                  "key": "work:pl_25",
+                  "utility": 0.39782786200942405,
+                  "reasons": [
+                    "I normally brew at this time; other concerns may matter more"
+                  ]
+                },
+                {
+                  "type": "sleep",
+                  "key": "sleep:pl_15",
+                  "utility": 0.27340573813287083,
+                  "reasons": [
+                    "energy need 0.41"
+                  ]
+                },
+                {
+                  "type": "socialize",
+                  "key": "socialize:pl_1",
+                  "utility": 0.1813,
+                  "reasons": [
+                    "social need 1.00",
+                    "my appetite for company",
+                    "my body leaves little room for company"
+                  ]
+                },
+                {
+                  "type": "check_on",
+                  "key": "check_on:p_24",
+                  "utility": 0.1642037317633765,
+                  "reasons": [
+                    "purpose: see to Maud Penny (priority 0.11)",
+                    "I have not seen Maud Penny and I want to know how they are",
+                    "I am worried about Maud Penny",
+                    "but my own body is telling me otherwise (critical need)",
+                    "purpose: see to them (0.11)",
+                    "I am worried about Maud Penny",
+                    "concern: worried about them (0.17)",
+                    "I know Maud Penny"
+                  ]
+                },
+                {
+                  "type": "idle",
+                  "key": "idle:",
+                  "utility": 0.1,
+                  "reasons": [
+                    "nothing better to do"
+                  ]
+                }
+              ],
+              "chosen": "work:pl_25",
+              "switched": true,
+              "note": "switched from eat to work"
+            },
+            "commitment": null,
+            "investigated": [],
+            "noFoodUntil": 9964083,
+            "percepts": []
+          }
+        },
+        {
+          "event": {
+            "id": "e_238935",
+            "tick": 9980760,
+            "type": "goal_changed",
+            "category": "cognition",
+            "actor": "p_27",
+            "placeId": "pl_35",
+            "data": {
+              "from": "work",
+              "fromUtility": 0.39782786200942405,
+              "to": "eat",
+              "utility": 0.8,
+              "reasons": [
+                "hunger 1.00",
+                "",
+                ""
+              ],
+              "key": "eat:pl_35"
+            },
+            "causes": [],
+            "effects": [],
+            "perceivedBy": [],
+            "significance": 0.12,
+            "summary": "Old Wyn: goal work → eat @ the river woods (u=0.80)"
+          },
+          "actorAtEmission": {
+            "id": "p_27",
+            "name": "Old Wyn",
+            "alive": true,
+            "needs": {
+              "hunger": 1,
+              "energy": 0.41646974517021773,
+              "social": 1,
+              "comfort": 1,
+              "thirst": 0.28448181818181695
+            },
+            "wealth": 1,
+            "homeId": "pl_15",
+            "workId": "pl_35",
+            "householdId": "hh_17",
+            "inventory": [],
+            "bodies": [
+              {
+                "id": "b_27",
+                "pos": {
+                  "x": 49.60618319019765,
+                  "y": 14,
+                  "z": 157.49999999999986
+                },
+                "health": 80,
+                "maxHealth": 80,
+                "dead": false,
+                "present": true,
+                "path": [
+                  {
+                    "x": 50.5,
+                    "y": 14,
+                    "z": 157.5
+                  },
+                  {
+                    "x": 47.5,
+                    "y": 14,
+                    "z": 157.5
+                  },
+                  {
+                    "x": 43.5,
+                    "y": 13,
+                    "z": 159.5
+                  },
+                  {
+                    "x": 43.5,
+                    "y": 13,
+                    "z": 161.5
+                  }
+                ],
+                "pathGoal": {
+                  "x": 43,
+                  "y": 13,
+                  "z": 161
+                }
+              }
+            ],
+            "goal": {
+              "type": "eat",
+              "utility": 0.8,
+              "reasons": [
+                "hunger 1.00",
+                "",
+                ""
+              ],
+              "createdAt": 9980760,
+              "key": "eat:pl_35",
+              "targetPlace": "pl_35",
+              "data": {
+                "food": "i_89",
+                "intentionReason": "have food on hand or at home",
+                "grounded": true
+              }
+            },
+            "plan": [
+              {
+                "status": "pending",
+                "type": "goto",
+                "pos": {
+                  "x": 45,
+                  "y": 14,
+                  "z": 149
+                },
+                "placeId": "pl_35"
+              },
+              {
+                "status": "pending",
+                "type": "eat",
+                "pos": {
+                  "x": 45,
+                  "y": 14,
+                  "z": 149
+                },
+                "placeId": "pl_35",
+                "duration": 1500
+              }
+            ],
+            "decision": {
+              "tick": 9980760,
+              "candidates": [
+                {
+                  "type": "eat",
+                  "key": "eat:pl_35",
+                  "utility": 0.8,
+                  "reasons": [
+                    "hunger 1.00"
+                  ]
+                },
+                {
+                  "type": "work",
+                  "key": "work:pl_25",
+                  "utility": 0.3977240374305482,
+                  "reasons": [
+                    "I normally brew at this time; other concerns may matter more"
+                  ]
+                },
+                {
+                  "type": "sleep",
+                  "key": "sleep:pl_15",
+                  "utility": 0.27482277065319594,
+                  "reasons": [
+                    "energy need 0.42"
+                  ]
+                },
+                {
+                  "type": "socialize",
+                  "key": "socialize:pl_1",
+                  "utility": 0.1813,
+                  "reasons": [
+                    "social need 1.00",
+                    "my appetite for company",
+                    "my body leaves little room for company"
+                  ]
+                },
+                {
+                  "type": "check_on",
+                  "key": "check_on:p_24",
+                  "utility": 0.1642037317633765,
+                  "reasons": [
+                    "purpose: see to Maud Penny (priority 0.11)",
+                    "I have not seen Maud Penny and I want to know how they are",
+                    "I am worried about Maud Penny",
+                    "but my own body is telling me otherwise (critical need)",
+                    "purpose: see to them (0.11)",
+                    "I am worried about Maud Penny",
+                    "concern: worried about them (0.17)",
+                    "I know Maud Penny"
+                  ]
+                },
+                {
+                  "type": "idle",
+                  "key": "idle:",
+                  "utility": 0.1,
+                  "reasons": [
+                    "nothing better to do"
+                  ]
+                }
+              ],
+              "chosen": "eat:pl_35",
+              "switched": true,
+              "note": "switched from work to eat"
+            },
+            "commitment": null,
+            "investigated": [],
+            "noFoodUntil": 9964083,
+            "percepts": []
+          }
+        },
+        {
+          "event": {
+            "id": "e_238951",
+            "tick": 9980859,
+            "type": "goal_changed",
+            "category": "cognition",
+            "actor": "p_27",
+            "placeId": "pl_25",
+            "data": {
+              "from": "eat",
+              "fromUtility": 0.8,
+              "to": "work",
+              "utility": 0.3975163874850321,
+              "reasons": [
+                "I normally brew at this time; other concerns may matter more",
+                "",
+                ""
+              ],
+              "key": "work:pl_25"
+            },
+            "causes": [],
+            "effects": [],
+            "perceivedBy": [],
+            "significance": 0.12,
+            "summary": "Old Wyn: goal eat → work @ Old Wyn's hut (u=0.40)"
+          },
+          "actorAtEmission": {
+            "id": "p_27",
+            "name": "Old Wyn",
+            "alive": true,
+            "needs": {
+              "hunger": 1,
+              "energy": 0.41961870632649595,
+              "social": 1,
+              "comfort": 1,
+              "thirst": 0.2880863636363624
+            },
+            "wealth": 1,
+            "homeId": "pl_15",
+            "workId": "pl_35",
+            "householdId": "hh_17",
+            "inventory": [],
+            "bodies": [
+              {
+                "id": "b_27",
+                "pos": {
+                  "x": 51.84534926123274,
+                  "y": 14,
+                  "z": 157.49999999999997
+                },
+                "health": 80,
+                "maxHealth": 80,
+                "dead": false,
+                "present": true,
+                "path": [
+                  {
+                    "x": 50.5,
+                    "y": 14,
+                    "z": 157.5
+                  },
+                  {
+                    "x": 55.5,
+                    "y": 14,
+                    "z": 157.5
+                  },
+                  {
+                    "x": 55.5,
+                    "y": 14,
+                    "z": 155.5
+                  },
+                  {
+                    "x": 49.5,
+                    "y": 14,
+                    "z": 155.5
+                  },
+                  {
+                    "x": 46.5,
+                    "y": 14,
+                    "z": 151.5
+                  },
+                  {
+                    "x": 45.5,
+                    "y": 14,
+                    "z": 149.5
+                  }
+                ],
+                "pathGoal": {
+                  "x": 45,
+                  "y": 14,
+                  "z": 149
+                }
+              }
+            ],
+            "goal": {
+              "type": "work",
+              "utility": 0.3975163874850321,
+              "reasons": [
+                "I normally brew at this time; other concerns may matter more",
+                "",
+                ""
+              ],
+              "createdAt": 9980859,
+              "key": "work:pl_25",
+              "targetPlace": "pl_25",
+              "data": {
+                "label": "brew"
+              }
+            },
+            "plan": [
+              {
+                "status": "pending",
+                "type": "goto",
+                "pos": {
+                  "x": 43,
+                  "y": 13,
+                  "z": 161
+                },
+                "placeId": "pl_25"
+              },
+              {
+                "status": "pending",
+                "type": "work",
+                "pos": {
+                  "x": 43,
+                  "y": 13,
+                  "z": 161
+                },
+                "duration": 2401.3230096548796,
+                "placeId": "pl_25"
+              }
+            ],
+            "decision": {
+              "tick": 9980859,
+              "candidates": [
+                {
+                  "type": "work",
+                  "key": "work:pl_25",
+                  "utility": 0.3975163874850321,
+                  "reasons": [
+                    "I normally brew at this time; other concerns may matter more"
+                  ]
+                },
+                {
+                  "type": "sleep",
+                  "key": "sleep:pl_15",
+                  "utility": 0.27765683569384636,
+                  "reasons": [
+                    "energy need 0.42"
+                  ]
+                },
+                {
+                  "type": "socialize",
+                  "key": "socialize:pl_1",
+                  "utility": 0.1813,
+                  "reasons": [
+                    "social need 1.00",
+                    "my appetite for company",
+                    "my body leaves little room for company"
+                  ]
+                },
+                {
+                  "type": "check_on",
+                  "key": "check_on:p_24",
+                  "utility": 0.1642037317633765,
+                  "reasons": [
+                    "purpose: see to Maud Penny (priority 0.11)",
+                    "I have not seen Maud Penny and I want to know how they are",
+                    "I am worried about Maud Penny",
+                    "but my own body is telling me otherwise (critical need)",
+                    "purpose: see to them (0.11)",
+                    "I am worried about Maud Penny",
+                    "concern: worried about them (0.17)",
+                    "I know Maud Penny"
+                  ]
+                },
+                {
+                  "type": "idle",
+                  "key": "idle:",
+                  "utility": 0.1,
+                  "reasons": [
+                    "nothing better to do"
+                  ]
+                }
+              ],
+              "chosen": "work:pl_25",
+              "switched": true,
+              "note": "switched from eat to work"
+            },
+            "commitment": null,
+            "investigated": [],
+            "noFoodUntil": 9964083,
+            "percepts": []
+          }
+        },
+        {
+          "event": {
+            "id": "e_238974",
+            "tick": 9980958,
+            "type": "goal_changed",
+            "category": "cognition",
+            "actor": "p_27",
+            "placeId": "pl_35",
+            "data": {
+              "from": "work",
+              "fromUtility": 0.3975163874850321,
+              "to": "eat",
+              "utility": 0.8,
+              "reasons": [
+                "hunger 1.00",
+                "",
+                ""
+              ],
+              "key": "eat:pl_35"
+            },
+            "causes": [],
+            "effects": [],
+            "perceivedBy": [],
+            "significance": 0.12,
+            "summary": "Old Wyn: goal work → eat @ the river woods (u=0.80)"
+          },
+          "actorAtEmission": {
+            "id": "p_27",
+            "name": "Old Wyn",
+            "alive": true,
+            "needs": {
+              "hunger": 1,
+              "energy": 0.4227676674827742,
+              "social": 1,
+              "comfort": 1,
+              "thirst": 0.2916909090909079
+            },
+            "wealth": 1,
+            "homeId": "pl_15",
+            "workId": "pl_35",
+            "householdId": "hh_17",
+            "inventory": [],
+            "bodies": [
+              {
+                "id": "b_27",
+                "pos": {
+                  "x": 49.60659503678301,
+                  "y": 14,
+                  "z": 157.49999999999997
+                },
+                "health": 80,
+                "maxHealth": 80,
+                "dead": false,
+                "present": true,
+                "path": [
+                  {
+                    "x": 50.5,
+                    "y": 14,
+                    "z": 157.5
+                  },
+                  {
+                    "x": 47.5,
+                    "y": 14,
+                    "z": 157.5
+                  },
+                  {
+                    "x": 43.5,
+                    "y": 13,
+                    "z": 159.5
+                  },
+                  {
+                    "x": 43.5,
+                    "y": 13,
+                    "z": 161.5
+                  }
+                ],
+                "pathGoal": {
+                  "x": 43,
+                  "y": 13,
+                  "z": 161
+                }
+              }
+            ],
+            "goal": {
+              "type": "eat",
+              "utility": 0.8,
+              "reasons": [
+                "hunger 1.00",
+                "",
+                ""
+              ],
+              "createdAt": 9980958,
+              "key": "eat:pl_35",
+              "targetPlace": "pl_35",
+              "data": {
+                "food": "i_89",
+                "intentionReason": "have food on hand or at home",
+                "grounded": true
+              }
+            },
+            "plan": [
+              {
+                "status": "pending",
+                "type": "goto",
+                "pos": {
+                  "x": 45,
+                  "y": 14,
+                  "z": 149
+                },
+                "placeId": "pl_35"
+              },
+              {
+                "status": "pending",
+                "type": "eat",
+                "pos": {
+                  "x": 45,
+                  "y": 14,
+                  "z": 149
+                },
+                "placeId": "pl_35",
+                "duration": 1500
+              }
+            ],
+            "decision": {
+              "tick": 9980958,
+              "candidates": [
+                {
+                  "type": "eat",
+                  "key": "eat:pl_35",
+                  "utility": 0.8,
+                  "reasons": [
+                    "hunger 1.00"
+                  ]
+                },
+                {
+                  "type": "work",
+                  "key": "work:pl_25",
+                  "utility": 0.3973087364942058,
+                  "reasons": [
+                    "I normally brew at this time; other concerns may matter more"
+                  ]
+                },
+                {
+                  "type": "sleep",
+                  "key": "sleep:pl_15",
+                  "utility": 0.2804909007344968,
+                  "reasons": [
+                    "energy need 0.42"
+                  ]
+                },
+                {
+                  "type": "socialize",
+                  "key": "socialize:pl_1",
+                  "utility": 0.1813,
+                  "reasons": [
+                    "social need 1.00",
+                    "my appetite for company",
+                    "my body leaves little room for company"
+                  ]
+                },
+                {
+                  "type": "check_on",
+                  "key": "check_on:p_24",
+                  "utility": 0.1642037317633765,
+                  "reasons": [
+                    "purpose: see to Maud Penny (priority 0.11)",
+                    "I have not seen Maud Penny and I want to know how they are",
+                    "I am worried about Maud Penny",
+                    "but my own body is telling me otherwise (critical need)",
+                    "purpose: see to them (0.11)",
+                    "I am worried about Maud Penny",
+                    "concern: worried about them (0.17)",
+                    "I know Maud Penny"
+                  ]
+                },
+                {
+                  "type": "idle",
+                  "key": "idle:",
+                  "utility": 0.1,
+                  "reasons": [
+                    "nothing better to do"
+                  ]
+                }
+              ],
+              "chosen": "eat:pl_35",
+              "switched": true,
+              "note": "switched from work to eat"
+            },
+            "commitment": null,
+            "investigated": [],
+            "noFoodUntil": 9964083,
+            "percepts": []
+          }
+        }
+      ]
+    },
+    {
+      "key": "goal_churn:p_17:",
+      "samples": 1,
+      "first": 10682400,
+      "last": 10682400,
+      "worst": {
+        "type": "goal_churn",
+        "entity": "p_17",
+        "occurrences": 40,
+        "firstSeen": 10674012,
+        "lastSeen": 10682382,
+        "relatedEvents": [
+          "e_343372",
+          "e_343441",
+          "e_343465",
+          "e_343502",
+          "e_343520",
+          "e_343539",
+          "e_343583",
+          "e_343631",
+          "e_343648",
+          "e_343684",
+          "e_343696",
+          "e_343713",
+          "e_343720",
+          "e_343729",
+          "e_343733",
+          "e_343738",
+          "e_343740",
+          "e_343755",
+          "e_343760",
+          "e_343765"
+        ],
+        "data": {
+          "windowHours": 3
+        }
+      },
+      "rows": [
+        {
+          "event": {
+            "id": "e_343372",
+            "tick": 10674012,
+            "type": "goal_changed",
+            "category": "cognition",
+            "actor": "p_17",
+            "placeId": "pl_1",
+            "data": {
+              "from": "sleep",
+              "fromUtility": 0.24742468750002802,
+              "to": "socialize",
+              "utility": 0.22049999999999997,
+              "reasons": [
+                "social need 1.00",
+                "my appetite for company",
+                "my body leaves little room for company"
+              ],
+              "key": "socialize:pl_1"
+            },
+            "causes": [],
+            "effects": [],
+            "perceivedBy": [],
+            "significance": 0.12,
+            "summary": "Alwin Hollis: goal sleep → socialize @ the village square (u=0.22)"
+          },
+          "actorAtEmission": {
+            "id": "p_17",
+            "name": "Alwin Hollis",
+            "alive": true,
+            "needs": {
+              "hunger": 1,
+              "energy": 0.31785862268521703,
+              "social": 1,
+              "comfort": 0.264999999999997,
+              "thirst": 0.19742424242424494
+            },
+            "wealth": 0.65771484375,
+            "homeId": "pl_23",
+            "workId": "pl_26",
+            "householdId": "hh_9",
+            "inventory": [],
+            "bodies": [
+              {
+                "id": "b_17",
+                "pos": {
+                  "x": 57.51905128230556,
+                  "y": 14,
+                  "z": 85.53248727010859
+                },
+                "health": 80,
+                "maxHealth": 80,
+                "injuries": {
+                  "head": 0.17000743526008363
+                },
+                "dead": false,
+                "present": true,
+                "path": null,
+                "pathGoal": {
+                  "x": 57,
+                  "y": 14,
+                  "z": 85
+                }
+              }
+            ],
+            "goal": {
+              "type": "socialize",
+              "utility": 0.22049999999999997,
+              "reasons": [
+                "social need 1.00",
+                "my appetite for company",
+                "my body leaves little room for company"
+              ],
+              "createdAt": 10674012,
+              "key": "socialize:pl_1",
+              "targetPlace": "pl_1"
+            },
+            "plan": [
+              {
+                "status": "pending",
+                "type": "goto",
+                "pos": {
+                  "x": 96,
+                  "y": 14,
+                  "z": 98
+                },
+                "placeId": "pl_1"
+              },
+              {
+                "status": "pending",
+                "type": "sit",
+                "pos": {
+                  "x": 96,
+                  "y": 14,
+                  "z": 98
+                },
+                "duration": 1552.094213012606,
+                "data": {
+                  "social": true
+                }
+              }
+            ],
+            "decision": {
+              "tick": 10674012,
+              "candidates": [
+                {
+                  "type": "socialize",
+                  "key": "socialize:pl_1",
+                  "utility": 0.22049999999999997,
+                  "reasons": [
+                    "social need 1.00",
+                    "my appetite for company",
+                    "my body leaves little room for company"
+                  ]
+                },
+                {
+                  "type": "work",
+                  "key": "work:pl_26",
+                  "utility": 0.19923186760500702,
+                  "reasons": [
+                    "I normally field work at this time; other concerns may matter more",
+                    "but it is raining out there"
+                  ]
+                },
+                {
+                  "type": "sleep",
+                  "key": "sleep:pl_23",
+                  "utility": 0.18607276041669532,
+                  "reasons": [
+                    "energy need 0.32"
+                  ]
+                },
+                {
+                  "type": "idle",
+                  "key": "idle:",
+                  "utility": 0.1,
+                  "reasons": [
+                    "nothing better to do"
+                  ]
+                }
+              ],
+              "chosen": "socialize:pl_1",
+              "switched": true,
+              "note": "switched from sleep to socialize"
+            },
+            "commitment": null,
+            "investigated": [],
+            "noFoodUntil": 10666560,
+            "percepts": []
+          }
+        },
+        {
+          "event": {
+            "id": "e_343441",
+            "tick": 10674210,
+            "type": "goal_changed",
+            "category": "cognition",
+            "actor": "p_17",
+            "placeId": "pl_26",
+            "data": {
+              "from": "socialize",
+              "fromUtility": 0.22049999999999997,
+              "to": "harvest",
+              "utility": 0.47167977832095775,
+              "reasons": [
+                "wheat is ripe in the Hollis fields"
+              ],
+              "key": "harvest:pl_26"
+            },
+            "causes": [
+              "e_342176"
+            ],
+            "effects": [],
+            "perceivedBy": [],
+            "significance": 0.12,
+            "summary": "Alwin Hollis: goal socialize → harvest @ the Hollis fields (u=0.47)"
+          },
+          "actorAtEmission": {
+            "id": "p_17",
+            "name": "Alwin Hollis",
+            "alive": true,
+            "needs": {
+              "hunger": 1,
+              "energy": 0.3220391249388979,
+              "social": 1,
+              "comfort": 0.24749999999999697,
+              "thirst": 0.2033333333333358
+            },
+            "wealth": 0.65771484375,
+            "homeId": "pl_23",
+            "workId": "pl_26",
+            "householdId": "hh_9",
+            "inventory": [],
+            "bodies": [
+              {
+                "id": "b_17",
+                "pos": {
+                  "x": 60.43663092864415,
+                  "y": 14,
+                  "z": 91.34560751073681
+                },
+                "health": 80,
+                "maxHealth": 80,
+                "injuries": {
+                  "head": 0.17000743526008363
+                },
+                "dead": false,
+                "present": true,
+                "path": [
+                  {
+                    "x": 58.5,
+                    "y": 14,
+                    "z": 86.5
+                  },
+                  {
+                    "x": 60.5,
+                    "y": 14,
+                    "z": 91.5
+                  },
+                  {
+                    "x": 60.5,
+                    "y": 14,
+                    "z": 92.5
+                  },
+                  {
+                    "x": 66.5,
+                    "y": 14,
+                    "z": 98.5
+                  },
+                  {
+                    "x": 72.5,
+                    "y": 14,
+                    "z": 98.5
+                  },
+                  {
+                    "x": 78.5,
+                    "y": 14,
+                    "z": 98.5
+                  },
+                  {
+                    "x": 84.5,
+                    "y": 14,
+                    "z": 98.5
+                  },
+                  {
+                    "x": 90.5,
+                    "y": 14,
+                    "z": 98.5
+                  },
+                  {
+                    "x": 96.5,
+                    "y": 14,
+                    "z": 98.5
+                  }
+                ],
+                "pathGoal": {
+                  "x": 96,
+                  "y": 14,
+                  "z": 98
+                }
+              }
+            ],
+            "goal": {
+              "type": "harvest",
+              "utility": 0.47167977832095775,
+              "reasons": [
+                "wheat is ripe in the Hollis fields"
+              ],
+              "createdAt": 10674210,
+              "key": "harvest:pl_26",
+              "targetPlace": "pl_26",
+              "causeEvent": "e_342176",
+              "data": {
+                "fieldId": "fld_1",
+                "resource": "grain"
+              }
+            },
+            "plan": [
+              {
+                "status": "pending",
+                "type": "goto",
+                "pos": {
+                  "x": 40.5,
+                  "y": 14,
+                  "z": 115.5
+                },
+                "placeId": "pl_26"
+              },
+              {
+                "status": "pending",
+                "type": "harvest",
+                "pos": {
+                  "x": 40.5,
+                  "y": 14,
+                  "z": 115.5
+                },
+                "placeId": "pl_26",
+                "duration": 1800,
+                "data": {
+                  "fieldId": "fld_1"
+                }
+              }
+            ],
+            "decision": {
+              "tick": 10674210,
+              "candidates": [
+                {
+                  "type": "harvest",
+                  "key": "harvest:pl_26",
+                  "utility": 0.47167977832095775,
+                  "reasons": [
+                    "wheat is ripe in the Hollis fields"
+                  ]
+                },
+                {
+                  "type": "socialize",
+                  "key": "socialize:pl_1",
+                  "utility": 0.22049999999999997,
+                  "reasons": [
+                    "social need 1.00",
+                    "my appetite for company",
+                    "my body leaves little room for company"
+                  ]
+                },
+                {
+                  "type": "sleep",
+                  "key": "sleep:pl_23",
+                  "utility": 0.18983521244500814,
+                  "reasons": [
+                    "energy need 0.32"
+                  ]
+                },
+                {
+                  "type": "idle",
+                  "key": "idle:",
+                  "utility": 0.1,
+                  "reasons": [
+                    "nothing better to do"
+                  ]
+                }
+              ],
+              "chosen": "harvest:pl_26",
+              "switched": true,
+              "note": "switched from socialize to harvest"
+            },
+            "commitment": null,
+            "investigated": [],
+            "noFoodUntil": 10666560,
+            "percepts": []
+          }
+        },
+        {
+          "event": {
+            "id": "e_343465",
+            "tick": 10674309,
+            "type": "goal_changed",
+            "category": "cognition",
+            "actor": "p_17",
+            "placeId": "pl_1",
+            "data": {
+              "from": "harvest",
+              "fromUtility": 0.47167977832095775,
+              "to": "socialize",
+              "utility": 0.22049999999999997,
+              "reasons": [
+                "social need 1.00",
+                "my appetite for company",
+                "my body leaves little room for company"
+              ],
+              "key": "socialize:pl_1"
+            },
+            "causes": [],
+            "effects": [],
+            "perceivedBy": [],
+            "significance": 0.12,
+            "summary": "Alwin Hollis: goal harvest → socialize @ the village square (u=0.22)"
+          },
+          "actorAtEmission": {
+            "id": "p_17",
+            "name": "Alwin Hollis",
+            "alive": true,
+            "needs": {
+              "hunger": 1,
+              "energy": 0.3248293076041315,
+              "social": 1,
+              "comfort": 0.2668456424307048,
+              "thirst": 0.20727272727272972
+            },
+            "wealth": 0.65771484375,
+            "homeId": "pl_23",
+            "workId": "pl_26",
+            "householdId": "hh_9",
+            "inventory": [],
+            "bodies": [
+              {
+                "id": "b_17",
+                "pos": {
+                  "x": 58.96530150842557,
+                  "y": 14,
+                  "z": 93.8655113895125
+                },
+                "health": 80,
+                "maxHealth": 80,
+                "injuries": {
+                  "head": 0.17000743526008363
+                },
+                "dead": false,
+                "present": true,
+                "path": [
+                  {
+                    "x": 60.5,
+                    "y": 14,
+                    "z": 92.5
+                  },
+                  {
+                    "x": 54.5,
+                    "y": 14,
+                    "z": 98.5
+                  },
+                  {
+                    "x": 51.5,
+                    "y": 14,
+                    "z": 99.5
+                  },
+                  {
+                    "x": 51.5,
+                    "y": 14,
+                    "z": 101.5
+                  },
+                  {
+                    "x": 45.5,
+                    "y": 14,
+                    "z": 101.5
+                  },
+                  {
+                    "x": 42.5,
+                    "y": 14,
+                    "z": 105.5
+                  },
+                  {
+                    "x": 42.5,
+                    "y": 14,
+                    "z": 111.5
+                  },
+                  {
+                    "x": 40.5,
+                    "y": 14,
+                    "z": 115.5
+                  }
+                ],
+                "pathGoal": {
+                  "x": 40.5,
+                  "y": 14,
+                  "z": 115.5
+                }
+              }
+            ],
+            "goal": {
+              "type": "socialize",
+              "utility": 0.22049999999999997,
+              "reasons": [
+                "social need 1.00",
+                "my appetite for company",
+                "my body leaves little room for company"
+              ],
+              "createdAt": 10674309,
+              "key": "socialize:pl_1",
+              "targetPlace": "pl_1"
+            },
+            "plan": [
+              {
+                "status": "pending",
+                "type": "goto",
+                "pos": {
+                  "x": 88,
+                  "y": 14,
+                  "z": 88
+                },
+                "placeId": "pl_1"
+              },
+              {
+                "status": "pending",
+                "type": "sit",
+                "pos": {
+                  "x": 88,
+                  "y": 14,
+                  "z": 88
+                },
+                "duration": 2232.775919395499,
+                "data": {
+                  "social": true
+                }
+              }
+            ],
+            "decision": {
+              "tick": 10674309,
+              "candidates": [
+                {
+                  "type": "socialize",
+                  "key": "socialize:pl_1",
+                  "utility": 0.22049999999999997,
+                  "reasons": [
+                    "social need 1.00",
+                    "my appetite for company",
+                    "my body leaves little room for company"
+                  ]
+                },
+                {
+                  "type": "work",
+                  "key": "work:pl_26",
+                  "utility": 0.19902082463521067,
+                  "reasons": [
+                    "I normally field work at this time; other concerns may matter more",
+                    "but it is raining out there"
+                  ]
+                },
+                {
+                  "type": "sleep",
+                  "key": "sleep:pl_23",
+                  "utility": 0.19234637684371833,
+                  "reasons": [
+                    "energy need 0.32"
+                  ]
+                },
+                {
+                  "type": "shelter",
+                  "key": "shelter:pl_23",
+                  "utility": 0.18961970659205463,
+                  "reasons": [
+                    "starting to feel the rain and outside in the rain"
+                  ]
+                },
+                {
+                  "type": "idle",
+                  "key": "idle:",
+                  "utility": 0.1,
+                  "reasons": [
+                    "nothing better to do"
+                  ]
+                }
+              ],
+              "chosen": "socialize:pl_1",
+              "switched": true,
+              "note": "switched from harvest to socialize"
+            },
+            "commitment": null,
+            "investigated": [],
+            "noFoodUntil": 10666560,
+            "percepts": []
+          }
+        },
+        {
+          "event": {
+            "id": "e_343502",
+            "tick": 10674408,
+            "type": "goal_changed",
+            "category": "cognition",
+            "actor": "p_17",
+            "placeId": "pl_26",
+            "data": {
+              "from": "socialize",
+              "fromUtility": 0.22049999999999997,
+              "to": "harvest",
+              "utility": 0.4713793979417886,
+              "reasons": [
+                "wheat is ripe in the Hollis fields"
+              ],
+              "key": "harvest:pl_26"
+            },
+            "causes": [
+              "e_343501"
+            ],
+            "effects": [],
+            "perceivedBy": [],
+            "significance": 0.12,
+            "summary": "Alwin Hollis: goal socialize → harvest @ the Hollis fields (u=0.47)"
+          },
+          "actorAtEmission": {
+            "id": "p_17",
+            "name": "Alwin Hollis",
+            "alive": true,
+            "needs": {
+              "hunger": 1,
+              "energy": 0.3262270589625825,
+              "social": 1,
+              "comfort": 0.2765184636460587,
+              "thirst": 0.20924242424242667
+            },
+            "wealth": 0.65771484375,
+            "homeId": "pl_23",
+            "workId": "pl_26",
+            "householdId": "hh_9",
+            "inventory": [],
+            "bodies": [
+              {
+                "id": "b_17",
+                "pos": {
+                  "x": 61.30261953413097,
+                  "y": 14,
+                  "z": 92.63657441790927
+                },
+                "health": 80,
+                "maxHealth": 80,
+                "injuries": {
+                  "head": 0.17000743526008363
+                },
+                "dead": false,
+                "present": true,
+                "path": [
+                  {
+                    "x": 59.5,
+                    "y": 14,
+                    "z": 92.5
+                  },
+                  {
+                    "x": 65.5,
+                    "y": 14,
+                    "z": 92.5
+                  },
+                  {
+                    "x": 71.5,
+                    "y": 14,
+                    "z": 88.5
+                  },
+                  {
+                    "x": 77.5,
+                    "y": 14,
+                    "z": 88.5
+                  },
+                  {
+                    "x": 83.5,
+                    "y": 14,
+                    "z": 88.5
+                  },
+                  {
+                    "x": 88.5,
+                    "y": 14,
+                    "z": 88.5
+                  }
+                ],
+                "pathGoal": {
+                  "x": 88,
+                  "y": 14,
+                  "z": 88
+                }
+              }
+            ],
+            "goal": {
+              "type": "harvest",
+              "utility": 0.4713793979417886,
+              "reasons": [
+                "wheat is ripe in the Hollis fields"
+              ],
+              "createdAt": 10674408,
+              "key": "harvest:pl_26",
+              "targetPlace": "pl_26",
+              "causeEvent": "e_343501",
+              "data": {
+                "fieldId": "fld_1",
+                "resource": "grain"
+              }
+            },
+            "plan": [
+              {
+                "status": "pending",
+                "type": "goto",
+                "pos": {
+                  "x": 40.5,
+                  "y": 14,
+                  "z": 115.5
+                },
+                "placeId": "pl_26"
+              },
+              {
+                "status": "pending",
+                "type": "harvest",
+                "pos": {
+                  "x": 40.5,
+                  "y": 14,
+                  "z": 115.5
+                },
+                "placeId": "pl_26",
+                "duration": 1800,
+                "data": {
+                  "fieldId": "fld_1"
+                }
+              }
+            ],
+            "decision": {
+              "tick": 10674408,
+              "candidates": [
+                {
+                  "type": "harvest",
+                  "key": "harvest:pl_26",
+                  "utility": 0.4713793979417886,
+                  "reasons": [
+                    "wheat is ripe in the Hollis fields"
+                  ]
+                },
+                {
+                  "type": "socialize",
+                  "key": "socialize:pl_1",
+                  "utility": 0.22049999999999997,
+                  "reasons": [
+                    "social need 1.00",
+                    "my appetite for company",
+                    "my body leaves little room for company"
+                  ]
+                },
+                {
+                  "type": "shelter",
+                  "key": "shelter:pl_23",
+                  "utility": 0.19687432250357007,
+                  "reasons": [
+                    "starting to feel the rain and outside in the rain"
+                  ]
+                },
+                {
+                  "type": "sleep",
+                  "key": "sleep:pl_23",
+                  "utility": 0.1936043530663242,
+                  "reasons": [
+                    "energy need 0.33"
+                  ]
+                },
+                {
+                  "type": "idle",
+                  "key": "idle:",
+                  "utility": 0.1,
+                  "reasons": [
+                    "nothing better to do"
+                  ]
+                }
+              ],
+              "chosen": "harvest:pl_26",
+              "switched": true,
+              "note": "switched from socialize to harvest"
+            },
+            "commitment": null,
+            "investigated": [],
+            "noFoodUntil": 10666560,
+            "percepts": []
+          }
+        },
+        {
+          "event": {
+            "id": "e_343520",
+            "tick": 10674507,
+            "type": "goal_changed",
+            "category": "cognition",
+            "actor": "p_17",
+            "placeId": "pl_1",
+            "data": {
+              "from": "harvest",
+              "fromUtility": 0.4713793979417886,
+              "to": "socialize",
+              "utility": 0.22049999999999997,
+              "reasons": [
+                "social need 1.00",
+                "my appetite for company",
+                "my body leaves little room for company"
+              ],
+              "key": "socialize:pl_1"
+            },
+            "causes": [],
+            "effects": [],
+            "perceivedBy": [],
+            "significance": 0.12,
+            "summary": "Alwin Hollis: goal harvest → socialize @ the village square (u=0.22)"
+          },
+          "actorAtEmission": {
+            "id": "p_17",
+            "name": "Alwin Hollis",
+            "alive": true,
+            "needs": {
+              "hunger": 1,
+              "energy": 0.3290278817311528,
+              "social": 1,
+              "comfort": 0.2958641060767665,
+              "thirst": 0.21318181818182058
+            },
+            "wealth": 0.65771484375,
+            "homeId": "pl_23",
+            "workId": "pl_26",
+            "householdId": "hh_9",
+            "inventory": [],
+            "bodies": [
+              {
+                "id": "b_17",
+                "pos": {
+                  "x": 59.112250872105356,
+                  "y": 14,
+                  "z": 94.87854703702712
+                },
+                "health": 80,
+                "maxHealth": 80,
+                "injuries": {
+                  "head": 0.17000743526008363
+                },
+                "dead": false,
+                "present": true,
+                "path": [
+                  {
+                    "x": 60.5,
+                    "y": 14,
+                    "z": 93.5
+                  },
+                  {
+                    "x": 54.5,
+                    "y": 14,
+                    "z": 99.5
+                  },
+                  {
+                    "x": 51.5,
+                    "y": 14,
+                    "z": 99.5
+                  },
+                  {
+                    "x": 51.5,
+                    "y": 14,
+                    "z": 101.5
+                  },
+                  {
+                    "x": 45.5,
+                    "y": 14,
+                    "z": 101.5
+                  },
+                  {
+                    "x": 42.5,
+                    "y": 14,
+                    "z": 105.5
+                  },
+                  {
+                    "x": 42.5,
+                    "y": 14,
+                    "z": 111.5
+                  },
+                  {
+                    "x": 40.5,
+                    "y": 14,
+                    "z": 115.5
+                  }
+                ],
+                "pathGoal": {
+                  "x": 40.5,
+                  "y": 14,
+                  "z": 115.5
+                }
+              }
+            ],
+            "goal": {
+              "type": "socialize",
+              "utility": 0.22049999999999997,
+              "reasons": [
+                "social need 1.00",
+                "my appetite for company",
+                "my body leaves little room for company"
+              ],
+              "createdAt": 10674507,
+              "key": "socialize:pl_1",
+              "targetPlace": "pl_1"
+            },
+            "plan": [
+              {
+                "status": "pending",
+                "type": "goto",
+                "pos": {
+                  "x": 98,
+                  "y": 14,
+                  "z": 96
+                },
+                "placeId": "pl_1"
+              },
+              {
+                "status": "pending",
+                "type": "sit",
+                "pos": {
+                  "x": 98,
+                  "y": 14,
+                  "z": 96
+                },
+                "duration": 1872.8252375498414,
+                "data": {
+                  "social": true
+                }
+              }
+            ],
+            "decision": {
+              "tick": 10674507,
+              "candidates": [
+                {
+                  "type": "socialize",
+                  "key": "socialize:pl_1",
+                  "utility": 0.22049999999999997,
+                  "reasons": [
+                    "social need 1.00",
+                    "my appetite for company",
+                    "my body leaves little room for company"
+                  ]
+                },
+                {
+                  "type": "shelter",
+                  "key": "shelter:pl_23",
+                  "utility": 0.2113835543266009,
+                  "reasons": [
+                    "starting to feel the rain and outside in the rain"
+                  ]
+                },
+                {
+                  "type": "work",
+                  "key": "work:pl_26",
+                  "utility": 0.19889370199717635,
+                  "reasons": [
+                    "I normally field work at this time; other concerns may matter more",
+                    "but it is raining out there"
+                  ]
+                },
+                {
+                  "type": "sleep",
+                  "key": "sleep:pl_23",
+                  "utility": 0.19612509355803756,
+                  "reasons": [
+                    "energy need 0.33"
+                  ]
+                },
+                {
+                  "type": "idle",
+                  "key": "idle:",
+                  "utility": 0.1,
+                  "reasons": [
+                    "nothing better to do"
+                  ]
+                }
+              ],
+              "chosen": "socialize:pl_1",
+              "switched": true,
+              "note": "switched from harvest to socialize"
+            },
+            "commitment": null,
+            "investigated": [],
+            "noFoodUntil": 10666560,
+            "percepts": []
+          }
+        },
+        {
+          "event": {
+            "id": "e_343539",
+            "tick": 10674606,
+            "type": "goal_changed",
+            "category": "cognition",
+            "actor": "p_17",
+            "placeId": "pl_26",
+            "data": {
+              "from": "socialize",
+              "fromUtility": 0.22049999999999997,
+              "to": "harvest",
+              "utility": 0.4710778585029996,
+              "reasons": [
+                "wheat is ripe in the Hollis fields"
+              ],
+              "key": "harvest:pl_26"
+            },
+            "causes": [
+              "e_343528"
+            ],
+            "effects": [],
+            "perceivedBy": [],
+            "significance": 0.12,
+            "summary": "Alwin Hollis: goal socialize → harvest @ the Hollis fields (u=0.47)"
+          },
+          "actorAtEmission": {
+            "id": "p_17",
+            "name": "Alwin Hollis",
+            "alive": true,
+            "needs": {
+              "hunger": 1,
+              "energy": 0.33043095314127224,
+              "social": 1,
+              "comfort": 0.3055369272921204,
+              "thirst": 0.21515151515151754
+            },
+            "wealth": 0.65771484375,
+            "homeId": "pl_23",
+            "workId": "pl_26",
+            "householdId": "hh_9",
+            "inventory": [],
+            "bodies": [
+              {
+                "id": "b_17",
+                "pos": {
+                  "x": 62.0671141103811,
+                  "y": 14,
+                  "z": 95.5
+                },
+                "health": 80,
+                "maxHealth": 80,
+                "injuries": {
+                  "head": 0.17000743526008363
+                },
+                "dead": false,
+                "present": true,
+                "path": [
+                  {
+                    "x": 60.5,
+                    "y": 14,
+                    "z": 95.5
+                  },
+                  {
+                    "x": 66.5,
+                    "y": 14,
+                    "z": 95.5
+                  },
+                  {
+                    "x": 72.5,
+                    "y": 14,
+                    "z": 95.5
+                  },
+                  {
+                    "x": 78.5,
+                    "y": 14,
+                    "z": 94.5
+                  },
+                  {
+                    "x": 84.5,
+                    "y": 14,
+                    "z": 94.5
+                  },
+                  {
+                    "x": 90.5,
+                    "y": 14,
+                    "z": 94.5
+                  },
+                  {
+                    "x": 96.5,
+                    "y": 14,
+                    "z": 94.5
+                  },
+                  {
+                    "x": 98.5,
+                    "y": 14,
+                    "z": 94.5
+                  },
+                  {
+                    "x": 98.5,
+                    "y": 14,
+                    "z": 96.5
+                  }
+                ],
+                "pathGoal": {
+                  "x": 98,
+                  "y": 14,
+                  "z": 96
+                }
+              }
+            ],
+            "goal": {
+              "type": "harvest",
+              "utility": 0.4710778585029996,
+              "reasons": [
+                "wheat is ripe in the Hollis fields"
+              ],
+              "createdAt": 10674606,
+              "key": "harvest:pl_26",
+              "targetPlace": "pl_26",
+              "causeEvent": "e_343528",
+              "data": {
+                "fieldId": "fld_1",
+                "resource": "grain"
+              }
+            },
+            "plan": [
+              {
+                "status": "pending",
+                "type": "goto",
+                "pos": {
+                  "x": 40.5,
+                  "y": 14,
+                  "z": 115.5
+                },
+                "placeId": "pl_26"
+              },
+              {
+                "status": "pending",
+                "type": "harvest",
+                "pos": {
+                  "x": 40.5,
+                  "y": 14,
+                  "z": 115.5
+                },
+                "placeId": "pl_26",
+                "duration": 1800,
+                "data": {
+                  "fieldId": "fld_1"
+                }
+              }
+            ],
+            "decision": {
+              "tick": 10674606,
+              "candidates": [
+                {
+                  "type": "harvest",
+                  "key": "harvest:pl_26",
+                  "utility": 0.4710778585029996,
+                  "reasons": [
+                    "wheat is ripe in the Hollis fields"
+                  ]
+                },
+                {
+                  "type": "socialize",
+                  "key": "socialize:pl_1",
+                  "utility": 0.22049999999999997,
+                  "reasons": [
+                    "social need 1.00",
+                    "my appetite for company",
+                    "my body leaves little room for company"
+                  ]
+                },
+                {
+                  "type": "shelter",
+                  "key": "shelter:pl_23",
+                  "utility": 0.21863817023811633,
+                  "reasons": [
+                    "getting wet and outside in the rain"
+                  ]
+                },
+                {
+                  "type": "sleep",
+                  "key": "sleep:pl_23",
+                  "utility": 0.19738785782714505,
+                  "reasons": [
+                    "energy need 0.33"
+                  ]
+                },
+                {
+                  "type": "idle",
+                  "key": "idle:",
+                  "utility": 0.1,
+                  "reasons": [
+                    "nothing better to do"
+                  ]
+                }
+              ],
+              "chosen": "harvest:pl_26",
+              "switched": true,
+              "note": "switched from socialize to harvest"
+            },
+            "commitment": null,
+            "investigated": [],
+            "noFoodUntil": 10666560,
+            "percepts": []
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,293 @@
+{
+  "scope": "Isolated compaction optimization before intentional decision/navigation repairs. Same seed and checkpoint; no normalized canonical fields except envelope savedAt. Whole-step times are uninstrumented and include cold navigation caches. Shared-host maxima do not establish the 100 ms budget.",
+  "budgetMs": 100,
+  "before": {
+    "input": ".debug/observatory-hardening/baseline/replay-918271/day-29.875.save.json.gz",
+    "hours": 3,
+    "instrumentation": "No in-step profiler or event listeners. Includes cold path caches on each independent restore. Three consecutive trials; shared-host wall times.",
+    "runs": [
+      {
+        "run": 0,
+        "initialHash": "587a3f26908f4f79c7e650f85099f07a0af840f02586efe5ecf2e9558bff11ab",
+        "finalHash": "08f4742073ec16dec1f785994878d9b0e4fae9aa1af5080b91922eff57165130",
+        "worldTime": 11258400,
+        "steps": 1200,
+        "wallMs": 5402.3060000000005,
+        "median": 3.657799999999952,
+        "p95": 9.42659999999978,
+        "max": 121.23559999999998,
+        "finalStep": 119.00009999999929,
+        "navSearches": 477,
+        "navCacheHits": 70
+      },
+      {
+        "run": 1,
+        "initialHash": "587a3f26908f4f79c7e650f85099f07a0af840f02586efe5ecf2e9558bff11ab",
+        "finalHash": "08f4742073ec16dec1f785994878d9b0e4fae9aa1af5080b91922eff57165130",
+        "worldTime": 11258400,
+        "steps": 1200,
+        "wallMs": 4844.2968,
+        "median": 3.1529000000009546,
+        "p95": 8.588200000000143,
+        "max": 122.57140000000072,
+        "finalStep": 109.3150999999998,
+        "navSearches": 477,
+        "navCacheHits": 70
+      },
+      {
+        "run": 2,
+        "initialHash": "587a3f26908f4f79c7e650f85099f07a0af840f02586efe5ecf2e9558bff11ab",
+        "finalHash": "08f4742073ec16dec1f785994878d9b0e4fae9aa1af5080b91922eff57165130",
+        "worldTime": 11258400,
+        "steps": 1200,
+        "wallMs": 4440.4967,
+        "median": 2.878600000000006,
+        "p95": 8.009600000001228,
+        "max": 120.1215000000011,
+        "finalStep": 102.66760000000068,
+        "navSearches": 477,
+        "navCacheHits": 70
+      }
+    ]
+  },
+  "after": {
+    "input": ".debug/observatory-hardening/baseline/replay-918271/day-29.875.save.json.gz",
+    "hours": 3,
+    "instrumentation": "No in-step profiler or event listeners. Includes cold path caches on each independent restore. Three consecutive trials; shared-host wall times.",
+    "runs": [
+      {
+        "run": 0,
+        "initialHash": "587a3f26908f4f79c7e650f85099f07a0af840f02586efe5ecf2e9558bff11ab",
+        "finalHash": "08f4742073ec16dec1f785994878d9b0e4fae9aa1af5080b91922eff57165130",
+        "worldTime": 11258400,
+        "steps": 1200,
+        "wallMs": 5525.4056,
+        "median": 3.664299999999912,
+        "p95": 9.40900000000056,
+        "max": 140.30269999999973,
+        "finalStep": 134.76969999999983,
+        "navSearches": 477,
+        "navCacheHits": 70
+      },
+      {
+        "run": 1,
+        "initialHash": "587a3f26908f4f79c7e650f85099f07a0af840f02586efe5ecf2e9558bff11ab",
+        "finalHash": "08f4742073ec16dec1f785994878d9b0e4fae9aa1af5080b91922eff57165130",
+        "worldTime": 11258400,
+        "steps": 1200,
+        "wallMs": 4756.205300000001,
+        "median": 3.204200000000128,
+        "p95": 8.207699999999022,
+        "max": 129.9328999999998,
+        "finalStep": 110.46399999999994,
+        "navSearches": 477,
+        "navCacheHits": 70
+      },
+      {
+        "run": 2,
+        "initialHash": "587a3f26908f4f79c7e650f85099f07a0af840f02586efe5ecf2e9558bff11ab",
+        "finalHash": "08f4742073ec16dec1f785994878d9b0e4fae9aa1af5080b91922eff57165130",
+        "worldTime": 11258400,
+        "steps": 1200,
+        "wallMs": 4411.415400000002,
+        "median": 2.897799999998824,
+        "p95": 7.8505999999979394,
+        "max": 121.90199999999822,
+        "finalStep": 108.03970000000118,
+        "navSearches": 477,
+        "navCacheHits": 70
+      }
+    ]
+  },
+  "compaction": {
+    "results": [
+      {
+        "trial": 0,
+        "variant": "baseline",
+        "ms": 115.65300000000025,
+        "before": "587a3f26908f4f79c7e650f85099f07a0af840f02586efe5ecf2e9558bff11ab",
+        "after": "30a895f37fad4be110ba28fc024a92f116c0c26f494401e12d09053515113acb",
+        "events": 56377
+      },
+      {
+        "trial": 0,
+        "variant": "current",
+        "ms": 114.99110000000019,
+        "before": "587a3f26908f4f79c7e650f85099f07a0af840f02586efe5ecf2e9558bff11ab",
+        "after": "30a895f37fad4be110ba28fc024a92f116c0c26f494401e12d09053515113acb",
+        "events": 56377
+      },
+      {
+        "trial": 1,
+        "variant": "current",
+        "ms": 99.77960000000076,
+        "before": "587a3f26908f4f79c7e650f85099f07a0af840f02586efe5ecf2e9558bff11ab",
+        "after": "30a895f37fad4be110ba28fc024a92f116c0c26f494401e12d09053515113acb",
+        "events": 56377
+      },
+      {
+        "trial": 1,
+        "variant": "baseline",
+        "ms": 118.90789999999834,
+        "before": "587a3f26908f4f79c7e650f85099f07a0af840f02586efe5ecf2e9558bff11ab",
+        "after": "30a895f37fad4be110ba28fc024a92f116c0c26f494401e12d09053515113acb",
+        "events": 56377
+      },
+      {
+        "trial": 2,
+        "variant": "baseline",
+        "ms": 137.78659999999945,
+        "before": "587a3f26908f4f79c7e650f85099f07a0af840f02586efe5ecf2e9558bff11ab",
+        "after": "30a895f37fad4be110ba28fc024a92f116c0c26f494401e12d09053515113acb",
+        "events": 56377
+      },
+      {
+        "trial": 2,
+        "variant": "current",
+        "ms": 103.47149999999965,
+        "before": "587a3f26908f4f79c7e650f85099f07a0af840f02586efe5ecf2e9558bff11ab",
+        "after": "30a895f37fad4be110ba28fc024a92f116c0c26f494401e12d09053515113acb",
+        "events": 56377
+      },
+      {
+        "trial": 3,
+        "variant": "current",
+        "ms": 97.91380000000026,
+        "before": "587a3f26908f4f79c7e650f85099f07a0af840f02586efe5ecf2e9558bff11ab",
+        "after": "30a895f37fad4be110ba28fc024a92f116c0c26f494401e12d09053515113acb",
+        "events": 56377
+      },
+      {
+        "trial": 3,
+        "variant": "baseline",
+        "ms": 111.85510000000068,
+        "before": "587a3f26908f4f79c7e650f85099f07a0af840f02586efe5ecf2e9558bff11ab",
+        "after": "30a895f37fad4be110ba28fc024a92f116c0c26f494401e12d09053515113acb",
+        "events": 56377
+      },
+      {
+        "trial": 4,
+        "variant": "baseline",
+        "ms": 111.95939999999973,
+        "before": "587a3f26908f4f79c7e650f85099f07a0af840f02586efe5ecf2e9558bff11ab",
+        "after": "30a895f37fad4be110ba28fc024a92f116c0c26f494401e12d09053515113acb",
+        "events": 56377
+      },
+      {
+        "trial": 4,
+        "variant": "current",
+        "ms": 100.9922000000006,
+        "before": "587a3f26908f4f79c7e650f85099f07a0af840f02586efe5ecf2e9558bff11ab",
+        "after": "30a895f37fad4be110ba28fc024a92f116c0c26f494401e12d09053515113acb",
+        "events": 56377
+      },
+      {
+        "trial": 5,
+        "variant": "current",
+        "ms": 105.27210000000196,
+        "before": "587a3f26908f4f79c7e650f85099f07a0af840f02586efe5ecf2e9558bff11ab",
+        "after": "30a895f37fad4be110ba28fc024a92f116c0c26f494401e12d09053515113acb",
+        "events": 56377
+      },
+      {
+        "trial": 5,
+        "variant": "baseline",
+        "ms": 112.53679999999804,
+        "before": "587a3f26908f4f79c7e650f85099f07a0af840f02586efe5ecf2e9558bff11ab",
+        "after": "30a895f37fad4be110ba28fc024a92f116c0c26f494401e12d09053515113acb",
+        "events": 56377
+      }
+    ]
+  },
+  "baselineFullRun": {
+    "median": 2.241800000000012,
+    "p95": 10.6832000000868,
+    "max": 180.2428999999538,
+    "subsystems": {
+      "act": 91519.83799983579,
+      "creatures": 9133.200100003483,
+      "bodyPhysics": 2555.827400037653,
+      "perceive": 434981.6378000772,
+      "strategic.persons": 9473.667300005964,
+      "strategic.weather": 1554.9314000081915,
+      "strategic": 43257.24490001039,
+      "think": 404777.0128000461,
+      "strategic.conflict": 29828.126599999774,
+      "strategic.metabolism": 2346.800699995257,
+      "compact": 37445.79029999983
+    },
+    "navCalls": 166893,
+    "navMs": 16260.895300024842,
+    "slowest": [
+      {
+        "tick": 11107200,
+        "ms": 180.2428999999538,
+        "observerMs": 0.20660000015050173,
+        "navMs": 0.04769999999552965,
+        "navCalls": 1,
+        "subsystems": {
+          "act": 3.3458999999566004,
+          "creatures": 0.03559999994467944,
+          "bodyPhysics": 0.011900000041350722,
+          "perceive": 4.283899999689311,
+          "strategic.persons": 0.45519999996759,
+          "strategic.weather": 0.08810000005178154,
+          "strategic": 8.604500000015832,
+          "think": 1.6552999999839813,
+          "strategic.conflict": 7.105600000009872,
+          "strategic.metabolism": 0.9512999999569729,
+          "compact": 161.71100000001024
+        },
+        "events": 53671,
+        "knowledge": 14205,
+        "entities": 1598
+      },
+      {
+        "tick": 11182800,
+        "ms": 178.6359999999404,
+        "observerMs": 0.14300000062212348,
+        "navMs": 0,
+        "navCalls": 0,
+        "subsystems": {
+          "act": 0.6216000001877546,
+          "creatures": 0.04029999999329448,
+          "bodyPhysics": 0.018700000131502748,
+          "perceive": 16.372599999886006,
+          "strategic.persons": 0.21029999991878867,
+          "strategic.weather": 0.03139999997802079,
+          "strategic": 8.716499999864027,
+          "think": 0.7079000000376254,
+          "strategic.conflict": 7.916800000006333,
+          "strategic.metabolism": 0.5557999999728054,
+          "compact": 152.08549999981187
+        },
+        "events": 55512,
+        "knowledge": 13977,
+        "entities": 1612
+      },
+      {
+        "tick": 10653600,
+        "ms": 172.1302999999607,
+        "observerMs": 0.09440000005997717,
+        "navMs": 0.044600000022910535,
+        "navCalls": 1,
+        "subsystems": {
+          "act": 0.7190999996382743,
+          "creatures": 0.03890000004321337,
+          "bodyPhysics": 0.017099999939091504,
+          "perceive": 10.098699999973178,
+          "strategic.persons": 0.329799999948591,
+          "strategic.weather": 0.05760000005830079,
+          "strategic": 8.112700000056066,
+          "think": 3.6731999999610707,
+          "strategic.conflict": 7.065100000007078,
+          "strategic.metabolism": 0.6563999999780208,
+          "compact": 149.393100000103
+        },
+        "events": 50174,
+        "knowledge": 14106,
+        "entities": 1442
+      }
+    ]
+  }
+}

@@ -1,0 +1,1997 @@
+{
+  "scope": "Selected exact receipts from the complete archived worst window; full raw archive named below.",
+  "archive": "D:/TornVeilValidation/observatory-hardening-20260930/revision-17/repaired-918272/critical-water-fear-review.json",
+  "key": "goal_churn:p_4:",
+  "worst": {
+    "type": "goal_churn",
+    "entity": "p_4",
+    "occurrences": 55,
+    "firstSeen": 9732207,
+    "lastSeen": 9742728,
+    "relatedEvents": [
+      "e_228231",
+      "e_228357",
+      "e_228463",
+      "e_228490",
+      "e_228562",
+      "e_228580",
+      "e_228672",
+      "e_228778",
+      "e_228914",
+      "e_228968",
+      "e_229016",
+      "e_229033",
+      "e_229137",
+      "e_229180",
+      "e_229254",
+      "e_229304",
+      "e_229367",
+      "e_229392",
+      "e_229471",
+      "e_229489"
+    ],
+    "data": {
+      "windowHours": 3
+    }
+  },
+  "rows": [
+    {
+      "event": {
+        "id": "e_228914",
+        "tick": 9734808,
+        "type": "goal_changed",
+        "category": "cognition",
+        "actor": "p_4",
+        "target": "p_15",
+        "data": {
+          "from": "drink_water",
+          "fromUtility": 1,
+          "to": "flee",
+          "utility": 0.8684640267443591,
+          "reasons": [
+            "an unfamiliar person is a threat (fear 0.70, dist 5.2)",
+            "my tolerance for danger, unarmed",
+            "concern: wary of them (0.57)",
+            "I know Garrick Ironhand",
+            "Dunstan Mole frightens me"
+          ],
+          "key": "flee:p_15"
+        },
+        "causes": [
+          "e_228907"
+        ],
+        "effects": [],
+        "perceivedBy": [],
+        "significance": 0.45,
+        "summary": "Osric Bramble: goal drink_water → flee → Dunstan Mole (u=0.87)"
+      },
+      "actorAtEmission": {
+        "id": "p_4",
+        "name": "Osric Bramble",
+        "alive": true,
+        "needs": {
+          "hunger": 0.857136507936531,
+          "energy": 0.6297946935814736,
+          "social": 1,
+          "comfort": 0.250999999999999,
+          "thirst": 1
+        },
+        "wealth": 227.25,
+        "homeId": "pl_9",
+        "workId": "pl_9",
+        "householdId": "hh_3",
+        "inventory": [],
+        "bodies": [
+          {
+            "id": "b_4",
+            "pos": {
+              "x": 94.49903258965014,
+              "y": 14,
+              "z": 98.35333436897422
+            },
+            "health": 80,
+            "maxHealth": 80,
+            "dead": false,
+            "present": true,
+            "path": [
+              {
+                "x": 90.5,
+                "y": 14,
+                "z": 114.5
+              },
+              {
+                "x": 90.5,
+                "y": 14,
+                "z": 113.5
+              },
+              {
+                "x": 94.5,
+                "y": 14,
+                "z": 107.5
+              },
+              {
+                "x": 94.5,
+                "y": 14,
+                "z": 101.5
+              },
+              {
+                "x": 94.5,
+                "y": 14,
+                "z": 96.5
+              }
+            ],
+            "pathGoal": {
+              "x": 94,
+              "y": 14,
+              "z": 96
+            }
+          }
+        ],
+        "goal": {
+          "type": "flee",
+          "utility": 0.8684640267443591,
+          "reasons": [
+            "an unfamiliar person is a threat (fear 0.70, dist 5.2)",
+            "my tolerance for danger, unarmed",
+            "concern: wary of them (0.57)",
+            "I know Garrick Ironhand",
+            "Dunstan Mole frightens me"
+          ],
+          "createdAt": 9734808,
+          "key": "flee:p_15",
+          "targetEntity": "p_15"
+        },
+        "plan": [
+          {
+            "status": "pending",
+            "type": "goto",
+            "pos": {
+              "x": 83.5,
+              "y": 14,
+              "z": 115.5
+            },
+            "run": true,
+            "data": {
+              "flee": true,
+              "escapeThreats": [
+                {
+                  "entityId": "p_15",
+                  "pos": {
+                    "x": 94.5,
+                    "y": 14,
+                    "z": 93.15527313883649
+                  },
+                  "observedAt": 9734808
+                }
+              ]
+            }
+          },
+          {
+            "status": "pending",
+            "type": "wait",
+            "duration": 180,
+            "data": {
+              "hide": true
+            }
+          }
+        ],
+        "decision": {
+          "tick": 9734808,
+          "candidates": [
+            {
+              "type": "flee",
+              "key": "flee:p_15",
+              "utility": 0.8684640267443591,
+              "reasons": [
+                "an unfamiliar person is a threat (fear 0.70, dist 5.2)",
+                "my tolerance for danger, unarmed",
+                "concern: wary of them (0.57)",
+                "I know Garrick Ironhand",
+                "Dunstan Mole frightens me"
+              ]
+            },
+            {
+              "type": "eat",
+              "key": "eat:pl_9",
+              "utility": 0.6714228571428779,
+              "reasons": [
+                "hunger 0.86",
+                "must find food"
+              ]
+            },
+            {
+              "type": "report",
+              "key": "report:p_15:ev:e_226818",
+              "utility": 0.5589999999999999,
+              "reasons": [
+                "I know someone attacked an unfamiliar person (heard)",
+                "the watch should hear of it",
+                "my sense of honesty",
+                "concern: set on seeing them answer for it (0.94)",
+                "Mara Bramble is my child",
+                "I have my own history with Vex"
+              ]
+            },
+            {
+              "type": "report",
+              "key": "report:p_15:ev:e_227233",
+              "utility": 0.5589999999999999,
+              "reasons": [
+                "I know someone attacked an unfamiliar person (heard)",
+                "the watch should hear of it",
+                "my sense of honesty",
+                "concern: set on seeing them answer for it (0.94)",
+                "Mara Bramble is my child",
+                "I have my own history with Vex"
+              ]
+            },
+            {
+              "type": "sleep",
+              "key": "sleep:pl_9",
+              "utility": 0.4668152242233262,
+              "reasons": [
+                "energy need 0.63"
+              ]
+            },
+            {
+              "type": "work",
+              "key": "work:pl_9",
+              "utility": 0.22419962068061985,
+              "reasons": [
+                "I normally bake at this time; other concerns may matter more"
+              ]
+            },
+            {
+              "type": "socialize",
+              "key": "socialize:pl_7",
+              "utility": 0.22049999999999997,
+              "reasons": [
+                "social need 1.00",
+                "my appetite for company",
+                "my body leaves little room for company"
+              ]
+            },
+            {
+              "type": "idle",
+              "key": "idle:",
+              "utility": 0.1,
+              "reasons": [
+                "nothing better to do"
+              ]
+            }
+          ],
+          "chosen": "flee:p_15",
+          "switched": true,
+          "note": "switched from drink_water to flee"
+        },
+        "commitment": null,
+        "investigated": [],
+        "noFoodUntil": 9488487,
+        "targetLocation": {
+          "key": "loc:p_15",
+          "kind": "location",
+          "claim": {
+            "entityId": "p_15",
+            "pos": {
+              "x": 94.5,
+              "y": 14,
+              "z": 93.15527313883649
+            },
+            "placeId": "pl_1"
+          },
+          "confidence": 1,
+          "learnedAt": 9734808,
+          "source": {
+            "type": "witnessed"
+          },
+          "hops": 0,
+          "sharedWith": []
+        },
+        "targetHome": {
+          "key": "home:p_15",
+          "kind": "fact",
+          "claim": {
+            "text": "Dunstan Mole lives at the guardhouse",
+            "entityId": "p_15",
+            "placeId": "pl_13"
+          },
+          "confidence": 0.9,
+          "learnedAt": 8666400,
+          "source": {
+            "type": "prior"
+          },
+          "hops": 0,
+          "sharedWith": []
+        },
+        "percepts": [
+          {
+            "entityId": "p_1",
+            "bodyId": "b_1",
+            "how": "saw",
+            "tick": 9734808,
+            "pos": {
+              "x": 97.01223042141979,
+              "y": 14,
+              "z": 83.5
+            },
+            "distance": 15.064451706522952
+          },
+          {
+            "entityId": "p_2",
+            "bodyId": "b_2",
+            "how": "saw",
+            "tick": 9734808,
+            "pos": {
+              "x": 102.80606603234565,
+              "y": 14,
+              "z": 79.94898899460907
+            },
+            "distance": 20.192244384341667
+          },
+          {
+            "entityId": "p_3",
+            "bodyId": "b_3",
+            "how": "saw",
+            "tick": 9734808,
+            "pos": {
+              "x": 86.49994651273978,
+              "y": 14,
+              "z": 74.42404036042542
+            },
+            "distance": 25.230863834070174
+          },
+          {
+            "entityId": "p_7",
+            "bodyId": "b_7",
+            "how": "saw",
+            "tick": 9734808,
+            "pos": {
+              "x": 99.50340909545244,
+              "y": 14,
+              "z": 76.49659090454756
+            },
+            "distance": 22.422333042785343
+          },
+          {
+            "entityId": "p_10",
+            "bodyId": "b_10",
+            "how": "saw",
+            "tick": 9734808,
+            "pos": {
+              "x": 101.53296507317008,
+              "y": 14,
+              "z": 88.49442281790488
+            },
+            "distance": 12.110918344804631
+          },
+          {
+            "entityId": "p_15",
+            "bodyId": "b_15",
+            "how": "saw",
+            "tick": 9734808,
+            "pos": {
+              "x": 94.5,
+              "y": 14,
+              "z": 93.15527313883649
+            },
+            "distance": 5.198061320160017
+          },
+          {
+            "entityId": "p_23",
+            "bodyId": "b_23",
+            "how": "saw",
+            "tick": 9734808,
+            "pos": {
+              "x": 94.49999453525122,
+              "y": 14,
+              "z": 96.94454588283217
+            },
+            "distance": 1.408788814558708
+          },
+          {
+            "entityId": "p_25",
+            "bodyId": "b_25",
+            "how": "saw",
+            "tick": 9734808,
+            "pos": {
+              "x": 87.43162334809392,
+              "y": 14,
+              "z": 87.50459523607297
+            },
+            "distance": 12.947718492513541
+          },
+          {
+            "entityId": "p_30",
+            "bodyId": "b_30",
+            "how": "saw",
+            "tick": 9734808,
+            "pos": {
+              "x": 104.5,
+              "y": 14,
+              "z": 73.5
+            },
+            "distance": 26.790064919647264
+          },
+          {
+            "entityId": "p_37",
+            "bodyId": "b_42",
+            "how": "saw",
+            "tick": 9734808,
+            "pos": {
+              "x": 93.53303930866177,
+              "y": 14,
+              "z": 92.56619463479322
+            },
+            "distance": 5.867207966473592
+          }
+        ]
+      }
+    },
+    {
+      "event": {
+        "id": "e_228968",
+        "tick": 9734907,
+        "type": "goal_changed",
+        "category": "cognition",
+        "actor": "p_4",
+        "placeId": "pl_2",
+        "data": {
+          "from": "flee",
+          "fromUtility": 0.8684640267443591,
+          "to": "drink_water",
+          "utility": 1,
+          "reasons": [
+            "thirst 1.00"
+          ],
+          "key": "drink_water:pl_2"
+        },
+        "causes": [],
+        "effects": [],
+        "perceivedBy": [],
+        "significance": 0.12,
+        "summary": "Osric Bramble: goal flee → drink_water @ the village well (u=1.00)"
+      },
+      "actorAtEmission": {
+        "id": "p_4",
+        "name": "Osric Bramble",
+        "alive": true,
+        "needs": {
+          "hunger": 0.8599428571428801,
+          "energy": 0.6305395547279704,
+          "social": 1,
+          "comfort": 0.246999999999999,
+          "thirst": 1
+        },
+        "wealth": 227.25,
+        "homeId": "pl_9",
+        "workId": "pl_9",
+        "householdId": "hh_3",
+        "inventory": [],
+        "bodies": [
+          {
+            "id": "b_4",
+            "pos": {
+              "x": 91.5,
+              "y": 14,
+              "z": 104.5
+            },
+            "health": 80,
+            "maxHealth": 80,
+            "dead": false,
+            "present": true,
+            "path": [
+              {
+                "x": 93.5,
+                "y": 14,
+                "z": 99.5
+              },
+              {
+                "x": 91.5,
+                "y": 14,
+                "z": 104.5
+              },
+              {
+                "x": 85.5,
+                "y": 14,
+                "z": 110.5
+              },
+              {
+                "x": 83.5,
+                "y": 14,
+                "z": 115.5
+              }
+            ],
+            "pathGoal": {
+              "x": 83.5,
+              "y": 14,
+              "z": 115.5
+            }
+          }
+        ],
+        "goal": {
+          "type": "drink_water",
+          "utility": 1,
+          "reasons": [
+            "thirst 1.00"
+          ],
+          "createdAt": 9734907,
+          "key": "drink_water:pl_2",
+          "targetPos": {
+            "x": 94,
+            "y": 14,
+            "z": 96
+          },
+          "targetPlace": "pl_2",
+          "origin": {
+            "x": 91.5,
+            "y": 14,
+            "z": 104.5
+          },
+          "data": {
+            "water": true
+          }
+        },
+        "plan": [
+          {
+            "status": "pending",
+            "type": "goto",
+            "pos": {
+              "x": 94,
+              "y": 14,
+              "z": 96
+            },
+            "placeId": "pl_2"
+          },
+          {
+            "status": "pending",
+            "type": "drink",
+            "pos": {
+              "x": 94,
+              "y": 14,
+              "z": 96
+            },
+            "placeId": "pl_2",
+            "duration": 90
+          }
+        ],
+        "decision": {
+          "tick": 9734907,
+          "candidates": [
+            {
+              "type": "drink_water",
+              "key": "drink_water:pl_2",
+              "utility": 1,
+              "reasons": [
+                "thirst 1.00"
+              ]
+            },
+            {
+              "type": "eat",
+              "key": "eat:pl_9",
+              "utility": 0.6739485714285921,
+              "reasons": [
+                "hunger 0.86",
+                "must find food"
+              ]
+            },
+            {
+              "type": "report",
+              "key": "report:p_14:ev:e_226818",
+              "utility": 0.6114999999999999,
+              "reasons": [
+                "I know someone attacked an unfamiliar person (heard)",
+                "the watch should hear of it",
+                "my sense of honesty",
+                "concern: set on seeing them answer for it (0.94)",
+                "Mara Bramble is my child",
+                "I have my own history with Vex"
+              ]
+            },
+            {
+              "type": "report",
+              "key": "report:p_14:ev:e_227233",
+              "utility": 0.6114999999999999,
+              "reasons": [
+                "I know someone attacked an unfamiliar person (heard)",
+                "the watch should hear of it",
+                "my sense of honesty",
+                "concern: set on seeing them answer for it (0.94)",
+                "Mara Bramble is my child",
+                "I have my own history with Vex"
+              ]
+            },
+            {
+              "type": "sleep",
+              "key": "sleep:pl_9",
+              "utility": 0.4674855992551734,
+              "reasons": [
+                "energy need 0.63"
+              ]
+            },
+            {
+              "type": "work",
+              "key": "work:pl_9",
+              "utility": 0.2245677146546233,
+              "reasons": [
+                "I normally bake at this time; other concerns may matter more"
+              ]
+            },
+            {
+              "type": "socialize",
+              "key": "socialize:pl_7",
+              "utility": 0.22049999999999997,
+              "reasons": [
+                "social need 1.00",
+                "my appetite for company",
+                "my body leaves little room for company"
+              ]
+            },
+            {
+              "type": "idle",
+              "key": "idle:",
+              "utility": 0.1,
+              "reasons": [
+                "nothing better to do"
+              ]
+            }
+          ],
+          "chosen": "drink_water:pl_2",
+          "switched": true,
+          "note": "switched from flee to drink_water"
+        },
+        "commitment": null,
+        "investigated": [],
+        "noFoodUntil": 9488487,
+        "percepts": [
+          {
+            "entityId": "p_29",
+            "bodyId": "b_29",
+            "how": "saw",
+            "tick": 9734898,
+            "pos": {
+              "x": 96.5,
+              "y": 14,
+              "z": 113.93753584112086
+            },
+            "distance": 10.680219227733149
+          }
+        ]
+      }
+    },
+    {
+      "event": {
+        "id": "e_229016",
+        "tick": 9735105,
+        "type": "goal_changed",
+        "category": "cognition",
+        "actor": "p_4",
+        "target": "p_15",
+        "data": {
+          "from": "drink_water",
+          "fromUtility": 1,
+          "to": "flee",
+          "utility": 0.8562261074777626,
+          "reasons": [
+            "an unfamiliar person is a threat (fear 0.69, dist 6.0)",
+            "my tolerance for danger, unarmed",
+            "concern: wary of them (0.57)",
+            "I know Garrick Ironhand",
+            "Dunstan Mole frightens me"
+          ],
+          "key": "flee:p_15"
+        },
+        "causes": [
+          "e_229012"
+        ],
+        "effects": [],
+        "perceivedBy": [],
+        "significance": 0.45,
+        "summary": "Osric Bramble: goal drink_water → flee → Dunstan Mole (u=0.86)"
+      },
+      "actorAtEmission": {
+        "id": "p_4",
+        "name": "Osric Bramble",
+        "alive": true,
+        "needs": {
+          "hunger": 0.8641523809524039,
+          "energy": 0.6316540964477156,
+          "social": 1,
+          "comfort": 0.240999999999999,
+          "thirst": 1
+        },
+        "wealth": 227.25,
+        "homeId": "pl_9",
+        "workId": "pl_9",
+        "householdId": "hh_3",
+        "inventory": [],
+        "bodies": [
+          {
+            "id": "b_4",
+            "pos": {
+              "x": 94.04358874083246,
+              "y": 14,
+              "z": 98.81593973629055
+            },
+            "health": 80,
+            "maxHealth": 80,
+            "dead": false,
+            "present": true,
+            "path": [
+              {
+                "x": 92.5,
+                "y": 14,
+                "z": 103.5
+              },
+              {
+                "x": 94.5,
+                "y": 14,
+                "z": 97.5
+              },
+              {
+                "x": 94.5,
+                "y": 14,
+                "z": 96.5
+              }
+            ],
+            "pathGoal": {
+              "x": 94,
+              "y": 14,
+              "z": 96
+            }
+          }
+        ],
+        "goal": {
+          "type": "flee",
+          "utility": 0.8562261074777626,
+          "reasons": [
+            "an unfamiliar person is a threat (fear 0.69, dist 6.0)",
+            "my tolerance for danger, unarmed",
+            "concern: wary of them (0.57)",
+            "I know Garrick Ironhand",
+            "Dunstan Mole frightens me"
+          ],
+          "createdAt": 9735105,
+          "key": "flee:p_15",
+          "targetEntity": "p_15"
+        },
+        "plan": [
+          {
+            "status": "pending",
+            "type": "goto",
+            "pos": {
+              "x": 82.5,
+              "y": 14,
+              "z": 114.5
+            },
+            "run": true,
+            "data": {
+              "flee": true,
+              "escapeThreats": [
+                {
+                  "entityId": "p_15",
+                  "pos": {
+                    "x": 94.5,
+                    "y": 14,
+                    "z": 93.15527313883649
+                  },
+                  "observedAt": 9735096
+                }
+              ]
+            }
+          },
+          {
+            "status": "pending",
+            "type": "wait",
+            "duration": 180,
+            "data": {
+              "hide": true
+            }
+          }
+        ],
+        "decision": {
+          "tick": 9735105,
+          "candidates": [
+            {
+              "type": "flee",
+              "key": "flee:p_15",
+              "utility": 0.8562261074777626,
+              "reasons": [
+                "an unfamiliar person is a threat (fear 0.69, dist 6.0)",
+                "my tolerance for danger, unarmed",
+                "concern: wary of them (0.57)",
+                "I know Garrick Ironhand",
+                "Dunstan Mole frightens me"
+              ]
+            },
+            {
+              "type": "eat",
+              "key": "eat:pl_9",
+              "utility": 0.6777371428571636,
+              "reasons": [
+                "hunger 0.86",
+                "must find food"
+              ]
+            },
+            {
+              "type": "report",
+              "key": "report:p_15:ev:e_226818",
+              "utility": 0.5589999999999999,
+              "reasons": [
+                "I know someone attacked an unfamiliar person (heard)",
+                "the watch should hear of it",
+                "my sense of honesty",
+                "concern: set on seeing them answer for it (0.93)",
+                "Mara Bramble is my child",
+                "I have my own history with Vex"
+              ]
+            },
+            {
+              "type": "report",
+              "key": "report:p_15:ev:e_227233",
+              "utility": 0.5589999999999999,
+              "reasons": [
+                "I know someone attacked an unfamiliar person (heard)",
+                "the watch should hear of it",
+                "my sense of honesty",
+                "concern: set on seeing them answer for it (0.93)",
+                "Mara Bramble is my child",
+                "I have my own history with Vex"
+              ]
+            },
+            {
+              "type": "sleep",
+              "key": "sleep:pl_9",
+              "utility": 0.4684886868029441,
+              "reasons": [
+                "energy need 0.63"
+              ]
+            },
+            {
+              "type": "work",
+              "key": "work:pl_9",
+              "utility": 0.22555959767859252,
+              "reasons": [
+                "I normally bake at this time; other concerns may matter more"
+              ]
+            },
+            {
+              "type": "socialize",
+              "key": "socialize:pl_7",
+              "utility": 0.22049999999999997,
+              "reasons": [
+                "social need 1.00",
+                "my appetite for company",
+                "my body leaves little room for company"
+              ]
+            },
+            {
+              "type": "idle",
+              "key": "idle:",
+              "utility": 0.1,
+              "reasons": [
+                "nothing better to do"
+              ]
+            }
+          ],
+          "chosen": "flee:p_15",
+          "switched": true,
+          "note": "switched from drink_water to flee"
+        },
+        "commitment": null,
+        "investigated": [],
+        "noFoodUntil": 9488487,
+        "targetLocation": {
+          "key": "loc:p_15",
+          "kind": "location",
+          "claim": {
+            "entityId": "p_15",
+            "pos": {
+              "x": 94.5,
+              "y": 14,
+              "z": 93.15527313883649
+            },
+            "placeId": "pl_1"
+          },
+          "confidence": 1,
+          "learnedAt": 9735096,
+          "source": {
+            "type": "witnessed"
+          },
+          "hops": 0,
+          "sharedWith": []
+        },
+        "targetHome": {
+          "key": "home:p_15",
+          "kind": "fact",
+          "claim": {
+            "text": "Dunstan Mole lives at the guardhouse",
+            "entityId": "p_15",
+            "placeId": "pl_13"
+          },
+          "confidence": 0.9,
+          "learnedAt": 8666400,
+          "source": {
+            "type": "prior"
+          },
+          "hops": 0,
+          "sharedWith": []
+        },
+        "percepts": [
+          {
+            "entityId": "p_1",
+            "bodyId": "b_1",
+            "how": "saw",
+            "tick": 9735096,
+            "pos": {
+              "x": 97.01223042141979,
+              "y": 14,
+              "z": 83.5
+            },
+            "distance": 15.898216699264676
+          },
+          {
+            "entityId": "p_2",
+            "bodyId": "b_2",
+            "how": "saw",
+            "tick": 9735096,
+            "pos": {
+              "x": 108.34846548679758,
+              "y": 14,
+              "z": 80.0392829155361
+            },
+            "distance": 23.89033952299047
+          },
+          {
+            "entityId": "p_7",
+            "bodyId": "b_7",
+            "how": "saw",
+            "tick": 9735096,
+            "pos": {
+              "x": 95.04058625793147,
+              "y": 14,
+              "z": 83.43636200348794
+            },
+            "distance": 15.701466490145538
+          },
+          {
+            "entityId": "p_10",
+            "bodyId": "b_10",
+            "how": "saw",
+            "tick": 9735096,
+            "pos": {
+              "x": 109.43173651216966,
+              "y": 14,
+              "z": 84.1894211626101
+            },
+            "distance": 21.497558173127935
+          },
+          {
+            "entityId": "p_15",
+            "bodyId": "b_15",
+            "how": "saw",
+            "tick": 9735096,
+            "pos": {
+              "x": 94.5,
+              "y": 14,
+              "z": 93.15527313883649
+            },
+            "distance": 5.9701339822425
+          },
+          {
+            "entityId": "p_17",
+            "bodyId": "b_17",
+            "how": "saw",
+            "tick": 9735096,
+            "pos": {
+              "x": 111.26918086424453,
+              "y": 14,
+              "z": 77.91800455718685
+            },
+            "distance": 27.363820624958826
+          },
+          {
+            "entityId": "p_23",
+            "bodyId": "b_23",
+            "how": "saw",
+            "tick": 9735096,
+            "pos": {
+              "x": 93.36068427591448,
+              "y": 14,
+              "z": 99.76891729871053
+            },
+            "distance": 0.8886487274998071
+          },
+          {
+            "entityId": "p_30",
+            "bodyId": "b_30",
+            "how": "saw",
+            "tick": 9735096,
+            "pos": {
+              "x": 108.46835830044189,
+              "y": 14,
+              "z": 79.46855334902355
+            },
+            "distance": 24.419227360788078
+          },
+          {
+            "entityId": "p_37",
+            "bodyId": "b_42",
+            "how": "saw",
+            "tick": 9735096,
+            "pos": {
+              "x": 93.53303930866177,
+              "y": 14,
+              "z": 92.56619463479322
+            },
+            "distance": 6.546368112421017
+          }
+        ]
+      }
+    },
+    {
+      "event": {
+        "id": "e_229033",
+        "tick": 9735204,
+        "type": "goal_changed",
+        "category": "cognition",
+        "actor": "p_4",
+        "placeId": "pl_2",
+        "data": {
+          "from": "flee",
+          "fromUtility": 0.8562261074777626,
+          "to": "drink_water",
+          "utility": 1,
+          "reasons": [
+            "thirst 1.00"
+          ],
+          "key": "drink_water:pl_2"
+        },
+        "causes": [],
+        "effects": [],
+        "perceivedBy": [],
+        "significance": 0.12,
+        "summary": "Osric Bramble: goal flee → drink_water @ the village well (u=1.00)"
+      },
+      "actorAtEmission": {
+        "id": "p_4",
+        "name": "Osric Bramble",
+        "alive": true,
+        "needs": {
+          "hunger": 0.8669587301587531,
+          "energy": 0.6323952909275459,
+          "social": 1,
+          "comfort": 0.236999999999999,
+          "thirst": 1
+        },
+        "wealth": 227.25,
+        "homeId": "pl_9",
+        "workId": "pl_9",
+        "householdId": "hh_3",
+        "inventory": [],
+        "bodies": [
+          {
+            "id": "b_4",
+            "pos": {
+              "x": 90.92020793959897,
+              "y": 14,
+              "z": 105.07979206040103
+            },
+            "health": 80,
+            "maxHealth": 80,
+            "dead": false,
+            "present": true,
+            "path": [
+              {
+                "x": 93.5,
+                "y": 14,
+                "z": 99.5
+              },
+              {
+                "x": 91.5,
+                "y": 14,
+                "z": 104.5
+              },
+              {
+                "x": 85.5,
+                "y": 14,
+                "z": 110.5
+              },
+              {
+                "x": 82.5,
+                "y": 14,
+                "z": 114.5
+              }
+            ],
+            "pathGoal": {
+              "x": 82.5,
+              "y": 14,
+              "z": 114.5
+            }
+          }
+        ],
+        "goal": {
+          "type": "drink_water",
+          "utility": 1,
+          "reasons": [
+            "thirst 1.00"
+          ],
+          "createdAt": 9735204,
+          "key": "drink_water:pl_2",
+          "targetPos": {
+            "x": 94,
+            "y": 14,
+            "z": 96
+          },
+          "targetPlace": "pl_2",
+          "origin": {
+            "x": 90.92020793959897,
+            "y": 14,
+            "z": 105.07979206040103
+          },
+          "data": {
+            "water": true
+          }
+        },
+        "plan": [
+          {
+            "status": "pending",
+            "type": "goto",
+            "pos": {
+              "x": 94,
+              "y": 14,
+              "z": 96
+            },
+            "placeId": "pl_2"
+          },
+          {
+            "status": "pending",
+            "type": "drink",
+            "pos": {
+              "x": 94,
+              "y": 14,
+              "z": 96
+            },
+            "placeId": "pl_2",
+            "duration": 90
+          }
+        ],
+        "decision": {
+          "tick": 9735204,
+          "candidates": [
+            {
+              "type": "drink_water",
+              "key": "drink_water:pl_2",
+              "utility": 1,
+              "reasons": [
+                "thirst 1.00"
+              ]
+            },
+            {
+              "type": "eat",
+              "key": "eat:pl_9",
+              "utility": 0.6802628571428778,
+              "reasons": [
+                "hunger 0.87",
+                "must find food"
+              ]
+            },
+            {
+              "type": "report",
+              "key": "report:p_14:ev:e_226818",
+              "utility": 0.6114999999999999,
+              "reasons": [
+                "I know someone attacked an unfamiliar person (heard)",
+                "the watch should hear of it",
+                "my sense of honesty",
+                "concern: set on seeing them answer for it (0.93)",
+                "Mara Bramble is my child",
+                "I have my own history with Vex"
+              ]
+            },
+            {
+              "type": "report",
+              "key": "report:p_14:ev:e_227233",
+              "utility": 0.6114999999999999,
+              "reasons": [
+                "I know someone attacked an unfamiliar person (heard)",
+                "the watch should hear of it",
+                "my sense of honesty",
+                "concern: set on seeing them answer for it (0.93)",
+                "Mara Bramble is my child",
+                "I have my own history with Vex"
+              ]
+            },
+            {
+              "type": "sleep",
+              "key": "sleep:pl_9",
+              "utility": 0.46915576183479135,
+              "reasons": [
+                "energy need 0.63"
+              ]
+            },
+            {
+              "type": "work",
+              "key": "work:pl_9",
+              "utility": 0.2259219515532733,
+              "reasons": [
+                "I normally bake at this time; other concerns may matter more"
+              ]
+            },
+            {
+              "type": "socialize",
+              "key": "socialize:pl_7",
+              "utility": 0.22049999999999997,
+              "reasons": [
+                "social need 1.00",
+                "my appetite for company",
+                "my body leaves little room for company"
+              ]
+            },
+            {
+              "type": "idle",
+              "key": "idle:",
+              "utility": 0.1,
+              "reasons": [
+                "nothing better to do"
+              ]
+            }
+          ],
+          "chosen": "drink_water:pl_2",
+          "switched": true,
+          "note": "switched from flee to drink_water"
+        },
+        "commitment": null,
+        "investigated": [],
+        "noFoodUntil": 9488487,
+        "percepts": [
+          {
+            "entityId": "p_5",
+            "bodyId": "b_5",
+            "how": "saw",
+            "tick": 9735204,
+            "pos": {
+              "x": 66.964867736431,
+              "y": 14,
+              "z": 91.15785223837759
+            },
+            "distance": 27.70701594646305
+          },
+          {
+            "entityId": "p_23",
+            "bodyId": "b_23",
+            "how": "heard",
+            "tick": 9735204,
+            "pos": {
+              "x": 92.22696259319859,
+              "y": 14,
+              "z": 100.13822444080849
+            },
+            "distance": 5.111428201951959
+          },
+          {
+            "entityId": "p_29",
+            "bodyId": "b_29",
+            "how": "saw",
+            "tick": 9735204,
+            "pos": {
+              "x": 95.27748251420584,
+              "y": 14,
+              "z": 110.75826586266761
+            },
+            "distance": 7.157576855440912
+          }
+        ]
+      }
+    },
+    {
+      "event": {
+        "id": "e_229137",
+        "tick": 9735501,
+        "type": "goal_changed",
+        "category": "cognition",
+        "actor": "p_4",
+        "target": "p_15",
+        "data": {
+          "from": "drink_water",
+          "fromUtility": 1,
+          "to": "flee",
+          "utility": 0.8791753680158085,
+          "reasons": [
+            "an unfamiliar person is a threat (fear 0.69, dist 3.7)",
+            "my tolerance for danger, unarmed",
+            "concern: wary of them (0.57)",
+            "I know Garrick Ironhand",
+            "Dunstan Mole frightens me"
+          ],
+          "key": "flee:p_15"
+        },
+        "causes": [
+          "e_229078"
+        ],
+        "effects": [],
+        "perceivedBy": [],
+        "significance": 0.45,
+        "summary": "Osric Bramble: goal drink_water → flee → Dunstan Mole (u=0.88)"
+      },
+      "actorAtEmission": {
+        "id": "p_4",
+        "name": "Osric Bramble",
+        "alive": true,
+        "needs": {
+          "hunger": 0.873974603174626,
+          "energy": 0.6342418604604545,
+          "social": 1,
+          "comfort": 0.22699999999999898,
+          "thirst": 1
+        },
+        "wealth": 227.25,
+        "homeId": "pl_9",
+        "workId": "pl_9",
+        "householdId": "hh_3",
+        "inventory": [],
+        "bodies": [
+          {
+            "id": "b_4",
+            "pos": {
+              "x": 94.4897432363876,
+              "y": 14,
+              "z": 96.83046675496789
+            },
+            "health": 80,
+            "maxHealth": 80,
+            "dead": false,
+            "present": true,
+            "path": null,
+            "pathGoal": {
+              "x": 94,
+              "y": 14,
+              "z": 96
+            }
+          }
+        ],
+        "goal": {
+          "type": "flee",
+          "utility": 0.8791753680158085,
+          "reasons": [
+            "an unfamiliar person is a threat (fear 0.69, dist 3.7)",
+            "my tolerance for danger, unarmed",
+            "concern: wary of them (0.57)",
+            "I know Garrick Ironhand",
+            "Dunstan Mole frightens me"
+          ],
+          "createdAt": 9735501,
+          "key": "flee:p_15",
+          "targetEntity": "p_15"
+        },
+        "plan": [
+          {
+            "status": "pending",
+            "type": "goto",
+            "pos": {
+              "x": 83.5,
+              "y": 14,
+              "z": 113.5
+            },
+            "run": true,
+            "data": {
+              "flee": true,
+              "escapeThreats": [
+                {
+                  "entityId": "p_15",
+                  "pos": {
+                    "x": 94.5,
+                    "y": 14,
+                    "z": 93.15527313883649
+                  },
+                  "observedAt": 9735492
+                }
+              ]
+            }
+          },
+          {
+            "status": "pending",
+            "type": "wait",
+            "duration": 180,
+            "data": {
+              "hide": true
+            }
+          }
+        ],
+        "decision": {
+          "tick": 9735501,
+          "candidates": [
+            {
+              "type": "flee",
+              "key": "flee:p_15",
+              "utility": 0.8791753680158085,
+              "reasons": [
+                "an unfamiliar person is a threat (fear 0.69, dist 3.7)",
+                "my tolerance for danger, unarmed",
+                "concern: wary of them (0.57)",
+                "I know Garrick Ironhand",
+                "Dunstan Mole frightens me"
+              ]
+            },
+            {
+              "type": "eat",
+              "key": "eat:pl_9",
+              "utility": 0.6865771428571635,
+              "reasons": [
+                "hunger 0.87",
+                "must find food"
+              ]
+            },
+            {
+              "type": "report",
+              "key": "report:p_15:ev:e_226818",
+              "utility": 0.5589999999999999,
+              "reasons": [
+                "I know someone attacked an unfamiliar person (heard)",
+                "the watch should hear of it",
+                "my sense of honesty",
+                "concern: set on seeing them answer for it (0.93)",
+                "Mara Bramble is my child",
+                "I have my own history with Vex"
+              ]
+            },
+            {
+              "type": "report",
+              "key": "report:p_15:ev:e_227233",
+              "utility": 0.5589999999999999,
+              "reasons": [
+                "I know someone attacked an unfamiliar person (heard)",
+                "the watch should hear of it",
+                "my sense of honesty",
+                "concern: set on seeing them answer for it (0.93)",
+                "Mara Bramble is my child",
+                "I have my own history with Vex"
+              ]
+            },
+            {
+              "type": "sleep",
+              "key": "sleep:pl_9",
+              "utility": 0.47081767441440914,
+              "reasons": [
+                "energy need 0.63"
+              ]
+            },
+            {
+              "type": "work",
+              "key": "work:pl_9",
+              "utility": 0.22681792625289432,
+              "reasons": [
+                "I normally bake at this time; other concerns may matter more"
+              ]
+            },
+            {
+              "type": "socialize",
+              "key": "socialize:pl_7",
+              "utility": 0.22049999999999997,
+              "reasons": [
+                "social need 1.00",
+                "my appetite for company",
+                "my body leaves little room for company"
+              ]
+            },
+            {
+              "type": "idle",
+              "key": "idle:",
+              "utility": 0.1,
+              "reasons": [
+                "nothing better to do"
+              ]
+            }
+          ],
+          "chosen": "flee:p_15",
+          "switched": true,
+          "note": "switched from drink_water to flee"
+        },
+        "commitment": null,
+        "investigated": [],
+        "noFoodUntil": 9488487,
+        "targetLocation": {
+          "key": "loc:p_15",
+          "kind": "location",
+          "claim": {
+            "entityId": "p_15",
+            "pos": {
+              "x": 94.5,
+              "y": 14,
+              "z": 93.15527313883649
+            },
+            "placeId": "pl_1"
+          },
+          "confidence": 1,
+          "learnedAt": 9735492,
+          "source": {
+            "type": "witnessed"
+          },
+          "hops": 0,
+          "sharedWith": []
+        },
+        "targetHome": {
+          "key": "home:p_15",
+          "kind": "fact",
+          "claim": {
+            "text": "Dunstan Mole lives at the guardhouse",
+            "entityId": "p_15",
+            "placeId": "pl_13"
+          },
+          "confidence": 0.9,
+          "learnedAt": 8666400,
+          "source": {
+            "type": "prior"
+          },
+          "hops": 0,
+          "sharedWith": []
+        },
+        "percepts": [
+          {
+            "entityId": "p_1",
+            "bodyId": "b_1",
+            "how": "saw",
+            "tick": 9735492,
+            "pos": {
+              "x": 97.01223042141979,
+              "y": 14,
+              "z": 83.5
+            },
+            "distance": 13.567029354429645
+          },
+          {
+            "entityId": "p_2",
+            "bodyId": "b_2",
+            "how": "saw",
+            "tick": 9735492,
+            "pos": {
+              "x": 100.32269383092738,
+              "y": 14,
+              "z": 89.5948430580217
+            },
+            "distance": 9.293953029908815
+          },
+          {
+            "entityId": "p_5",
+            "bodyId": "b_5",
+            "how": "saw",
+            "tick": 9735492,
+            "pos": {
+              "x": 75.14813937534768,
+              "y": 14,
+              "z": 87.50540529332834
+            },
+            "distance": 21.472177606864875
+          },
+          {
+            "entityId": "p_8",
+            "bodyId": "b_8",
+            "how": "saw",
+            "tick": 9735492,
+            "pos": {
+              "x": 94.50896488679695,
+              "y": 14,
+              "z": 81.45246679801446
+            },
+            "distance": 15.378011969949306
+          },
+          {
+            "entityId": "p_12",
+            "bodyId": "b_12",
+            "how": "saw",
+            "tick": 9735492,
+            "pos": {
+              "x": 105.65069982724032,
+              "y": 14,
+              "z": 83.35315430909095
+            },
+            "distance": 17.49871146075299
+          },
+          {
+            "entityId": "p_14",
+            "bodyId": "b_14",
+            "how": "saw",
+            "tick": 9735492,
+            "pos": {
+              "x": 107.71832981467841,
+              "y": 14,
+              "z": 81.28167018532159
+            },
+            "distance": 20.414714732848473
+          },
+          {
+            "entityId": "p_15",
+            "bodyId": "b_15",
+            "how": "saw",
+            "tick": 9735492,
+            "pos": {
+              "x": 94.5,
+              "y": 14,
+              "z": 93.15527313883649
+            },
+            "distance": 3.6752079284378945
+          },
+          {
+            "entityId": "p_17",
+            "bodyId": "b_17",
+            "how": "saw",
+            "tick": 9735492,
+            "pos": {
+              "x": 110.9082691391161,
+              "y": 14,
+              "z": 78.0917308608839
+            },
+            "distance": 24.914016451122418
+          },
+          {
+            "entityId": "p_18",
+            "bodyId": "b_18",
+            "how": "saw",
+            "tick": 9735492,
+            "pos": {
+              "x": 110.20181228276414,
+              "y": 14,
+              "z": 78.79818771723586
+            },
+            "distance": 23.917194672718907
+          },
+          {
+            "entityId": "p_23",
+            "bodyId": "b_23",
+            "how": "saw",
+            "tick": 9735492,
+            "pos": {
+              "x": 94.45165294833451,
+              "y": 14,
+              "z": 97.63794580246757
+            },
+            "distance": 0.8083769431366549
+          },
+          {
+            "entityId": "p_25",
+            "bodyId": "b_25",
+            "how": "saw",
+            "tick": 9735492,
+            "pos": {
+              "x": 80.30374004577038,
+              "y": 14,
+              "z": 77.49715930498117
+            },
+            "distance": 23.97956345474024
+          },
+          {
+            "entityId": "p_26",
+            "bodyId": "b_26",
+            "how": "saw",
+            "tick": 9735492,
+            "pos": {
+              "x": 105.11424355154716,
+              "y": 14,
+              "z": 83.9564109627498
+            },
+            "distance": 16.691953734897833
+          },
+          {
+            "entityId": "p_30",
+            "bodyId": "b_30",
+            "how": "saw",
+            "tick": 9735492,
+            "pos": {
+              "x": 108.46835830044189,
+              "y": 14,
+              "z": 79.46855334902355
+            },
+            "distance": 22.289856801346108
+          },
+          {
+            "entityId": "p_37",
+            "bodyId": "b_42",
+            "how": "saw",
+            "tick": 9735492,
+            "pos": {
+              "x": 93.53303930866177,
+              "y": 14,
+              "z": 92.56619463479322
+            },
+            "distance": 4.3702744902608766
+          }
+        ]
+      }
+    },
+    {
+      "event": {
+        "id": "e_229180",
+        "tick": 9735600,
+        "type": "goal_changed",
+        "category": "cognition",
+        "actor": "p_4",
+        "placeId": "pl_2",
+        "data": {
+          "from": "flee",
+          "fromUtility": 0.8791753680158085,
+          "to": "drink_water",
+          "utility": 1,
+          "reasons": [
+            "thirst 1.00"
+          ],
+          "key": "drink_water:pl_2"
+        },
+        "causes": [],
+        "effects": [],
+        "perceivedBy": [],
+        "significance": 0.12,
+        "summary": "Osric Bramble: goal flee → drink_water @ the village well (u=1.00)"
+      },
+      "actorAtEmission": {
+        "id": "p_4",
+        "name": "Osric Bramble",
+        "alive": true,
+        "needs": {
+          "hunger": 0.8753777777778007,
+          "energy": 0.6346100743670363,
+          "social": 1,
+          "comfort": 0.22499999999999898,
+          "thirst": 1
+        },
+        "wealth": 227.25,
+        "homeId": "pl_9",
+        "workId": "pl_9",
+        "householdId": "hh_3",
+        "inventory": [],
+        "bodies": [
+          {
+            "id": "b_4",
+            "pos": {
+              "x": 91.5,
+              "y": 14,
+              "z": 103.5
+            },
+            "health": 80,
+            "maxHealth": 80,
+            "dead": false,
+            "present": true,
+            "path": [
+              {
+                "x": 93.5,
+                "y": 14,
+                "z": 97.5
+              },
+              {
+                "x": 91.5,
+                "y": 14,
+                "z": 103.5
+              },
+              {
+                "x": 90.5,
+                "y": 14,
+                "z": 105.5
+              },
+              {
+                "x": 84.5,
+                "y": 14,
+                "z": 111.5
+              },
+              {
+                "x": 83.5,
+                "y": 14,
+                "z": 113.5
+              }
+            ],
+            "pathGoal": {
+              "x": 83.5,
+              "y": 14,
+              "z": 113.5
+            }
+          }
+        ],
+        "goal": {
+          "type": "drink_water",
+          "utility": 1,
+          "reasons": [
+            "thirst 1.00"
+          ],
+          "createdAt": 9735600,
+          "key": "drink_water:pl_2",
+          "targetPos": {
+            "x": 94,
+            "y": 14,
+            "z": 96
+          },
+          "targetPlace": "pl_2",
+          "origin": {
+            "x": 91.5,
+            "y": 14,
+            "z": 103.5
+          },
+          "data": {
+            "water": true
+          }
+        },
+        "plan": [
+          {
+            "status": "pending",
+            "type": "goto",
+            "pos": {
+              "x": 94,
+              "y": 14,
+              "z": 96
+            },
+            "placeId": "pl_2"
+          },
+          {
+            "status": "pending",
+            "type": "drink",
+            "pos": {
+              "x": 94,
+              "y": 14,
+              "z": 96
+            },
+            "placeId": "pl_2",
+            "duration": 90
+          }
+        ],
+        "decision": {
+          "tick": 9735600,
+          "candidates": [
+            {
+              "type": "drink_water",
+              "key": "drink_water:pl_2",
+              "utility": 1,
+              "reasons": [
+                "thirst 1.00"
+              ]
+            },
+            {
+              "type": "eat",
+              "key": "eat:pl_9",
+              "utility": 0.6878400000000207,
+              "reasons": [
+                "hunger 0.88",
+                "must find food"
+              ]
+            },
+            {
+              "type": "report",
+              "key": "report:p_15:ev:e_226818",
+              "utility": 0.6114999999999999,
+              "reasons": [
+                "I know someone attacked an unfamiliar person (heard)",
+                "the watch should hear of it",
+                "my sense of honesty",
+                "concern: set on seeing them answer for it (0.93)",
+                "Mara Bramble is my child",
+                "I have my own history with Vex"
+              ]
+            },
+            {
+              "type": "report",
+              "key": "report:p_15:ev:e_227233",
+              "utility": 0.6114999999999999,
+              "reasons": [
+                "I know someone attacked an unfamiliar person (heard)",
+                "the watch should hear of it",
+                "my sense of honesty",
+                "concern: set on seeing them answer for it (0.93)",
+                "Mara Bramble is my child",
+                "I have my own history with Vex"
+              ]
+            },
+            {
+              "type": "sleep",
+              "key": "sleep:pl_9",
+              "utility": 0.47114906693033276,
+              "reasons": [
+                "energy need 0.63"
+              ]
+            },
+            {
+              "type": "work",
+              "key": "work:pl_9",
+              "utility": 0.2269954359318296,
+              "reasons": [
+                "I normally bake at this time; other concerns may matter more"
+              ]
+            },
+            {
+              "type": "socialize",
+              "key": "socialize:pl_7",
+              "utility": 0.22049999999999997,
+              "reasons": [
+                "social need 1.00",
+                "my appetite for company",
+                "my body leaves little room for company"
+              ]
+            },
+            {
+              "type": "idle",
+              "key": "idle:",
+              "utility": 0.1,
+              "reasons": [
+                "nothing better to do"
+              ]
+            }
+          ],
+          "chosen": "drink_water:pl_2",
+          "switched": true,
+          "note": "switched from flee to drink_water"
+        },
+        "commitment": null,
+        "investigated": [],
+        "noFoodUntil": 9488487,
+        "percepts": [
+          {
+            "entityId": "p_19",
+            "bodyId": "b_19",
+            "how": "saw",
+            "tick": 9735600,
+            "pos": {
+              "x": 97.05018252564095,
+              "y": 14,
+              "z": 112.94814667127845
+            },
+            "distance": 10.957737065193717
+          },
+          {
+            "entityId": "p_20",
+            "bodyId": "b_20",
+            "how": "saw",
+            "tick": 9735600,
+            "pos": {
+              "x": 112.49998235510743,
+              "y": 14,
+              "z": 112.82450388225529
+            },
+            "distance": 22.97706751448099
+          },
+          {
+            "entityId": "p_22",
+            "bodyId": "b_22",
+            "how": "saw",
+            "tick": 9735600,
+            "pos": {
+              "x": 111.50217495027486,
+              "y": 14,
+              "z": 109.62547120871932
+            },
+            "distance": 20.9190917649465
+          },
+          {
+            "entityId": "p_23",
+            "bodyId": "b_23",
+            "how": "heard",
+            "tick": 9735600,
+            "pos": {
+              "x": 93.02588213037504,
+              "y": 14,
+              "z": 99.98637822000502
+            },
+            "distance": 3.830646719374281
+          },
+          {
+            "entityId": "p_27",
+            "bodyId": "b_27",
+            "how": "saw",
+            "tick": 9735600,
+            "pos": {
+              "x": 82.50897751415256,
+              "y": 14,
+              "z": 122.49102248584744
+            },
+            "distance": 21.01184000507755
+          },
+          {
+            "entityId": "p_29",
+            "bodyId": "b_29",
+            "how": "heard",
+            "tick": 9735600,
+            "pos": {
+              "x": 94.50538962976607,
+              "y": 14,
+              "z": 101.46594334358194
+            },
+            "distance": 3.6290154736820917
+          }
+        ]
+      }
+    }
+  ]
+}

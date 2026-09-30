@@ -1,0 +1,1335 @@
+[
+  {
+    "event": {
+      "id": "e_202010",
+      "tick": 9625467,
+      "type": "perceived",
+      "category": "cognition",
+      "actor": "p_24",
+      "target": "p_13",
+      "placeId": "pl_13",
+      "pos": {
+        "x": 95.5,
+        "y": 14,
+        "z": 117.3322470914521
+      },
+      "data": {
+        "kind": "failed_report",
+        "reason": "conversation_unavailable",
+        "key": "ev:e_173321"
+      },
+      "causes": [
+        "e_202008"
+      ],
+      "effects": [],
+      "perceivedBy": [],
+      "significance": 0.12,
+      "summary": "Maud Penny could not deliver the report"
+    },
+    "goal": {
+      "type": "report",
+      "utility": 1,
+      "reasons": [
+        "I know an unfamiliar person attacked an unfamiliar person (witnessed)",
+        "the watch should hear of it",
+        "my sense of honesty",
+        "concern: set on seeing them answer for it (0.41)",
+        "I know Rowan Ashford",
+        "Kestrel frightens me"
+      ],
+      "createdAt": 9625422,
+      "key": "report:p_13:ev:e_173321",
+      "targetEntity": "p_13",
+      "targetPos": {
+        "x": 95.66715967750646,
+        "y": 14,
+        "z": 118.15426448668389
+      },
+      "data": {
+        "key": "ev:e_173321"
+      }
+    },
+    "report": {
+      "key": "ev:e_173321",
+      "status": "unavailable",
+      "attempts": 1,
+      "firstAt": 9492456,
+      "lastAttemptAt": 9625467,
+      "towardId": "p_13",
+      "deferUntil": 9626667,
+      "note": "could not make Rowan Ashford hear it"
+    },
+    "knowledge": {
+      "key": "ev:e_173321",
+      "kind": "event",
+      "claim": {
+        "eventId": "e_173321",
+        "type": "attack",
+        "tick": 9492447,
+        "pos": {
+          "x": 96.62422797222388,
+          "y": 14,
+          "z": 112.77515275913728
+        },
+        "significance": 0.7,
+        "actor": "p_14",
+        "target": "p_24"
+      },
+      "confidence": 1,
+      "learnedAt": 9492447,
+      "source": {
+        "type": "witnessed",
+        "viaEvent": "e_173323"
+      },
+      "hops": 0,
+      "sharedWith": []
+    },
+    "speaker": [
+      {
+        "id": "b_24",
+        "kind": "body",
+        "name": "Maud Penny's body",
+        "createdAt": 8666400,
+        "tags": [],
+        "ownerId": "p_24",
+        "shape": "humanoid",
+        "pos": {
+          "x": 95.5,
+          "y": 14,
+          "z": 117.3322470914521
+        },
+        "vel": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "yaw": -3.141592653589793,
+        "pose": "stand",
+        "poseUntil": 13925.549999978204,
+        "onGround": true,
+        "path": null,
+        "pathIndex": 1,
+        "pathGoal": {
+          "x": 95.66715967750646,
+          "y": 14,
+          "z": 118.15426448668389
+        },
+        "speed": 5.6,
+        "health": 64.14083229832735,
+        "maxHealth": 80,
+        "dead": false,
+        "lastHitAt": 13805.549999978204,
+        "lastAttackAt": 13751.999999978334,
+        "attackSeq": 17,
+        "hitSeq": 18,
+        "attackTarget": null,
+        "subduedUntil": 13925.549999978204,
+        "sitAnchor": null,
+        "present": true,
+        "combatAction": {
+          "id": "action_733",
+          "actorBodyId": "b_24",
+          "kind": "sidestep",
+          "targetBodyId": null,
+          "weaponId": null,
+          "definition": "sidestep",
+          "trajectory": "high",
+          "startedAt": 13752.899999978332,
+          "startTick": 825174,
+          "activeAt": 13752.899999978332,
+          "recoveryAt": 13752.899999978332,
+          "completeAt": 13753.019999978333,
+          "phase": "complete",
+          "outcome": "interrupted",
+          "facing": -1.2429445908205308,
+          "initialFacing": -1.2429445908205308,
+          "trackingUntil": 13752.899999978332,
+          "turnRate": 1.5707963267948966,
+          "turnBudget": 0.2617993877991494,
+          "reach": 0,
+          "radius": 0.12,
+          "impact": 0,
+          "exertionCost": 0.035,
+          "intent": "defend",
+          "direction": {
+            "x": 0.3220099334895575,
+            "y": 0,
+            "z": 0.9467362899636048
+          },
+          "distance": 0.65,
+          "appliedDistance": 0.44433593749821665,
+          "eventId": "e_173189",
+          "repertoireRevision": 2,
+          "priorStrike": "jab",
+          "techniqueId": "motor:sidestep",
+          "stoppedAt": 13752.899999978332,
+          "stopReason": "contact",
+          "learningEventId": "e_173198"
+        },
+        "injuries": {
+          "head": 0.27973172939818614
+        }
+      }
+    ],
+    "listener": [
+      {
+        "id": "b_13",
+        "kind": "body",
+        "name": "Rowan Ashford's body",
+        "createdAt": 8666400,
+        "tags": [],
+        "ownerId": "p_13",
+        "shape": "humanoid",
+        "pos": {
+          "x": 95.66715967750646,
+          "y": 14,
+          "z": 118.15426448668389
+        },
+        "vel": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "yaw": -0.16549858036570292,
+        "pose": "downed",
+        "poseUntil": 15187.199999975144,
+        "onGround": true,
+        "path": null,
+        "pathIndex": 1,
+        "pathGoal": {
+          "x": 96.70233871472797,
+          "y": 14,
+          "z": 115.87992846968456
+        },
+        "speed": 5.6,
+        "health": 1,
+        "maxHealth": 110,
+        "dead": false,
+        "lastHitAt": 15067.199999975144,
+        "lastAttackAt": 14925.299999975488,
+        "attackSeq": 59,
+        "hitSeq": 41,
+        "attackTarget": null,
+        "subduedUntil": 15187.199999975144,
+        "sitAnchor": null,
+        "present": true,
+        "combatAction": {
+          "id": "action_943",
+          "actorBodyId": "b_13",
+          "kind": "sidestep",
+          "targetBodyId": null,
+          "weaponId": null,
+          "definition": "sidestep",
+          "trajectory": "high",
+          "startedAt": 15063.449999975153,
+          "startTick": 903807,
+          "activeAt": 15063.449999975153,
+          "recoveryAt": 15063.689999975153,
+          "completeAt": 15063.809999975154,
+          "phase": "complete",
+          "outcome": "pending",
+          "facing": -0.6120766159027561,
+          "initialFacing": -0.6120766159027561,
+          "trackingUntil": 15063.449999975153,
+          "turnRate": 1.5707963267948966,
+          "turnBudget": 0.2617993877991494,
+          "reach": 0,
+          "radius": 0.12,
+          "impact": 0,
+          "exertionCost": 0.035,
+          "intent": "defend",
+          "direction": {
+            "x": 0.8184566257254619,
+            "y": 0,
+            "z": 0.5745683177883124
+          },
+          "distance": 0.65,
+          "appliedDistance": 0.6499999999995222,
+          "eventId": "e_193607",
+          "repertoireRevision": 2
+        },
+        "injuries": {
+          "head": 0.1975273838450237
+        }
+      }
+    ],
+    "custody": {
+      "active": true,
+      "byFactionId": "f_2",
+      "byId": "p_14",
+      "reason": "suspicion",
+      "crimeKey": "ev:e_60254",
+      "since": 9570450,
+      "releaseAt": 9700050,
+      "conflictId": "cf_147"
+    },
+    "reachable": false
+  },
+  {
+    "event": {
+      "id": "e_202058",
+      "tick": 9625620,
+      "type": "perceived",
+      "category": "cognition",
+      "actor": "p_24",
+      "target": "p_13",
+      "placeId": "pl_13",
+      "pos": {
+        "x": 95.5,
+        "y": 14,
+        "z": 117.33206352889447
+      },
+      "data": {
+        "kind": "failed_report",
+        "reason": "conversation_unavailable",
+        "key": "ev:e_173435"
+      },
+      "causes": [
+        "e_202043"
+      ],
+      "effects": [],
+      "perceivedBy": [],
+      "significance": 0.12,
+      "summary": "Maud Penny could not deliver the report"
+    },
+    "goal": {
+      "type": "report",
+      "utility": 1,
+      "reasons": [
+        "I know an unfamiliar person attacked an unfamiliar person at the woodcutter's clearing (witnessed)",
+        "the watch should hear of it",
+        "my sense of honesty",
+        "concern: set on seeing them answer for it (0.41)",
+        "I know Rowan Ashford",
+        "Kestrel frightens me"
+      ],
+      "createdAt": 9625575,
+      "key": "report:p_13:ev:e_173435",
+      "targetEntity": "p_13",
+      "targetPos": {
+        "x": 95.66715967750646,
+        "y": 14,
+        "z": 118.15426448668389
+      },
+      "data": {
+        "key": "ev:e_173435"
+      }
+    },
+    "report": {
+      "key": "ev:e_173435",
+      "status": "unavailable",
+      "attempts": 1,
+      "firstAt": 9492951,
+      "lastAttemptAt": 9625620,
+      "towardId": "p_13",
+      "deferUntil": 9626820,
+      "note": "could not make Rowan Ashford hear it"
+    },
+    "knowledge": {
+      "key": "ev:e_173435",
+      "kind": "event",
+      "claim": {
+        "eventId": "e_173435",
+        "type": "attack",
+        "tick": 9492942,
+        "placeId": "pl_36",
+        "pos": {
+          "x": 98.78203890475352,
+          "y": 14,
+          "z": 133.16155331429576
+        },
+        "significance": 0.7,
+        "actor": "p_14",
+        "target": "p_24"
+      },
+      "confidence": 1,
+      "learnedAt": 9492942,
+      "source": {
+        "type": "witnessed",
+        "viaEvent": "e_173437"
+      },
+      "hops": 0,
+      "sharedWith": []
+    },
+    "speaker": [
+      {
+        "id": "b_24",
+        "kind": "body",
+        "name": "Maud Penny's body",
+        "createdAt": 8666400,
+        "tags": [],
+        "ownerId": "p_24",
+        "shape": "humanoid",
+        "pos": {
+          "x": 95.5,
+          "y": 14,
+          "z": 117.33206352889447
+        },
+        "vel": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "yaw": 3.141592653589793,
+        "pose": "stand",
+        "poseUntil": 13925.549999978204,
+        "onGround": true,
+        "path": null,
+        "pathIndex": 1,
+        "pathGoal": {
+          "x": 95.66715967750646,
+          "y": 14,
+          "z": 118.15426448668389
+        },
+        "speed": 5.6,
+        "health": 64.3154246830508,
+        "maxHealth": 80,
+        "dead": false,
+        "lastHitAt": 13805.549999978204,
+        "lastAttackAt": 13751.999999978334,
+        "attackSeq": 17,
+        "hitSeq": 18,
+        "attackTarget": null,
+        "subduedUntil": 13925.549999978204,
+        "sitAnchor": null,
+        "present": true,
+        "combatAction": {
+          "id": "action_733",
+          "actorBodyId": "b_24",
+          "kind": "sidestep",
+          "targetBodyId": null,
+          "weaponId": null,
+          "definition": "sidestep",
+          "trajectory": "high",
+          "startedAt": 13752.899999978332,
+          "startTick": 825174,
+          "activeAt": 13752.899999978332,
+          "recoveryAt": 13752.899999978332,
+          "completeAt": 13753.019999978333,
+          "phase": "complete",
+          "outcome": "interrupted",
+          "facing": -1.2429445908205308,
+          "initialFacing": -1.2429445908205308,
+          "trackingUntil": 13752.899999978332,
+          "turnRate": 1.5707963267948966,
+          "turnBudget": 0.2617993877991494,
+          "reach": 0,
+          "radius": 0.12,
+          "impact": 0,
+          "exertionCost": 0.035,
+          "intent": "defend",
+          "direction": {
+            "x": 0.3220099334895575,
+            "y": 0,
+            "z": 0.9467362899636048
+          },
+          "distance": 0.65,
+          "appliedDistance": 0.44433593749821665,
+          "eventId": "e_173189",
+          "repertoireRevision": 2,
+          "priorStrike": "jab",
+          "techniqueId": "motor:sidestep",
+          "stoppedAt": 13752.899999978332,
+          "stopReason": "contact",
+          "learningEventId": "e_173198"
+        },
+        "injuries": {
+          "head": 0.27973172939818614
+        }
+      }
+    ],
+    "listener": [
+      {
+        "id": "b_13",
+        "kind": "body",
+        "name": "Rowan Ashford's body",
+        "createdAt": 8666400,
+        "tags": [],
+        "ownerId": "p_13",
+        "shape": "humanoid",
+        "pos": {
+          "x": 95.66715967750646,
+          "y": 14,
+          "z": 118.15426448668389
+        },
+        "vel": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "yaw": -0.16549858036570292,
+        "pose": "downed",
+        "poseUntil": 15187.199999975144,
+        "onGround": true,
+        "path": null,
+        "pathIndex": 1,
+        "pathGoal": {
+          "x": 96.70233871472797,
+          "y": 14,
+          "z": 115.87992846968456
+        },
+        "speed": 5.6,
+        "health": 1,
+        "maxHealth": 110,
+        "dead": false,
+        "lastHitAt": 15067.199999975144,
+        "lastAttackAt": 14925.299999975488,
+        "attackSeq": 59,
+        "hitSeq": 41,
+        "attackTarget": null,
+        "subduedUntil": 15187.199999975144,
+        "sitAnchor": null,
+        "present": true,
+        "combatAction": {
+          "id": "action_943",
+          "actorBodyId": "b_13",
+          "kind": "sidestep",
+          "targetBodyId": null,
+          "weaponId": null,
+          "definition": "sidestep",
+          "trajectory": "high",
+          "startedAt": 15063.449999975153,
+          "startTick": 903807,
+          "activeAt": 15063.449999975153,
+          "recoveryAt": 15063.689999975153,
+          "completeAt": 15063.809999975154,
+          "phase": "complete",
+          "outcome": "pending",
+          "facing": -0.6120766159027561,
+          "initialFacing": -0.6120766159027561,
+          "trackingUntil": 15063.449999975153,
+          "turnRate": 1.5707963267948966,
+          "turnBudget": 0.2617993877991494,
+          "reach": 0,
+          "radius": 0.12,
+          "impact": 0,
+          "exertionCost": 0.035,
+          "intent": "defend",
+          "direction": {
+            "x": 0.8184566257254619,
+            "y": 0,
+            "z": 0.5745683177883124
+          },
+          "distance": 0.65,
+          "appliedDistance": 0.6499999999995222,
+          "eventId": "e_193607",
+          "repertoireRevision": 2
+        },
+        "injuries": {
+          "head": 0.1975273838450237
+        }
+      }
+    ],
+    "custody": {
+      "active": true,
+      "byFactionId": "f_2",
+      "byId": "p_14",
+      "reason": "suspicion",
+      "crimeKey": "ev:e_60254",
+      "since": 9570450,
+      "releaseAt": 9700050,
+      "conflictId": "cf_147"
+    },
+    "reachable": false
+  },
+  {
+    "event": {
+      "id": "e_202093",
+      "tick": 9625773,
+      "type": "perceived",
+      "category": "cognition",
+      "actor": "p_24",
+      "target": "p_13",
+      "placeId": "pl_13",
+      "pos": {
+        "x": 95.5,
+        "y": 14,
+        "z": 117.33205642170962
+      },
+      "data": {
+        "kind": "failed_report",
+        "reason": "conversation_unavailable",
+        "key": "ev:e_173554"
+      },
+      "causes": [
+        "e_202084"
+      ],
+      "effects": [],
+      "perceivedBy": [],
+      "significance": 0.12,
+      "summary": "Maud Penny could not deliver the report"
+    },
+    "goal": {
+      "type": "report",
+      "utility": 1,
+      "reasons": [
+        "I know an unfamiliar person attacked an unfamiliar person at the guardhouse (witnessed)",
+        "the watch should hear of it",
+        "my sense of honesty",
+        "concern: set on seeing them answer for it (0.41)",
+        "I know Rowan Ashford",
+        "Kestrel frightens me"
+      ],
+      "createdAt": 9625728,
+      "key": "report:p_13:ev:e_173554",
+      "targetEntity": "p_13",
+      "targetPos": {
+        "x": 95.66715967750646,
+        "y": 14,
+        "z": 118.15426448668389
+      },
+      "data": {
+        "key": "ev:e_173554"
+      }
+    },
+    "report": {
+      "key": "ev:e_173554",
+      "status": "unavailable",
+      "attempts": 1,
+      "firstAt": 9493518,
+      "lastAttemptAt": 9625773,
+      "towardId": "p_13",
+      "deferUntil": 9626973,
+      "note": "could not make Rowan Ashford hear it"
+    },
+    "knowledge": {
+      "key": "ev:e_173554",
+      "kind": "event",
+      "claim": {
+        "eventId": "e_173554",
+        "type": "attack",
+        "tick": 9493509,
+        "placeId": "pl_13",
+        "pos": {
+          "x": 95.1375302164082,
+          "y": 14,
+          "z": 117.54370467538773
+        },
+        "significance": 0.7,
+        "actor": "p_14",
+        "target": "p_24"
+      },
+      "confidence": 1,
+      "learnedAt": 9493509,
+      "source": {
+        "type": "witnessed",
+        "viaEvent": "e_173556"
+      },
+      "hops": 0,
+      "sharedWith": []
+    },
+    "speaker": [
+      {
+        "id": "b_24",
+        "kind": "body",
+        "name": "Maud Penny's body",
+        "createdAt": 8666400,
+        "tags": [],
+        "ownerId": "p_24",
+        "shape": "humanoid",
+        "pos": {
+          "x": 95.5,
+          "y": 14,
+          "z": 117.33205642170962
+        },
+        "vel": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "yaw": 3.141592653589793,
+        "pose": "stand",
+        "poseUntil": 13925.549999978204,
+        "onGround": true,
+        "path": null,
+        "pathIndex": 1,
+        "pathGoal": {
+          "x": 95.66715967750646,
+          "y": 14,
+          "z": 118.15426448668389
+        },
+        "speed": 5.6,
+        "health": 64.5774537982118,
+        "maxHealth": 80,
+        "dead": false,
+        "lastHitAt": 13805.549999978204,
+        "lastAttackAt": 13751.999999978334,
+        "attackSeq": 17,
+        "hitSeq": 18,
+        "attackTarget": null,
+        "subduedUntil": 13925.549999978204,
+        "sitAnchor": null,
+        "present": true,
+        "combatAction": {
+          "id": "action_733",
+          "actorBodyId": "b_24",
+          "kind": "sidestep",
+          "targetBodyId": null,
+          "weaponId": null,
+          "definition": "sidestep",
+          "trajectory": "high",
+          "startedAt": 13752.899999978332,
+          "startTick": 825174,
+          "activeAt": 13752.899999978332,
+          "recoveryAt": 13752.899999978332,
+          "completeAt": 13753.019999978333,
+          "phase": "complete",
+          "outcome": "interrupted",
+          "facing": -1.2429445908205308,
+          "initialFacing": -1.2429445908205308,
+          "trackingUntil": 13752.899999978332,
+          "turnRate": 1.5707963267948966,
+          "turnBudget": 0.2617993877991494,
+          "reach": 0,
+          "radius": 0.12,
+          "impact": 0,
+          "exertionCost": 0.035,
+          "intent": "defend",
+          "direction": {
+            "x": 0.3220099334895575,
+            "y": 0,
+            "z": 0.9467362899636048
+          },
+          "distance": 0.65,
+          "appliedDistance": 0.44433593749821665,
+          "eventId": "e_173189",
+          "repertoireRevision": 2,
+          "priorStrike": "jab",
+          "techniqueId": "motor:sidestep",
+          "stoppedAt": 13752.899999978332,
+          "stopReason": "contact",
+          "learningEventId": "e_173198"
+        },
+        "injuries": {
+          "head": 0.27973172939818614
+        }
+      }
+    ],
+    "listener": [
+      {
+        "id": "b_13",
+        "kind": "body",
+        "name": "Rowan Ashford's body",
+        "createdAt": 8666400,
+        "tags": [],
+        "ownerId": "p_13",
+        "shape": "humanoid",
+        "pos": {
+          "x": 95.66715967750646,
+          "y": 14,
+          "z": 118.15426448668389
+        },
+        "vel": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "yaw": -0.16549858036570292,
+        "pose": "downed",
+        "poseUntil": 15187.199999975144,
+        "onGround": true,
+        "path": null,
+        "pathIndex": 1,
+        "pathGoal": {
+          "x": 96.70233871472797,
+          "y": 14,
+          "z": 115.87992846968456
+        },
+        "speed": 5.6,
+        "health": 1,
+        "maxHealth": 110,
+        "dead": false,
+        "lastHitAt": 15067.199999975144,
+        "lastAttackAt": 14925.299999975488,
+        "attackSeq": 59,
+        "hitSeq": 41,
+        "attackTarget": null,
+        "subduedUntil": 15187.199999975144,
+        "sitAnchor": null,
+        "present": true,
+        "combatAction": {
+          "id": "action_943",
+          "actorBodyId": "b_13",
+          "kind": "sidestep",
+          "targetBodyId": null,
+          "weaponId": null,
+          "definition": "sidestep",
+          "trajectory": "high",
+          "startedAt": 15063.449999975153,
+          "startTick": 903807,
+          "activeAt": 15063.449999975153,
+          "recoveryAt": 15063.689999975153,
+          "completeAt": 15063.809999975154,
+          "phase": "complete",
+          "outcome": "pending",
+          "facing": -0.6120766159027561,
+          "initialFacing": -0.6120766159027561,
+          "trackingUntil": 15063.449999975153,
+          "turnRate": 1.5707963267948966,
+          "turnBudget": 0.2617993877991494,
+          "reach": 0,
+          "radius": 0.12,
+          "impact": 0,
+          "exertionCost": 0.035,
+          "intent": "defend",
+          "direction": {
+            "x": 0.8184566257254619,
+            "y": 0,
+            "z": 0.5745683177883124
+          },
+          "distance": 0.65,
+          "appliedDistance": 0.6499999999995222,
+          "eventId": "e_193607",
+          "repertoireRevision": 2
+        },
+        "injuries": {
+          "head": 0.1975273838450237
+        }
+      }
+    ],
+    "custody": {
+      "active": true,
+      "byFactionId": "f_2",
+      "byId": "p_14",
+      "reason": "suspicion",
+      "crimeKey": "ev:e_60254",
+      "since": 9570450,
+      "releaseAt": 9700050,
+      "conflictId": "cf_147"
+    },
+    "reachable": false
+  },
+  {
+    "event": {
+      "id": "e_202112",
+      "tick": 9625926,
+      "type": "perceived",
+      "category": "cognition",
+      "actor": "p_24",
+      "target": "p_13",
+      "placeId": "pl_13",
+      "pos": {
+        "x": 95.5,
+        "y": 14,
+        "z": 117.33187480347198
+      },
+      "data": {
+        "kind": "failed_report",
+        "reason": "conversation_unavailable",
+        "key": "ev:e_173776"
+      },
+      "causes": [
+        "e_202110"
+      ],
+      "effects": [],
+      "perceivedBy": [],
+      "significance": 0.12,
+      "summary": "Maud Penny could not deliver the report"
+    },
+    "goal": {
+      "type": "report",
+      "utility": 1,
+      "reasons": [
+        "I know an unfamiliar person attacked an unfamiliar person at Bors's house (witnessed)",
+        "the watch should hear of it",
+        "my sense of honesty",
+        "concern: set on seeing them answer for it (0.41)",
+        "I know Rowan Ashford",
+        "Kestrel frightens me"
+      ],
+      "createdAt": 9625881,
+      "key": "report:p_13:ev:e_173776",
+      "targetEntity": "p_13",
+      "targetPos": {
+        "x": 95.66715967750646,
+        "y": 14,
+        "z": 118.15426448668389
+      },
+      "data": {
+        "key": "ev:e_173776"
+      }
+    },
+    "report": {
+      "key": "ev:e_173776",
+      "status": "unavailable",
+      "attempts": 1,
+      "firstAt": 9494175,
+      "lastAttemptAt": 9625926,
+      "towardId": "p_13",
+      "deferUntil": 9627126,
+      "note": "could not make Rowan Ashford hear it"
+    },
+    "knowledge": {
+      "key": "ev:e_173776",
+      "kind": "event",
+      "claim": {
+        "eventId": "e_173776",
+        "type": "attack",
+        "tick": 9494166,
+        "placeId": "pl_19",
+        "pos": {
+          "x": 84.5,
+          "y": 14,
+          "z": 133.9558242671264
+        },
+        "significance": 0.7,
+        "actor": "p_14",
+        "target": "p_24"
+      },
+      "confidence": 1,
+      "learnedAt": 9494166,
+      "source": {
+        "type": "witnessed",
+        "viaEvent": "e_173778"
+      },
+      "hops": 0,
+      "sharedWith": []
+    },
+    "speaker": [
+      {
+        "id": "b_24",
+        "kind": "body",
+        "name": "Maud Penny's body",
+        "createdAt": 8666400,
+        "tags": [],
+        "ownerId": "p_24",
+        "shape": "humanoid",
+        "pos": {
+          "x": 95.5,
+          "y": 14,
+          "z": 117.33187480347198
+        },
+        "vel": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "yaw": 9.42477796076938,
+        "pose": "stand",
+        "poseUntil": 13925.549999978204,
+        "onGround": true,
+        "path": null,
+        "pathIndex": 1,
+        "pathGoal": {
+          "x": 95.66715967750646,
+          "y": 14,
+          "z": 118.15426448668389
+        },
+        "speed": 5.6,
+        "health": 64.75218104899474,
+        "maxHealth": 80,
+        "dead": false,
+        "lastHitAt": 13805.549999978204,
+        "lastAttackAt": 13751.999999978334,
+        "attackSeq": 17,
+        "hitSeq": 18,
+        "attackTarget": null,
+        "subduedUntil": 13925.549999978204,
+        "sitAnchor": null,
+        "present": true,
+        "combatAction": {
+          "id": "action_733",
+          "actorBodyId": "b_24",
+          "kind": "sidestep",
+          "targetBodyId": null,
+          "weaponId": null,
+          "definition": "sidestep",
+          "trajectory": "high",
+          "startedAt": 13752.899999978332,
+          "startTick": 825174,
+          "activeAt": 13752.899999978332,
+          "recoveryAt": 13752.899999978332,
+          "completeAt": 13753.019999978333,
+          "phase": "complete",
+          "outcome": "interrupted",
+          "facing": -1.2429445908205308,
+          "initialFacing": -1.2429445908205308,
+          "trackingUntil": 13752.899999978332,
+          "turnRate": 1.5707963267948966,
+          "turnBudget": 0.2617993877991494,
+          "reach": 0,
+          "radius": 0.12,
+          "impact": 0,
+          "exertionCost": 0.035,
+          "intent": "defend",
+          "direction": {
+            "x": 0.3220099334895575,
+            "y": 0,
+            "z": 0.9467362899636048
+          },
+          "distance": 0.65,
+          "appliedDistance": 0.44433593749821665,
+          "eventId": "e_173189",
+          "repertoireRevision": 2,
+          "priorStrike": "jab",
+          "techniqueId": "motor:sidestep",
+          "stoppedAt": 13752.899999978332,
+          "stopReason": "contact",
+          "learningEventId": "e_173198"
+        },
+        "injuries": {
+          "head": 0.27973172939818614
+        }
+      }
+    ],
+    "listener": [
+      {
+        "id": "b_13",
+        "kind": "body",
+        "name": "Rowan Ashford's body",
+        "createdAt": 8666400,
+        "tags": [],
+        "ownerId": "p_13",
+        "shape": "humanoid",
+        "pos": {
+          "x": 95.66715967750646,
+          "y": 14,
+          "z": 118.15426448668389
+        },
+        "vel": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "yaw": -0.16549858036570292,
+        "pose": "downed",
+        "poseUntil": 15187.199999975144,
+        "onGround": true,
+        "path": null,
+        "pathIndex": 1,
+        "pathGoal": {
+          "x": 96.70233871472797,
+          "y": 14,
+          "z": 115.87992846968456
+        },
+        "speed": 5.6,
+        "health": 1,
+        "maxHealth": 110,
+        "dead": false,
+        "lastHitAt": 15067.199999975144,
+        "lastAttackAt": 14925.299999975488,
+        "attackSeq": 59,
+        "hitSeq": 41,
+        "attackTarget": null,
+        "subduedUntil": 15187.199999975144,
+        "sitAnchor": null,
+        "present": true,
+        "combatAction": {
+          "id": "action_943",
+          "actorBodyId": "b_13",
+          "kind": "sidestep",
+          "targetBodyId": null,
+          "weaponId": null,
+          "definition": "sidestep",
+          "trajectory": "high",
+          "startedAt": 15063.449999975153,
+          "startTick": 903807,
+          "activeAt": 15063.449999975153,
+          "recoveryAt": 15063.689999975153,
+          "completeAt": 15063.809999975154,
+          "phase": "complete",
+          "outcome": "pending",
+          "facing": -0.6120766159027561,
+          "initialFacing": -0.6120766159027561,
+          "trackingUntil": 15063.449999975153,
+          "turnRate": 1.5707963267948966,
+          "turnBudget": 0.2617993877991494,
+          "reach": 0,
+          "radius": 0.12,
+          "impact": 0,
+          "exertionCost": 0.035,
+          "intent": "defend",
+          "direction": {
+            "x": 0.8184566257254619,
+            "y": 0,
+            "z": 0.5745683177883124
+          },
+          "distance": 0.65,
+          "appliedDistance": 0.6499999999995222,
+          "eventId": "e_193607",
+          "repertoireRevision": 2
+        },
+        "injuries": {
+          "head": 0.1975273838450237
+        }
+      }
+    ],
+    "custody": {
+      "active": true,
+      "byFactionId": "f_2",
+      "byId": "p_14",
+      "reason": "suspicion",
+      "crimeKey": "ev:e_60254",
+      "since": 9570450,
+      "releaseAt": 9700050,
+      "conflictId": "cf_147"
+    },
+    "reachable": false
+  },
+  {
+    "event": {
+      "id": "e_202158",
+      "tick": 9626079,
+      "type": "perceived",
+      "category": "cognition",
+      "actor": "p_24",
+      "target": "p_13",
+      "placeId": "pl_13",
+      "pos": {
+        "x": 95.4979133681074,
+        "y": 14,
+        "z": 117.33018030952981
+      },
+      "data": {
+        "kind": "failed_report",
+        "reason": "conversation_unavailable",
+        "key": "ev:e_173858"
+      },
+      "causes": [
+        "e_202147"
+      ],
+      "effects": [],
+      "perceivedBy": [],
+      "significance": 0.12,
+      "summary": "Maud Penny could not deliver the report"
+    },
+    "goal": {
+      "type": "report",
+      "utility": 1,
+      "reasons": [
+        "I know an unfamiliar person attacked an unfamiliar person (witnessed)",
+        "the watch should hear of it",
+        "my sense of honesty",
+        "concern: set on seeing them answer for it (0.41)",
+        "I know Rowan Ashford",
+        "Kestrel frightens me"
+      ],
+      "createdAt": 9626034,
+      "key": "report:p_13:ev:e_173858",
+      "targetEntity": "p_13",
+      "targetPos": {
+        "x": 95.66715967750646,
+        "y": 14,
+        "z": 118.15426448668389
+      },
+      "data": {
+        "key": "ev:e_173858"
+      }
+    },
+    "report": {
+      "key": "ev:e_173858",
+      "status": "unavailable",
+      "attempts": 1,
+      "firstAt": 9624621,
+      "lastAttemptAt": 9626079,
+      "towardId": "p_13",
+      "deferUntil": 9627279,
+      "note": "could not make Rowan Ashford hear it"
+    },
+    "knowledge": {
+      "key": "ev:e_173858",
+      "kind": "event",
+      "claim": {
+        "eventId": "e_173858",
+        "type": "attack",
+        "tick": 9494733,
+        "pos": {
+          "x": 85.69684488227759,
+          "y": 14,
+          "z": 153.515775588612
+        },
+        "significance": 0.7,
+        "actor": "p_14",
+        "target": "p_24"
+      },
+      "confidence": 1,
+      "learnedAt": 9494733,
+      "source": {
+        "type": "witnessed",
+        "viaEvent": "e_173861"
+      },
+      "hops": 0,
+      "sharedWith": []
+    },
+    "speaker": [
+      {
+        "id": "b_24",
+        "kind": "body",
+        "name": "Maud Penny's body",
+        "createdAt": 8666400,
+        "tags": [],
+        "ownerId": "p_24",
+        "shape": "humanoid",
+        "pos": {
+          "x": 95.4979133681074,
+          "y": 14,
+          "z": 117.33018030952981
+        },
+        "vel": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "yaw": 15.709746987009787,
+        "pose": "stand",
+        "poseUntil": 13925.549999978204,
+        "onGround": true,
+        "path": null,
+        "pathIndex": 1,
+        "pathGoal": {
+          "x": 95.66715967750646,
+          "y": 14,
+          "z": 118.15426448668389
+        },
+        "speed": 5.6,
+        "health": 65.01440952604084,
+        "maxHealth": 80,
+        "dead": false,
+        "lastHitAt": 13805.549999978204,
+        "lastAttackAt": 13751.999999978334,
+        "attackSeq": 17,
+        "hitSeq": 18,
+        "attackTarget": null,
+        "subduedUntil": 13925.549999978204,
+        "sitAnchor": null,
+        "present": true,
+        "combatAction": {
+          "id": "action_733",
+          "actorBodyId": "b_24",
+          "kind": "sidestep",
+          "targetBodyId": null,
+          "weaponId": null,
+          "definition": "sidestep",
+          "trajectory": "high",
+          "startedAt": 13752.899999978332,
+          "startTick": 825174,
+          "activeAt": 13752.899999978332,
+          "recoveryAt": 13752.899999978332,
+          "completeAt": 13753.019999978333,
+          "phase": "complete",
+          "outcome": "interrupted",
+          "facing": -1.2429445908205308,
+          "initialFacing": -1.2429445908205308,
+          "trackingUntil": 13752.899999978332,
+          "turnRate": 1.5707963267948966,
+          "turnBudget": 0.2617993877991494,
+          "reach": 0,
+          "radius": 0.12,
+          "impact": 0,
+          "exertionCost": 0.035,
+          "intent": "defend",
+          "direction": {
+            "x": 0.3220099334895575,
+            "y": 0,
+            "z": 0.9467362899636048
+          },
+          "distance": 0.65,
+          "appliedDistance": 0.44433593749821665,
+          "eventId": "e_173189",
+          "repertoireRevision": 2,
+          "priorStrike": "jab",
+          "techniqueId": "motor:sidestep",
+          "stoppedAt": 13752.899999978332,
+          "stopReason": "contact",
+          "learningEventId": "e_173198"
+        },
+        "injuries": {
+          "head": 0.27973172939818614
+        }
+      }
+    ],
+    "listener": [
+      {
+        "id": "b_13",
+        "kind": "body",
+        "name": "Rowan Ashford's body",
+        "createdAt": 8666400,
+        "tags": [],
+        "ownerId": "p_13",
+        "shape": "humanoid",
+        "pos": {
+          "x": 95.66715967750646,
+          "y": 14,
+          "z": 118.15426448668389
+        },
+        "vel": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "yaw": -0.16549858036570292,
+        "pose": "downed",
+        "poseUntil": 15187.199999975144,
+        "onGround": true,
+        "path": null,
+        "pathIndex": 1,
+        "pathGoal": {
+          "x": 96.70233871472797,
+          "y": 14,
+          "z": 115.87992846968456
+        },
+        "speed": 5.6,
+        "health": 1,
+        "maxHealth": 110,
+        "dead": false,
+        "lastHitAt": 15067.199999975144,
+        "lastAttackAt": 14925.299999975488,
+        "attackSeq": 59,
+        "hitSeq": 41,
+        "attackTarget": null,
+        "subduedUntil": 15187.199999975144,
+        "sitAnchor": null,
+        "present": true,
+        "combatAction": {
+          "id": "action_943",
+          "actorBodyId": "b_13",
+          "kind": "sidestep",
+          "targetBodyId": null,
+          "weaponId": null,
+          "definition": "sidestep",
+          "trajectory": "high",
+          "startedAt": 15063.449999975153,
+          "startTick": 903807,
+          "activeAt": 15063.449999975153,
+          "recoveryAt": 15063.689999975153,
+          "completeAt": 15063.809999975154,
+          "phase": "complete",
+          "outcome": "pending",
+          "facing": -0.6120766159027561,
+          "initialFacing": -0.6120766159027561,
+          "trackingUntil": 15063.449999975153,
+          "turnRate": 1.5707963267948966,
+          "turnBudget": 0.2617993877991494,
+          "reach": 0,
+          "radius": 0.12,
+          "impact": 0,
+          "exertionCost": 0.035,
+          "intent": "defend",
+          "direction": {
+            "x": 0.8184566257254619,
+            "y": 0,
+            "z": 0.5745683177883124
+          },
+          "distance": 0.65,
+          "appliedDistance": 0.6499999999995222,
+          "eventId": "e_193607",
+          "repertoireRevision": 2
+        },
+        "injuries": {
+          "head": 0.1975273838450237
+        }
+      }
+    ],
+    "custody": {
+      "active": true,
+      "byFactionId": "f_2",
+      "byId": "p_14",
+      "reason": "suspicion",
+      "crimeKey": "ev:e_60254",
+      "since": 9570450,
+      "releaseAt": 9700050,
+      "conflictId": "cf_147"
+    },
+    "reachable": false
+  }
+]

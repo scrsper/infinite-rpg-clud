@@ -1,4 +1,43 @@
-# Current: Observatory and local language — branch `codex/observatory-local-language` (2026-09-29)
+# Current: Observatory simulation integrity — IN PROGRESS (2026-09-30)
+
+Authoritative Desktop checkout, branch `codex/observatory-local-language`. The completed
+Observatory/local-language work was preserved in `e59b7da` / `633a5d2`. The original ordinary
+seed-918271 30-day RED was exactly reproduced before simulation edits. Full receipts explain
+the original food balance, five combat injuries, case-completion loops, fear churn and bad paths.
+See `docs/OBSERVATORY_HARDENING.md` for the evidence and later multi-seed findings.
+
+Local simulation/diagnostic repairs are preserved through `f5eb319` (previous `f7380cb`, `7c55be6`, `eb08760`,
+previous `8262390`, `e47bfb5`). Revision 13 completed all seeds, but detailed review exposed stale
+listener locations across distinct report cases. Revision 14 then exposed terminal same-key
+plans rebuilding old parameters instead of current evidence, plus mutable hourly diagnostic
+payloads. Revision 15 then reproduced 601 reports to an observed sleeping guard; nearby
+sightings reopened backoff despite ordinary conversation refusing the sleeping listener.
+Selection/reopening now honor that conversation contract. Revision 16 found the same listener
+failure bypassed across different cases after turning away; records now retain failure time
+and listener attempts independently of eventual delivery to another guard. Sixty-nine focused
+regressions and typecheck passed. Revision 17 then exposed critical water/fear oscillation
+through a categorical proximity override. Critical invested needs now compete through shared
+utility, with immediate attacks still interrupting; 53 focused tests/typecheck and 21 inspector
+tests pass. Revision 18 completed all three 30-day runs with zero configured hard failures,
+but rate-window review exposed food/work and harvest/social oscillation in seed 918273:
+ordinary unfinished attempts lost their assessment when the current proposal disappeared.
+The shared selector now retains finite attempts until fresh reassessment, completion/failure,
+or a winning competing need/emergency. Two tests fail before; 55 focused tests and typecheck
+pass afterward. Revision 19 also completed all three runs with zero configured hard failures,
+but final primary rate review exposed Kestrel reselecting failed hunting 354 times: fresh
+empty-ground evidence lacked practical-memory priority and could be evicted immediately.
+It now retains the same priority as other practical stock evidence for the existing hunt
+interval, inside the unchanged bound. The before regression fails; 74 focused tests and
+typecheck pass after the repair. Revision 20 is running the three-seed 30-day matrix.
+Final replay, save/reload continuation, the normal suite,
+browser handoff and final acceptance remain outstanding; no intermediate run is acceptance.
+
+Raw runs: `D:/TornVeilValidation/observatory-hardening-20260930`. Original baseline remains in
+`.debug/observatory-hardening/baseline/replay-918271`. The UI archive still must be populated
+at `.debug/observatory-hardening/reviewed-918271`. No live/staging, Unreal, web gameplay
+presentation, push or merge. Preserve the older Observatory process; the launcher chooses
+a free port for the new diagnostic version.
+# Previous: Observatory and local language — branch `codex/observatory-local-language` (2026-09-29)
 
 Built on the clean web-rebirth checkout at the authoritative Desktop location. Launch with
 `Torn Veil Observatory.cmd` (loopback 7480, disposable in-memory Ashford development worlds).

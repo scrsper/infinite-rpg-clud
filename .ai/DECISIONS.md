@@ -1,5 +1,56 @@
 # Durable design decisions
 
+## Simulation integrity evidence (2026-09-30)
+
+- Observatory RED means a concrete invariant failure or confirmed pathological loop. Activity
+  rates remain diagnostic leads, and incomplete evidence/performance warnings remain AMBER.
+  Scarcity, injury, conflict and business failure are outcomes, not integrity violations.
+- Full-state continuation includes execution caches. Schema-25 execution snapshots carry an
+  optional alias manifest for conversation topics: actual links to knowledge, concerns and
+  situations reconnect on load; detached older evidence remains detached. Equality alone cannot
+  distinguish those cases. Legacy snapshots without the manifest have best-effort restoration.
+- Failed physical handoffs must fail their plan and inform the existing pursuit machinery.
+  An observed absence refutes the searched location, preserving any newer evidence elsewhere;
+  it does not reveal a recipient's remote location or justify a named-actor recovery script.
+- Evidence collection is non-authoritative. Immutable event-time receipts, full saves, material
+  accounting and profiles are kept in isolated development archives. No diagnostic finding is
+  fed into an NPC's knowledge or decision-making. See `docs/OBSERVATORY_HARDENING.md`.
+
+- Spatial evidence for a current goal or active/deferred purpose uses the existing practical
+  memory tier within the unchanged memory bound. Negative searches remain evidence while
+  the actor is using them; ending the purpose removes that retention relevance. Distinct
+  search centers are not interchangeable merely because their search radii overlap.
+- A developer repetition detector must distinguish an unchanged retry from a plan extended
+  by a newly consumed, provenance-bearing defensive perception. Merely reusing the same
+  perception does not excuse repeated completion.
+- A diagonal navigation edge must satisfy the side-column constraints at both endpoint
+  heights. Path search and voluntary movement/crowd separation share this check; a route
+  cannot become one-way merely because the same terrain is inspected from the other end.
+
+- A failed attempt to find a report recipient is spatial evidence shared by every case aimed
+  at that listener. It uses the existing negative location belief, not case-specific cooldowns
+  or a separate availability registry. Unresolved failed report records make that location
+  practically relevant under the same bounded memory policy; a fresh observation can replace it.
+- Report selection and reopening share ordinary embodied conversation requirements, gated
+  by the speaker's nearby visual perception. Seeing an unresponsive listener repeatedly is
+  not new availability evidence. Terminal plans use freshly assessed candidate parameters;
+  failed attempts receive a new adoption receipt, while unfinished plans retain commitment.
+- Failure to reach/hear a listener influences every report to that listener through existing
+  report progress. Failure time/attempts remain distinct from eventual case delivery to a
+  different authority. New observed availability or actual delivery to that listener supersedes
+  the old failed approach; changing case or view direction alone does not.
+- An invested critical physiological need competes with proximity fear through the shared
+  utility/hysteresis rule. A goal label alone must not make a lower urgency repeatedly cancel
+  that attempt. Observed immediate attacks and threatened escape destinations still interrupt.
+- Proposal absence is not a failed invested action. Every unfinished finite attempt retains
+  its last assessment when no fresh candidate reassesses it, including ordinary food and labor
+  trips. Existing action prerequisites, completion/failure, candidate utility and competing
+  emergencies still determine progress and interruption; there is no added commitment timer.
+- Recent local hunting observations use the existing practical-memory tier for the hunt
+  interval already used by deliberation. Busy social memory must not erase a just-observed
+  resource failure before reconsideration. The bound and ordinary expiry remain unchanged;
+  remote replenishment supplies no knowledge.
+
 ## Developer Observatory and bounded local language
 
 - Observatory worlds are disposable, process-local fixtures; no API accepts a save path or an
