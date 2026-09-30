@@ -133,6 +133,9 @@ function practicalKnowledge(k: KnowledgeItem, now: number): boolean {
   const age = now - (k.lastConfirmedAt ?? k.learnedAt);
   if (k.key.startsWith('food-access:')) return age < FOOD_PREFERENCE_WINDOW_SECONDS;
   if (k.key.startsWith('pantry:')) return age < 24 * 3600;
+  // A recent local hunting result drives the existing one-hunt-interval retry
+  // decision. Routine social episodes must not erase it between action and thought.
+  if (k.key.startsWith('game:')) return age < 30 * 60;
   return k.key.startsWith('short:') && !k.handled && age < 2 * 3600;
 }
 

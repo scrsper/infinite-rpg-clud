@@ -16,8 +16,36 @@ import { materializeStructure } from '../src/sim/world/construction';
 import { RunDiagnostics } from '../src/observatory/diagnostics';
 import { MAX_TESTIMONY_HOPS } from '../src/sim/mind/knowledge';
 import { syncNeeds } from '../src/sim/core/physiology';
+import { registerGameGround } from '../src/sim/world/resources';
 
 describe('progress defects exposed by every-hour 30-day review', () => {
+  it('retains a recent failed hunt under memory pressure without learning remote replenishment or pinning it forever', () => {
+    const tw = createTestWorld(), w = tw.world;
+    const ground = makePlace(w, 'wilderness', 'Ground', { x0: 20, x1: 26, z0: 20, z1: 26, y0: 1, y1: 3 }, { inside: v(23, 1, 23) });
+    const p = addPerson(tw, 'Hunter', 'hunter', { ...ground.inside }, { workId: ground.id }), body = w.primaryBody(p.id)!;
+    p.schedule = [{ start: 0, end: 24, activity: 'work', placeId: ground.id, label: 'hunt' }];
+    registerGameGround(w, ground.id, 8);
+    const node = w.resourceNodes.find(n => n.placeId === ground.id && n.kind === 'game')!;
+    node.remaining = 0; node.state = 'depleted';
+    (tw.sim as any).observeGameGround(p, node);
+    const key = `game:${node.id}`, receipt = p.knowledge[key].source.viaEvent;
+    const crowdMemory = (prefix: string) => { for (let i = 0; i < 500; i++) learn(w, p, { key: `${prefix}:${i}`, kind: 'event', claim: { type: 'theft', target: p.id }, confidence: 1, source: { type: 'witnessed' } }); };
+    crowdMemory('busy');
+    expect(p.knowledge[key]?.claim.available).toBe(false);
+    expect(p.knowledge[key]?.source.viaEvent).toBe(receipt);
+    expect(Object.keys(p.knowledge).length).toBeLessThanOrEqual(440);
+    (tw.sim as any).think(p, body);
+    expect(p.mind.decision?.candidates.some(c => c.key === `work:${ground.id}`)).toBe(false);
+    node.remaining = 8; node.state = 'available'; body.pos = v(1, 1, 1);
+    (tw.sim as any).observeGameGround(p, node);
+    expect(p.knowledge[key]?.claim.available).toBe(false);
+    body.pos = { ...ground.inside };
+    (tw.sim as any).observeGameGround(p, node);
+    expect(p.knowledge[key]?.claim.available).toBe(true);
+    w.clock.worldSeconds += 30 * 60 + 1; crowdMemory('later');
+    expect(p.knowledge[key]).toBeUndefined();
+  });
+
   it.each(['eat', 'harvest'] as const)('keeps an unfinished %s trip when its proposal disappears, but releases terminal plans and admits stronger needs', type => {
     const tw = createTestWorld(), w = tw.world;
     const p = addPerson(tw, 'Worker', 'villager', v(10, 1, 10)), body = w.primaryBody(p.id)!;
