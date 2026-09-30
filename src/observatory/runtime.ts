@@ -1,5 +1,5 @@
 import { canonicalDigest as hash } from './fingerprint';
-import { createScenario } from './scenarios';
+import { createScenario, SCENARIOS } from './scenarios';
 import { worldOverview, settlementMetrics, causalGraph, resourceState } from './readers';
 import { healthSnapshot, type HealthCheck } from './health';
 import { serialize, deserialize } from '../sim/persist/save';
@@ -9,11 +9,13 @@ import type { World } from '../sim/core/world';
 import type { Observation } from '../headless/worldlab/types';
 import { LocalLanguageClient, type LocalConfig } from '../language/client';
 import { LanguageService } from '../language/service';
+import { RunDiagnostics } from './diagnostics';
 
 export const STEP = .15; // Existing headless runner quantum. UI speeds change pacing only.
 export function stepWorld(w: World, sim: Simulation, dt = STEP) { const wd = w.clock.advance(dt); w.physicalTime += dt; sim.step(dt, wd); sim.flushSpeech(); }
 export class Observatory {
   state = createScenario();
+  diagnostics = new RunDiagnostics(this.state.world);
   readonly client = new LocalLanguageClient();
   readonly language = new LanguageService(this.client);
   paused = true; speed = 1; revision = 0;
@@ -52,7 +54,7 @@ export class Observatory {
     if (this.world.now - this.healthAt >= 3600) { this.health = this.sampleHealth(); this.healthAt = this.world.now; }
   }
   private sampleHealth() {
-    const { current, report } = healthSnapshot(this.state.world, { seed: this.state.world.seed, requestedDays: 30, worldStart: this.start ?? this.state.world.now, startingPopulation: this.initial?.entities.filter(p => p.alive).length ?? this.state.world.livingPersons().length }, this.previous, this.verification ?? [], this.stepMs);
+    const { current, report } = healthSnapshot(this.state.world, { seed: this.state.world.seed, requestedDays: 30, worldStart: this.start ?? this.state.world.now, startingPopulation: this.initial?.entities.filter(p => p.alive).length ?? this.state.world.livingPersons().length }, this.previous, this.verification ?? [], this.stepMs, this.diagnostics.checks());
     this.previous = current;
     this.healthHistory.push({ tick: this.state.world.now, status: report.status, failures: report.checks.filter(c => c.status === 'FAIL') });
     if (this.healthHistory.length > 800) this.healthHistory.shift();
@@ -64,6 +66,7 @@ export class Observatory {
   reset(id: string, seed: number) {
     this.requireIdle(); this.cancelLanguage(); this.paused = true;
     this.state = createScenario(id, seed); this.revision++; this.start = this.world.now; this.initial = worldOverview(this.world);
+    this.diagnostics = new RunDiagnostics(this.world); this.stepMs = undefined;
     this.previous = undefined; this.healthAt = this.start; this.verification = []; this.healthHistory = []; this.health = this.sampleHealth(); this.report = null; this.latestLanguage = null; this.job = null; this.checkpoint = null; this.wallAccum = 0;
   }
   control(paused: boolean, speed: number) { this.requireIdle(); if (![1, 6, 60].includes(speed) || typeof paused !== 'boolean') throw new Error('Invalid time control'); this.paused = paused; this.speed = speed; this.wallAt = performance.now(); }
@@ -106,7 +109,18 @@ export class Observatory {
     this.requireIdle(); if (!this.checkpoint) throw new Error('No isolated checkpoint');
     const loaded = deserialize(this.checkpoint); if (!loaded) throw new Error('Checkpoint rejected');
     this.cancelLanguage(); this.paused = true; this.state = { ...this.state, world: loaded.world, sim: new Simulation(loaded.world) }; this.revision++;
+    this.diagnostics = new RunDiagnostics(this.world); this.stepMs = undefined;
     this.previous = undefined; this.healthHistory = []; this.healthAt = this.world.now; this.health = this.sampleHealth(); this.latestLanguage = null; this.wallAccum = 0; this.report = null;
+  }
+  openValidationSave(raw: string) {
+    this.requireIdle();
+    // The server supplies only its fixed, isolated audit archive. No client file paths.
+    const loaded = deserialize(raw); if (!loaded) throw new Error('Validation save rejected');
+    this.cancelLanguage(); this.paused = true;
+    this.state = { ...this.state, scenario: SCENARIOS.find(s => s.id === 'ordinary')!, initialEvents: [], world: loaded.world, sim: new Simulation(loaded.world) };
+    this.revision++; this.start = this.world.now; this.initial = worldOverview(this.world);
+    this.diagnostics = new RunDiagnostics(this.world); this.previous = undefined; this.verification = []; this.healthHistory = [];
+    this.stepMs = undefined; this.healthAt = this.start; this.health = this.sampleHealth(); this.report = null; this.latestLanguage = null; this.job = null; this.checkpoint = null; this.wallAccum = 0;
   }
   verify() {
     this.requireIdle();

@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { Observatory } from './runtime';
 import { SCENARIOS } from './scenarios';
 import { EVENT_FILTERS, eventGroups, eventRow, inspectEvent, inspectPerson, settlementMetrics } from './readers';
+import { validationEvidence, validationFinding, validationSave } from './validationArchive';
 
 export function createObservatoryServer(runtime = new Observatory()) {
   const token = randomBytes(32).toString('hex');
@@ -18,7 +19,7 @@ export function createObservatoryServer(runtime = new Observatory()) {
       if (req.headers.origin && req.headers.origin !== origin) return send({ error: 'Foreign origin rejected' }, 403);
       if (req.headers['sec-fetch-site'] === 'cross-site') return send({ error: 'Cross-site request rejected' }, 403);
       const url = new URL(req.url ?? '/', origin), path = url.pathname;
-      if (req.method === 'GET' && path === '/health') return send({ service: 'torn-veil-observatory', isolated: true });
+      if (req.method === 'GET' && path === '/health') return send({ service: 'torn-veil-observatory', isolated: true, diagnosticVersion: 2 });
       if (req.method === 'GET' && path === '/favicon.ico') { res.writeHead(204, headers); res.end(); return; }
       if (req.method === 'GET' && ['/', '/app.js', '/style.css'].includes(path)) {
         const file = path === '/' ? 'index.html' : path.slice(1);
@@ -29,6 +30,9 @@ export function createObservatoryServer(runtime = new Observatory()) {
       const id = url.searchParams.get('id') ?? '';
       if (req.method === 'GET') {
         if (path === '/api/state') return send(runtime.snapshot());
+        if (path === '/api/diagnostics') return send(id ? runtime.diagnostics.person(id) : runtime.diagnostics.summary());
+        if (path === '/api/validation') return send(await validationEvidence(url.searchParams.get('run') ?? 'repaired'));
+        if (path === '/api/validation-finding') return send(await validationFinding(url.searchParams.get('run') ?? 'repaired', (url.searchParams.get('key') ?? '').slice(0, 512)));
         if (path === '/api/catalogue') return send({ scenarios: SCENARIOS, filters: EVENT_FILTERS });
         if (path === '/api/person') return send(inspectPerson(runtime.world, id));
         if (path === '/api/event') return send(inspectEvent(runtime.world, id));
@@ -46,6 +50,8 @@ export function createObservatoryServer(runtime = new Observatory()) {
       if (req.method === 'POST' && req.headers['content-type']?.startsWith('application/json')) {
         let raw = ''; for await (const part of req) { raw += part.toString(); if (Buffer.byteLength(raw) > 8192) return send({ error: 'Request too large' }, 413); }
         const body = JSON.parse(raw || '{}');
+        if (path === '/api/reproduce') { runtime.reset('ordinary', 918271); void runtime.advance(2592000, true).catch(console.error); return send({ ok: true }); }
+        if (path === '/api/validation-load') { runtime.requireIdle(); const rawSave = await validationSave(body.run); runtime.openValidationSave(rawSave); return send({ ok: true }); }
         if (path === '/api/control') { runtime.control(body.paused, body.speed); return send({ ok: true }); }
         if (path === '/api/reset') { runtime.reset(body.scenario, body.seed); return send({ ok: true }); }
         if (path === '/api/advance') { runtime.requireIdle(); if (![3600, 86400, 604800, 2592000].includes(body.seconds)) throw new Error('Unsupported horizon'); void runtime.advance(body.seconds, body.noPlayer === true).catch(console.error); return send({ ok: true }); }

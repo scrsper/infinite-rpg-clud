@@ -2,11 +2,11 @@ import { chromium } from 'playwright';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { createObservatoryServer } from '../../src/observatory/server';
 
-const output = '.debug/observatory'; await mkdir(output, { recursive: true });
+const output = process.argv.includes('--hardening') ? '.debug/observatory-hardening/browser' : '.debug/observatory'; await mkdir(output, { recursive: true });
 const { server, runtime } = createObservatoryServer();
 await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve)); runtime.startLoop();
 const port = (server.address() as { port: number }).port;
-const browser = await chromium.launch({ channel: 'chrome', headless: false });
+const browser = await chromium.launch({ channel: 'chrome', headless: !process.argv.includes('--visible') });
 const page = await browser.newPage({ viewport: { width: 1600, height: 1000 }, deviceScaleFactor: 1 });
 const errors: string[] = []; page.on('pageerror', e => errors.push(e.message)); page.on('console', m => { if (m.type() === 'error' && !m.text().includes('favicon')) errors.push(m.text()); });
 const check = (condition: unknown, message: string) => { if (!condition) throw new Error(message); };
@@ -54,7 +54,37 @@ try {
   check((await page.locator('#health-checks').textContent())?.includes('two independent initializations'), 'Replay evidence not displayed');
   await page.setViewportSize({ width: 1100, height: 800 }); await page.evaluate(() => scrollTo(0, 0)); await page.screenshot({ path: `${output}/observatory-1100.png` });
   check(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'Horizontal page overflow');
+  if (process.argv.includes('--hardening')) {
+    await page.locator('#baseline-evidence').click();
+    await page.getByRole('heading', { name: 'baseline · ordinary · seed 918271' }).waitFor();
+    await page.getByRole('button', { name: /stuck_agent · Father Aldous/ }).click();
+    check((await page.locator('#validation-evidence').textContent())?.includes('Failed Actions'), 'Named finding did not expose its blocked-action receipts');
+    await page.locator('#validation-evidence').getByText('Final Window', { exact: true }).click();
+    check((await page.locator('#validation-evidence').textContent())?.includes('Switches'), 'Original offending decision receipts missing');
+    const downloaded = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'Download complete evidence JSON' }).click();
+    check((await downloaded).suggestedFilename().includes('baseline-918271'), 'Evidence download missing');
+    await page.locator('#archived-finding').selectOption('stuck_agent:p_11:');
+    await page.getByRole('button', { name: 'Inspect sampled finding' }).click();
+    await page.getByRole('button', { name: 'Download finding receipts' }).waitFor();
+    check((await page.locator('#validation-evidence').textContent())?.includes('Rows'), 'Hourly finding receipts missing');
+    await page.locator('#repaired-evidence').click();
+    await page.getByRole('heading', { name: 'repaired · ordinary · seed 918271' }).waitFor();
+    await page.locator('#load-repaired').click();
+    await page.waitForFunction(() => document.getElementById('job-label')?.textContent?.includes('Paused'));
+    await page.waitForTimeout(500);
+    check(runtime.world.now === 11258400 && runtime.paused, 'Archived repaired world was not loaded paused');
+    await page.locator('#run-diagnostics').click();
+    await page.locator('#validation-evidence').getByText('Food', { exact: true }).click();
+    await page.locator('#validation-evidence').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: `${output}/integrity-evidence.png` });
+    await page.locator('#reproduce').click();
+    await page.waitForTimeout(700);
+    check(runtime.world.seed === 918271 && runtime.job?.active && runtime.job.to === 11258400, 'Reproduce action did not start the exact scenario');
+    await page.locator('#cancel').click(); await page.waitForTimeout(500);
+    check(!runtime.job?.active && runtime.paused, 'Isolated reproduction did not stop cleanly');
+  }
   check(errors.length === 0, 'Browser errors: ' + errors.join('; '));
-  await writeFile(`${output}/browser-evidence.json`, JSON.stringify({ passed: true, liveModel: process.argv.includes('--live'), viewport: [1600, 1000], secondViewport: [1100, 800], errors, checks: ['select person', 'truth/belief separation', 'causal event source', 'click aggregate', 'offline free text', 'uncertain testimony', 'advance 1 hour', 'current goal reasons and adoption cause', 'checkpoint restore', 'replay check', 'no horizontal overflow', ...(process.argv.includes('--live') ? ['local model UI response', 'read-only thought UI'] : [])] }, null, 2));
+  await writeFile(`${output}/browser-evidence.json`, JSON.stringify({ passed: true, hardening: process.argv.includes('--hardening'), liveModel: process.argv.includes('--live'), viewport: [1600, 1000], secondViewport: [1100, 800], errors, checks: ['select person', 'truth/belief separation', 'causal event source', 'click aggregate', 'offline free text', 'uncertain testimony', 'advance 1 hour', 'current goal reasons and adoption cause', 'checkpoint restore', 'replay check', 'no horizontal overflow', ...(process.argv.includes('--hardening') ? ['original evidence drilldown and download', 'repaired evidence', 'load repaired world paused', 'ledger', 'start and stop exact 30-day reproduction'] : []), ...(process.argv.includes('--live') ? ['local model UI response', 'read-only thought UI'] : [])] }, null, 2));
   console.log('Observatory browser acceptance passed; screenshots saved in ' + output);
 } finally { await browser.close(); runtime.close(); await new Promise<void>(resolve => server.close(() => resolve())); }

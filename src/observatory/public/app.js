@@ -5,6 +5,11 @@ function node(tag, text, cls) { const el = document.createElement(tag); if (text
 function button(text, action, cls) { const el = node('button', text, cls); el.type = 'button'; el.addEventListener('click', () => safe(action)); return el; }
 function clear(el, children) { el.replaceChildren(...children); }
 function details(title, content, open = false) { const el = node('details'); el.open = open; el.append(node('summary', title), content); return el; }
+function evidenceDetails(title, value, depth = 0, open = false) {
+  const content = node('div'), el = details(title, content, open); let built = false;
+  const expand = () => { if (el.open && !built) { built = true; content.append(tree(value, depth)); } };
+  el.addEventListener('toggle', expand); expand(); return el;
+}
 function pretty(key) { return key.replace(/([A-Z])/g, ' $1').replaceAll('_', ' ').replace(/^./, x => x.toUpperCase()); }
 function tree(value, depth = 0) {
   if (value === null || value === undefined) return node('span', 'Not represented', 'empty');
@@ -13,7 +18,7 @@ function tree(value, depth = 0) {
   const entries = Object.entries(value);
   if (!entries.length) return node('span', 'None recorded', 'empty');
   for (const [key, v] of entries.slice(0, 100)) {
-    if (v && typeof v === 'object') { const label = Array.isArray(value) ? (v.name ?? v.description ?? v.type ?? v.key ?? v.id ?? `Record ${Number(key) + 1}`) : pretty(key); el.append(details(String(label), tree(v, depth + 1))); }
+    if (v && typeof v === 'object') { const label = Array.isArray(value) ? (v.name ?? v.description ?? v.type ?? v.key ?? v.id ?? `Record ${Number(key) + 1}`) : pretty(key); el.append(evidenceDetails(String(label), v, depth + 1)); }
     else { const row = node('div', undefined, 'kv'); row.append(node('b', pretty(key)), node('span', v == null ? 'Not represented' : typeof v === 'number' ? (Number.isInteger(v) ? String(v) : v.toFixed(3)) : String(v))); el.append(row); }
   }
   if (entries.length > 100) el.append(node('p', `${entries.length - 100} further records omitted from this bounded view.`, 'muted'));
@@ -80,6 +85,10 @@ async function selectPerson(id, preserve = false) {
   }
   contents.push(details(`Knowledge (${person.beliefs.length})`, knowledge, !preserve || open.includes(`Knowledge (${person.beliefs.length})`)), details('Memories', tree(person.memories), open.includes('Memories')));
   const history = node('div'); person.history.forEach(e => history.append(eventButton(e))); contents.push(details('History', history, open.includes('History')));
+  contents.push(button('Decision timeline / why blocked or abandoned', async () => {
+    const receipts = await api(`/api/diagnostics?id=${encodeURIComponent(id)}`);
+    clear($('cause-detail'), [node('h3', 'Recorded decisions · ' + person.name), tree(receipts)]);
+  }));
   clear($('person-inspector'), contents);
   $('person-inspector').scrollTop = scroll;
   const oldSpeaker = $('speaker').value;
@@ -127,6 +136,41 @@ function renderReport() {
   for (const metric of r.metrics) { const row = node('tr'); [metric.label, metric.before, metric.after, metric.delta].forEach(v => row.append(node('td', String(v)))); table.append(row); }
   clear($('report'), [node('h3', `${r.completed ? 'Completed' : 'Stopped / partial'} · ${r.mode} · ${((r.to - r.from) / 86400).toFixed(3)} world days · ${(r.elapsedMs / 1000).toFixed(1)} s wall time`), node('p', r.caveat, 'muted'), table, details('Resource quantities and canonical lifetime tallies', tree(r.resources)), details('Relationship changes', tree(r.relationships)), details('Events with large stored causal impact', tree(r.importantCauses)), details('Health failures observed during this run', tree(r.healthObservations?.filter(h => h.failures.length) ?? []))]);
 }
+async function archiveEvidence(run) {
+  const evidence = await api(`/api/validation?run=${run}`);
+  const findings = node('div'), findingDetail = node('div'), window = evidence.evidence.finalWindow;
+  for (const finding of evidence.report.health.anomalies) {
+    const actor = finding.entity, decisions = window.switches.filter(r => r.event.actor === actor), attempts = window.failures.filter(r => r.event.actor === actor);
+    const name = decisions[0]?.actorAtEmission?.name ?? attempts[0]?.actorAtEmission?.name ?? actor ?? 'world';
+    findings.append(button(`${finding.type} · ${name} · ${finding.occurrences}`, () => clear(findingDetail, [tree({ finding,
+      decisionTimeline: decisions, failedActions: attempts,
+      repeatedCases: evidence.evidence.investigatedPlanRepetitions.filter(r => r.actor === actor && r.last.event.tick >= finding.firstSeen && r.first.event.tick <= finding.lastSeen),
+      signatures: window.signatures.filter(r => r.key.split(':')[1] === actor),
+    })])));
+  }
+  const download = button('Download complete evidence JSON', () => {
+    const url = URL.createObjectURL(new Blob([JSON.stringify(evidence, null, 2)], { type: 'application/json' }));
+    const a = node('a'); a.href = url; a.download = `observatory-${run}-918271-evidence.json`; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+  const sampled = node('select'); sampled.id = 'archived-finding'; sampled.setAttribute('aria-label', 'Hourly rate finding');
+  for (const group of evidence.review.groups) {
+    const option = node('option', `${group.key} · peak ${group.worst.occurrences} · ${group.samples} hourly samples`);
+    option.value = group.key; sampled.append(option);
+  }
+  const inspectSampled = button('Inspect sampled finding', () => safe(async () => {
+    const finding = await api(`/api/validation-finding?run=${run}&key=${encodeURIComponent(sampled.value)}`);
+    const downloadFinding = button('Download finding receipts', () => {
+      const url = URL.createObjectURL(new Blob([JSON.stringify(finding, null, 2)], { type: 'application/json' }));
+      const a = node('a'); a.href = url; a.download = `observatory-${run}-finding.json`; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+    });
+    clear(findingDetail, [downloadFinding, tree(finding)]);
+  }));
+  clear($('validation-evidence'), [node('h3', `${run} · ordinary · seed 918271`), node('p', evidence.note, 'muted'), download, findings, findingDetail,
+    node('h4', 'Hourly rate findings across all 30 days'), sampled, inspectSampled,
+    evidenceDetails('Outcomes, food ledger, timings and integrity checks', evidence.report, 0, true),
+    evidenceDetails('Offending events, decisions, workplaces, households and injury receipts', evidence.evidence, 0, true),
+    evidenceDetails('Material accounting, household causes, care and retained injury provenance', evidence.analysis, 0, true)]);
+}
 async function refresh() {
   if (refreshBusy) return; refreshBusy = true;
   try {
@@ -155,6 +199,11 @@ $('reset').onclick = () => safe(() => post('reset', { scenario: $('scenario').va
 $('checkpoint').onclick = () => safe(() => post('checkpoint'));
 $('restore').onclick = () => safe(() => post('restore'));
 $('verify').onclick = () => safe(async () => { $('verify').disabled = true; try { await api('/api/verify', {}); lastHealth = null; await refresh(); } finally { $('verify').disabled = false; } });
+$('reproduce').onclick = () => safe(() => post('reproduce'));
+$('baseline-evidence').onclick = () => safe(() => archiveEvidence('baseline'));
+$('repaired-evidence').onclick = () => safe(() => archiveEvidence('repaired'));
+$('load-repaired').onclick = () => safe(() => post('validation-load', { run: 'repaired' }));
+$('run-diagnostics').onclick = () => safe(async () => clear($('validation-evidence'), [tree(await api('/api/diagnostics'))]));
 $('config-form').onsubmit = ev => { ev.preventDefault(); safe(async () => { await post('config', { enabled: $('ai-enabled').checked, baseUrl: $('base-url').value, model: $('model').value, timeoutMs: Number($('timeout').value), maxTokens: Number($('tokens').value), temperature: .2, concurrency: 1 }); $('model-status').textContent = 'Configuration applied. Disabled/offline models use deterministic fallback.'; }); };
 $('thought').onclick = () => safe(async () => {
   if (!selected) throw new Error('Select a living person first.');

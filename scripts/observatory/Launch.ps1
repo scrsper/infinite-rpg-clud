@@ -12,9 +12,23 @@ $node = (Get-Command node -ErrorAction Stop).Source
 if (-not (Test-Path -LiteralPath (Join-Path $repo 'node_modules\tsx\dist\cli.mjs'))) { throw 'Run npm ci in the authoritative checkout first.' }
 Write-Host 'Observatory uses a disposable in-memory world. Live/staging saves are never opened.'
 if ($CheckOnly) { Write-Host 'Preflight passed.'; exit 0 }
-$url = "http://127.0.0.1:$Port"
 $ready = $false
-try { $health = Invoke-RestMethod "$url/health" -TimeoutSec 2; if ($health.service -ne 'torn-veil-observatory' -or -not $health.isolated) { throw 'Port belongs to another service.' }; $ready = $true } catch { if ($_.Exception.Message -eq 'Port belongs to another service.') { throw } }
+# Preserve an older process and its in-memory world. Open this diagnostic revision on
+# another port instead of attaching its new static UI to an older server implementation.
+for ($candidate = $Port; $candidate -le [Math]::Min($Port + 10, 65535); $candidate++) {
+  $url = "http://127.0.0.1:$candidate"
+  try {
+    $health = Invoke-RestMethod "$url/health" -TimeoutSec 2
+    if ($health.service -ne 'torn-veil-observatory' -or -not $health.isolated) { continue }
+    if ($health.diagnosticVersion -ne 2) { Write-Host "Preserving older Observatory on port $candidate."; continue }
+    $Port = $candidate; $ready = $true; break
+  } catch {
+    $listener = Get-NetTCPConnection -LocalPort $candidate -State Listen -ErrorAction SilentlyContinue
+    if ($listener) { continue }
+    $Port = $candidate; break
+  }
+}
+if ($candidate -gt [Math]::Min($Port + 10, 65535)) { throw 'No isolated Observatory port available.' }
 if (-not $ready) {
   $logs = Join-Path $repo '.debug\observatory'
   New-Item -ItemType Directory -Force -Path $logs | Out-Null
