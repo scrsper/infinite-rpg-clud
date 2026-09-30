@@ -1,0 +1,2810 @@
+{
+  "scope": "Ordinary autonomous fixture. All persisted canonical fields and property enumeration order compared; only envelope savedAt excluded. Raw differences remain visible alongside any exact-row human review. Horizons are checkpoints along continuous 30-day runs. Each run retains its own source digest. Outcomes are not health verdicts.",
+  "primary": "D:/TornVeilValidation/observatory-hardening-20260930/revision-21/repaired-918271",
+  "others": "D:/TornVeilValidation/observatory-hardening-20260930/revision-20",
+  "continuityRoot": "D:/TornVeilValidation/observatory-hardening-20260930/revision-21",
+  "runs": [
+    {
+      "seed": 918271,
+      "dir": "D:/TornVeilValidation/observatory-hardening-20260930/revision-21/repaired-918271",
+      "sourceDigest": "79e3b3695df4606ad9bc01c303f0e9511b89263c747522ed16e368550dd793fb",
+      "simulationSourceHash": "2e2ad09d368fc8b979b7045636dc5a485b57713bec39d13345f117a776e9c506",
+      "foodLedger": {
+        "initial": 377,
+        "production": 1051,
+        "consumption": 1129,
+        "spoilage": 170,
+        "transformationInput": 22,
+        "final": 107,
+        "unexplained": 0
+      },
+      "finalHash": "461b057fa012be7574cd973a1a4b91366e2b7618cd269eba2e9e0c1f6b7698f4",
+      "performance": {
+        "median": 2.352999999995518,
+        "p95": 10.32949999999255,
+        "max": 185.14809999999125
+      },
+      "hardFailures": [],
+      "warningGroups": 344
+    },
+    {
+      "seed": 918272,
+      "dir": "D:/TornVeilValidation/observatory-hardening-20260930/revision-20/repaired-918272",
+      "sourceDigest": "57c4a2ef7b9c9a5ea3269e3145864be74d5f9d7a509b59f0be07a32e51546914",
+      "simulationSourceHash": "863b2fa5f9c871c3d873b6eb0360116a8795ebad6cf86320bb69443b294135ed",
+      "foodLedger": {
+        "initial": 377,
+        "production": 929,
+        "consumption": 1112,
+        "spoilage": 138,
+        "transformationInput": 6,
+        "final": 50,
+        "unexplained": 0
+      },
+      "finalHash": "b06b2d687a730de1eac78a647d6738e8ed3e17a9ab9027b8b91251a04ac58649",
+      "performance": {
+        "median": 2.30360000001383,
+        "p95": 8.864999999990687,
+        "max": 177.93999999994412
+      },
+      "hardFailures": [],
+      "warningGroups": 325
+    },
+    {
+      "seed": 918273,
+      "dir": "D:/TornVeilValidation/observatory-hardening-20260930/revision-20/repaired-918273",
+      "sourceDigest": "57c4a2ef7b9c9a5ea3269e3145864be74d5f9d7a509b59f0be07a32e51546914",
+      "simulationSourceHash": "863b2fa5f9c871c3d873b6eb0360116a8795ebad6cf86320bb69443b294135ed",
+      "foodLedger": {
+        "initial": 377,
+        "production": 1005,
+        "consumption": 1144,
+        "spoilage": 152,
+        "transformationInput": 14,
+        "final": 72,
+        "unexplained": 0
+      },
+      "finalHash": "af620ad1b8bc975062b430181e13b4146ad3b8966c63ef1b05fc274cd0d562bd",
+      "performance": {
+        "median": 2.3876000000163913,
+        "p95": 9.63870000001043,
+        "max": 175.18170000007376
+      },
+      "hardFailures": [],
+      "warningGroups": 313
+    }
+  ],
+  "rows": [
+    {
+      "seed": 918271,
+      "days": 1,
+      "population": 33,
+      "food": 322,
+      "stressedHouseholds": 3,
+      "lowHealthBodies": 5,
+      "productionReceipts": 178,
+      "purchases": 13,
+      "deliveredHauls": 22,
+      "conflictsStarted": 37,
+      "knowledge": 8186,
+      "knowledgeGained": 1280,
+      "retainedEvents": 10931,
+      "emittedEvents": 18450,
+      "relationships": 985,
+      "relationshipChanges": 536,
+      "labor": [],
+      "progression": [
+        {
+          "id": "p_1",
+          "skills": {
+            "construction": 0.15
+          }
+        },
+        {
+          "id": "p_2",
+          "skills": {
+            "cooking": 0.55,
+            "hauling": 0.015
+          }
+        },
+        {
+          "id": "p_3",
+          "skills": {
+            "construction": 0.2,
+            "hauling": 0.26125
+          }
+        },
+        {
+          "id": "p_4",
+          "skills": {
+            "baking": 0.6
+          }
+        },
+        {
+          "id": "p_5",
+          "skills": {
+            "baking": 0.6,
+            "hauling": 0.029775
+          }
+        },
+        {
+          "id": "p_6",
+          "skills": {
+            "cooking": 0.046106400000000006,
+            "hauling": 0.015
+          }
+        },
+        {
+          "id": "p_7",
+          "skills": {
+            "hauling": 0.015
+          }
+        },
+        {
+          "id": "p_8",
+          "skills": {
+            "hauling": 0.029775
+          }
+        },
+        {
+          "id": "p_9",
+          "skills": {
+            "hauling": 0.015
+          }
+        },
+        {
+          "id": "p_10",
+          "skills": {
+            "hauling": 0.015
+          }
+        },
+        {
+          "id": "p_11",
+          "skills": {
+            "hauling": 0.015,
+            "unarmed": 0.000019718012070186728
+          }
+        },
+        {
+          "id": "p_12",
+          "skills": {
+            "hauling": 0.072783497634375
+          }
+        },
+        {
+          "id": "p_13",
+          "skills": {
+            "unarmed": 0.000019718012070186728
+          }
+        },
+        {
+          "id": "p_14",
+          "skills": {
+            "unarmed": 0.00007886971551141221
+          }
+        },
+        {
+          "id": "p_15",
+          "skills": {
+            "hauling": 0.015,
+            "unarmed": 0.000039435635340373456
+          }
+        },
+        {
+          "id": "p_16",
+          "skills": {
+            "unarmed": 0.00005915286981822655
+          }
+        },
+        {
+          "id": "p_17",
+          "skills": {
+            "hauling": 0.3
+          }
+        },
+        {
+          "id": "p_18",
+          "skills": {
+            "hauling": 0.3105,
+            "quarrying": 0.029775
+          }
+        },
+        {
+          "id": "p_19",
+          "skills": {}
+        },
+        {
+          "id": "p_20",
+          "skills": {
+            "hauling": 0.3,
+            "unarmed": 0.000019718012070186728
+          }
+        },
+        {
+          "id": "p_21",
+          "skills": {
+            "hauling": 0.3
+          }
+        },
+        {
+          "id": "p_22",
+          "skills": {}
+        },
+        {
+          "id": "p_23",
+          "skills": {
+            "hauling": 0.3
+          }
+        },
+        {
+          "id": "p_24",
+          "skills": {
+            "hauling": 0.3,
+            "unarmed": 0.0000558677008655275
+          }
+        },
+        {
+          "id": "p_25",
+          "skills": {
+            "milling": 0.62911339905375,
+            "hauling": 0.25
+          }
+        },
+        {
+          "id": "p_26",
+          "skills": {
+            "hauling": 0.2,
+            "hunting": 0.6,
+            "unarmed": 0.000039435635340373456
+          }
+        },
+        {
+          "id": "p_27",
+          "skills": {
+            "herbalism": 0.67053220728125
+          }
+        },
+        {
+          "id": "p_28",
+          "skills": {
+            "woodcutting": 0.6302710050329061,
+            "sawing": 0.4,
+            "hauling": 0.28324628124999995
+          }
+        },
+        {
+          "id": "p_29",
+          "skills": {}
+        },
+        {
+          "id": "p_30",
+          "skills": {
+            "hauling": 0.21200000000000002,
+            "woodcutting": 0.08669174516985938,
+            "quarrying": 0.015
+          }
+        },
+        {
+          "id": "p_31",
+          "skills": {
+            "unarmed": 0.00013341421004417245
+          }
+        },
+        {
+          "id": "p_32",
+          "skills": {
+            "unarmed": 0.000039732380990362975
+          }
+        },
+        {
+          "id": "p_33",
+          "skills": {}
+        },
+        {
+          "id": "p_34",
+          "skills": {}
+        },
+        {
+          "id": "p_35",
+          "skills": {}
+        },
+        {
+          "id": "p_36",
+          "skills": {}
+        },
+        {
+          "id": "p_37",
+          "skills": {}
+        }
+      ],
+      "hourlySamples": 24,
+      "hardFailureSamples": 0,
+      "impossibleResources": [],
+      "duplicateIdentities": [],
+      "hash": "36ed7f93ce7d31dbdbe4351c4eb69be031328783c7e024c70a7d4e1985fed9d2"
+    },
+    {
+      "seed": 918271,
+      "days": 7,
+      "population": 33,
+      "food": 134,
+      "stressedHouseholds": 7,
+      "lowHealthBodies": 11,
+      "productionReceipts": 351,
+      "purchases": 135,
+      "deliveredHauls": 66,
+      "conflictsStarted": 273,
+      "knowledge": 13818,
+      "knowledgeGained": 9548,
+      "retainedEvents": 29667,
+      "emittedEvents": 148932,
+      "relationships": 1065,
+      "relationshipChanges": 4176,
+      "labor": [],
+      "progression": [
+        {
+          "id": "p_1",
+          "skills": {
+            "construction": 0.15,
+            "unarmed": 0.000023421853296658245,
+            "hauling": 0.015
+          }
+        },
+        {
+          "id": "p_2",
+          "skills": {
+            "cooking": 0.5567500000000001,
+            "hauling": 0.058663449375,
+            "unarmed": 0.00003943563534033609
+          }
+        },
+        {
+          "id": "p_3",
+          "skills": {
+            "construction": 0.2,
+            "hauling": 0.28324628124999995,
+            "unarmed": 0.00017335122076462322
+          }
+        },
+        {
+          "id": "p_4",
+          "skills": {
+            "baking": 0.6762817244065891,
+            "hauling": 0.015,
+            "unarmed": 0.000019718012070168043
+          }
+        },
+        {
+          "id": "p_5",
+          "skills": {
+            "baking": 0.6401565475969245,
+            "hauling": 0.072783497634375,
+            "unarmed": 0.0000197180120701805
+          }
+        },
+        {
+          "id": "p_6",
+          "skills": {
+            "cooking": 0.11315159768432641,
+            "hauling": 0.029775,
+            "unarmed": 0.00008551525896264661
+          }
+        },
+        {
+          "id": "p_7",
+          "skills": {
+            "hauling": 0.072783497634375,
+            "cooking": 0.1352330204097282
+          }
+        },
+        {
+          "id": "p_8",
+          "skills": {
+            "hauling": 0.044328375,
+            "unarmed": 0.00003943563534033609
+          }
+        },
+        {
+          "id": "p_9",
+          "skills": {
+            "hauling": 0.029775,
+            "unarmed": 0.00003943563534033609
+          }
+        },
+        {
+          "id": "p_10",
+          "skills": {
+            "hauling": 0.058663449375,
+            "unarmed": 0.000019718012070168043
+          }
+        },
+        {
+          "id": "p_11",
+          "skills": {
+            "hauling": 0.029775,
+            "unarmed": 0.000059152869818189174
+          }
+        },
+        {
+          "id": "p_12",
+          "skills": {
+            "hauling": 0.10039136899231149,
+            "unarmed": 0.0000197180120701805
+          }
+        },
+        {
+          "id": "p_13",
+          "skills": {
+            "unarmed": 0.00018826682746927634
+          }
+        },
+        {
+          "id": "p_14",
+          "skills": {
+            "unarmed": 0.0002347876311292879
+          }
+        },
+        {
+          "id": "p_15",
+          "skills": {
+            "hauling": 0.015,
+            "unarmed": 0.00010351528665654452
+          }
+        },
+        {
+          "id": "p_16",
+          "skills": {
+            "unarmed": 0.00014787573535450076
+          }
+        },
+        {
+          "id": "p_17",
+          "skills": {
+            "hauling": 0.35094844834406247,
+            "unarmed": 0.00011830224057433327
+          }
+        },
+        {
+          "id": "p_18",
+          "skills": {
+            "hauling": 0.3310298625,
+            "quarrying": 0.029775
+          }
+        },
+        {
+          "id": "p_19",
+          "skills": {}
+        },
+        {
+          "id": "p_20",
+          "skills": {
+            "hauling": 0.3208425,
+            "unarmed": 0.000059152869818238986
+          }
+        },
+        {
+          "id": "p_21",
+          "skills": {
+            "hauling": 0.3105,
+            "unarmed": 0.000019718012070168043
+          }
+        },
+        {
+          "id": "p_22",
+          "skills": {
+            "unarmed": 0.000019718012070168043
+          }
+        },
+        {
+          "id": "p_23",
+          "skills": {
+            "hauling": 0.3208425,
+            "unarmed": 0.000019718012070168043
+          }
+        },
+        {
+          "id": "p_24",
+          "skills": {
+            "hauling": 0.3105,
+            "unarmed": 0.004467660312146452
+          }
+        },
+        {
+          "id": "p_25",
+          "skills": {
+            "milling": 0.6663472126636492,
+            "hauling": 0.26125
+          }
+        },
+        {
+          "id": "p_26",
+          "skills": {
+            "hauling": 0.2,
+            "hunting": 0.6455541993829707,
+            "unarmed": 0.00014578929715595626
+          }
+        },
+        {
+          "id": "p_27",
+          "skills": {
+            "herbalism": 0.67053220728125,
+            "hauling": 0.029775
+          }
+        },
+        {
+          "id": "p_28",
+          "skills": {
+            "woodcutting": 0.6302710050329061,
+            "sawing": 0.4,
+            "hauling": 0.28324628124999995,
+            "unarmed": 0.00029069732469435726
+          }
+        },
+        {
+          "id": "p_29",
+          "skills": {
+            "unarmed": 0.000019718012070168043
+          }
+        },
+        {
+          "id": "p_30",
+          "skills": {
+            "hauling": 0.2693533961358875,
+            "woodcutting": 0.08669174516985938,
+            "quarrying": 0.015
+          }
+        },
+        {
+          "id": "p_31",
+          "skills": {
+            "unarmed": 0.00013341421004417245
+          }
+        },
+        {
+          "id": "p_32",
+          "skills": {
+            "unarmed": 0.00006437891677362555
+          }
+        },
+        {
+          "id": "p_33",
+          "skills": {}
+        },
+        {
+          "id": "p_34",
+          "skills": {}
+        },
+        {
+          "id": "p_35",
+          "skills": {}
+        },
+        {
+          "id": "p_36",
+          "skills": {}
+        },
+        {
+          "id": "p_37",
+          "skills": {
+            "unarmed": 0.00013131474832831977
+          }
+        }
+      ],
+      "hourlySamples": 168,
+      "hardFailureSamples": 0,
+      "impossibleResources": [],
+      "duplicateIdentities": [],
+      "hash": "1fb95c4f7efcb931524b5c930ef58b00a4fd15fa4c93ff2ae3f6cf232dc1e4e7"
+    },
+    {
+      "seed": 918271,
+      "days": 30,
+      "population": 33,
+      "food": 107,
+      "stressedHouseholds": 14,
+      "lowHealthBodies": 0,
+      "productionReceipts": 683,
+      "purchases": 528,
+      "deliveredHauls": 213,
+      "conflictsStarted": 671,
+      "knowledge": 13959,
+      "knowledgeGained": 25680,
+      "retainedEvents": 48460,
+      "emittedEvents": 482373,
+      "relationships": 1072,
+      "relationshipChanges": 9085,
+      "labor": [],
+      "progression": [
+        {
+          "id": "p_1",
+          "skills": {
+            "construction": 0.15,
+            "unarmed": 0.0025463093788603043,
+            "hauling": 0.044328375
+          }
+        },
+        {
+          "id": "p_2",
+          "skills": {
+            "cooking": 0.5633987500000001,
+            "hauling": 0.2608635666528983,
+            "unarmed": 0.00009858617242765255
+          }
+        },
+        {
+          "id": "p_3",
+          "skills": {
+            "construction": 0.2,
+            "hauling": 0.36487413578105804,
+            "unarmed": 0.0003933384385270813
+          }
+        },
+        {
+          "id": "p_4",
+          "skills": {
+            "baking": 0.9019089400143819,
+            "hauling": 0.044328375,
+            "unarmed": 0.000019718012070168043
+          }
+        },
+        {
+          "id": "p_5",
+          "skills": {
+            "baking": 0.7216895437567098,
+            "hauling": 0.16586803165912292,
+            "unarmed": 0.000039435635340398365
+          }
+        },
+        {
+          "id": "p_6",
+          "skills": {
+            "cooking": 0.3371009569864948,
+            "hauling": 0.15316551437474407,
+            "unarmed": 0.00017024365210628392
+          }
+        },
+        {
+          "id": "p_7",
+          "skills": {
+            "hauling": 0.29362828364647114,
+            "cooking": 0.5925787866323858,
+            "unarmed": 0.00005915286981831994,
+            "hunting": 0.058663449375
+          }
+        },
+        {
+          "id": "p_8",
+          "skills": {
+            "hauling": 0.23818038769656347,
+            "unarmed": 0.00003943563534033609,
+            "cooking": 0.070285824
+          }
+        },
+        {
+          "id": "p_9",
+          "skills": {
+            "hauling": 0.16586803165912292,
+            "unarmed": 0.00009858617242765255
+          }
+        },
+        {
+          "id": "p_10",
+          "skills": {
+            "hauling": 0.12717721598056542,
+            "unarmed": 0.000039435635340385904
+          }
+        },
+        {
+          "id": "p_11",
+          "skills": {
+            "hauling": 0.12717721598056542,
+            "unarmed": 0.000059152869818189174
+          }
+        },
+        {
+          "id": "p_12",
+          "skills": {
+            "hauling": 0.17838001118423608,
+            "unarmed": 0.000039435635340398365
+          }
+        },
+        {
+          "id": "p_13",
+          "skills": {
+            "unarmed": 0.0003663298858817065
+          }
+        },
+        {
+          "id": "p_14",
+          "skills": {
+            "unarmed": 0.0004257442412424796
+          }
+        },
+        {
+          "id": "p_15",
+          "skills": {
+            "hauling": 0.015,
+            "unarmed": 0.00010940913367060176
+          }
+        },
+        {
+          "id": "p_16",
+          "skills": {
+            "unarmed": 0.00037014963541178337
+          }
+        },
+        {
+          "id": "p_17",
+          "skills": {
+            "hauling": 0.3981886904185998,
+            "unarmed": 0.00011830224057433327
+          }
+        },
+        {
+          "id": "p_18",
+          "skills": {
+            "hauling": 0.4334930177115307,
+            "quarrying": 0.029775
+          }
+        },
+        {
+          "id": "p_19",
+          "skills": {
+            "unarmed": 0.000019718012070217862
+          }
+        },
+        {
+          "id": "p_20",
+          "skills": {
+            "hauling": 0.3981886904185998,
+            "unarmed": 0.00009858617242767122
+          }
+        },
+        {
+          "id": "p_21",
+          "skills": {
+            "hauling": 0.3310298625,
+            "unarmed": 0.000019718012070168043
+          }
+        },
+        {
+          "id": "p_22",
+          "skills": {
+            "unarmed": 0.000019718012070168043
+          }
+        },
+        {
+          "id": "p_23",
+          "skills": {
+            "hauling": 0.3410644145625,
+            "unarmed": 0.000019718012070168043
+          }
+        },
+        {
+          "id": "p_24",
+          "skills": {
+            "hauling": 0.3105,
+            "unarmed": 0.00881037461929039
+          }
+        },
+        {
+          "id": "p_25",
+          "skills": {
+            "milling": 0.8546926994711381,
+            "hauling": 0.26125
+          }
+        },
+        {
+          "id": "p_26",
+          "skills": {
+            "hauling": 0.2,
+            "hunting": 0.764317107943083,
+            "unarmed": 0.0003255628164431695
+          }
+        },
+        {
+          "id": "p_27",
+          "skills": {
+            "herbalism": 0.6990943452092999,
+            "hauling": 0.058663449375,
+            "unarmed": 0.00005915286981831994
+          }
+        },
+        {
+          "id": "p_28",
+          "skills": {
+            "woodcutting": 0.6302710050329061,
+            "sawing": 0.45201504710191565,
+            "hauling": 0.3045876232257812,
+            "unarmed": 0.004719556588178154
+          }
+        },
+        {
+          "id": "p_29",
+          "skills": {
+            "unarmed": 0.000019718012070168043
+          }
+        },
+        {
+          "id": "p_30",
+          "skills": {
+            "hauling": 0.3622749970809804,
+            "woodcutting": 0.08669174516985938,
+            "quarrying": 0.015
+          }
+        },
+        {
+          "id": "p_31",
+          "skills": {
+            "unarmed": 0.0001561962906526479
+          }
+        },
+        {
+          "id": "p_32",
+          "skills": {
+            "unarmed": 0.0001436576858206224
+          }
+        },
+        {
+          "id": "p_33",
+          "skills": {}
+        },
+        {
+          "id": "p_34",
+          "skills": {}
+        },
+        {
+          "id": "p_35",
+          "skills": {}
+        },
+        {
+          "id": "p_36",
+          "skills": {}
+        },
+        {
+          "id": "p_37",
+          "skills": {
+            "unarmed": 0.00015874871583137278,
+            "hauling": 0.015
+          }
+        }
+      ],
+      "hourlySamples": 720,
+      "hardFailureSamples": 0,
+      "impossibleResources": [],
+      "duplicateIdentities": [],
+      "hash": "461b057fa012be7574cd973a1a4b91366e2b7618cd269eba2e9e0c1f6b7698f4"
+    },
+    {
+      "seed": 918272,
+      "days": 1,
+      "population": 33,
+      "food": 337,
+      "stressedHouseholds": 6,
+      "lowHealthBodies": 10,
+      "productionReceipts": 136,
+      "purchases": 15,
+      "deliveredHauls": 23,
+      "conflictsStarted": 45,
+      "knowledge": 8738,
+      "knowledgeGained": 1850,
+      "retainedEvents": 12662,
+      "emittedEvents": 21739,
+      "relationships": 995,
+      "relationshipChanges": 751,
+      "labor": [],
+      "progression": [
+        {
+          "id": "p_1",
+          "skills": {
+            "construction": 0.15,
+            "unarmed": 0.00004446286122525024
+          }
+        },
+        {
+          "id": "p_2",
+          "skills": {
+            "cooking": 0.55,
+            "hauling": 0.029775
+          }
+        },
+        {
+          "id": "p_3",
+          "skills": {
+            "construction": 0.2,
+            "hauling": 0.26125,
+            "unarmed": 0.000019718012070186728
+          }
+        },
+        {
+          "id": "p_4",
+          "skills": {
+            "baking": 0.6
+          }
+        },
+        {
+          "id": "p_5",
+          "skills": {
+            "baking": 0.6,
+            "hauling": 0.015
+          }
+        },
+        {
+          "id": "p_6",
+          "skills": {
+            "cooking": 0.015
+          }
+        },
+        {
+          "id": "p_7",
+          "skills": {
+            "cooking": 0.029775,
+            "hauling": 0.015
+          }
+        },
+        {
+          "id": "p_8",
+          "skills": {
+            "hauling": 0.029775
+          }
+        },
+        {
+          "id": "p_9",
+          "skills": {
+            "hauling": 0.015
+          }
+        },
+        {
+          "id": "p_10",
+          "skills": {
+            "hauling": 0.015
+          }
+        },
+        {
+          "id": "p_11",
+          "skills": {
+            "hauling": 0.015
+          }
+        },
+        {
+          "id": "p_12",
+          "skills": {
+            "hauling": 0.044328375
+          }
+        },
+        {
+          "id": "p_13",
+          "skills": {
+            "unarmed": 0.00004164721733100527
+          }
+        },
+        {
+          "id": "p_14",
+          "skills": {
+            "unarmed": 0.0002119486805487223
+          }
+        },
+        {
+          "id": "p_15",
+          "skills": {
+            "unarmed": 0.00002769367412335183
+          }
+        },
+        {
+          "id": "p_16",
+          "skills": {
+            "hauling": 0.015,
+            "unarmed": 0.000045555293070686704
+          }
+        },
+        {
+          "id": "p_17",
+          "skills": {
+            "hauling": 0.3
+          }
+        },
+        {
+          "id": "p_18",
+          "skills": {
+            "hauling": 0.3105,
+            "quarrying": 0.029775
+          }
+        },
+        {
+          "id": "p_19",
+          "skills": {}
+        },
+        {
+          "id": "p_20",
+          "skills": {
+            "hauling": 0.3
+          }
+        },
+        {
+          "id": "p_21",
+          "skills": {
+            "hauling": 0.3105,
+            "quarrying": 0.015
+          }
+        },
+        {
+          "id": "p_22",
+          "skills": {}
+        },
+        {
+          "id": "p_23",
+          "skills": {
+            "hauling": 0.3105,
+            "unarmed": 0.0000197180120701805
+          }
+        },
+        {
+          "id": "p_24",
+          "skills": {
+            "hauling": 0.3,
+            "unarmed": 0.00007891839159024124
+          }
+        },
+        {
+          "id": "p_25",
+          "skills": {
+            "milling": 0.62911339905375,
+            "hauling": 0.25
+          }
+        },
+        {
+          "id": "p_26",
+          "skills": {
+            "hauling": 0.2,
+            "hunting": 0.6,
+            "unarmed": 0.00008379892693470862
+          }
+        },
+        {
+          "id": "p_27",
+          "skills": {
+            "herbalism": 0.67053220728125,
+            "hauling": 0.015
+          }
+        },
+        {
+          "id": "p_28",
+          "skills": {
+            "woodcutting": 0.6302710050329061,
+            "sawing": 0.4,
+            "hauling": 0.27233124999999997,
+            "unarmed": 0.000023765237304447682
+          }
+        },
+        {
+          "id": "p_29",
+          "skills": {}
+        },
+        {
+          "id": "p_30",
+          "skills": {
+            "hauling": 0.21200000000000002,
+            "woodcutting": 0.08669174516985938
+          }
+        },
+        {
+          "id": "p_31",
+          "skills": {
+            "unarmed": 0.0000681826253839594
+          }
+        },
+        {
+          "id": "p_32",
+          "skills": {
+            "unarmed": 0.00013380646093621285
+          }
+        },
+        {
+          "id": "p_33",
+          "skills": {}
+        },
+        {
+          "id": "p_34",
+          "skills": {}
+        },
+        {
+          "id": "p_35",
+          "skills": {}
+        },
+        {
+          "id": "p_36",
+          "skills": {}
+        },
+        {
+          "id": "p_37",
+          "skills": {
+            "hauling": 0.029775,
+            "unarmed": 0.00008872811405897888
+          }
+        }
+      ],
+      "hourlySamples": 24,
+      "hardFailureSamples": 0,
+      "impossibleResources": [],
+      "duplicateIdentities": [],
+      "hash": "b3bb834c95245d4dd4723f6c3b36266d9d67e71120e8f85a5b9960a166e4742a"
+    },
+    {
+      "seed": 918272,
+      "days": 7,
+      "population": 33,
+      "food": 121,
+      "stressedHouseholds": 5,
+      "lowHealthBodies": 9,
+      "productionReceipts": 279,
+      "purchases": 105,
+      "deliveredHauls": 52,
+      "conflictsStarted": 233,
+      "knowledge": 13894,
+      "knowledgeGained": 7807,
+      "retainedEvents": 26632,
+      "emittedEvents": 119558,
+      "relationships": 1053,
+      "relationshipChanges": 3053,
+      "labor": [],
+      "progression": [
+        {
+          "id": "p_1",
+          "skills": {
+            "construction": 0.15,
+            "unarmed": 0.0000711796273918562
+          }
+        },
+        {
+          "id": "p_2",
+          "skills": {
+            "cooking": 0.55,
+            "hauling": 0.058663449375,
+            "unarmed": 0.000019718012070168043
+          }
+        },
+        {
+          "id": "p_3",
+          "skills": {
+            "construction": 0.2,
+            "hauling": 0.26125,
+            "unarmed": 0.00013222110727199166
+          }
+        },
+        {
+          "id": "p_4",
+          "skills": {
+            "baking": 0.6859204360623828,
+            "hauling": 0.029775,
+            "unarmed": 0.000019718012070217862
+          }
+        },
+        {
+          "id": "p_5",
+          "skills": {
+            "baking": 0.6177313499999999,
+            "hauling": 0.044328375,
+            "unarmed": 0.000019718012070217862
+          }
+        },
+        {
+          "id": "p_6",
+          "skills": {
+            "cooking": 0.06171264,
+            "hauling": 0.058663449375
+          }
+        },
+        {
+          "id": "p_7",
+          "skills": {
+            "cooking": 0.19263162439276987,
+            "hauling": 0.044328375,
+            "unarmed": 0.00007886971551133748
+          }
+        },
+        {
+          "id": "p_8",
+          "skills": {
+            "hauling": 0.029775,
+            "unarmed": 0.00003943563534033609
+          }
+        },
+        {
+          "id": "p_9",
+          "skills": {
+            "hauling": 0.015
+          }
+        },
+        {
+          "id": "p_10",
+          "skills": {
+            "hauling": 0.044328375
+          }
+        },
+        {
+          "id": "p_11",
+          "skills": {
+            "hauling": 0.015,
+            "unarmed": 0.00003943563534033609
+          }
+        },
+        {
+          "id": "p_12",
+          "skills": {
+            "hauling": 0.11388549845742682,
+            "unarmed": 0.00009858617242750311
+          }
+        },
+        {
+          "id": "p_13",
+          "skills": {
+            "unarmed": 0.00007961182822369481
+          }
+        },
+        {
+          "id": "p_14",
+          "skills": {
+            "unarmed": 0.00026123265533637265
+          }
+        },
+        {
+          "id": "p_15",
+          "skills": {
+            "unarmed": 0.00009858690628151199
+          }
+        },
+        {
+          "id": "p_16",
+          "skills": {
+            "hauling": 0.015,
+            "unarmed": 0.00013829899817584398
+          }
+        },
+        {
+          "id": "p_17",
+          "skills": {
+            "hauling": 0.3105,
+            "unarmed": 0.000019718012070168043
+          }
+        },
+        {
+          "id": "p_18",
+          "skills": {
+            "hauling": 0.3105,
+            "quarrying": 0.029775,
+            "unarmed": 0.00005915286981822032
+          }
+        },
+        {
+          "id": "p_19",
+          "skills": {}
+        },
+        {
+          "id": "p_20",
+          "skills": {
+            "hauling": 0.3208425,
+            "unarmed": 0.000019718012070168043
+          }
+        },
+        {
+          "id": "p_21",
+          "skills": {
+            "hauling": 0.3310298625,
+            "quarrying": 0.015,
+            "hunting": 0.044328375
+          }
+        },
+        {
+          "id": "p_22",
+          "skills": {}
+        },
+        {
+          "id": "p_23",
+          "skills": {
+            "hauling": 0.3208425,
+            "unarmed": 0.0000197180120701805
+          }
+        },
+        {
+          "id": "p_24",
+          "skills": {
+            "hauling": 0.3,
+            "unarmed": 0.0007935378923759753
+          }
+        },
+        {
+          "id": "p_25",
+          "skills": {
+            "milling": 0.6811374985404902,
+            "hauling": 0.27233124999999997
+          }
+        },
+        {
+          "id": "p_26",
+          "skills": {
+            "hauling": 0.2,
+            "hunting": 0.61191,
+            "unarmed": 0.00017007420531818938
+          }
+        },
+        {
+          "id": "p_27",
+          "skills": {
+            "herbalism": 0.67053220728125,
+            "hauling": 0.044328375,
+            "unarmed": 0.000019718012070217862
+          }
+        },
+        {
+          "id": "p_28",
+          "skills": {
+            "woodcutting": 0.6302710050329061,
+            "sawing": 0.4,
+            "hauling": 0.27233124999999997,
+            "unarmed": 0.00009588203653473353
+          }
+        },
+        {
+          "id": "p_29",
+          "skills": {}
+        },
+        {
+          "id": "p_30",
+          "skills": {
+            "hauling": 0.21200000000000002,
+            "woodcutting": 0.08669174516985938,
+            "unarmed": 0.000019718012070217862
+          }
+        },
+        {
+          "id": "p_31",
+          "skills": {
+            "unarmed": 0.00011361579302036195
+          }
+        },
+        {
+          "id": "p_32",
+          "skills": {
+            "unarmed": 0.00013380646093621285
+          }
+        },
+        {
+          "id": "p_33",
+          "skills": {}
+        },
+        {
+          "id": "p_34",
+          "skills": {}
+        },
+        {
+          "id": "p_35",
+          "skills": {}
+        },
+        {
+          "id": "p_36",
+          "skills": {}
+        },
+        {
+          "id": "p_37",
+          "skills": {
+            "hauling": 0.029775,
+            "unarmed": 0.0001140064583574903
+          }
+        }
+      ],
+      "hourlySamples": 168,
+      "hardFailureSamples": 0,
+      "impossibleResources": [],
+      "duplicateIdentities": [],
+      "hash": "49af284c73d1acbef3c36c275e5a1ac99bfa74a119d10f14077200619ce0bc58"
+    },
+    {
+      "seed": 918272,
+      "days": 30,
+      "population": 33,
+      "food": 50,
+      "stressedHouseholds": 15,
+      "lowHealthBodies": 1,
+      "productionReceipts": 673,
+      "purchases": 460,
+      "deliveredHauls": 175,
+      "conflictsStarted": 635,
+      "knowledge": 14101,
+      "knowledgeGained": 28680,
+      "retainedEvents": 49464,
+      "emittedEvents": 491102,
+      "relationships": 1072,
+      "relationshipChanges": 9770,
+      "labor": [],
+      "progression": [
+        {
+          "id": "p_1",
+          "skills": {
+            "construction": 0.15,
+            "unarmed": 0.000090896235941322
+          }
+        },
+        {
+          "id": "p_2",
+          "skills": {
+            "cooking": 0.55,
+            "hauling": 0.11388549845742682,
+            "unarmed": 0.00003996509792307562
+          }
+        },
+        {
+          "id": "p_3",
+          "skills": {
+            "construction": 0.2,
+            "hauling": 0.29399758703124995,
+            "unarmed": 0.00028687513152425033
+          }
+        },
+        {
+          "id": "p_4",
+          "skills": {
+            "baking": 0.8893020486462435,
+            "hauling": 0.10039136899231149,
+            "unarmed": 0.00007886971551153673
+          }
+        },
+        {
+          "id": "p_5",
+          "skills": {
+            "baking": 0.7607280283686122,
+            "hauling": 0.19070431101647253,
+            "unarmed": 0.00007886971551153673
+          }
+        },
+        {
+          "id": "p_6",
+          "skills": {
+            "cooking": 0.3446316923970985,
+            "hauling": 0.19070431101647253,
+            "unarmed": 0.00011830224057463214
+          }
+        },
+        {
+          "id": "p_7",
+          "skills": {
+            "cooking": 0.503329818006501,
+            "hauling": 0.23818038769656347,
+            "unarmed": 0.00010274059937812041
+          }
+        },
+        {
+          "id": "p_8",
+          "skills": {
+            "hauling": 0.10039136899231149,
+            "unarmed": 0.00005915286981822032
+          }
+        },
+        {
+          "id": "p_9",
+          "skills": {
+            "hauling": 0.015,
+            "unarmed": 0.00005915286981831994
+          }
+        },
+        {
+          "id": "p_10",
+          "skills": {
+            "hauling": 0.20284374635122546,
+            "unarmed": 0.000019718012070217862
+          }
+        },
+        {
+          "id": "p_11",
+          "skills": {
+            "hauling": 0.08669174516985938,
+            "unarmed": 0.00011830224057453252
+          }
+        },
+        {
+          "id": "p_12",
+          "skills": {
+            "hauling": 0.22657907380361772,
+            "unarmed": 0.0001577332105907996
+          }
+        },
+        {
+          "id": "p_13",
+          "skills": {
+            "unarmed": 0.0003356640837864775,
+            "hauling": 0.015
+          }
+        },
+        {
+          "id": "p_14",
+          "skills": {
+            "unarmed": 0.0003480936403282488
+          }
+        },
+        {
+          "id": "p_15",
+          "skills": {
+            "unarmed": 0.00015379275906571714
+          }
+        },
+        {
+          "id": "p_16",
+          "skills": {
+            "hauling": 0.015,
+            "unarmed": 0.00016294310453717137
+          }
+        },
+        {
+          "id": "p_17",
+          "skills": {
+            "hauling": 0.370273958294618,
+            "unarmed": 0.00012016855727723462
+          }
+        },
+        {
+          "id": "p_18",
+          "skills": {
+            "hauling": 0.3606842216189015,
+            "quarrying": 0.029775,
+            "unarmed": 0.000157733210590949
+          }
+        },
+        {
+          "id": "p_19",
+          "skills": {}
+        },
+        {
+          "id": "p_20",
+          "skills": {
+            "hauling": 0.3797198489201987,
+            "unarmed": 0.000019718012070168043
+          }
+        },
+        {
+          "id": "p_21",
+          "skills": {
+            "hauling": 0.35094844834406247,
+            "quarrying": 0.015,
+            "hunting": 0.044328375
+          }
+        },
+        {
+          "id": "p_22",
+          "skills": {}
+        },
+        {
+          "id": "p_23",
+          "skills": {
+            "hauling": 0.3208425,
+            "unarmed": 0.0000197180120701805
+          }
+        },
+        {
+          "id": "p_24",
+          "skills": {
+            "hauling": 0.3,
+            "unarmed": 0.007684820343930189
+          }
+        },
+        {
+          "id": "p_25",
+          "skills": {
+            "milling": 0.8546926994711381,
+            "hauling": 0.32529352674423356
+          }
+        },
+        {
+          "id": "p_26",
+          "skills": {
+            "hauling": 0.21200000000000002,
+            "hunting": 0.6234653797499999,
+            "unarmed": 0.0009351624604023838
+          }
+        },
+        {
+          "id": "p_27",
+          "skills": {
+            "herbalism": 0.6990943452092999,
+            "hauling": 0.072783497634375,
+            "unarmed": 0.000019718012070217862
+          }
+        },
+        {
+          "id": "p_28",
+          "skills": {
+            "woodcutting": 0.6302710050329061,
+            "sawing": 0.4602348213953869,
+            "hauling": 0.28324628124999995,
+            "unarmed": 0.00024954206379509427
+          }
+        },
+        {
+          "id": "p_29",
+          "skills": {
+            "unarmed": 0.00003943563534043572
+          }
+        },
+        {
+          "id": "p_30",
+          "skills": {
+            "hauling": 0.3718408721247657,
+            "woodcutting": 0.08669174516985938,
+            "unarmed": 0.00003943563534043572
+          }
+        },
+        {
+          "id": "p_31",
+          "skills": {
+            "unarmed": 0.0002572790866717871
+          }
+        },
+        {
+          "id": "p_32",
+          "skills": {
+            "unarmed": 0.00019788006476469726
+          }
+        },
+        {
+          "id": "p_33",
+          "skills": {}
+        },
+        {
+          "id": "p_34",
+          "skills": {}
+        },
+        {
+          "id": "p_35",
+          "skills": {}
+        },
+        {
+          "id": "p_36",
+          "skills": {}
+        },
+        {
+          "id": "p_37",
+          "skills": {
+            "hauling": 0.029775,
+            "unarmed": 0.00031340506381028464
+          }
+        }
+      ],
+      "hourlySamples": 720,
+      "hardFailureSamples": 0,
+      "impossibleResources": [],
+      "duplicateIdentities": [],
+      "hash": "b06b2d687a730de1eac78a647d6738e8ed3e17a9ab9027b8b91251a04ac58649"
+    },
+    {
+      "seed": 918273,
+      "days": 1,
+      "population": 33,
+      "food": 325,
+      "stressedHouseholds": 5,
+      "lowHealthBodies": 2,
+      "productionReceipts": 217,
+      "purchases": 23,
+      "deliveredHauls": 36,
+      "conflictsStarted": 11,
+      "knowledge": 7726,
+      "knowledgeGained": 926,
+      "retainedEvents": 9123,
+      "emittedEvents": 13203,
+      "relationships": 980,
+      "relationshipChanges": 77,
+      "labor": [],
+      "progression": [
+        {
+          "id": "p_1",
+          "skills": {
+            "construction": 0.15
+          }
+        },
+        {
+          "id": "p_2",
+          "skills": {
+            "cooking": 0.55,
+            "hauling": 0.058663449375
+          }
+        },
+        {
+          "id": "p_3",
+          "skills": {
+            "construction": 0.2,
+            "hauling": 0.27233124999999997
+          }
+        },
+        {
+          "id": "p_4",
+          "skills": {
+            "baking": 0.6
+          }
+        },
+        {
+          "id": "p_5",
+          "skills": {
+            "baking": 0.6,
+            "hauling": 0.029775
+          }
+        },
+        {
+          "id": "p_6",
+          "skills": {
+            "cooking": 0.0359805,
+            "hauling": 0.015
+          }
+        },
+        {
+          "id": "p_7",
+          "skills": {
+            "cooking": 0.02175
+          }
+        },
+        {
+          "id": "p_8",
+          "skills": {
+            "hauling": 0.044328375
+          }
+        },
+        {
+          "id": "p_9",
+          "skills": {
+            "hauling": 0.015
+          }
+        },
+        {
+          "id": "p_10",
+          "skills": {
+            "hauling": 0.015
+          }
+        },
+        {
+          "id": "p_11",
+          "skills": {
+            "hauling": 0.044328375
+          }
+        },
+        {
+          "id": "p_12",
+          "skills": {
+            "hauling": 0.044328375
+          }
+        },
+        {
+          "id": "p_13",
+          "skills": {}
+        },
+        {
+          "id": "p_14",
+          "skills": {
+            "unarmed": 0.00004436504115792013
+          }
+        },
+        {
+          "id": "p_15",
+          "skills": {
+            "hauling": 0.029775
+          }
+        },
+        {
+          "id": "p_16",
+          "skills": {
+            "hauling": 0.029775
+          }
+        },
+        {
+          "id": "p_17",
+          "skills": {
+            "hauling": 0.3
+          }
+        },
+        {
+          "id": "p_18",
+          "skills": {
+            "hauling": 0.3208425
+          }
+        },
+        {
+          "id": "p_19",
+          "skills": {}
+        },
+        {
+          "id": "p_20",
+          "skills": {
+            "hauling": 0.3
+          }
+        },
+        {
+          "id": "p_21",
+          "skills": {
+            "hauling": 0.3
+          }
+        },
+        {
+          "id": "p_22",
+          "skills": {}
+        },
+        {
+          "id": "p_23",
+          "skills": {
+            "hauling": 0.3
+          }
+        },
+        {
+          "id": "p_24",
+          "skills": {
+            "hauling": 0.3,
+            "unarmed": 0.0000018920197761972759
+          }
+        },
+        {
+          "id": "p_25",
+          "skills": {
+            "milling": 0.62911339905375,
+            "hauling": 0.25
+          }
+        },
+        {
+          "id": "p_26",
+          "skills": {
+            "hauling": 0.2,
+            "hunting": 0.6,
+            "woodcutting": 0.072783497634375,
+            "unarmed": 0.00015280460660581556
+          }
+        },
+        {
+          "id": "p_27",
+          "skills": {
+            "herbalism": 0.6754742241720312,
+            "hauling": 0.015
+          }
+        },
+        {
+          "id": "p_28",
+          "skills": {
+            "woodcutting": 0.6302710050329061,
+            "sawing": 0.443670098580625,
+            "hauling": 0.3045876232257812
+          }
+        },
+        {
+          "id": "p_29",
+          "skills": {}
+        },
+        {
+          "id": "p_30",
+          "skills": {
+            "hauling": 0.23546270000000002,
+            "woodcutting": 0.015,
+            "quarrying": 0.044328375
+          }
+        },
+        {
+          "id": "p_31",
+          "skills": {
+            "unarmed": 0.000039435635340373456
+          }
+        },
+        {
+          "id": "p_32",
+          "skills": {
+            "unarmed": 0.0001380179199596245
+          }
+        },
+        {
+          "id": "p_33",
+          "skills": {}
+        },
+        {
+          "id": "p_34",
+          "skills": {}
+        },
+        {
+          "id": "p_35",
+          "skills": {}
+        },
+        {
+          "id": "p_36",
+          "skills": {}
+        },
+        {
+          "id": "p_37",
+          "skills": {
+            "hauling": 0.015
+          }
+        }
+      ],
+      "hourlySamples": 24,
+      "hardFailureSamples": 0,
+      "impossibleResources": [],
+      "duplicateIdentities": [],
+      "hash": "3d7a67c6022f975f28aaad513ab54a056ec296aa816190292a68077d02447f19"
+    },
+    {
+      "seed": 918273,
+      "days": 7,
+      "population": 33,
+      "food": 120,
+      "stressedHouseholds": 8,
+      "lowHealthBodies": 11,
+      "productionReceipts": 376,
+      "purchases": 123,
+      "deliveredHauls": 81,
+      "conflictsStarted": 176,
+      "knowledge": 13873,
+      "knowledgeGained": 8261,
+      "retainedEvents": 27474,
+      "emittedEvents": 120274,
+      "relationships": 1064,
+      "relationshipChanges": 3075,
+      "labor": [],
+      "progression": [
+        {
+          "id": "p_1",
+          "skills": {
+            "construction": 0.15,
+            "hauling": 0.015,
+            "unarmed": 9.119594644026454e-7
+          }
+        },
+        {
+          "id": "p_2",
+          "skills": {
+            "cooking": 0.5567500000000001,
+            "hauling": 0.10039136899231149
+          }
+        },
+        {
+          "id": "p_3",
+          "skills": {
+            "construction": 0.2,
+            "hauling": 0.27233124999999997,
+            "unarmed": 0.00003943563534033609
+          }
+        },
+        {
+          "id": "p_4",
+          "skills": {
+            "baking": 0.6859204360623828,
+            "unarmed": 0.0000654498870335582,
+            "hauling": 0.015
+          }
+        },
+        {
+          "id": "p_5",
+          "skills": {
+            "baking": 0.6,
+            "hauling": 0.058663449375,
+            "unarmed": 0.00007886971551148691
+          }
+        },
+        {
+          "id": "p_6",
+          "skills": {
+            "cooking": 0.14584812368737293,
+            "hauling": 0.029775,
+            "unarmed": 0.00005915286981827012
+          }
+        },
+        {
+          "id": "p_7",
+          "skills": {
+            "cooking": 0.21386303893423128,
+            "hauling": 0.08669174516985938,
+            "unarmed": 0.00001971801207021786
+          }
+        },
+        {
+          "id": "p_8",
+          "skills": {
+            "hauling": 0.11388549845742682,
+            "unarmed": 0.0000788697155113873
+          }
+        },
+        {
+          "id": "p_9",
+          "skills": {
+            "hauling": 0.029775,
+            "unarmed": 0.00005915286981822032
+          }
+        },
+        {
+          "id": "p_10",
+          "skills": {
+            "hauling": 0.029775,
+            "unarmed": 0.00003943563534033609
+          }
+        },
+        {
+          "id": "p_11",
+          "skills": {
+            "hauling": 0.044328375,
+            "unarmed": 0.000019718012070168043
+          }
+        },
+        {
+          "id": "p_12",
+          "skills": {
+            "hauling": 0.072783497634375,
+            "unarmed": 0.00003943563534033609
+          }
+        },
+        {
+          "id": "p_13",
+          "skills": {
+            "unarmed": 0.00032895809886103456
+          }
+        },
+        {
+          "id": "p_14",
+          "skills": {
+            "unarmed": 0.00023904919228792833
+          }
+        },
+        {
+          "id": "p_15",
+          "skills": {
+            "hauling": 0.044328375,
+            "unarmed": 0.0001099024740078401
+          }
+        },
+        {
+          "id": "p_16",
+          "skills": {
+            "hauling": 0.029775,
+            "unarmed": 0.00004450904027127982
+          }
+        },
+        {
+          "id": "p_17",
+          "skills": {
+            "hauling": 0.3,
+            "unarmed": 0.00006177689668215527
+          }
+        },
+        {
+          "id": "p_18",
+          "skills": {
+            "hauling": 0.3410644145625,
+            "unarmed": 0.00003943563534033609
+          }
+        },
+        {
+          "id": "p_19",
+          "skills": {
+            "unarmed": 0.0000591528698181705
+          }
+        },
+        {
+          "id": "p_20",
+          "skills": {
+            "hauling": 0.3410644145625
+          }
+        },
+        {
+          "id": "p_21",
+          "skills": {
+            "hauling": 0.3105,
+            "unarmed": 0.00009858617242755292
+          }
+        },
+        {
+          "id": "p_22",
+          "skills": {}
+        },
+        {
+          "id": "p_23",
+          "skills": {
+            "hauling": 0.3,
+            "unarmed": 0.0000010895565035204829
+          }
+        },
+        {
+          "id": "p_24",
+          "skills": {
+            "hauling": 0.3,
+            "unarmed": 0.0006452023309389901
+          }
+        },
+        {
+          "id": "p_25",
+          "skills": {
+            "milling": 0.6663472126636492,
+            "hauling": 0.28324628124999995,
+            "unarmed": 0.00007886971551133748
+          }
+        },
+        {
+          "id": "p_26",
+          "skills": {
+            "hauling": 0.21200000000000002,
+            "hunting": 0.6346766980679437,
+            "woodcutting": 0.072783497634375,
+            "unarmed": 0.0001984918466069209
+          }
+        },
+        {
+          "id": "p_27",
+          "skills": {
+            "herbalism": 0.6754742241720312,
+            "hauling": 0.058663449375
+          }
+        },
+        {
+          "id": "p_28",
+          "skills": {
+            "woodcutting": 0.6302710050329061,
+            "sawing": 0.47630632958833924,
+            "hauling": 0.34538291198542403,
+            "unarmed": 0.00015814999477501823
+          }
+        },
+        {
+          "id": "p_29",
+          "skills": {
+            "unarmed": 0.0000591528698181705
+          }
+        },
+        {
+          "id": "p_30",
+          "skills": {
+            "hauling": 0.2693533961358875,
+            "woodcutting": 0.015,
+            "quarrying": 0.044328375
+          }
+        },
+        {
+          "id": "p_31",
+          "skills": {
+            "unarmed": 0.000039435635340373456
+          }
+        },
+        {
+          "id": "p_32",
+          "skills": {
+            "unarmed": 0.0001577332105907809
+          }
+        },
+        {
+          "id": "p_33",
+          "skills": {}
+        },
+        {
+          "id": "p_34",
+          "skills": {}
+        },
+        {
+          "id": "p_35",
+          "skills": {}
+        },
+        {
+          "id": "p_36",
+          "skills": {}
+        },
+        {
+          "id": "p_37",
+          "skills": {
+            "hauling": 0.015,
+            "unarmed": 0.00008379892693466658
+          }
+        }
+      ],
+      "hourlySamples": 168,
+      "hardFailureSamples": 0,
+      "impossibleResources": [],
+      "duplicateIdentities": [],
+      "hash": "422ffc63cae2c69d03ddced21c3d00a9966751198cd8cc674b41f6ce7d5c0335"
+    },
+    {
+      "seed": 918273,
+      "days": 30,
+      "population": 33,
+      "food": 72,
+      "stressedHouseholds": 13,
+      "lowHealthBodies": 8,
+      "productionReceipts": 751,
+      "purchases": 462,
+      "deliveredHauls": 189,
+      "conflictsStarted": 598,
+      "knowledge": 14016,
+      "knowledgeGained": 28251,
+      "retainedEvents": 49329,
+      "emittedEvents": 483432,
+      "relationships": 1072,
+      "relationshipChanges": 8976,
+      "labor": [],
+      "progression": [
+        {
+          "id": "p_1",
+          "skills": {
+            "construction": 0.15,
+            "hauling": 0.015,
+            "unarmed": 0.00019168077470726
+          }
+        },
+        {
+          "id": "p_2",
+          "skills": {
+            "cooking": 0.5567500000000001,
+            "hauling": 0.22657907380361772,
+            "unarmed": 0.00008216024878212282
+          }
+        },
+        {
+          "id": "p_3",
+          "skills": {
+            "construction": 0.2,
+            "hauling": 0.32529352674423356,
+            "unarmed": 0.00024151891965219964
+          }
+        },
+        {
+          "id": "p_4",
+          "skills": {
+            "baking": 0.9327743221422109,
+            "unarmed": 0.0000654498870335582,
+            "hauling": 0.029775
+          }
+        },
+        {
+          "id": "p_5",
+          "skills": {
+            "baking": 0.62911339905375,
+            "hauling": 0.10039136899231149,
+            "unarmed": 0.00011830224057458232
+          }
+        },
+        {
+          "id": "p_6",
+          "skills": {
+            "cooking": 0.36183510359600424,
+            "hauling": 0.10039136899231149,
+            "unarmed": 0.00013801791995979258
+          }
+        },
+        {
+          "id": "p_7",
+          "skills": {
+            "cooking": 0.5279974047321919,
+            "hauling": 0.2719506131531048,
+            "unarmed": 0.00007886971551153673
+          }
+        },
+        {
+          "id": "p_8",
+          "skills": {
+            "hauling": 0.23818038769656347,
+            "unarmed": 0.00009858617242760273
+          }
+        },
+        {
+          "id": "p_9",
+          "skills": {
+            "hauling": 0.058663449375,
+            "unarmed": 0.00006250939780380962
+          }
+        },
+        {
+          "id": "p_10",
+          "skills": {
+            "hauling": 0.19070431101647253,
+            "unarmed": 0.00009858617242765255
+          }
+        },
+        {
+          "id": "p_11",
+          "skills": {
+            "hauling": 0.072783497634375,
+            "unarmed": 0.00002002124243400724
+          }
+        },
+        {
+          "id": "p_12",
+          "skills": {
+            "hauling": 0.15316551437474407,
+            "unarmed": 0.00007886971551143712
+          }
+        },
+        {
+          "id": "p_13",
+          "skills": {
+            "unarmed": 0.0006261188529164176
+          }
+        },
+        {
+          "id": "p_14",
+          "skills": {
+            "unarmed": 0.0005257003949406835,
+            "hauling": 0.029775
+          }
+        },
+        {
+          "id": "p_15",
+          "skills": {
+            "hauling": 0.058663449375,
+            "unarmed": 0.00044876488291345344
+          }
+        },
+        {
+          "id": "p_16",
+          "skills": {
+            "hauling": 0.029775,
+            "unarmed": 0.00011351743139544442
+          }
+        },
+        {
+          "id": "p_17",
+          "skills": {
+            "hauling": 0.3310298625,
+            "unarmed": 0.00006177689668215527
+          }
+        },
+        {
+          "id": "p_18",
+          "skills": {
+            "hauling": 0.35094844834406247,
+            "unarmed": 0.00009989255718774639
+          }
+        },
+        {
+          "id": "p_19",
+          "skills": {
+            "unarmed": 0.0000788697155113873
+          }
+        },
+        {
+          "id": "p_20",
+          "skills": {
+            "hauling": 0.4072158600623208,
+            "unarmed": 0.00003943563534043572
+          }
+        },
+        {
+          "id": "p_21",
+          "skills": {
+            "hauling": 0.3208425,
+            "unarmed": 0.00013801791995964318
+          }
+        },
+        {
+          "id": "p_22",
+          "skills": {
+            "unarmed": 0.000019718012070217862
+          }
+        },
+        {
+          "id": "p_23",
+          "skills": {
+            "hauling": 0.3208425,
+            "unarmed": 0.0000010895565035204829
+          }
+        },
+        {
+          "id": "p_24",
+          "skills": {
+            "hauling": 0.3,
+            "unarmed": 0.004351011738899915
+          }
+        },
+        {
+          "id": "p_25",
+          "skills": {
+            "milling": 0.8568723089790711,
+            "hauling": 0.32529352674423356,
+            "unarmed": 0.0001183022405744329
+          }
+        },
+        {
+          "id": "p_26",
+          "skills": {
+            "hauling": 0.21200000000000002,
+            "hunting": 0.7174513134585886,
+            "woodcutting": 0.072783497634375,
+            "unarmed": 0.000571531178593106
+          }
+        },
+        {
+          "id": "p_27",
+          "skills": {
+            "herbalism": 0.6945120255931979,
+            "hauling": 0.15316551437474407
+          }
+        },
+        {
+          "id": "p_28",
+          "skills": {
+            "woodcutting": 0.6302710050329061,
+            "sawing": 0.47630632958833924,
+            "hauling": 0.34538291198542403,
+            "unarmed": 0.0004216908135826755
+          }
+        },
+        {
+          "id": "p_29",
+          "skills": {
+            "unarmed": 0.00008308321604575388
+          }
+        },
+        {
+          "id": "p_30",
+          "skills": {
+            "hauling": 0.3326944253272983,
+            "woodcutting": 0.015,
+            "quarrying": 0.044328375
+          }
+        },
+        {
+          "id": "p_31",
+          "skills": {
+            "unarmed": 0.00018483763796609318
+          }
+        },
+        {
+          "id": "p_32",
+          "skills": {
+            "unarmed": 0.0003254797229796106
+          }
+        },
+        {
+          "id": "p_33",
+          "skills": {}
+        },
+        {
+          "id": "p_34",
+          "skills": {}
+        },
+        {
+          "id": "p_35",
+          "skills": {}
+        },
+        {
+          "id": "p_36",
+          "skills": {}
+        },
+        {
+          "id": "p_37",
+          "skills": {
+            "hauling": 0.058663449375,
+            "unarmed": 0.00008379892693466658
+          }
+        }
+      ],
+      "hourlySamples": 720,
+      "hardFailureSamples": 0,
+      "impossibleResources": [],
+      "duplicateIdentities": [],
+      "hash": "af620ad1b8bc975062b430181e13b4146ad3b8966c63ef1b05fc274cd0d562bd"
+    }
+  ],
+  "continuation": {
+    "aPath": "D:/TornVeilValidation/observatory-hardening-20260930/revision-21/repaired-918271/final.save.json.gz",
+    "bPath": "D:/TornVeilValidation/observatory-hardening-20260930/revision-21/continuation-918271/final.save.json.gz",
+    "differences": 4,
+    "valueDifferences": 0,
+    "propertyOrderDifferences": 4,
+    "categories": {
+      "persons": 4
+    },
+    "rows": [
+      {
+        "path": "$.persons.8.mind.concerns.0",
+        "kind": "property-order",
+        "a": [
+          "id",
+          "kind",
+          "subjectId",
+          "aboutId",
+          "situationId",
+          "basisKeys",
+          "intensity",
+          "createdAt",
+          "lastReinforcedAt",
+          "status",
+          "reasons",
+          "addressedAt",
+          "lastActedAt"
+        ],
+        "b": [
+          "id",
+          "kind",
+          "subjectId",
+          "aboutId",
+          "basisKeys",
+          "intensity",
+          "createdAt",
+          "lastReinforcedAt",
+          "status",
+          "reasons",
+          "addressedAt",
+          "lastActedAt",
+          "situationId"
+        ]
+      },
+      {
+        "path": "$.persons.8.mind.concerns.1",
+        "kind": "property-order",
+        "a": [
+          "id",
+          "kind",
+          "subjectId",
+          "situationId",
+          "basisKeys",
+          "intensity",
+          "createdAt",
+          "lastReinforcedAt",
+          "status",
+          "reasons",
+          "addressedAt"
+        ],
+        "b": [
+          "id",
+          "kind",
+          "subjectId",
+          "basisKeys",
+          "intensity",
+          "createdAt",
+          "lastReinforcedAt",
+          "status",
+          "reasons",
+          "addressedAt",
+          "situationId"
+        ]
+      },
+      {
+        "path": "$.persons.14.mind.concerns.0",
+        "kind": "property-order",
+        "a": [
+          "id",
+          "kind",
+          "subjectId",
+          "situationId",
+          "basisKeys",
+          "intensity",
+          "createdAt",
+          "lastReinforcedAt",
+          "status",
+          "reasons"
+        ],
+        "b": [
+          "id",
+          "kind",
+          "subjectId",
+          "basisKeys",
+          "intensity",
+          "createdAt",
+          "lastReinforcedAt",
+          "status",
+          "reasons",
+          "situationId"
+        ]
+      },
+      {
+        "path": "$.persons.29.mind.concerns.0",
+        "kind": "property-order",
+        "a": [
+          "id",
+          "kind",
+          "subjectId",
+          "situationId",
+          "basisKeys",
+          "intensity",
+          "createdAt",
+          "lastReinforcedAt",
+          "status",
+          "reasons",
+          "addressedAt",
+          "lastActedAt"
+        ],
+        "b": [
+          "id",
+          "kind",
+          "subjectId",
+          "basisKeys",
+          "intensity",
+          "createdAt",
+          "lastReinforcedAt",
+          "status",
+          "reasons",
+          "addressedAt",
+          "lastActedAt",
+          "situationId"
+        ]
+      }
+    ]
+  },
+  "continuationReview": {
+    "classification": "C",
+    "comparisonSHA256": "34918aff3da43cbc9a7b06fbc7400d47f45cadf831b7b14580f4d651a61f134d",
+    "valueDifferences": 0,
+    "rawDifferences": 4,
+    "unreviewedDifferences": 0,
+    "relevantCanonicalStateEquivalent": true,
+    "reviewedOrderDifferences": [
+      {
+        "path": "$.persons.8.mind.concerns.0",
+        "kind": "property-order",
+        "a": [
+          "id",
+          "kind",
+          "subjectId",
+          "aboutId",
+          "situationId",
+          "basisKeys",
+          "intensity",
+          "createdAt",
+          "lastReinforcedAt",
+          "status",
+          "reasons",
+          "addressedAt",
+          "lastActedAt"
+        ],
+        "b": [
+          "id",
+          "kind",
+          "subjectId",
+          "aboutId",
+          "basisKeys",
+          "intensity",
+          "createdAt",
+          "lastReinforcedAt",
+          "status",
+          "reasons",
+          "addressedAt",
+          "lastActedAt",
+          "situationId"
+        ],
+        "person": "p_9",
+        "name": "Wendel Crane",
+        "concern": "cn_1051",
+        "finalSituation": "sit_102",
+        "classification": "C",
+        "reason": "JSON omitted an undefined optional field. Later named-field assignment appends its property in the loaded record. All values and all collection ordering match."
+      },
+      {
+        "path": "$.persons.8.mind.concerns.1",
+        "kind": "property-order",
+        "a": [
+          "id",
+          "kind",
+          "subjectId",
+          "situationId",
+          "basisKeys",
+          "intensity",
+          "createdAt",
+          "lastReinforcedAt",
+          "status",
+          "reasons",
+          "addressedAt"
+        ],
+        "b": [
+          "id",
+          "kind",
+          "subjectId",
+          "basisKeys",
+          "intensity",
+          "createdAt",
+          "lastReinforcedAt",
+          "status",
+          "reasons",
+          "addressedAt",
+          "situationId"
+        ],
+        "person": "p_9",
+        "name": "Wendel Crane",
+        "concern": "cn_2099",
+        "finalSituation": "sit_102",
+        "classification": "C",
+        "reason": "JSON omitted an undefined optional field. Later named-field assignment appends its property in the loaded record. All values and all collection ordering match."
+      },
+      {
+        "path": "$.persons.14.mind.concerns.0",
+        "kind": "property-order",
+        "a": [
+          "id",
+          "kind",
+          "subjectId",
+          "situationId",
+          "basisKeys",
+          "intensity",
+          "createdAt",
+          "lastReinforcedAt",
+          "status",
+          "reasons"
+        ],
+        "b": [
+          "id",
+          "kind",
+          "subjectId",
+          "basisKeys",
+          "intensity",
+          "createdAt",
+          "lastReinforcedAt",
+          "status",
+          "reasons",
+          "situationId"
+        ],
+        "person": "p_15",
+        "name": "Dunstan Mole",
+        "concern": "cn_2324",
+        "finalSituation": "sit_98",
+        "classification": "C",
+        "reason": "JSON omitted an undefined optional field. Later named-field assignment appends its property in the loaded record. All values and all collection ordering match."
+      },
+      {
+        "path": "$.persons.29.mind.concerns.0",
+        "kind": "property-order",
+        "a": [
+          "id",
+          "kind",
+          "subjectId",
+          "situationId",
+          "basisKeys",
+          "intensity",
+          "createdAt",
+          "lastReinforcedAt",
+          "status",
+          "reasons",
+          "addressedAt",
+          "lastActedAt"
+        ],
+        "b": [
+          "id",
+          "kind",
+          "subjectId",
+          "basisKeys",
+          "intensity",
+          "createdAt",
+          "lastReinforcedAt",
+          "status",
+          "reasons",
+          "addressedAt",
+          "lastActedAt",
+          "situationId"
+        ],
+        "person": "p_30",
+        "name": "Fenn Muddle",
+        "concern": "cn_1502",
+        "finalSituation": "sit_150",
+        "classification": "C",
+        "reason": "JSON omitted an undefined optional field. Later named-field assignment appends its property in the loaded record. All values and all collection ordering match."
+      }
+    ],
+    "sourceEvidence": [
+      "src/sim/mind/concern.ts: formConcerns creates situationId before basisKeys even when undefined; reinforcement assigns it by name.",
+      "Concern decisions access named fields; list ordering is unchanged. The generic compaction traversal collects reference membership, independent of this record-field order.",
+      "New execution snapshots reconnect conversation topics through explicit lastTopicLinks; the legacy JSON-equality heuristic is not used for these snapshots."
+    ],
+    "scope": "Human-reviewed classification of these four exact rows only. No values, collection order, comparison rows or saved worlds are normalized or rewritten. Raw strict comparison still reports four differences. New or changed rows require their own review.",
+    "comparisonMatches": true
+  },
+  "replays": [
+    {
+      "days": 1,
+      "aPath": "D:/TornVeilValidation/observatory-hardening-20260930/revision-21/repaired-918271/day-1.save.json.gz",
+      "bPath": "D:/TornVeilValidation/observatory-hardening-20260930/revision-21/repeat-918271/day-1.save.json.gz",
+      "differences": 0,
+      "valueDifferences": 0,
+      "propertyOrderDifferences": 0,
+      "categories": {},
+      "rows": []
+    },
+    {
+      "days": 7,
+      "aPath": "D:/TornVeilValidation/observatory-hardening-20260930/revision-21/repaired-918271/day-7.save.json.gz",
+      "bPath": "D:/TornVeilValidation/observatory-hardening-20260930/revision-21/repeat-918271/day-7.save.json.gz",
+      "differences": 0,
+      "valueDifferences": 0,
+      "propertyOrderDifferences": 0,
+      "categories": {},
+      "rows": []
+    },
+    {
+      "days": 30,
+      "aPath": "D:/TornVeilValidation/observatory-hardening-20260930/revision-21/repaired-918271/day-30.save.json.gz",
+      "bPath": "D:/TornVeilValidation/observatory-hardening-20260930/revision-21/repeat-918271/day-30.save.json.gz",
+      "differences": 0,
+      "valueDifferences": 0,
+      "propertyOrderDifferences": 0,
+      "categories": {},
+      "rows": []
+    }
+  ]
+}

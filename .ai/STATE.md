@@ -1,42 +1,49 @@
-# Current: Observatory simulation integrity — IN PROGRESS (2026-09-30)
+# Current: Observatory simulation integrity — reviewed AMBER handoff (2026-09-30)
 
-Authoritative Desktop checkout, branch `codex/observatory-local-language`. The completed
-Observatory/local-language work was preserved in `e59b7da` / `633a5d2`. The original ordinary
-seed-918271 30-day RED was exactly reproduced before simulation edits. Full receipts explain
-the original food balance, five combat injuries, case-completion loops, fear churn and bad paths.
-See `docs/OBSERVATORY_HARDENING.md` for the evidence and later multi-seed findings.
+Authoritative Desktop checkout, branch `codex/observatory-local-language`. Completed prior
+Observatory/local-language work was preserved in `e59b7da` / `633a5d2`; original seed-918271
+30-day RED was exactly reproduced before simulation edits. Confirmed planning, reporting,
+delivery, memory, navigation and persistence repairs are preserved through simulation commit
+`187a035`; current test-only fixture commit is `2d79e62`. See `docs/OBSERVATORY_HARDENING.md`.
 
-Local simulation/diagnostic repairs are preserved through `f5eb319` (previous `f7380cb`, `7c55be6`, `eb08760`,
-previous `8262390`, `e47bfb5`). Revision 13 completed all seeds, but detailed review exposed stale
-listener locations across distinct report cases. Revision 14 then exposed terminal same-key
-plans rebuilding old parameters instead of current evidence, plus mutable hourly diagnostic
-payloads. Revision 15 then reproduced 601 reports to an observed sleeping guard; nearby
-sightings reopened backoff despite ordinary conversation refusing the sleeping listener.
-Selection/reopening now honor that conversation contract. Revision 16 found the same listener
-failure bypassed across different cases after turning away; records now retain failure time
-and listener attempts independently of eventual delivery to another guard. Sixty-nine focused
-regressions and typecheck passed. Revision 17 then exposed critical water/fear oscillation
-through a categorical proximity override. Critical invested needs now compete through shared
-utility, with immediate attacks still interrupting; 53 focused tests/typecheck and 21 inspector
-tests pass. Revision 18 completed all three 30-day runs with zero configured hard failures,
-but rate-window review exposed food/work and harvest/social oscillation in seed 918273:
-ordinary unfinished attempts lost their assessment when the current proposal disappeared.
-The shared selector now retains finite attempts until fresh reassessment, completion/failure,
-or a winning competing need/emergency. Two tests fail before; 55 focused tests and typecheck
-pass afterward. Revision 19 also completed all three runs with zero configured hard failures,
-but final primary rate review exposed Kestrel reselecting failed hunting 354 times: fresh
-empty-ground evidence lacked practical-memory priority and could be evicted immediately.
-It now retains the same priority as other practical stock evidence for the existing hunt
-interval, inside the unchanged bound. The before regression fails; 74 focused tests and
-typecheck pass after the repair. Revision 20 is running the three-seed 30-day matrix.
-Final replay, save/reload continuation, the normal suite,
-browser handoff and final acceptance remain outstanding; no intermediate run is acceptance.
+Revision 20 completed all three 30-day seeds with zero configured hard failures, balanced
+edible-unit ledgers, no stuck-path groups or duplicate event identities. Fresh revision-21
+primary matches every prior saved value and property order; its only addition is the persisted
+compaction cursor. Decision-window reviews are identical. Day-15 reload + 15 days matches every
+canonical value and final content hash `461b057fa012be7574cd973a1a4b91366e2b7618cd269eba2e9e0c1f6b7698f4`.
+Raw strict comparison retains four optional `situationId` property-order differences inside
+fixed concern records. Their exact SHA-bound class-C review is saved; no meaningful values or
+collection ordering are normalized. Legacy saves remain best-effort for missing metadata.
 
-Raw runs: `D:/TornVeilValidation/observatory-hardening-20260930`. Original baseline remains in
-`.debug/observatory-hardening/baseline/replay-918271`. The UI archive still must be populated
-at `.debug/observatory-hardening/reviewed-918271`. No live/staging, Unreal, web gameplay
-presentation, push or merge. Preserve the older Observatory process; the launcher chooses
-a free port for the new diagnostic version.
+Normal coverage: full invocation had 1,409 passes and four living-universe cutoff failures
+(162 files / 1,413 tests). Only that fixture changed to five world days; all 11 of its tests
+then passed with every assertion retained. Other 161 passing files remain valid. Build and
+latest typecheck pass. Real qwen, disabled and offline modes match canonical outcomes.
+Quiet three-hour benchmark trials match the primary final hash; maxima 115.766 / 103.353 /
+99.181 ms, so the unchanged 100 ms budget remains AMBER. Remaining decision/economy/social
+coverage gaps are recorded, not hidden; overall simulation integrity is not universally verified.
+
+Independent revision-21 repeat completed: strict day-1/7/30 comparisons have zero value and
+zero property-order differences. The nine-horizon validation summary, raw continuation plus
+exact-row review and final verification manifest are checked in under
+`docs/evidence/observatory-hardening`. Browser `--hardening` passes with no errors; screenshots
+were visually inspected. The exact `Torn Veil Observatory.cmd` launcher started server PID
+19672 on port 7481; the reviewed seed-918271 day-30 world is loaded paused at tick 11258400.
+Opening it in the Codex browser panel was also requested (queued by the app). Old port 7480 was preserved.
+
+Bounded statuses: DETERMINISM, SAVE/LOAD (canonical values, four disclosed nonsemantic record
+field-order differences) and LOCAL LLM ISOLATION VERIFIED. SIMULATION INTEGRITY, ECONOMY
+CAUSALITY, NPC DECISION-MAKING, KNOWLEDGE, SOCIAL CAUSALITY, EVENT HEALTH and PERFORMANCE
+PARTIAL. Remaining warnings include 16/11/11 worst-window churn actors, incomplete economic
+and epistemic coverage, and maximum-step budget overruns. These are visible, not suppressed.
+The original RED findings are explained and repaired/classified; no universal correctness claim.
+
+Raw evidence: `D:/TornVeilValidation/observatory-hardening-20260930`. Browser subset is populated
+at `.debug/observatory-hardening/reviewed-918271`. Baseline UI files remain under `baseline/replay-918271`;
+eleven bulk files moved to D `baseline-bulk` with before/after SHA verification and checked manifest.
+Preserve the paused reviewed server on port 7481 and old Observatory on port 7480. No live/staging,
+Unreal or web gameplay presentation changes, pushes or merges. C drive is low; large outputs go to D.
+
 # Previous: Observatory and local language — branch `codex/observatory-local-language` (2026-09-29)
 
 Built on the clean web-rebirth checkout at the authoritative Desktop location. Launch with

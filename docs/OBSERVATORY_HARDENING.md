@@ -1,6 +1,73 @@
 # Observatory integrity investigation
 
-This investigation is in progress. Its acceptance target is causal integrity and inspectability, not prosperity. All runs use disposable development worlds. Live, staging, web gameplay, Unreal, and model capabilities are outside this work.
+The original RED investigation and bounded validation are complete. Overall integrity remains **AMBER**: the original findings are explained, confirmed simulation defects are repaired, and incomplete evidence and performance warnings remain visible. All runs use disposable development worlds. Live, staging, web gameplay presentation, Unreal, and model capabilities were not modified.
+
+## Final handoff
+
+Launch **`Torn Veil Observatory.cmd`** from `C:\Users\green\Desktop\projects\torn-veil-online`.
+The delivered launcher was executed; its new server is at **http://127.0.0.1:7481** with the
+reviewed day-30 world loaded **paused**. The older port-7480 process was preserved. A future
+launch chooses the appropriate free port. In **30-day integrity investigation**, use
+**Original RED evidence**, **Repaired run evidence**, **Inspect repaired saved world**, and
+**Reproduce 30-day validation**. The reproduction is **ordinary / seed 918271 / 30 days**,
+scenario version **2**, save schema **25**. Version 2 records terrain edits from initialization;
+the preserved original scenario and receipts remain available separately.
+
+| Original finding | Final classification, repair and evidence |
+| --- | --- |
+| Stuck behavior | **A — simulation defect.** Escape chose disconnected roof floors and retried failed destinations. Reachability and remembered failure now constrain ordinary planning. Exact Aldous receipts and failing-before regressions are preserved; no stuck-path groups occur in the accepted three-seed matrix. |
+| Goal churn | **A — simulation defect.** Turning away from a threat erased the assessment of an unfinished escape; later review found the same proposal/attempt confusion in ordinary needs. Finite attempts retain their grounded assessment, with stronger needs and immediate danger still able to interrupt. Original actor timelines and focused regressions support the repair. Other rate leads remain class F. |
+| Repeated events | **A — simulation defect.** Case identity was omitted, allowing handled investigation/confrontation plans to complete repeatedly. Case identity, actual action success and retry evidence now govern progress; additional reporting, delivery and hunting loops found during review were repaired at their shared layers. No configured hard loop or duplicate event-identity failures occur in the accepted matrix. |
+| Slow step | **B — performance defect.** Measured compaction dominates the offending step. Scoped traversal/index reuse preserves exact outcomes in controlled comparisons, but the unchanged 100 ms maximum budget is still exceeded in some final trials. Remains AMBER. |
+| Food pressure | **D — legitimate emergent hardship.** Both original and repaired edible-unit ledgers close with zero unexplained loss. Actual labor, processing, access, affordability and interruption evidence is detailed below. This does not certify every economic decision or a full calorie/mass balance. |
+| Injuries | **D — implemented combat outcome.** All original five bodies have physical contact and action-parent receipts; care and HP recovery use ordinary mechanics. Independent reconstruction of every swept trajectory and regional-wound mending remain outside the verified scope. |
+
+| Primary day-30 measure | Original | Repaired |
+| --- | ---: | ---: |
+| People alive | 33 | 33 |
+| Edible stock, starting at 377 | 47 | 107 |
+| Pressured households (hunger or thirst) | 14 | 14 |
+| Bodies below maximum HP | 5 | 0 |
+| Emitted events during the run | 783,572 | 482,373 |
+| Instrumented step median / p95 / max, ms | 2.242 / 10.683 / 180.243 | 2.353 / 10.329 / 185.148 |
+
+Different repaired histories and observer overhead make the last row descriptive, not a
+controlled speedup claim. Controlled compaction-only comparisons and final quiet trials are
+reported below. Hardship and event counts are outcomes, not integrity pass criteria.
+
+Seeds **918271, 918272 and 918273** completed 30 days with retained day-1 and day-7 checkpoints,
+**720 hourly samples each**, zero configured hard failures and balanced edible-unit ledgers.
+The independent primary replay has **zero value or property-order differences** at days 1,
+7 and 30. Saving at day 15 and continuing after reload has **zero canonical value differences**;
+four optional concern-field order differences are preserved and individually reviewed as class C.
+The source scope and every raw difference are retained, rather than normalized away.
+
+| Requested status | Verdict | Evidence scope / remaining limit |
+| --- | --- | --- |
+| SIMULATION INTEGRITY | PARTIAL | All configured hard checks pass across the nine horizons; unclassified leads and coverage gaps remain. |
+| DETERMINISM | VERIFIED | Independent same-input 30-day replay; all saved values and property order match at days 1, 7 and 30, excluding only envelope `savedAt`. |
+| SAVE/LOAD | VERIFIED | New-save day-15 reload plus 15 days matches every canonical value; four nonsemantic field-order differences disclosed. Legacy missing metadata is best-effort. |
+| ECONOMY CAUSALITY | PARTIAL | Exact edible-unit balances and workplace/household receipts; incomplete full-material and unavailable-offer accounting. |
+| NPC DECISION-MAKING | PARTIAL | Confirmed shared-planning/retry defects repaired and regression-tested; remaining worst-window leads are class F. |
+| KNOWLEDGE | PARTIAL | Focused provenance/acquisition checks and negative-evidence repairs; not an exhaustive audit of legacy epistemology. |
+| SOCIAL CAUSALITY | PARTIAL | Stored causes and reporting/action receipts checked; interpretation of lawful violence remains imperfect. |
+| EVENT HEALTH | PARTIAL | No duplicate identities or configured hard loops; activity-rate leads remain visible and historical compaction limits inspection. |
+| PERFORMANCE | PARTIAL | Exact hotspot identified and scoped optimization equivalence verified; maximum-step budget not consistently met. |
+| LOCAL LLM ISOLATION | VERIFIED | Real qwen3:8b, disabled and offline runs have identical mechanics; expression changes no saved field/event, and existing injection/privacy/fallback regressions pass. |
+
+These verdicts apply to the recorded scenarios, inputs and source, not every possible world.
+Normal regression coverage is **1,413 tests / 162 files** through the full invocation plus
+the complete rerun of its sole failing file after an evidence-backed fixture correction.
+Build, typecheck and browser hardening acceptance pass. Screenshots were visually inspected,
+including the actual launcher server's paused world and expanded ledger.
+
+Start with [final-verification.json](evidence/observatory-hardening/final-verification.json),
+[validation-summary.json](evidence/observatory-hardening/validation-summary.json), and
+[remaining-leads.json](evidence/observatory-hardening/remaining-leads.json). Full emission-time
+receipts, checkpoints, profiles and failed/intermediate investigations remain under
+`D:/TornVeilValidation/observatory-hardening-20260930`; browser subsets remain in
+`.debug/observatory-hardening`. No food was injected, thresholds weakened, events suppressed,
+or actor-specific recovery scripts added. Changes are committed locally; no push or merge.
 
 ## Preserved baseline
 
@@ -47,6 +114,12 @@ The instrumented first 960 steps and an uninstrumented run both produced full ca
 
 The unchanged 30-day replay is recorded under `.debug/observatory-hardening/baseline/replay-918271`. `extract-audit.ts` builds evidence grouped by actor, signature, case, workplace, and household; `profile-summary.mjs` summarizes the V8 CPU profile. Instrumented timings include observer cost and must be distinguished from uninstrumented benchmarks.
 
+The browser-required baseline evidence and final save remain at that path. During final
+verification, eleven bulky raw/checkpoint files (237,148,705 bytes) were moved to
+`D:/TornVeilValidation/observatory-hardening-20260930/baseline-bulk` to preserve system-drive
+headroom. Every file's SHA-256 was checked before and after the move; none was discarded.
+Exact old/new locations and hashes are in `docs/evidence/observatory-hardening/baseline-relocation.json`.
+
 Four focused regression tests in `tests/observatory-root-causes.test.ts` fail on the preserved implementation: restarting a handled investigation or confrontation when another case shares its key; abandoning an unfinished escape when the threat is no longer perceived; and selecting a disconnected roof for escape. The failure log is `baseline/root-causes-before.log`.
 
 ## Reproduction completed before simulation edits
@@ -68,11 +141,9 @@ The original rate thresholds are unchanged. Each original finding now has archiv
 
 Instrumented whole-run timings: median 2.242 ms, p95 10.683 ms, maximum 180.243 ms; event observation itself cost 9.212 seconds across the run. These are not the uninstrumented comparison. `baseline/step-before.json` contains three uninstrumented trials over the same final-three-hour checkpoint.
 
-Additional save/load defect found: restoring the day-29.875 checkpoint and continuing three hours reproduces the same world mechanics but yields **23 persisted differences**, all in `execution.lastTopic` (cached concern intensity and situation history). Those objects retain live references during continuous execution but become detached JSON copies on load. They are not normalized away. Full differences are preserved in `baseline/continuation-diff.json.gz`; continuation remains unverified until repaired and tested over the required long horizon.
+Additional save/load defect found in the baseline: restoring the day-29.875 checkpoint and continuing three hours reproduces the same world mechanics but yields **23 persisted differences**, all in `execution.lastTopic` (cached concern intensity and situation history). Those objects retain live references during continuous execution but become detached JSON copies on load. They were not normalized away. Full differences are preserved in `baseline/continuation-diff.json.gz`; the repair and completed long-horizon verification are recorded below.
 
-Repairs, final multi-seed validation, complete household/workplace analysis, and handoff remain in progress.
-
-## Repairs under validation
+## Repairs and their evidence
 
 Goal identity now includes the underlying evidence key for investigations, reports, and confrontations. A new accusation at the same place or against the same person cannot restart an old handled case. Escape destinations must have a navigable path from the actor's actual height; the existing eight-direction search tries another destination when a roof is disconnected. An unfinished escape retains its last grounded utility when turning away removes the threat from view. This commitment ends with that finite plan (travel plus the existing 180-second hiding action); stronger competing goals still use the shared selection rules. No actor-specific recovery code, extra knowledge, food, or utility bonus was added.
 
@@ -271,7 +342,8 @@ The fourth revision's original seed had one strict save/load difference: `doors[
 checkpoint and remained at day 30; every other saved field matched. Reconstructing a completed
 structure cleared its door after saved door states had been applied. Door restoration now
 follows reconstruction. Immediate round-trip differences are zero, and a regression opens a
-completed building's door before loading. A fresh final continuation is still required.
+completed building's door before loading. That iteration still required a fresh continuation;
+the completed final comparison is recorded below.
 
 The new defeated-target detector itself had a class C false positive. In the fourth revision,
 Bors completed an attack after Tomas's earlier recorded defeat at 9044400, then responded to
@@ -379,7 +451,7 @@ files. The original baseline stays in place; no evidence was discarded.
 
 ## Local language isolation regression
 
-The unchanged language implementation was checked against the current simulation using a real
+An earlier check of the unchanged language implementation used a real
 installed `qwen3:8b`, disabled mode, and an unreachable loopback endpoint. Each independent seed-918271
 world ran 20 steps, requested one read-only expression, then ran another 100 steps. The real request
 validated without fallback in 27.029 seconds on simulation revision c7b1997. All three final canonical hashes are
@@ -389,6 +461,14 @@ The expression itself changes no serialized field and adds zero events in every 
 models, ordinary conversation fallback, and truth/belief separation. Generated wording does not
 automatically become memory. Evidence: `docs/evidence/observatory-hardening/language-isolation.json` (raw archive also on D:).
 Earlier HTTP-500 and timeout attempts remain recorded; no backend/model capability was changed.
+
+The final check on simulation `187a035` again validates real `qwen3:8b` without fallback,
+plus disabled and refused-connection modes. Each produces the same final content hash
+`4a84e419accfc2bea3b3fb8af4fb6ce82df97c4b5ab59f95b5da806718be2d88`, including the new
+saved compaction cursor. Expression changes zero fields and emits zero events. See
+`docs/evidence/observatory-hardening/language-isolation-current.json`. The 14 existing
+language regressions also pass in the normal suite. No LLM feature or canonical capability
+was added; this is a bounded 120-step isolation check, not a long model-load benchmark.
 
 Revision 11 found a class-C detector error in seed 918272. Bors completed attack at
 9182811 (`e_122402`) and again at 9182856 (`e_122439`) under the same adoption and old
@@ -621,7 +701,74 @@ or recovery script is added. Seventy-four focused progress, economy and knowledg
 plus typecheck pass. Selected receipts: `docs/evidence/observatory-hardening/hunt-memory-before.json`.
 Revision 19 is preserved as intermediate evidence. Commit `f5eb319` starts revision 20.
 
-## Limits that remain AMBER
+## Continuous world results and remaining decision leads
+
+The reviewed revision-20 matrix has **720 hourly samples per seed**, no configured hard
+failures, no stuck-path groups, no duplicate event identities, no hit/contact identity
+failures and no absent hit-action parents. It preserves every rate alert. The three
+archives have 344, 325 and 313 warning groups respectively; these are signature groups,
+not counts of confirmed defects. The failed-hunt retry group is gone.
+
+| Seed | Days | Alive | Edible units | Pressured households | Low-HP bodies | Knowledge records | Emitted events |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 918271 | 1 | 33 | 322 | 3 | 5 | 8,186 | 18,450 |
+| 918271 | 7 | 33 | 134 | 7 | 11 | 13,818 | 148,932 |
+| 918271 | 30 | 33 | 107 | 14 | 0 | 13,959 | 482,373 |
+| 918272 | 1 | 33 | 337 | 6 | 10 | 8,738 | 21,739 |
+| 918272 | 7 | 33 | 121 | 5 | 9 | 13,894 | 119,558 |
+| 918272 | 30 | 33 | 50 | 15 | 1 | 14,101 | 491,102 |
+| 918273 | 1 | 33 | 325 | 5 | 2 | 7,726 | 13,203 |
+| 918273 | 7 | 33 | 120 | 8 | 11 | 13,873 | 120,274 |
+| 918273 | 30 | 33 | 72 | 13 | 8 | 14,016 | 483,432 |
+
+These horizons are checkpoints along each continuous run, starting from the same ordinary
+fixture for that seed. Low HP is separate from localized wounds; zero low-HP bodies does
+not assert no fights or no wounds. All three edible-unit balances close:
+
+- 918271: **377 + 1051 − 1129 − 170 − 22 = 107**.
+- 918272: **377 + 929 − 1112 − 138 − 6 = 50**.
+- 918273: **377 + 1005 − 1144 − 152 − 14 = 72**.
+
+Terms remain initial + production − consumption − spoilage − edible transformation inputs.
+Internal transfers net to zero. There is no injected food or guaranteed-prosperity target.
+The source digests and complete production, trade, injury, conflict, knowledge, relationship,
+labor and skill outcomes are retained per run, rather than merging distinct seeds' histories.
+
+The remaining worst churn windows contain 16, 11 and 11 actors, with maximum counts 64,
+49 and 48. Review distinguishes completed finite flights and distinct reported cases from
+repeated failure. Subsequent completion receipts exist for most displaced ordinary needs;
+some are hours later, so they demonstrate bounded progress rather than optimal choices.
+For example, seed 918271 Alwin's hauling completes at 9565302 after his worst window ends
+at 9562800. Seed 918272 Fenn's sleeping completes 105534 world seconds after his window.
+
+Tilly Fletcher's primary worst window contains 30 meal adoptions and 30 flights, 29 of
+which complete. No later completed meal was found before day 30. Her final pantry evidence
+is empty, personal wealth is zero, and actual failure `e_481731` at 11255133 records an
+unaffordable four-silver meal. These explain sampled material barriers but do not prove
+every intervening choice is appropriate. This unresolved decision-quality lead remains
+**F — insufficient evidence**, AMBER, rather than being labeled an infinite loop or declared
+healthy. `docs/evidence/observatory-hardening/remaining-leads.json` records all these windows
+and subsequent-progress checks; complete event-time receipts remain in each run archive.
+
+## Exact continuation verification
+
+The normal suite identified four **E — integration observation-window failures** in the
+existing seed-17 living-universe fixture. At its old 2400-physical-second endpoint (1.667
+world days), ordinary mechanical output is 5.886, seven flour units have been delivered,
+one person holds the discovered method and no bread has yet been baked. A receipt trace
+shows the baker using ordinary meals, sleep, conversation, substitute mill work and hauling;
+this is not zero progress or a missing production transformation. Actual first bread occurs
+at physical time 6259 (`e_9935`, Wren Alder, world tick 9041940). At five world days the
+normal/control/manual/plank variants bake 20/10/40/20 units; mechanical output remains zero
+in the calm and skilled-manual controls, while normal and plank variants teach their methods.
+
+Only this fixture's observation horizon and corresponding wall-time test limits change.
+Every existing output, comparative-control, material/energy conservation, provenance,
+teaching isolation, deterministic replay and continuation assertion is retained. The original
+seed, generated resources, people, autonomous decisions and wind controls remain unchanged.
+The Observatory's 1/7/30-day horizons do not change. Before/after timing receipts are checked
+in as `docs/evidence/observatory-hardening/living-fixture-timing.json`; full trace and failure
+logs remain under `revision-21`. This is not a runtime adjustment to make the economy succeed.
 
 Revision 20 completed all three continuous 30-day worlds with zero configured hard failures,
 but the uninstrumented final-three-hour checkpoint trial exposed **A — lost compaction
@@ -640,7 +787,9 @@ step, threshold, retention rule or NPC decision changes. Eighteen focused persis
 continuation and root-cause tests plus typecheck pass. The pre-fix short continuation, strict
 diff and benchmark remain under `revision-20`; long continuation must use newly captured saves.
 The three-seed continuous outcome/decision evidence remains valid for this persistence-only
-repair, and a new primary continuous run will also check that assertion explicitly.
+repair. A fresh primary run verifies that assertion at days 1, 7, 15 and 30: each strict
+cross-revision comparison reports only the added cursor, with every previously saved value
+and property order equal. Complete decision-window reviews are also identical.
 
 The final saved-state comparator also audits object property enumeration order. Earlier
 content fingerprints sort object keys, which alone cannot certify future iteration behavior
@@ -648,7 +797,79 @@ of knowledge tables. A synthetic two-key reversal passed the old comparator and 
 strengthened one; identical input still passes. Final comparisons report value and order
 differences separately, and count either as a divergence. Only envelope `savedAt` is omitted.
 This verification change does not alter simulation behavior. The fingerprint source comment
-changed after revision 20 started; its algorithm and all simulation source remain unchanged.
+changed after revision 20 started; that edit changed neither its algorithm nor simulation
+source. The later compaction-cadence persistence repair is recorded separately above.
+
+With that repair, continuous day 30 and day-15-save/reload-plus-15-days have **zero value
+differences** across all persisted fields, including execution, RNG streams, ownership,
+inventory, bodies, knowledge, relationships, economy, terrain, clocks and event history.
+Both content digests are `461b057fa012be7574cd973a1a4b91366e2b7618cd269eba2e9e0c1f6b7698f4`.
+The raw strict comparison still reports **four property-order differences**, all reviewed
+as **C — false positives for simulation-state divergence**:
+
+| Person | Concern | Difference |
+| --- | --- | --- |
+| Wendel Crane, p_9 | cn_1051 | `situationId` property moves after the other fields |
+| Wendel Crane, p_9 | cn_2099 | same |
+| Dunstan Mole, p_15 | cn_2324 | same |
+| Fenn Muddle, p_30 | cn_1502 | same |
+
+`formConcerns` initially creates this optional named field with `undefined`. JSON omits it;
+a later evidence-backed assignment appends it to the restored object's properties. Values,
+concern-array order and every other key order match. Decisions read concern fields by name;
+the generic reference collector uses membership, not record-field order. New execution saves
+use explicit topic links rather than the legacy JSON-equality fallback. Thus these four
+fixed-record layout differences do not change the represented state or behavior. This is
+not a byte-identical serialization claim. The raw diff is preserved unmodified, and its
+SHA-256-bound review lists all four exact rows. The summary refuses a review whose rows or
+hash differ; other ordering differences are not automatically excused.
+
+The independent fresh revision-21 repeat also completed. Strict comparisons at days **1, 7
+and 30** report **zero value differences and zero property-order differences**. Day-30
+content hash is again `461b057fa012be7574cd973a1a4b91366e2b7618cd269eba2e9e0c1f6b7698f4`.
+The raw comparisons are `revision-21/repeat-day-{1,7,30}-diff.json.gz`; both runs retain source
+digest `79e3b3695df4606ad9bc01c303f0e9511b89263c747522ed16e368550dd793fb`.
+The matrix's other two seeds use revision 20; the only subsequent simulation change persists
+the compaction cursor. The primary's strict cross-revision checks and identical complete
+decision review establish unchanged continuous behavior. Each run keeps its own source hash.
+
+Browser hardening acceptance passes with no browser errors. It expands an actual original
+decision receipt, downloads complete evidence, opens hourly findings, checks nine original
+diagnoses and nine horizon rows, displays the raw continuation differences and exact-row
+review, loads the repaired world paused, and starts/cancels the reproduction action.
+Screenshot evidence and `browser-evidence.json` are in `.debug/observatory-hardening/browser`.
+The delivered launcher was then executed separately, preserving the older server; its new
+port-7481 world was loaded from the reviewed archive and visually inspected paused at tick
+11258400. `revision-21/handoff.json` records that final local state.
+
+## Limits that remain AMBER
+
+Final uninstrumented benchmark: three independent restores of revision-21 day 29.875,
+each advanced 1200 fixed steps to day 30 without event listeners or an in-step profiler.
+Every final content hash equals the continuous primary. The host had no other owned
+validation jobs running during these trials; unrelated applications may still contribute.
+
+| Trial | Median ms | p95 ms | Maximum ms |
+| --- | ---: | ---: | ---: |
+| 1 | 3.310 | 12.315 | 115.766 |
+| 2 | 2.861 | 12.253 | 103.353 |
+| 3 | 2.718 | 11.624 | 99.181 |
+
+The original uninstrumented before/compaction-only after trials above provide the controlled
+semantics-preserving comparison. These final trials use the repaired world's different
+history and are not substituted for that experiment. The full instrumented primary is
+median **2.353**, p95 **10.329**, max **185.148 ms**, versus the original instrumented
+**2.242 / 10.683 / 180.243 ms**. Those shared-host whole-run figures include differing
+histories and diagnostic overhead; they do not establish an overall speedup. The unchanged
+100 ms maximum-step objective remains unverified. Evidence: `step-benchmark-current.json`.
+
+Normal regression coverage totals **1,413 tests across 162 files**. The complete invocation
+finished with 1,409 passes and four failures confined to the old living-universe cutoff.
+After the documented test-only horizon correction, all 11 tests in that file pass (161.80 s).
+No runtime source changed afterward; the other 161 passing files remain valid. This is full
+coverage through the full invocation plus its focused rerun, not a claim that the first
+invocation exited successfully. Production build and the final diagnostic-script typecheck
+pass. The original failing logs remain preserved alongside the rerun.
 
 - Activity-rate alerts retain their original thresholds. Distinct reports, timed hiding,
   ordinary observations and repeated care can cross them. Complete worst-window receipts

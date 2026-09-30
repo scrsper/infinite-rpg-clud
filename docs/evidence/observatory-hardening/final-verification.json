@@ -1,0 +1,663 @@
+{
+  "scope": "Configured isolated ordinary-world integrity checks and explicit limits; not a universal correctness claim.",
+  "simulationCommit": "187a035",
+  "source": {
+    "continuousMatrix": "D:/TornVeilValidation/observatory-hardening-20260930/revision-20",
+    "primaryAndContinuation": "D:/TornVeilValidation/observatory-hardening-20260930/revision-21",
+    "repairCommit": "187a035",
+    "changedSources": [
+      {
+        "path": "src/sim/core/world.ts",
+        "before": "acdf863178ddaccb9891679e0f258c31a325cf6a29877b2c4d6927fe8855dc44",
+        "after": "cbbf27f34cbc5ad9cd3481d5515a48833455a9676528d88164b763c0c363d2c2"
+      },
+      {
+        "path": "src/sim/persist/save.ts",
+        "before": "fdb2c8ff98c5ff504f6d0fa5f0a639ba436ad9d57b6e95bd40f0b7b89d08f566",
+        "after": "9f85f8f537c9f44ce24bd20ba565421433ae81e71607207b4ec30a8a667f3f3c"
+      },
+      {
+        "path": "src/observatory/fingerprint.ts",
+        "before": "e82b2fbafd04343580eca2b75c4b1ac801e936d25be39364b0f60b4e154541cf",
+        "after": "9401c78da024e66eecb493634e7c672bce0e0ba491b5b5d64acbcec75ea454b8"
+      }
+    ],
+    "scope": "Compaction cursor persistence plus fingerprint documentation comment. Continuous stepping and NPC/economy rules unchanged. Cross-revision strict saved-field differences are separately recorded, not normalized away.",
+    "primaryContinuousComparison": {
+      "days": [
+        1,
+        7,
+        15,
+        30
+      ],
+      "differencesPerCheckpoint": 1,
+      "onlyDifference": "Addition of persisted lastCompactionEventCount; every previously represented field and property order is unchanged."
+    },
+    "decisionWindowReviewIdentical": true
+  },
+  "diffs": [
+    {
+      "file": "repeat-day-1-diff",
+      "aPath": "D:/TornVeilValidation/observatory-hardening-20260930/revision-21/repaired-918271/day-1.save.json.gz",
+      "bPath": "D:/TornVeilValidation/observatory-hardening-20260930/revision-21/repeat-918271/day-1.save.json.gz",
+      "differences": 0,
+      "valueDifferences": 0,
+      "propertyOrderDifferences": 0,
+      "categories": {},
+      "rows": []
+    },
+    {
+      "file": "repeat-day-7-diff",
+      "aPath": "D:/TornVeilValidation/observatory-hardening-20260930/revision-21/repaired-918271/day-7.save.json.gz",
+      "bPath": "D:/TornVeilValidation/observatory-hardening-20260930/revision-21/repeat-918271/day-7.save.json.gz",
+      "differences": 0,
+      "valueDifferences": 0,
+      "propertyOrderDifferences": 0,
+      "categories": {},
+      "rows": []
+    },
+    {
+      "file": "repeat-day-30-diff",
+      "aPath": "D:/TornVeilValidation/observatory-hardening-20260930/revision-21/repaired-918271/day-30.save.json.gz",
+      "bPath": "D:/TornVeilValidation/observatory-hardening-20260930/revision-21/repeat-918271/day-30.save.json.gz",
+      "differences": 0,
+      "valueDifferences": 0,
+      "propertyOrderDifferences": 0,
+      "categories": {},
+      "rows": []
+    },
+    {
+      "file": "continuation-diff",
+      "aPath": "D:/TornVeilValidation/observatory-hardening-20260930/revision-21/repaired-918271/final.save.json.gz",
+      "bPath": "D:/TornVeilValidation/observatory-hardening-20260930/revision-21/continuation-918271/final.save.json.gz",
+      "differences": 4,
+      "valueDifferences": 0,
+      "propertyOrderDifferences": 4,
+      "categories": {
+        "persons": 4
+      },
+      "rows": [
+        {
+          "path": "$.persons.8.mind.concerns.0",
+          "kind": "property-order",
+          "a": [
+            "id",
+            "kind",
+            "subjectId",
+            "aboutId",
+            "situationId",
+            "basisKeys",
+            "intensity",
+            "createdAt",
+            "lastReinforcedAt",
+            "status",
+            "reasons",
+            "addressedAt",
+            "lastActedAt"
+          ],
+          "b": [
+            "id",
+            "kind",
+            "subjectId",
+            "aboutId",
+            "basisKeys",
+            "intensity",
+            "createdAt",
+            "lastReinforcedAt",
+            "status",
+            "reasons",
+            "addressedAt",
+            "lastActedAt",
+            "situationId"
+          ]
+        },
+        {
+          "path": "$.persons.8.mind.concerns.1",
+          "kind": "property-order",
+          "a": [
+            "id",
+            "kind",
+            "subjectId",
+            "situationId",
+            "basisKeys",
+            "intensity",
+            "createdAt",
+            "lastReinforcedAt",
+            "status",
+            "reasons",
+            "addressedAt"
+          ],
+          "b": [
+            "id",
+            "kind",
+            "subjectId",
+            "basisKeys",
+            "intensity",
+            "createdAt",
+            "lastReinforcedAt",
+            "status",
+            "reasons",
+            "addressedAt",
+            "situationId"
+          ]
+        },
+        {
+          "path": "$.persons.14.mind.concerns.0",
+          "kind": "property-order",
+          "a": [
+            "id",
+            "kind",
+            "subjectId",
+            "situationId",
+            "basisKeys",
+            "intensity",
+            "createdAt",
+            "lastReinforcedAt",
+            "status",
+            "reasons"
+          ],
+          "b": [
+            "id",
+            "kind",
+            "subjectId",
+            "basisKeys",
+            "intensity",
+            "createdAt",
+            "lastReinforcedAt",
+            "status",
+            "reasons",
+            "situationId"
+          ]
+        },
+        {
+          "path": "$.persons.29.mind.concerns.0",
+          "kind": "property-order",
+          "a": [
+            "id",
+            "kind",
+            "subjectId",
+            "situationId",
+            "basisKeys",
+            "intensity",
+            "createdAt",
+            "lastReinforcedAt",
+            "status",
+            "reasons",
+            "addressedAt",
+            "lastActedAt"
+          ],
+          "b": [
+            "id",
+            "kind",
+            "subjectId",
+            "basisKeys",
+            "intensity",
+            "createdAt",
+            "lastReinforcedAt",
+            "status",
+            "reasons",
+            "addressedAt",
+            "lastActedAt",
+            "situationId"
+          ]
+        }
+      ],
+      "review": {
+        "classification": "C",
+        "comparisonSHA256": "34918aff3da43cbc9a7b06fbc7400d47f45cadf831b7b14580f4d651a61f134d",
+        "valueDifferences": 0,
+        "rawDifferences": 4,
+        "unreviewedDifferences": 0,
+        "relevantCanonicalStateEquivalent": true,
+        "reviewedOrderDifferences": [
+          {
+            "path": "$.persons.8.mind.concerns.0",
+            "kind": "property-order",
+            "a": [
+              "id",
+              "kind",
+              "subjectId",
+              "aboutId",
+              "situationId",
+              "basisKeys",
+              "intensity",
+              "createdAt",
+              "lastReinforcedAt",
+              "status",
+              "reasons",
+              "addressedAt",
+              "lastActedAt"
+            ],
+            "b": [
+              "id",
+              "kind",
+              "subjectId",
+              "aboutId",
+              "basisKeys",
+              "intensity",
+              "createdAt",
+              "lastReinforcedAt",
+              "status",
+              "reasons",
+              "addressedAt",
+              "lastActedAt",
+              "situationId"
+            ],
+            "person": "p_9",
+            "name": "Wendel Crane",
+            "concern": "cn_1051",
+            "finalSituation": "sit_102",
+            "classification": "C",
+            "reason": "JSON omitted an undefined optional field. Later named-field assignment appends its property in the loaded record. All values and all collection ordering match."
+          },
+          {
+            "path": "$.persons.8.mind.concerns.1",
+            "kind": "property-order",
+            "a": [
+              "id",
+              "kind",
+              "subjectId",
+              "situationId",
+              "basisKeys",
+              "intensity",
+              "createdAt",
+              "lastReinforcedAt",
+              "status",
+              "reasons",
+              "addressedAt"
+            ],
+            "b": [
+              "id",
+              "kind",
+              "subjectId",
+              "basisKeys",
+              "intensity",
+              "createdAt",
+              "lastReinforcedAt",
+              "status",
+              "reasons",
+              "addressedAt",
+              "situationId"
+            ],
+            "person": "p_9",
+            "name": "Wendel Crane",
+            "concern": "cn_2099",
+            "finalSituation": "sit_102",
+            "classification": "C",
+            "reason": "JSON omitted an undefined optional field. Later named-field assignment appends its property in the loaded record. All values and all collection ordering match."
+          },
+          {
+            "path": "$.persons.14.mind.concerns.0",
+            "kind": "property-order",
+            "a": [
+              "id",
+              "kind",
+              "subjectId",
+              "situationId",
+              "basisKeys",
+              "intensity",
+              "createdAt",
+              "lastReinforcedAt",
+              "status",
+              "reasons"
+            ],
+            "b": [
+              "id",
+              "kind",
+              "subjectId",
+              "basisKeys",
+              "intensity",
+              "createdAt",
+              "lastReinforcedAt",
+              "status",
+              "reasons",
+              "situationId"
+            ],
+            "person": "p_15",
+            "name": "Dunstan Mole",
+            "concern": "cn_2324",
+            "finalSituation": "sit_98",
+            "classification": "C",
+            "reason": "JSON omitted an undefined optional field. Later named-field assignment appends its property in the loaded record. All values and all collection ordering match."
+          },
+          {
+            "path": "$.persons.29.mind.concerns.0",
+            "kind": "property-order",
+            "a": [
+              "id",
+              "kind",
+              "subjectId",
+              "situationId",
+              "basisKeys",
+              "intensity",
+              "createdAt",
+              "lastReinforcedAt",
+              "status",
+              "reasons",
+              "addressedAt",
+              "lastActedAt"
+            ],
+            "b": [
+              "id",
+              "kind",
+              "subjectId",
+              "basisKeys",
+              "intensity",
+              "createdAt",
+              "lastReinforcedAt",
+              "status",
+              "reasons",
+              "addressedAt",
+              "lastActedAt",
+              "situationId"
+            ],
+            "person": "p_30",
+            "name": "Fenn Muddle",
+            "concern": "cn_1502",
+            "finalSituation": "sit_150",
+            "classification": "C",
+            "reason": "JSON omitted an undefined optional field. Later named-field assignment appends its property in the loaded record. All values and all collection ordering match."
+          }
+        ],
+        "sourceEvidence": [
+          "src/sim/mind/concern.ts: formConcerns creates situationId before basisKeys even when undefined; reinforcement assigns it by name.",
+          "Concern decisions access named fields; list ordering is unchanged. The generic compaction traversal collects reference membership, independent of this record-field order.",
+          "New execution snapshots reconnect conversation topics through explicit lastTopicLinks; the legacy JSON-equality heuristic is not used for these snapshots."
+        ],
+        "scope": "Human-reviewed classification of these four exact rows only. No values, collection order, comparison rows or saved worlds are normalized or rewritten. Raw strict comparison still reports four differences. New or changed rows require their own review.",
+        "comparisonMatches": true
+      }
+    }
+  ],
+  "crossRevision": [
+    {
+      "day": 1,
+      "aPath": "D:/TornVeilValidation/observatory-hardening-20260930/revision-20/repaired-918271/day-1.save.json.gz",
+      "bPath": "D:/TornVeilValidation/observatory-hardening-20260930/revision-21/repaired-918271/day-1.save.json.gz",
+      "differences": 1,
+      "valueDifferences": 1,
+      "propertyOrderDifferences": 0,
+      "categories": {
+        "lastCompactionEventCount": 1
+      },
+      "rows": [
+        {
+          "path": "$.lastCompactionEventCount",
+          "kind": "value",
+          "b": 10931
+        }
+      ]
+    },
+    {
+      "day": 7,
+      "aPath": "D:/TornVeilValidation/observatory-hardening-20260930/revision-20/repaired-918271/day-7.save.json.gz",
+      "bPath": "D:/TornVeilValidation/observatory-hardening-20260930/revision-21/repaired-918271/day-7.save.json.gz",
+      "differences": 1,
+      "valueDifferences": 1,
+      "propertyOrderDifferences": 0,
+      "categories": {
+        "lastCompactionEventCount": 1
+      },
+      "rows": [
+        {
+          "path": "$.lastCompactionEventCount",
+          "kind": "value",
+          "b": 29667
+        }
+      ]
+    },
+    {
+      "day": 30,
+      "aPath": "D:/TornVeilValidation/observatory-hardening-20260930/revision-20/repaired-918271/day-30.save.json.gz",
+      "bPath": "D:/TornVeilValidation/observatory-hardening-20260930/revision-21/repaired-918271/day-30.save.json.gz",
+      "differences": 1,
+      "valueDifferences": 1,
+      "propertyOrderDifferences": 0,
+      "categories": {
+        "lastCompactionEventCount": 1
+      },
+      "rows": [
+        {
+          "path": "$.lastCompactionEventCount",
+          "kind": "value",
+          "b": 47734
+        }
+      ]
+    }
+  ],
+  "benchmark": {
+    "input": "D:/TornVeilValidation/observatory-hardening-20260930/revision-21/repaired-918271/day-29.875.save.json.gz",
+    "hours": 3,
+    "instrumentation": "No in-step profiler or event listeners. Includes cold path caches on each independent restore. Three consecutive trials; shared-host wall times.",
+    "runs": [
+      {
+        "run": 0,
+        "initialHash": "e2d1a1631df2bc01b5455f131b5bf6e8c0ddcfa38bb9f8fe50af972b9ac361c2",
+        "finalHash": "461b057fa012be7574cd973a1a4b91366e2b7618cd269eba2e9e0c1f6b7698f4",
+        "worldTime": 11258400,
+        "steps": 1200,
+        "wallMs": 5598.6724,
+        "median": 3.310099999999693,
+        "p95": 12.315399999999954,
+        "max": 115.76600000000053,
+        "finalStep": 12.844199999999546,
+        "navSearches": 377,
+        "navCacheHits": 46
+      },
+      {
+        "run": 1,
+        "initialHash": "e2d1a1631df2bc01b5455f131b5bf6e8c0ddcfa38bb9f8fe50af972b9ac361c2",
+        "finalHash": "461b057fa012be7574cd973a1a4b91366e2b7618cd269eba2e9e0c1f6b7698f4",
+        "worldTime": 11258400,
+        "steps": 1200,
+        "wallMs": 5019.1093,
+        "median": 2.861399999999776,
+        "p95": 12.253199999999197,
+        "max": 103.35280000000057,
+        "finalStep": 11.040199999999459,
+        "navSearches": 377,
+        "navCacheHits": 46
+      },
+      {
+        "run": 2,
+        "initialHash": "e2d1a1631df2bc01b5455f131b5bf6e8c0ddcfa38bb9f8fe50af972b9ac361c2",
+        "finalHash": "461b057fa012be7574cd973a1a4b91366e2b7618cd269eba2e9e0c1f6b7698f4",
+        "worldTime": 11258400,
+        "steps": 1200,
+        "wallMs": 4847.0641,
+        "median": 2.7181999999993423,
+        "p95": 11.62420000000202,
+        "max": 99.18130000000019,
+        "finalStep": 13.316500000000815,
+        "navSearches": 377,
+        "navCacheHits": 46
+      }
+    ]
+  },
+  "language": {
+    "results": [
+      {
+        "mode": "qwen3:8b",
+        "before": "4b7e2c5b25fd4e7e671a19cdf80798a9ff7a93d94f80a542cc5b95841f48f37c",
+        "after": "4b7e2c5b25fd4e7e671a19cdf80798a9ff7a93d94f80a542cc5b95841f48f37c",
+        "expressionUnchanged": true,
+        "eventsAddedByExpression": 0,
+        "final": "4a84e419accfc2bea3b3fb8af4fb6ce82df97c4b5ab59f95b5da806718be2d88",
+        "generated": {
+          "output": {
+            "speech": "I am thinking about my next task: work.",
+            "intent": "acknowledge",
+            "topics": [],
+            "claims": []
+          },
+          "fallback": false,
+          "reason": null,
+          "attempts": [
+            {
+              "raw": "{\"speech\":\"I am thinking about my next task: work.\",\"intent\":\"acknowledge\",\"topics\":[],\"claims\":[]}",
+              "latencyMs": 28157.956400000003,
+              "firstTokenMs": 24082.670000000002,
+              "tokens": 25,
+              "queueMs": 0.238900000000001
+            }
+          ]
+        },
+        "note": "This is disposable presentation, not a recorded thought, decision, memory or canonical event."
+      },
+      {
+        "mode": "disabled",
+        "before": "4b7e2c5b25fd4e7e671a19cdf80798a9ff7a93d94f80a542cc5b95841f48f37c",
+        "after": "4b7e2c5b25fd4e7e671a19cdf80798a9ff7a93d94f80a542cc5b95841f48f37c",
+        "expressionUnchanged": true,
+        "eventsAddedByExpression": 0,
+        "final": "4a84e419accfc2bea3b3fb8af4fb6ce82df97c4b5ab59f95b5da806718be2d88",
+        "generated": {
+          "output": {
+            "speech": "I am thinking about my next task: work.",
+            "intent": "acknowledge",
+            "topics": [],
+            "claims": []
+          },
+          "fallback": true,
+          "reason": "Error: Local model disabled",
+          "attempts": []
+        },
+        "note": "This is disposable presentation, not a recorded thought, decision, memory or canonical event."
+      },
+      {
+        "mode": "offline",
+        "before": "4b7e2c5b25fd4e7e671a19cdf80798a9ff7a93d94f80a542cc5b95841f48f37c",
+        "after": "4b7e2c5b25fd4e7e671a19cdf80798a9ff7a93d94f80a542cc5b95841f48f37c",
+        "expressionUnchanged": true,
+        "eventsAddedByExpression": 0,
+        "final": "4a84e419accfc2bea3b3fb8af4fb6ce82df97c4b5ab59f95b5da806718be2d88",
+        "generated": {
+          "output": {
+            "speech": "I am thinking about my next task: work.",
+            "intent": "acknowledge",
+            "topics": [],
+            "claims": []
+          },
+          "fallback": true,
+          "reason": "TypeError: fetch failed",
+          "attempts": []
+        },
+        "note": "This is disposable presentation, not a recorded thought, decision, memory or canonical event."
+      }
+    ],
+    "identicalMechanics": true,
+    "readOnlyExpression": true,
+    "scope": "Real local qwen wording vs disabled and refused loopback connection. Same seed, 20 steps before expression, 100 after. No player conversational input. Injection and canonical conversation fallback additionally covered by observatory-language.test.ts."
+  },
+  "browser": {
+    "passed": true,
+    "hardening": true,
+    "liveModel": false,
+    "viewport": [
+      1600,
+      1000
+    ],
+    "secondViewport": [
+      1100,
+      800
+    ],
+    "errors": [],
+    "checks": [
+      "select person",
+      "truth/belief separation",
+      "causal event source",
+      "click aggregate",
+      "offline free text",
+      "uncertain testimony",
+      "advance 1 hour",
+      "current goal reasons and adoption cause",
+      "checkpoint restore",
+      "replay check",
+      "no horizontal overflow",
+      "original evidence drilldown and download",
+      "repaired evidence",
+      "load repaired world paused",
+      "ledger",
+      "start and stop exact 30-day reproduction"
+    ]
+  },
+  "normalCoverage": {
+    "uniqueTests": 1413,
+    "files": 162,
+    "fullRunExitCode": 1,
+    "fullRunPassed": 1409,
+    "fullRunFailures": [
+      "tests/living-universe.test.ts",
+      "tests/living-universe.test.ts",
+      "tests/living-universe.test.ts",
+      "tests/living-universe.test.ts"
+    ],
+    "repair": "Test-only observation horizon correction, commit 2d79e62; every original assertion retained.",
+    "focusedRerun": {
+      "file": "tests/living-universe.test.ts",
+      "passed": 11,
+      "failed": 0
+    },
+    "scope": "Full run plus complete rerun of the only changed test file. All other successful checks remain valid. This does not claim the first full invocation exited successfully."
+  },
+  "handoff": {
+    "url": "http://127.0.0.1:7481",
+    "seed": 918271,
+    "tick": 11258400,
+    "paused": true,
+    "health": "AMBER",
+    "loadedArchive": "repaired",
+    "originalProcessPreservedAt": 7480
+  },
+  "finalChecks": {
+    "buildExitCode": 0,
+    "typecheck": "Passed; tool exit code 0, final-typecheck.log",
+    "screenshotReview": "Visually inspected overview at 1600x1000 and 1100x800, integrity drill, and actual launcher reviewed-world/reviewed-ledger captures."
+  },
+  "evidenceHashes": [
+    {
+      "file": "docs/evidence/observatory-hardening/validation-summary.json",
+      "sha256": "17345488a00fcc0efcbbbb6326f1f9a415040fcc78f122ab1b0248c01063741b"
+    },
+    {
+      "file": ".debug/observatory-hardening/browser/browser-evidence.json",
+      "sha256": "12bbe56643ee8776aa6b240c9d035b6164399d92edc9a52b4196ba8053579c0f"
+    },
+    {
+      "file": "D:/TornVeilValidation/observatory-hardening-20260930/revision-21/normal-suite.log",
+      "sha256": "f383a699d4846420fc94c2d591d0d42e1dde8c25f96ecd3abfde91d8a2c2b96a"
+    },
+    {
+      "file": "D:/TornVeilValidation/observatory-hardening-20260930/revision-21/living-universe-after.log",
+      "sha256": "61e4a1a707d4352bb069ba0bca9cb3c93d46d88a42e070004599d5bbe1d12d56"
+    },
+    {
+      "file": "D:/TornVeilValidation/observatory-hardening-20260930/revision-21/step-benchmark.json",
+      "sha256": "56824f9c3d1e07e7faf9baf5366d8b9d565b39490cf2b8684b10ef35b170e191"
+    },
+    {
+      "file": "D:/TornVeilValidation/observatory-hardening-20260930/revision-21/language-isolation.json",
+      "sha256": "8aea30bb7415a7de901628ed9567de96d881346e7d3d9be79e6214880758a669"
+    },
+    {
+      "file": "D:/TornVeilValidation/observatory-hardening-20260930/revision-21/handoff.json",
+      "sha256": "7ba8d1615fff456f2b78d051801bca862127e8b190bba155552b0e3dbf28bd76"
+    },
+    {
+      "file": "D:/TornVeilValidation/observatory-hardening-20260930/revision-21/build.log",
+      "sha256": "d35af9e4489437c215da8b2c527a550573701192f68d8a0e803130e25cc4605b"
+    },
+    {
+      "file": "D:/TornVeilValidation/observatory-hardening-20260930/revision-21/final-typecheck.log",
+      "sha256": "33aab0a1cc098ddcd4d58315e5cfade70a641c51cad423dced85f809eaeb48ca"
+    },
+    {
+      "file": ".debug/observatory-hardening/browser/reviewed-world.png",
+      "sha256": "1281ccf27298f0b27a7102dbd9272e724538f6a683892e3518da5f6c88898280"
+    },
+    {
+      "file": ".debug/observatory-hardening/browser/reviewed-ledger.png",
+      "sha256": "061edfab6faa935785610291324a5678d41272d537ae33021b7b096244eb46bb"
+    }
+  ]
+}

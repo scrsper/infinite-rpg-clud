@@ -1,0 +1,75 @@
+{
+  "results": [
+    {
+      "mode": "qwen3:8b",
+      "before": "4b7e2c5b25fd4e7e671a19cdf80798a9ff7a93d94f80a542cc5b95841f48f37c",
+      "after": "4b7e2c5b25fd4e7e671a19cdf80798a9ff7a93d94f80a542cc5b95841f48f37c",
+      "expressionUnchanged": true,
+      "eventsAddedByExpression": 0,
+      "final": "4a84e419accfc2bea3b3fb8af4fb6ce82df97c4b5ab59f95b5da806718be2d88",
+      "generated": {
+        "output": {
+          "speech": "I am thinking about my next task: work.",
+          "intent": "acknowledge",
+          "topics": [],
+          "claims": []
+        },
+        "fallback": false,
+        "reason": null,
+        "attempts": [
+          {
+            "raw": "{\"speech\":\"I am thinking about my next task: work.\",\"intent\":\"acknowledge\",\"topics\":[],\"claims\":[]}",
+            "latencyMs": 28157.956400000003,
+            "firstTokenMs": 24082.670000000002,
+            "tokens": 25,
+            "queueMs": 0.238900000000001
+          }
+        ]
+      },
+      "note": "This is disposable presentation, not a recorded thought, decision, memory or canonical event."
+    },
+    {
+      "mode": "disabled",
+      "before": "4b7e2c5b25fd4e7e671a19cdf80798a9ff7a93d94f80a542cc5b95841f48f37c",
+      "after": "4b7e2c5b25fd4e7e671a19cdf80798a9ff7a93d94f80a542cc5b95841f48f37c",
+      "expressionUnchanged": true,
+      "eventsAddedByExpression": 0,
+      "final": "4a84e419accfc2bea3b3fb8af4fb6ce82df97c4b5ab59f95b5da806718be2d88",
+      "generated": {
+        "output": {
+          "speech": "I am thinking about my next task: work.",
+          "intent": "acknowledge",
+          "topics": [],
+          "claims": []
+        },
+        "fallback": true,
+        "reason": "Error: Local model disabled",
+        "attempts": []
+      },
+      "note": "This is disposable presentation, not a recorded thought, decision, memory or canonical event."
+    },
+    {
+      "mode": "offline",
+      "before": "4b7e2c5b25fd4e7e671a19cdf80798a9ff7a93d94f80a542cc5b95841f48f37c",
+      "after": "4b7e2c5b25fd4e7e671a19cdf80798a9ff7a93d94f80a542cc5b95841f48f37c",
+      "expressionUnchanged": true,
+      "eventsAddedByExpression": 0,
+      "final": "4a84e419accfc2bea3b3fb8af4fb6ce82df97c4b5ab59f95b5da806718be2d88",
+      "generated": {
+        "output": {
+          "speech": "I am thinking about my next task: work.",
+          "intent": "acknowledge",
+          "topics": [],
+          "claims": []
+        },
+        "fallback": true,
+        "reason": "TypeError: fetch failed",
+        "attempts": []
+      },
+      "note": "This is disposable presentation, not a recorded thought, decision, memory or canonical event."
+    }
+  ],
+  "identicalMechanics": true,
+  "readOnlyExpression": true,
+  "scope": "Real local qwen wording vs disabled and refused loopback connection. Same seed, 20 steps before expression, 100 after. No player conversational input. Injection and canonical conversation fallback additionally covered by observatory-language.test.ts."
+}

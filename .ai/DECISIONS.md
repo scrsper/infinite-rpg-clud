@@ -50,6 +50,14 @@
   interval already used by deliberation. Busy social memory must not erase a just-observed
   resource failure before reconsideration. The bound and ordinary expiry remain unchanged;
   remote replenishment supplies no knowledge.
+- Event-compaction batching is part of continuation state. Schema-25 saves retain the
+  existing last-compaction event count; resetting it on reload can change retained history
+  and later causal-centrality totals. Legacy saves without this count cannot recover it.
+  Strict acceptance compares property enumeration order as well as all persisted values;
+  a sorted-key content hash alone is insufficient to establish identical future iteration.
+  A nonsemantic fixed-record field-order difference may receive an explicit diagnosis, but
+  the raw comparator result remains unchanged. Acceptance attaches only a SHA-bound review
+  matching every exact difference row; it never normalizes or automatically excuses new rows.
 
 ## Developer Observatory and bounded local language
 

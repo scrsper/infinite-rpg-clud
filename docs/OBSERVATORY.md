@@ -1,6 +1,8 @@
 # Torn Veil Observatory and local language
 
-The original 30-day RED investigation and current validation evidence are documented in [OBSERVATORY_HARDENING.md](OBSERVATORY_HARDENING.md). The original verification below is preserved as baseline evidence. The integrity panel distinguishes confirmed invariant/loop failures (RED), incomplete evidence or performance warnings (AMBER), and passing configured checks (GREEN); hardship alone does not set health.
+The original 30-day RED investigation is complete within the documented scope; overall health remains **AMBER**. [OBSERVATORY_HARDENING.md](OBSERVATORY_HARDENING.md) contains the diagnoses, repairs, before/after metrics, three-seed matrix and explicit limits. The repaired primary ends with 33 living people, 107 edible units and 14 pressured households. Same-seed 30-day replay matches exactly; day-15 save/reload continuation matches all canonical values, with four disclosed nonsemantic concern-field order differences. Performance and remaining decision leads keep the verdict AMBER. The original verification below is preserved as baseline evidence.
+
+The integrity panel distinguishes confirmed invariant/loop failures (RED), incomplete evidence or performance warnings (AMBER), and passing configured hard checks (GREEN); hardship alone does not set health. The delivered launcher has opened the reviewed day-30 world paused at `http://127.0.0.1:7481`, preserving an older server on 7480. Future launches choose the available port. Use **Inspect repaired saved world** to reopen that archive, or **Reproduce 30-day validation** for a fresh ordinary seed-918271 run.
 
 The Observatory runs a **disposable development world** in a separate loopback process. It never opens live, staging, alpha, browser, or Unreal saves. Closing its browser does not stop its server; worlds and checkpoints disappear when that server exits. `Play Torn Veil Web.cmd` and the Unreal fallback are unchanged.
 
