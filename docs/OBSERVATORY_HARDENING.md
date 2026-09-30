@@ -623,6 +623,25 @@ Revision 19 is preserved as intermediate evidence. Commit `f5eb319` starts revis
 
 ## Limits that remain AMBER
 
+Revision 20 completed all three continuous 30-day worlds with zero configured hard failures,
+but the uninstrumented final-three-hour checkpoint trial exposed **A — lost compaction
+cadence on reload**. All three restored trials agreed with one another, yet differed from
+continuous execution. Strict comparison found 870,975 differences, dominated by event-array
+index shifts, plus one historical-significance total (+0.12). The persisted people, bodies,
+inventories, knowledge, goals and economy did not differ in this short comparison.
+`World.lastCompactionEventCount` was a private, unsaved batching cursor: reload reset it to
+zero and could compact history earlier. A focused regression shows event `e_152` incorrectly
+retiring immediately after reload while continuous execution retains it. This matters because
+effect backlinks contribute to historical significance; it is not normalized away.
+
+New schema-25 saves now retain that existing count. Legacy saves without it retain their
+previous cold-start behavior; an exact missing boundary cannot be reconstructed. No continuous
+step, threshold, retention rule or NPC decision changes. Eighteen focused persistence,
+continuation and root-cause tests plus typecheck pass. The pre-fix short continuation, strict
+diff and benchmark remain under `revision-20`; long continuation must use newly captured saves.
+The three-seed continuous outcome/decision evidence remains valid for this persistence-only
+repair, and a new primary continuous run will also check that assertion explicitly.
+
 The final saved-state comparator also audits object property enumeration order. Earlier
 content fingerprints sort object keys, which alone cannot certify future iteration behavior
 of knowledge tables. A synthetic two-key reversal passed the old comparator and fails the

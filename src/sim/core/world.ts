@@ -167,8 +167,9 @@ export class World {
   private livingBodiesSet = new Set<EntityId>();
   /** Event count at the last attempted compaction. Storage cleanup is deliberately batched:
    * retaining a little extra recent detail is safe, while re-walking the same retained prefix
-   * every weekly clock tick is pure repeated work once the event log is above the threshold. */
-  private lastCompactionEventCount = 0;
+   * every weekly clock tick is pure repeated work once the event log is above the threshold.
+   * Persist this cadence: changing when detail retires also changes later causal backlinks. */
+  lastCompactionEventCount = 0;
 
   constructor(seed: number, clock?: WorldClock) { this.seed = seed; this.rng = new RNG(seed); this.weatherRng = this.rng.fork(97); this.demographicRng = this.rng.fork(151); this.clock = clock ?? new WorldClock(); }
 

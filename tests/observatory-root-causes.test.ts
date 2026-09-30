@@ -12,6 +12,22 @@ import { createScenario } from '../src/observatory/scenarios';
 import { healthSnapshot } from '../src/observatory/health';
 
 describe('root causes recovered from the Observatory seed 918271 receipts', () => {
+  it('preserves the event-compaction batch boundary across save/reload', () => {
+    const { world } = createScenario('ordinary', 918271);
+    for (let i = 0; i < 50; i++) world.emit('perceived', { category: 'cognition', significance: 1 });
+    for (let i = 0; i < 100; i++) world.emit('perceived', { category: 'cognition', significance: 0 });
+    world.compactEvents(20);
+    const retained = world.events.map(e => e.id);
+    world.emit('perceived', { category: 'cognition', significance: 0 });
+    const restored = deserialize(serialize(world))!;
+    new Simulation(restored.world);
+    world.compactEvents(20); restored.world.compactEvents(20);
+    // One new event is below the existing five-event batch. Reload must not force
+    // an early compaction and retire a different causal-history prefix.
+    expect(world.events.slice(0, -1).map(e => e.id)).toEqual(retained);
+    expect(restored.world.events.map(e => e.id)).toEqual(world.events.map(e => e.id));
+    expect(canonicalSave(restored.world)).toEqual(canonicalSave(world));
+  });
   it('does not subtract wildlife kilogram intake from an edible-item-unit ledger', () => {
     const { world: w } = createScenario('wildlife', 918271), diag = new RunDiagnostics(w);
     const before = diag.ledger();
