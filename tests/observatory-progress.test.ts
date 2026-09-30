@@ -294,6 +294,25 @@ describe('progress defects exposed by every-hour 30-day review', () => {
     expect(diag.checks().find(c => c.id === 'defeated-target-reprocessed')?.status).toBe('FAIL');
   });
 
+  it('counts a consumed defensive perception during an existing attack plan as new evidence', () => {
+    const tw = createTestWorld(), w = tw.world;
+    const p = addPerson(tw, 'Defender', 'guard', v(10, 1, 10));
+    const t = addPerson(tw, 'Opponent', 'villager', v(11, 1, 10));
+    const diag = new RunDiagnostics(w);
+    const c = beginConflict(w, { initiator: p.id, target: t.id, cause: 'self_defense', intent: 'subdue' });
+    recordDowning(w, c, t.id, p.id);
+    p.mind.goal = { type: 'attack', key: `attack:${t.id}`, targetEntity: t.id, utility: 1, createdAt: w.now, reasons: [] };
+    w.emit('goal_completed', { actor: p.id, data: { goalType: 'attack' } });
+    const action = w.emit('combat_action', { actor: t.id, data: { phase: 'preparation', kind: 'attack' } });
+    const receipt = w.emit('perceived', { actor: p.id, target: t.id, causes: [action.id], data: { how: 'saw', eventType: 'combat_action', eventId: action.id } });
+    p.mind.plan = [{ type: 'defend', status: 'done', data: { kind: 'sidestep', evidenceEvent: receipt.id } }];
+    w.emit('goal_completed', { actor: p.id, data: { goalType: 'attack' } });
+    expect(diag.checks().find(c => c.id === 'defeated-target-reprocessed')?.status).toBe('PASS');
+    // The same evidence cannot excuse repeatedly completing the same response.
+    w.emit('goal_completed', { actor: p.id, data: { goalType: 'attack' } });
+    expect(diag.checks().find(c => c.id === 'defeated-target-reprocessed')?.status).toBe('FAIL');
+  });
+
   it('ordinary wariness does not erase water candidates and make rain shelter interrupt them', () => {
     const tw = createTestWorld(), w = tw.world;
     const p = addPerson(tw, 'Thirsty', 'villager', v(10, 1, 10));

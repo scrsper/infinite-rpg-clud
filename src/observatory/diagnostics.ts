@@ -73,7 +73,18 @@ export class RunDiagnostics {
       const downed = conflictBetween(w, p.id, g.targetEntity)?.downed;
       if (downed?.who === g.targetEntity) {
         const ground = this.attackGrounds.get(p.id);
-        const renewedAggression = ground?.adoptedAt === g.createdAt ? ground.event : undefined;
+        // A reflex can extend an existing plan without selecting another goal. Its
+        // consumed sensory receipt is new evidence too; merely retaining/reusing
+        // the same defense in the plan must not excuse another completion.
+        const defenses = p.mind.plan.filter(a => a.type === 'defend' && a.status === 'done').flatMap(a => {
+          const receipt = a.data?.evidenceEvent && w.event(a.data.evidenceEvent);
+          const action = receipt?.data.eventId && w.event(receipt.data.eventId);
+          return receipt?.type === 'perceived' && receipt.actor === p.id && receipt.target === g.targetEntity
+            && receipt.data.how === 'saw' && action?.type === 'combat_action' && action.actor === g.targetEntity
+            && receipt.causes.includes(action.id) ? [receipt.id] : [];
+        });
+        const grounds = [...(ground?.adoptedAt === g.createdAt ? [ground.event] : []), ...defenses];
+        const renewedAggression = grounds.length ? grounds.join('/') : undefined;
         const key = `${p.id}/${g.targetEntity}/${downed.at}/${renewedAggression ?? ''}`, old = this.defeatedCompletions.get(key);
         if (old) { old.count++; old.last = e.id; }
         else this.defeatedCompletions.set(key, { first: e.id, last: e.id, count: 1, actor: p.id, target: g.targetEntity, downedAt: downed.at, renewedAggression });
