@@ -7,6 +7,27 @@ import { makePlace } from '../src/sim/world/factory';
 import { createFields } from '../src/sim/world/metabolism';
 
 describe('Navigator.findPath', () => {
+  it('rejects a diagonal ridge edge that is impassable in reverse', () => {
+    const { world } = createTestWorld(68, 14);
+    // The source is one above both side cells; the destination is two above them.
+    // Checking the sides only against the source admitted an irreversible route.
+    world.grid.set(5, 1, 5, B.Stone);
+    world.grid.set(6, 1, 6, B.Stone); world.grid.set(6, 2, 6, B.Stone);
+    world.nav.rebuildArea(4, 4, 7, 7);
+    const a = v(5.5, 2, 5.5), b = v(6.5, 3, 6.5);
+    expect(world.nav.findPath(a, b)).toBeNull();
+    expect(world.nav.findPath(b, a)).toBeNull();
+    expect(world.nav.canStepTo(a, b.x, b.z)).toBe(false);
+    expect(world.nav.canStepTo(b, a.x, a.z)).toBe(false);
+    // An ordinary one-step diagonal, supported on both sides, remains reversible.
+    world.grid.set(5, 1, 6, B.Stone); world.grid.set(6, 1, 5, B.Stone);
+    world.nav.rebuildArea(4, 4, 7, 7);
+    expect(world.nav.findPath(a, b)).not.toBeNull();
+    expect(world.nav.findPath(b, a)).not.toBeNull();
+    expect(world.nav.canStepTo(a, b.x, b.z)).toBe(true);
+    expect(world.nav.canStepTo(b, a.x, a.z)).toBe(true);
+  });
+
   it.each([3, 12])('walks %i overlapping resting bodies to clear positions without changing their shared destination', count => {
     const tw = createTestWorld(67, 18), { world } = tw, anchor = v(8.5, 1, 8.5);
     const people = Array.from({ length: count }, (_, i) => i % 3 === 2 ? 'wait' : 'sit').map((type, i) => {
