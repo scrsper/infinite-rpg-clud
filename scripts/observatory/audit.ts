@@ -51,6 +51,7 @@ const frame = (p: Person) => ({ id: p.id, name: p.name, alive: p.alive, needs: p
   homeId: p.homeId, workId: p.workId, householdId: p.householdId, inventory: p.inventory.map(id => w.item(id)),
   bodies: p.bodies.map(id => { const b = w.body(id); return b && { id, pos: b.pos, health: b.health, maxHealth: b.maxHealth, injuries: b.injuries, dead: b.dead, present: b.present, path: b.path, pathGoal: b.pathGoal }; }),
   goal: p.mind.goal, plan: p.mind.plan, decision: p.mind.decision, commitment: p.mind.commitment,
+  reportProgress: p.mind.goal?.data?.key ? p.mind.reports?.[String(p.mind.goal.data.key)] : undefined,
   investigated: [...p.mind.investigated], cooldowns: p.mind.pursuitCooldowns, noFoodUntil: p.mind.noFoodUntil,
   goalBelief: p.mind.goal?.data?.key ? p.knowledge[String(p.mind.goal.data.key)] : undefined,
   targetLocation: p.mind.goal?.targetEntity ? p.knowledge[`loc:${p.mind.goal.targetEntity}`] : undefined,
