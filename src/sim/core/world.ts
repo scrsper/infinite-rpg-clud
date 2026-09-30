@@ -370,25 +370,32 @@ export class World {
    * old; an attack or theft (significance >= 0.4-0.7) still clears the 0.5 bar or survives
    * via the causal-ancestor walk if it fed into something that did.
    */
+  /** Optional developer wall timings, excluded from saves and all decisions. */
+  compactionProfile: Record<string, number> | null = null;
   compactEvents(keep = 4000): void {
     if (this.events.length <= keep * 1.5) return;
     const batch = Math.max(1, Math.floor(keep * 0.25));
     if (this.lastCompactionEventCount > 0 && this.events.length - this.lastCompactionEventCount < batch) return;
+    let mark = this.compactionProfile ? performance.now() : 0;
+    const measured = (phase: string) => { if (this.compactionProfile) { const now = performance.now(); this.compactionProfile[phase] = (this.compactionProfile[phase] ?? 0) + now - mark; mark = now; } };
     const cutoff = this.events.length - keep;
     // v0.2.2 Phase 3 (long-run perf): reuse the current index by reference rather than cloning
-    // it — `this.eventIndex` isn't mutated anywhere below until it's reassigned to a fresh Map
-    // at the end, so a clone bought nothing but an O(events.length) copy on every call.
+    // it. Removed entries are deleted only after all reference rewrites have completed.
     const previousIndex = this.eventIndex;
     // Exact events named by living cognition or conserved provenance remain pinned. Other old
     // operational/cognitive detail may retire once its Chronicle era supplies a causal anchor.
     const referenced = new Set<EventId>();
-    const visit = (value: unknown, seen = new Set<object>()): void => {
+    // One synchronous read-only traversal. Revisited objects cannot expose new references
+    // within this pass; avoid allocating value arrays for large knowledge dictionaries
+    // and already-array histories. This set lives only for this compaction.
+    const seen = new Set<object>();
+    const visit = (value: unknown): void => {
       if (typeof value === 'string') { if (previousIndex.has(value)) referenced.add(value); return; }
       if (!value || typeof value !== 'object' || seen.has(value as object)) return;
       seen.add(value as object);
-      if (value instanceof Set) { for (const v of value) visit(v, seen); return; }
-      if (value instanceof Map) { for (const [k, v] of value) { visit(k, seen); visit(v, seen); } return; }
-      for (const v of Object.values(value)) visit(v, seen);
+      if (Array.isArray(value) || value instanceof Set) { for (const v of value) visit(v); return; }
+      if (value instanceof Map) { for (const [k, v] of value) { visit(k); visit(v); } return; }
+      for (const key of Object.keys(value)) visit((value as Record<string, unknown>)[key]);
     };
     for (const p of this.livingPersons()) visit({ memories: p.memories, knowledge: p.knowledge, mind: p.mind, desires: p.desires,
       lineage: p.lineage, exceptionalDevelopment: p.development.exceptional, ontology: p.ontology,
@@ -401,22 +408,26 @@ export class World {
     for (const item of this.items()) { visit(item.provenance); visit(item.record); }
     for (const creature of this.creatures()) visit(creature.wildlife?.pregnancy);
     visit({ kernel: this.kernel, situations: this.situations, conflicts: this.conflicts, requests: this.requests, haulTasks: this.haulTasks, workStints: this.workStints, eraCauses: this.chronicleEras.map(era => era.causes) });
+    measured('referenceTraversal');
     const pinCauses = (id: EventId): void => {
       const event = previousIndex.get(id); if (!event) return;
       for (const cause of event.causes) if (!referenced.has(cause)) { referenced.add(cause); pinCauses(cause); }
     };
     for (const id of [...referenced]) pinCauses(id);
+    measured('pinAncestors');
     const eraAnchors = new Set(this.chronicleEras.map(era => era.anchorEventId));
+    const removedIds: EventId[] = [];
     const kept = this.events.filter((e, i) => {
       if (i >= cutoff || referenced.has(e.id) || eraAnchors.has(e.id)) return true;
       // Once an era owns the discoverability and alias contract, its unpinned detailed source
       // can retire regardless of category. Identity/lineage/provenance remain canonical state.
-      if (this.chronicleCompactedEventIds.has(e.id)) return false;
-      if (e.category === 'history') return true;
-      if (e.category === 'cognition') return !this.chronicleEras.length && e.significance >= 0.5;
-      return e.significance >= 0.5;
+      const retain = !this.chronicleCompactedEventIds.has(e.id) && (e.category === 'history'
+        || e.significance >= 0.5 && (e.category !== 'cognition' || !this.chronicleEras.length));
+      if (!retain) removedIds.push(e.id);
+      return retain;
     });
     if (kept.length === this.events.length) { this.lastCompactionEventCount = this.events.length; return; }
+    measured('selectEvents');
     const keptIds = new Set(kept.map(e => e.id));
     const survivingCauses = (id: EventId, visiting = new Set<EventId>()): EventId[] => {
       if (keptIds.has(id)) return [id];
@@ -436,18 +447,29 @@ export class World {
     // walk when nothing changed produces byte-for-byte identical `causes`/`effects` to always
     // walking — it only avoids recomputing an answer that can't have changed.
     for (const event of kept) {
-      if (!event.causes.every(c => keptIds.has(c))) {
+      let missingCause = false;
+      for (const cause of event.causes) if (!keptIds.has(cause)) { missingCause = true; break; }
+      if (missingCause) {
         event.causes = [...new Set(event.causes.flatMap(cause => survivingCauses(cause)))];
       }
       event.effects = [];
     }
     this.events = kept;
+    measured('rewriteCauses');
     this.lastCompactionEventCount = this.events.length;
-    this.eventIndex = new Map(kept.map(event => [event.id, event]));
-    for (const event of kept) for (const cause of event.causes) {
+    // Surviving event objects and IDs did not change. Retire only discarded entries after
+    // all ancestry rewrites have finished, instead of allocating a new full-history index.
+    for (const id of removedIds) this.eventIndex.delete(id);
+    measured('rebuildIndex');
+    for (const event of kept) for (let i = 0; i < event.causes.length; i++) {
+      const cause = event.causes[i];
+      // Each canonical event ID occurs once. Duplicate causes within this one child are
+      // the only way to insert its backlink twice; do not scan a parent's growing history.
+      if (i && event.causes.indexOf(cause) !== i) continue;
       const parent = this.eventIndex.get(cause);
-      if (parent && !parent.effects.includes(event.id)) parent.effects.push(event.id);
+      if (parent) parent.effects.push(event.id);
     }
+    measured('rebuildEffects');
     // Compaction changes storage detail, not what historically happened. Rebuilding from only
     // the retained detail would erase contributions now represented by an era.
     this.pendingStimuli = this.pendingStimuli.filter(event => keptIds.has(event.id));
