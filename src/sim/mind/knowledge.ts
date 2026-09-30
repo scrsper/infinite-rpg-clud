@@ -485,7 +485,10 @@ export function locationNotFound(world: World, p: Person, entityId: EntityId, po
   // A newer sighting/testimony elsewhere is not disproved by reaching an old destination.
   if (remembered && Math.hypot(remembered.x - pos.x, remembered.y - pos.y, remembered.z - pos.z) >= 3.5) return;
   const searched: Vec3[] = [...(old?.claim.searched ?? [])];
-  if (!searched.some(q => Math.hypot(q.x - pos.x, q.y - pos.y, q.z - pos.z) < 3.5)) searched.push({ ...pos });
+  // Overlapping search areas are not interchangeable. An older center can be
+  // within reach of this one yet outside reach of the destination just checked.
+  // Keep the actual new observation; only identical centers are duplicates.
+  if (!searched.some(q => q.x === pos.x && q.y === pos.y && q.z === pos.z)) searched.push({ ...pos });
   p.knowledge[key] = { key, kind: 'location', claim: { entityId, searched }, confidence: 1,
     learnedAt: world.now, source: { type: 'witnessed', viaEvent: eventId }, hops: 0, sharedWith: [] };
   pruneKnowledge(world, p);

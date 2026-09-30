@@ -16,6 +16,29 @@ import { materializeStructure } from '../src/sim/world/construction';
 import { RunDiagnostics } from '../src/observatory/diagnostics';
 
 describe('progress defects exposed by every-hour 30-day review', () => {
+  it('remembers the danger behind its view cone while replanning the same escape', () => {
+    const tw = createTestWorld(918271, 64), w = tw.world;
+    const p = addPerson(tw, 'Escaping', 'villager', v(20, 1, 20), { traits: { sociability: 0 } });
+    const first = addPerson(tw, 'First danger', 'bandit', v(35, 1, 20));
+    const second = addPerson(tw, 'Second danger', 'villager', v(10, 1, 20));
+    const home = makePlace(w, 'house', 'Home', { x0: 33, z0: 18, x1: 37, z1: 22, y0: 1, y1: 3 }, { inside: v(35, 1, 20) });
+    p.homeId = home.id; getRel(p, first.id).fear = .32; getRel(p, second.id).fear = .8;
+    const observe = (q: typeof first) => ({ entityId: q.id, bodyId: w.primaryBody(q.id)!.id, how: 'saw' as const, pos: { ...w.primaryBody(q.id)!.pos }, distance: 15, tick: w.now });
+    p.mind.percepts = [observe(first)];
+    const firstGoal = { type: 'flee' as const, key: `flee:${first.id}`, targetEntity: first.id, utility: .7, createdAt: w.now, reasons: [] };
+    p.mind.plan = (tw.sim as any).plan(p, w.primaryBody(p.id), firstGoal); p.mind.goal = firstGoal;
+    // Seeing a second danger does not grant access to the first danger's actual movement.
+    p.mind.percepts = [observe(second)]; w.primaryBody(first.id)!.pos = v(60, 1, 60);
+    const plan = (tw.sim as any).plan(p, w.primaryBody(p.id), { ...firstGoal, targetEntity: second.id });
+    for (const pos of [v(35, 1, 20), v(10, 1, 20)]) expect(Math.hypot(plan[0].pos.x - pos.x, plan[0].pos.z - pos.z)).toBeGreaterThanOrEqual(8);
+    expect(plan[0].data.escapeThreats.find((t: any) => t.entityId === first.id).pos).toEqual(v(35, 1, 20));
+    expect(w.nav.findPath(w.primaryBody(p.id)!.pos, plan[0].pos)).not.toBeNull();
+    // Once the finite escape is over, its scratch observations are not a permanent registry.
+    p.mind.plan.forEach(a => { a.status = 'done'; });
+    const next = (tw.sim as any).plan(p, w.primaryBody(p.id), { ...firstGoal, targetEntity: second.id });
+    expect(next[0].data.escapeThreats.map((t: any) => t.entityId)).toEqual([second.id]);
+  });
+
   it('does not seek refuge with another watchman whom the actor also fears', () => {
     const tw = createTestWorld(918272, 64), w = tw.world;
     const p = addPerson(tw, 'Escaping', 'villager', v(20, 1, 20), { traits: { sociability: 1 } });

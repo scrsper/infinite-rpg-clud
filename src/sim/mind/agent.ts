@@ -1723,17 +1723,37 @@ export class Simulation {
       case 'flee': {
         const threatPos = p.mind.percepts.find(pc => pc.entityId === g.targetEntity)?.pos
           ?? p.knowledge[`loc:${g.targetEntity}`]?.claim.pos ?? body.pos;
+        // Turning to flee can put the danger behind the view cone. Keep the observed
+        // threats of this unfinished escape in its action parameters, just as we keep
+        // its destination. Otherwise two dangers repeatedly erase each other from the
+        // next plan. These are remembered observations, never unseen live positions.
+        const priorEscape = p.mind.goal?.type === 'flee' && p.mind.plan.some(a => a.status === 'pending' || a.status === 'active')
+          ? p.mind.plan.find(a => a.data?.flee) : undefined;
+        const escapeThreats: { entityId: EntityId; pos: Vec3; observedAt: number }[] =
+          (priorEscape?.data?.escapeThreats ?? []).map((old: { entityId: EntityId; pos: Vec3; observedAt: number }) => {
+            const seen = p.mind.percepts.find(pc => pc.entityId === old.entityId);
+            const remembered = p.knowledge[`loc:${old.entityId}`];
+            return seen ? { entityId: old.entityId, pos: { ...seen.pos }, observedAt: seen.tick }
+              : remembered?.claim.pos && remembered.learnedAt > old.observedAt
+                ? { entityId: old.entityId, pos: { ...remembered.claim.pos }, observedAt: remembered.learnedAt }
+                : { ...old, pos: { ...old.pos } };
+          });
+        if (g.targetEntity && !escapeThreats.some(t => t.entityId === g.targetEntity)) {
+          const seen = p.mind.percepts.find(pc => pc.entityId === g.targetEntity);
+          const remembered = p.knowledge[`loc:${g.targetEntity}`];
+          if (seen || remembered?.claim.pos) escapeThreats.push({ entityId: g.targetEntity, pos: { ...threatPos }, observedAt: seen?.tick ?? remembered.learnedAt });
+        }
         const feared = (id: EntityId) => (relOrNull(p, id)?.fear ?? 0) > 0.35 || socialEvidence(p, id, w.now).caution >= 0.15;
         // A uniform does not override this mind's evidence that the person is dangerous.
         // Otherwise fleeing one feared watchman chooses another as refuge, then reverses.
-        const guards = w.livingPersons().filter(q => (q.occupation === 'guard' || q.occupation === 'captain') && q.id !== g.targetEntity && !feared(q.id));
-        const dangers = [threatPos];
+        const guards = w.livingPersons().filter(q => (q.occupation === 'guard' || q.occupation === 'captain') && q.id !== g.targetEntity && !feared(q.id) && !escapeThreats.some(t => t.entityId === q.id));
+        const dangers = [threatPos, ...escapeThreats.map(t => t.pos)];
         for (const pc of p.mind.percepts) if (pc.entityId !== g.targetEntity && feared(pc.entityId)) dangers.push(pc.pos);
         for (const k of knowledgeItems(p)) if (k.kind === 'location' && k.claim.pos && k.claim.entityId !== g.targetEntity && feared(k.claim.entityId)) dangers.push(k.claim.pos);
         const gd = p.traits.sociability > 0.3 && !p.hostile ? this.nearestKnownGuard(p, body.pos, guards) : null;
         let dest = gd ? this.knownGuardPosition(p, gd)! : w.place(p.homeId)?.inside ?? this.awayFrom(body.pos, threatPos, 18, dangers);
         if (dangers.some(pos => dist2(dest, pos) < 8) || !w.nav.findPath(body.pos, dest)) dest = this.awayFrom(body.pos, threatPos, 20, dangers);
-        return [A({ type: 'goto', pos: { ...dest }, run: true, data: { flee: true } }), A({ type: 'wait', duration: 3 * 60, data: { hide: true } })];
+        return [A({ type: 'goto', pos: { ...dest }, run: true, data: { flee: true, escapeThreats } }), A({ type: 'wait', duration: 3 * 60, data: { hide: true } })];
       }
       case 'report': {
         const guard = w.person(g.targetEntity!);

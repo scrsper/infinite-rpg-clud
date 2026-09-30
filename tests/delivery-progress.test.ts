@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { addPerson, createTestWorld, v } from './helpers/world';
-import { makeItem } from '../src/sim/world/factory';
+import { makeItem, makePlace } from '../src/sim/world/factory';
 import { startCommitment } from '../src/sim/mind/commitment';
 import { locationKnowledge, locationNotFound } from '../src/sim/mind/knowledge';
 import { believedPosition } from '../src/sim/mind/pursuit';
@@ -44,6 +44,20 @@ describe('material delivery progress', () => {
     expect(w.events.filter(e => e.type === 'goal_completed')).toHaveLength(1);
     expect(p.mind.commitment).toBeNull();
     expect(p.mind.goal).toBeNull();
+  });
+
+  it('overlapping searches still record the newly checked home destination', () => {
+    const { w, p, to } = fixture(true);
+    const home = makePlace(w, 'house', 'Known home', { x0: 18, z0: 18, x1: 22, z1: 22, y0: 1, y1: 3 }, { inside: v(20, 1, 20) });
+    delete p.knowledge[`loc:${to.id}`];
+    p.knowledge[`home:${to.id}`] = { key: `home:${to.id}`, kind: 'fact', claim: { entityId: to.id, placeId: home.id }, confidence: 1, learnedAt: w.now, source: { type: 'prior' }, hops: 0, sharedWith: [] };
+    locationNotFound(w, p, to.id, v(20, 1, 23.6), 'first-search');
+    expect(believedPosition(w, p, to.id)?.pos).toEqual(home.inside);
+    locationNotFound(w, p, to.id, v(20, 1, 20.8), 'home-search');
+    expect(believedPosition(w, p, to.id)).toBeNull();
+    expect(p.knowledge[`loc:${to.id}`].source.viaEvent).toBe('home-search');
+    locationNotFound(w, p, to.id, v(20, 1, 20.8), 'same-search');
+    expect(p.knowledge[`loc:${to.id}`].claim.searched).toHaveLength(2);
   });
 
   it('failure at an old destination does not erase a newer location learned elsewhere', () => {
