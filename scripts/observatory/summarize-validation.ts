@@ -1,5 +1,6 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { gunzipSync } from 'node:zlib';
+import { createHash } from 'node:crypto';
 const primary = process.argv[2] ?? '.debug/observatory-hardening/reviewed-918271';
 const others = process.argv[3];
 if (!others) throw Error('Provide the matrix output directory');
@@ -9,7 +10,9 @@ const rows = [], runs = [];
 for (const seed of [918271, 918272, 918273]) {
   const dir = seed === 918271 ? primary : `${others}/repaired-${seed}`;
   const report = await json(`${dir}/report.json`), hourly = await gz(`${dir}/hourly.json.gz`), review = await json(`${dir}/health-review-summary.json`);
-  runs.push({ seed, dir, foodLedger: report.foodLedger, finalHash: report.finalHash, performance: { median: report.performance.median, p95: report.performance.p95, max: report.performance.max }, hardFailures: review.failures, warningGroups: review.groups.length });
+  const source = await json(`${dir}/source.json`);
+  const simulationSourceHash = createHash('sha256').update(JSON.stringify(Object.entries(source.sources).filter(([path]) => path.startsWith('src/sim/')))).digest('hex');
+  runs.push({ seed, dir, sourceDigest: source.sourceDigest, simulationSourceHash, foodLedger: report.foodLedger, finalHash: report.finalHash, performance: { median: report.performance.median, p95: report.performance.p95, max: report.performance.max }, hardFailures: review.failures, warningGroups: review.groups.length });
   for (const days of [1, 7, 30]) {
     const s = await json(`${dir}/day-${days}.summary.json`), events = s.lifetimeEvents;
     const saved = await gz(`${dir}/day-${days}.save.json.gz`);

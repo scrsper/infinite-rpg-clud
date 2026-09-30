@@ -68,8 +68,14 @@ try {
     await page.getByRole('button', { name: 'Inspect sampled finding' }).click();
     await page.getByRole('button', { name: 'Download finding receipts' }).waitFor();
     check((await page.locator('#validation-evidence').textContent())?.includes('Rows'), 'Hourly finding receipts missing');
+    const repairedResponse = page.waitForResponse(r => r.url().includes('/api/validation?run=repaired'));
     await page.locator('#repaired-evidence').click();
     await page.getByRole('heading', { name: 'repaired · ordinary · seed 918271' }).waitFor();
+    const repairedEvidence = await (await repairedResponse).json();
+    check(repairedEvidence.originalDiagnoses.findings?.length === 9, 'Reviewed original diagnoses missing');
+    check(repairedEvidence.longRunVerification.rows?.length === 9, 'Saved nine-horizon validation missing');
+    check(repairedEvidence.longRunVerification.continuation?.differences === 0, 'Exact long continuation evidence missing');
+    check(repairedEvidence.longRunVerification.replays?.every((r: { differences: number }) => r.differences === 0), 'Exact repeated-seed evidence missing');
     await page.locator('#load-repaired').click();
     await page.waitForFunction(() => document.getElementById('job-label')?.textContent?.includes('Paused'));
     await page.waitForTimeout(500);

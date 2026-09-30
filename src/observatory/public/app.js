@@ -167,6 +167,8 @@ async function archiveEvidence(run) {
   }));
   clear($('validation-evidence'), [node('h3', `${run} · ordinary · seed 918271`), node('p', evidence.note, 'muted'), download, findings, findingDetail,
     node('h4', 'Hourly rate findings across all 30 days'), sampled, inspectSampled,
+    evidenceDetails('Reviewed original diagnoses (developer interpretation)', evidence.originalDiagnoses, 0, true),
+    evidenceDetails('Saved multi-seed, replay and continuation evidence', evidence.longRunVerification, 0, true),
     evidenceDetails('Outcomes, food ledger, timings and integrity checks', evidence.report, 0, true),
     evidenceDetails('Offending events, decisions, workplaces, households and injury receipts', evidence.evidence, 0, true),
     evidenceDetails('Material accounting, household causes, care and retained injury provenance', evidence.analysis, 0, true)]);
