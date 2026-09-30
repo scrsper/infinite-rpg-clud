@@ -210,6 +210,9 @@ function pruneKnowledge(world: World, p: Person): void {
     if (p.mind.goal.targetEntity) activeSpatialKeys.add(`loc:${p.mind.goal.targetEntity}`);
   }
   for (const pu of p.mind.pursuits ?? []) if ((pu.status === 'active' || pu.status === 'deferred') && pu.subjectId) activeSpatialKeys.add(`loc:${pu.subjectId}`);
+  // Failed reports about different incidents share the same listener-location
+  // evidence. Its relevance survives switching cases until those reports retire.
+  for (const r of Object.values(p.mind.reports ?? {})) if (r.towardId && (r.status === 'unavailable' || r.status === 'no_authority')) activeSpatialKeys.add(`loc:${r.towardId}`);
   // Scores are pure and fixed for this synchronous prune. Evaluate each once rather than
   // rebuilding relationship/evidence weights for every comparison in the sort.
   const ranked = keys.map(key => ({ key, score: knowledgeScore(p, p.knowledge[key], now, obligationBases, activeSpatialKeys) }));

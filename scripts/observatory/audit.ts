@@ -71,7 +71,7 @@ const receipt = (e: WorldEvent) => {
   if (capture) {
     const p = e.actor ? w.person(e.actor) : undefined;
     const diagnostic = p && (['goal_changed', 'goal_abandoned', 'path_failure', 'investigation', 'work_blocked', 'attack'].includes(e.type)
-      || e.type === 'perceived' && e.data.kind === 'failed_handoff'
+      || e.type === 'perceived' && ['failed_handoff', 'failed_report'].includes(e.data.kind)
       || e.type === 'goal_completed' && ['investigate', 'provide', 'attack', 'flee', 'eat', 'drink'].includes(String(e.data.goalType))) ? frame(p) : undefined;
     pending.push(JSON.stringify({ event: e, actorAtEmission: diagnostic }) + '\n');
   }

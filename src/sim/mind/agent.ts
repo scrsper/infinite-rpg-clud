@@ -1554,7 +1554,7 @@ export class Simulation {
       // or for noise?" answerable from the event log alone — the difference between a person
       // changing their mind and a person flickering.
       data: { from: prev?.type, fromUtility: prev?.utility, to: g.type, utility: g.utility, reasons: g.reasons, key: g.key, pursuitId: g.data?.pursuitId, beliefInputs: g.data?.beliefInputs }, summary: `${p.name}: goal ${prev ? prev.type + ' → ' : ''}${g.type}${target} (u=${g.utility.toFixed(2)})` });
-    for (const action of plan) if (action.type === 'mechanism_task' || action.type === 'give' || action.type === 'pickup') action.data = { ...action.data, intentionEvent: adopted.id };
+    for (const action of plan) if (action.type === 'mechanism_task' || action.type === 'give' || action.type === 'pickup' || action.type === 'tell') action.data = { ...action.data, intentionEvent: adopted.id };
     // v0.2.3: choosing to flee an opponent we have a live conflict with IS breaking off that
     // conflict (Constitution §11 disengagement) — mark it so `maintainConflicts` settles it.
     if (g.type === 'flee' && g.targetEntity) {
@@ -1629,7 +1629,9 @@ export class Simulation {
     const post = knownPlaceForPerson(this.world, p, 'guardhouse');
     // The existing public-post fallback is scoped to that post's staff. Knowing a local
     // guardhouse does not locate every guard in a larger, multi-settlement world.
-    return post?.id === guard.workId ? post.inside : null;
+    if (post?.id !== guard.workId) return null;
+    const searched = p.knowledge[`loc:${guard.id}`]?.claim.searched as Vec3[] | undefined;
+    return searched?.some(q => Math.hypot(q.x - post.inside.x, q.y - post.inside.y, q.z - post.inside.z) < 3.5) ? null : post.inside;
   }
   placeIdOfType(type: import('../core/types').PlaceType, p: Person): string | undefined { return knownPlaceForPerson(this.world, p, type)?.id; }
   tavernId(p: Person): string { return knownPlaceForPerson(this.world, p, 'tavern')?.id ?? p.homeId!; }
@@ -2402,6 +2404,15 @@ export class Simulation {
         // does not simply set out again at the same urgency.
         if (!t || !tb || dist2(body.pos, tb.pos) > 3.5) {
           if (key && p.knowledge[key]) noteReportFailed(w, p, key, a.targetEntity, t ? `${t.name} had moved on` : 'they were not there');
+          // The search failed for this listener, not just for this one incident.
+          // Otherwise another case immediately reuses the same disproved address.
+          if (a.targetEntity && !m.percepts.some(pc => pc.entityId === a.targetEntity)) {
+            const ev = w.emit('perceived', { actor: p.id, target: a.targetEntity, pos: { ...body.pos }, category: 'cognition', significance: .12,
+              causes: a.data?.intentionEvent ? [a.data.intentionEvent] : [],
+              data: { kind: 'failed_report', reason: 'recipient_not_in_reach', key }, summary: `${p.name} could not find the intended listener here` });
+            locationNotFound(w, p, a.targetEntity, body.pos, ev.id);
+            a.data = { ...a.data, failureReason: 'recipient_not_in_reach', failureEvent: ev.id };
+          }
           a.status = 'failed'; break;
         }
         const k = key ? p.knowledge[key] : undefined;

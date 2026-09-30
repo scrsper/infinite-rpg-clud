@@ -13,6 +13,8 @@ export class RunDiagnostics {
   private falseDeliveries: unknown[] = [];
   private handoffAttempts = new Map<string, { signature: string; actor: string; target?: string; first: string; last: string; firstAt: number; lastAt: number; count: number }>();
   private handoffLoops: unknown[] = [];
+  private reportAttempts = new Map<string, { signature: string; actor: string; target?: string; first: string; last: string; firstAt: number; lastAt: number; count: number }>();
+  private reportLoops: unknown[] = [];
   private attackGrounds = new Map<string, { adoptedAt: number; event: string }>();
   private defeatedCompletions = new Map<string, { first: string; last: string; count: number; actor: string; target: string; downedAt: number; renewedAggression?: string }>();
   private completions = new Map<string, { first: string; firstAt: number; last: string; lastAt: number; count: number; actor: string; goal: unknown }>();
@@ -39,7 +41,7 @@ export class RunDiagnostics {
     if (s) { s.count++; s.last = e.id; s.lastAt = e.tick; s.causes = [...e.causes]; }
     else this.signatures.set(signature, { count: 1, first: e.id, last: e.id, firstAt: e.tick, lastAt: e.tick, causes: [...e.causes] });
     if (!p) return;
-    if (['goal_changed', 'goal_abandoned', 'path_failure', 'investigation', 'work_blocked', 'goal_completed'].includes(e.type) || e.type === 'perceived' && d.kind === 'failed_handoff') {
+    if (['goal_changed', 'goal_abandoned', 'path_failure', 'investigation', 'work_blocked', 'goal_completed'].includes(e.type) || e.type === 'perceived' && ['failed_handoff', 'failed_report'].includes(d.kind)) {
       const list = this.timelines.get(p.id) ?? [];
       // Copy immediately: plans, decisions and bodies subsequently mutate in place.
       list.push(JSON.parse(JSON.stringify({ event: e, needs: p.needs, wealth: p.wealth, goal: p.mind.goal,
@@ -49,6 +51,20 @@ export class RunDiagnostics {
       if (list.length > 250) list.shift(); this.timelines.set(p.id, list);
     }
     const g = p.mind.goal;
+    if (e.type === 'told') this.reportAttempts.delete(p.id);
+    if (e.type === 'perceived' && d.kind === 'failed_report') {
+      const b = w.primaryBody(p.id), loc = p.knowledge[`loc:${e.target}`];
+      // Changing the incident being reported does not change an absent listener.
+      // A new positive sighting, moved search, or successful report does.
+      const signature = JSON.stringify({ target: e.target, destination: g?.targetPos,
+        position: b && [b.pos.x, b.pos.y, b.pos.z].map(n => Number(n.toFixed(2))),
+        observation: loc?.claim.pos ? { pos: loc.claim.pos, at: loc.learnedAt } : null });
+      const old = this.reportAttempts.get(p.id);
+      if (old?.signature === signature && e.tick - old.firstAt <= 10800) {
+        old.count++; old.last = e.id; old.lastAt = e.tick;
+        if (old.count === 5) this.reportLoops.push(old);
+      } else this.reportAttempts.set(p.id, { signature, actor: p.id, target: e.target, first: e.id, last: e.id, firstAt: e.tick, lastAt: e.tick, count: 1 });
+    }
     if (e.type === 'gift') this.handoffAttempts.delete(p.id);
     if (e.type === 'perceived' && d.kind === 'failed_handoff' && g?.type === 'provide') {
       const b = w.primaryBody(p.id), seen = p.mind.percepts.find(pc => pc.entityId === e.target);
@@ -103,6 +119,7 @@ export class RunDiagnostics {
     const ledger = this.ledger();
     const defeated = [...this.defeatedCompletions.values()].filter(v => v.count > 1);
     return [
+      { id: 'failed-report-retry', label: 'Absent listener retried without new evidence', status: this.reportLoops.length ? 'FAIL' : 'PASS', detail: 'Five failed searches within three hours at the same position/destination without a fresh listener-location observation or successful report. Different incident keys do not reset the physical blocker.', evidence: this.reportLoops },
       { id: 'failed-handoff-retry', label: 'Failed handoff retried without progress', status: this.handoffLoops.length ? 'FAIL' : 'PASS', detail: 'Five autonomous provide failures within three hours with unchanged item holder, actor position, destination and recipient-location evidence. Actual transfers or new spatial evidence reset the attempt sequence.', evidence: this.handoffLoops },
       { id: 'defeated-target-reprocessed', label: 'Same recorded defeat completed repeatedly', status: defeated.length ? 'FAIL' : 'PASS', detail: 'Attack completed again against the same recorded downing without a distinct newly observed combat action. Separate responses to fresh aggression are separate evidence.', evidence: defeated },
       { id: 'delivery-progress', label: 'Completed delivery transferred its item', status: this.falseDeliveries.length ? 'FAIL' : 'PASS', detail: `Physical item holder checked at every provide completion since ${this.from}.`, evidence: this.falseDeliveries },

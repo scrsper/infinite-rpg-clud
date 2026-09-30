@@ -16,6 +16,65 @@ import { materializeStructure } from '../src/sim/world/construction';
 import { RunDiagnostics } from '../src/observatory/diagnostics';
 
 describe('progress defects exposed by every-hour 30-day review', () => {
+  it('detects retrying an absent listener across different case keys, while accepting new observations', () => {
+    const tw = createTestWorld(), w = tw.world;
+    const p = addPerson(tw, 'Witness', 'villager', v(10, 1, 10));
+    const guard = addPerson(tw, 'Watch', 'guard', v(35, 1, 35));
+    const diagnostics = new RunDiagnostics(w);
+    const fail = (i: number) => {
+      p.mind.goal = { type: 'report', key: `report:${guard.id}:case-${i}`, targetEntity: guard.id, targetPos: v(10, 1, 10), utility: 1, createdAt: w.now, reasons: [] };
+      w.emit('perceived', { actor: p.id, target: guard.id, data: { kind: 'failed_report' } });
+    };
+    for (let i = 0; i < 4; i++) fail(i);
+    expect(diagnostics.checks().find(c => c.id === 'failed-report-retry')?.status).toBe('PASS');
+    fail(4);
+    expect(diagnostics.checks().find(c => c.id === 'failed-report-retry')?.status).toBe('FAIL');
+    const fresh = new RunDiagnostics(w);
+    for (let i = 0; i < 6; i++) {
+      p.knowledge[`loc:${guard.id}`] = { key: `loc:${guard.id}`, kind: 'location', claim: { pos: v(10, 1, 10) }, confidence: 1, learnedAt: w.now + i, source: { type: 'witnessed' }, hops: 0, sharedWith: [] };
+      fail(i);
+    }
+    expect(fresh.checks().find(c => c.id === 'failed-report-retry')?.status).toBe('PASS');
+  });
+
+  it('an absent report recipient refutes the shared location across different cases', () => {
+    const tw = createTestWorld(), w = tw.world;
+    const p = addPerson(tw, 'Witness', 'villager', v(10, 1, 10));
+    const guard = addPerson(tw, 'Watch', 'guard', v(35, 1, 35));
+    const post = makePlace(w, 'guardhouse', 'Known post', { x0: 8, x1: 12, z0: 8, z1: 12, y0: 1, y1: 3 }, { inside: v(10, 1, 10) });
+    guard.workId = post.id;
+    learn(w, p, { key: `place:${post.id}`, kind: 'fact', claim: { placeId: post.id, type: 'guardhouse' }, confidence: 1, source: { type: 'prior' } });
+    learn(w, p, { key: `loc:${guard.id}`, kind: 'location', claim: { entityId: guard.id, pos: v(10, 1, 10) }, confidence: 1, source: { type: 'witnessed' } });
+    const incident = w.emit('theft', { actor: guard.id, target: p.id });
+    learn(w, p, { key: 'first-case', kind: 'event', claim: { eventId: incident.id, type: 'theft', target: p.id }, confidence: 1, source: { type: 'witnessed', viaEvent: incident.id } });
+    const adoption = w.emit('goal_changed', { actor: p.id });
+    p.mind.goal = { type: 'report', key: `report:${guard.id}:first-case`, targetEntity: guard.id, utility: 1, createdAt: w.now, reasons: [], data: { key: 'first-case' } };
+    p.mind.plan = [{ type: 'tell', targetEntity: guard.id, status: 'pending', data: { key: 'first-case', intentionEvent: adoption.id } }];
+    (tw.sim as any).act(p, w.primaryBody(p.id), .15, 9);
+    expect(p.mind.plan[0].status).toBe('failed');
+    const absence = p.knowledge[`loc:${guard.id}`];
+    expect(absence.claim.pos).toBeUndefined();
+    expect(absence.claim.searched).toEqual([v(10, 1, 10)]);
+    expect(w.event(absence.source.viaEvent!)?.causes).toEqual([adoption.id]);
+    // Another case cannot revive the searched post, or discover the guard's actual position.
+    p.mind.goal = { ...p.mind.goal!, key: `report:${guard.id}:second-case`, data: { key: 'second-case' } };
+    expect((tw.sim as any).knownGuardPosition(p, guard)).toBeNull();
+    w.primaryBody(guard.id)!.pos = v(20, 1, 20);
+    expect((tw.sim as any).knownGuardPosition(p, guard)).toBeNull();
+    // Switching to another activity must not evict the reason the reports failed.
+    p.mind.goal = null; p.mind.plan = [];
+    const crowdMemory = (prefix: string) => { for (let i = 0; i < 500; i++) learn(w, p, { key: `${prefix}:${i}`, kind: 'event', claim: { type: 'theft', target: p.id, eventId: incident.id }, confidence: 1, source: { type: 'witnessed', viaEvent: incident.id } }); };
+    crowdMemory('busy');
+    expect(p.knowledge[`loc:${guard.id}`]?.claim.pos).toBeUndefined();
+    expect(p.knowledge[`loc:${guard.id}`]?.claim.searched).toEqual([v(10, 1, 10)]);
+    expect(Object.keys(p.knowledge).length).toBeLessThanOrEqual(440);
+    p.mind.reports!['first-case'].status = 'moot'; crowdMemory('later');
+    expect(p.knowledge[`loc:${guard.id}`]).toBeUndefined(); // No permanent pin.
+    // A genuinely new observation supplies a location through ordinary perception.
+    p.mind.percepts = [{ entityId: guard.id, bodyId: w.primaryBody(guard.id)!.id, how: 'saw', pos: v(20, 1, 20), distance: 14, tick: w.now }];
+    expect((tw.sim as any).knownGuardPosition(p, guard)).toEqual(v(20, 1, 20));
+  });
+
   it('remembers the danger behind its view cone while replanning the same escape', () => {
     const tw = createTestWorld(918271, 64), w = tw.world;
     const p = addPerson(tw, 'Escaping', 'villager', v(20, 1, 20), { traits: { sociability: 0 } });
