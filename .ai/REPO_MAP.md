@@ -10,6 +10,15 @@ Read only the section relevant to the current task.
 
 # Core simulation
 
+Developer Observatory: `src/observatory/` hosts a loopback-only disposable world, read-only
+inspectors, stored-event causal graph, derived metrics, WorldLab checks and scenario controls.
+`Torn Veil Observatory.cmd` / `scripts/observatory/Launch.ps1` launch it without save-directory
+access. `src/language/` owns bounded single-mind context, exact grounded response validation,
+OpenAI-compatible local transport and queue/cancellation. The text-free canonical intent adapter
+is `src/sim/mind/conversationalIntent.ts`; it delegates knowledge transfer to ordinary `tell`.
+Guide and limits: `docs/OBSERVATORY.md`. Checks: `npm run observatory:check`; real-browser and
+benchmark harnesses are in `scripts/observatory/`. This is separate from both game renderers.
+
 Foundational presentation shell: `src/sim/core/container.ts` and `physical/hand.ts` own validated
 physical container state/actions; `bridge/session.ts`, `commands.ts`, `regions.ts` expose only
 observable DTOs and semantic intent. Native adapters are `TVLocomotionCameraPresentation`,

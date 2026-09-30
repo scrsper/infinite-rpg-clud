@@ -1,5 +1,21 @@
 # Durable design decisions
 
+## Developer Observatory and bounded local language
+
+- Observatory worlds are disposable, process-local fixtures; no API accepts a save path or an
+  alpha environment. It never connects its developer truth endpoints to the web gateway.
+- Observation reads existing state and stored event causes. Missing causality is disclosed.
+  Dashboard event counts explicitly cover retained records; source drill-downs and existing
+  canonical tallies are distinct from newly invented counters.
+- Language is outside `src/sim`. The model receives a detached allowlist from one person,
+  never World or another mind. Generated text is not persisted as knowledge, memory or speech.
+  A bounded intent adapter inside simulation delegates consequences to ordinary mechanics.
+- Claim references do not prove arbitrary prose is grounded. This first slice accepts only
+  reviewed realizations of the canonical answer, with immutable uncertainty/reference fields.
+  One malformed-output repair precedes deterministic fallback; no tools or model-driven world edits.
+- The local transport is loopback-only and provider-neutral, with bounded queue, cancellation,
+  size/time/token limits. It runs only on demand. Offline language cannot stop cognition.
+
 ## Wildlife on the realtime foundation
 
 - Live interaction schedules active wildlife physical motion once per interval; the 20 Hz

@@ -1,3 +1,21 @@
+# Current: Observatory and local language — branch `codex/observatory-local-language` (2026-09-29)
+
+Built on the clean web-rebirth checkout at the authoritative Desktop location. Launch with
+`Torn Veil Observatory.cmd` (loopback 7480, disposable in-memory Ashford development worlds).
+Web/Unreal launchers and save schema are unchanged. Inspectors separate truth and belief;
+scenario/time controls, source-backed aggregates, causal graph, WorldLab health, checkpoints,
+and local-language debugging are available. Qwen 3 8B Q4_K_M was already installed and was
+tested through Ollama with GPU offload; no model was downloaded. Natural speech is constrained
+to reviewed grounded realizations. Free text is Observatory-only; unsupported actions refuse.
+Guide, exact limitations and status categories: `docs/OBSERVATORY.md`. Evidence: `.debug/observatory/`.
+This is instrumentation plus a bounded language slice, not a declaration that the simulation
+is correct. Long-run invariant/anomaly findings remain visible and need separate investigation.
+The 30-day ordinary run completed (33 alive before/after; food 377→47; 14 pressured households;
+five injured manifestations). Final health RED: stuck actor, goal churn, repeated events and a
+130.46 ms final step against the 100 ms budget. One-day report/health history also verified.
+35 focused tests, production build/typecheck, real-model and offline browser acceptance passed.
+Final normal regression: 1,361 tests across 159 files passed (1,808.38 seconds).
+
 # Also in progress: web client (Babylon.js) — branch `claude/web-rebirth` (2026-09-29)
 
 User mandate: a browser client over the unchanged simulation, plus a separate `Play Torn Veil Web.cmd`. Lane A only
