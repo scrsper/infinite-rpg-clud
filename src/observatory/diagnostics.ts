@@ -118,14 +118,16 @@ export class RunDiagnostics {
     const repeated = [...this.completions.values()].filter(v => v.count > 1);
     const ledger = this.ledger();
     const defeated = [...this.defeatedCompletions.values()].filter(v => v.count > 1);
-    return [
+    // Hourly health retains these results. Later attempts must not retroactively
+    // insert a finding or increase its count in an earlier sampled observation.
+    return structuredClone<HealthCheck[]>([
       { id: 'failed-report-retry', label: 'Absent listener retried without new evidence', status: this.reportLoops.length ? 'FAIL' : 'PASS', detail: 'Five failed searches within three hours at the same position/destination without a fresh listener-location observation or successful report. Different incident keys do not reset the physical blocker.', evidence: this.reportLoops },
       { id: 'failed-handoff-retry', label: 'Failed handoff retried without progress', status: this.handoffLoops.length ? 'FAIL' : 'PASS', detail: 'Five autonomous provide failures within three hours with unchanged item holder, actor position, destination and recipient-location evidence. Actual transfers or new spatial evidence reset the attempt sequence.', evidence: this.handoffLoops },
       { id: 'defeated-target-reprocessed', label: 'Same recorded defeat completed repeatedly', status: defeated.length ? 'FAIL' : 'PASS', detail: 'Attack completed again against the same recorded downing without a distinct newly observed combat action. Separate responses to fresh aggression are separate evidence.', evidence: defeated },
       { id: 'delivery-progress', label: 'Completed delivery transferred its item', status: this.falseDeliveries.length ? 'FAIL' : 'PASS', detail: `Physical item holder checked at every provide completion since ${this.from}.`, evidence: this.falseDeliveries },
       { id: 'completed-case-reprocessed', label: 'Completed case processed again', status: repeated.length ? 'FAIL' : 'PASS', detail: `Same actor, case key and goal adoption completed more than once; continuous receipts since ${this.from}.`, evidence: repeated },
       { id: 'food-balance', label: 'Edible stock balance', status: Math.abs(ledger.unexplained) > 1e-6 ? 'FAIL' : 'PASS', detail: 'Edible item units, not calories; all represented production, eating, spoilage and edible transformation inputs since recording began.', evidence: [ledger] },
-    ];
+    ]);
   }
   ledger() {
     const final = this.foodUnits(), f = this.food;

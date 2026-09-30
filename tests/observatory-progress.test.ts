@@ -16,6 +16,25 @@ import { materializeStructure } from '../src/sim/world/construction';
 import { RunDiagnostics } from '../src/observatory/diagnostics';
 
 describe('progress defects exposed by every-hour 30-day review', () => {
+  it('reconsiders failed plans with current candidate parameters even when the goal key is unchanged', () => {
+    const tw = createTestWorld(), w = tw.world;
+    const p = addPerson(tw, 'Witness', 'villager', v(10, 1, 10), { traits: { honesty: 1, sociability: 0 } });
+    const guard = addPerson(tw, 'Watch', 'guard', v(25, 1, 10));
+    const culprit = addPerson(tw, 'Thief', 'villager', v(35, 1, 35));
+    const event = w.emit('theft', { actor: culprit.id, target: p.id });
+    const key = `ev:${event.id}`;
+    learn(w, p, { key, kind: 'event', claim: { eventId: event.id, type: 'theft', actor: culprit.id, target: p.id }, confidence: 1, source: { type: 'witnessed', viaEvent: event.id } });
+    learn(w, p, { key: `loc:${guard.id}`, kind: 'location', claim: { entityId: guard.id, pos: v(25, 1, 10) }, confidence: 1, source: { type: 'witnessed' } });
+    p.schedule = [];
+    p.mind.goal = { type: 'report', key: `report:${guard.id}:${key}`, targetEntity: guard.id, targetPos: v(10, 1, 10), utility: 1, createdAt: w.now - 600, reasons: [], data: { key } };
+    p.mind.plan = [{ type: 'goto', pos: v(10, 1, 10), status: 'done' }, { type: 'tell', targetEntity: guard.id, status: 'failed', data: { key } }];
+    (tw.sim as any).think(p, w.primaryBody(p.id));
+    expect(p.mind.goal?.key).toBe(`report:${guard.id}:${key}`);
+    expect(p.mind.goal?.targetPos).toEqual(v(25, 1, 10));
+    expect(p.mind.plan[0].pos).toEqual(v(25, 1, 10));
+    expect(p.mind.plan[1].data?.intentionEvent).toBe(w.events.filter(e => e.type === 'goal_changed' && e.actor === p.id).at(-1)?.id);
+  });
+
   it('detects retrying an absent listener across different case keys, while accepting new observations', () => {
     const tw = createTestWorld(), w = tw.world;
     const p = addPerson(tw, 'Witness', 'villager', v(10, 1, 10));
@@ -26,8 +45,10 @@ describe('progress defects exposed by every-hour 30-day review', () => {
       w.emit('perceived', { actor: p.id, target: guard.id, data: { kind: 'failed_report' } });
     };
     for (let i = 0; i < 4; i++) fail(i);
-    expect(diagnostics.checks().find(c => c.id === 'failed-report-retry')?.status).toBe('PASS');
+    const before = diagnostics.checks().find(c => c.id === 'failed-report-retry')!;
+    expect(before.status).toBe('PASS');
     fail(4);
+    expect(before.evidence).toEqual([]); // Later findings cannot rewrite an earlier hourly sample.
     expect(diagnostics.checks().find(c => c.id === 'failed-report-retry')?.status).toBe('FAIL');
     const fresh = new RunDiagnostics(w);
     for (let i = 0; i < 6; i++) {

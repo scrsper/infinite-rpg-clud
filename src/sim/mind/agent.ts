@@ -822,6 +822,7 @@ export class Simulation {
           // land. At seed 918271 an eyewitness to a theft switched guards twice in ten minutes,
           // went into back-off and went home without telling anyone.
           const heading = m.goal?.type === 'report' && m.goal.data?.key === k.key
+            && m.plan.some(a => a.status === 'pending' || a.status === 'active')
             ? untold.find(u => u.id === m.goal!.targetEntity) : undefined;
           const g = heading ?? this.nearestKnownGuard(p, pos, untold);
           if (g) {
@@ -1479,9 +1480,15 @@ export class Simulation {
       else { switched = true; note = best === best0 ? `switched from ${cur.type} to ${best.type}` : `resumed ${best.type} (committed)`; }
     } else if (!cur) { switched = true; note = `adopted ${best.type}`; }
     else {
-      chosen = cur;
+      // A terminal plan has no invested journey left to protect. A same-key
+      // candidate can carry newer location/resource evidence; rebuilding the old
+      // goal instead kept sending failed reports to an address already disproved.
+      chosen = curInProgress ? cur : { ...best, createdAt: cur.createdAt };
+      if (!curInProgress && m.plan.some(a => a.status === 'failed')) {
+        chosen = best; switched = true;
+      }
       if (!curInProgress && cur.type === 'idle' && best.data?.stationary) chosen = { ...cur, data: { ...cur.data, stationary: true } };
-      note = best === best0 ? `continuing ${cur.type}` : `continuing ${cur.type} (committed)`;
+      note = switched ? `reconsidered failed ${cur.type}` : best === best0 ? `continuing ${cur.type}` : `continuing ${cur.type} (committed)`;
     }
     if (blockedGoals.length) note += `; blocked routes: ${blockedGoals.join(', ')}`;
     m.decision = { tick: now, candidates: cands.slice(0, 8).map(c => ({ type: c.type, key: c.key, utility: c.utility, reasons: c.reasons.filter(Boolean) })), chosen: chosen.key, switched, note };
