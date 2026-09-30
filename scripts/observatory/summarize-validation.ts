@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 const primary = process.argv[2] ?? '.debug/observatory-hardening/reviewed-918271';
 const others = process.argv[3];
 if (!others) throw Error('Provide the matrix output directory');
+const continuityRoot = process.argv[4] ?? others;
 const json = async (path: string) => JSON.parse(await readFile(path, 'utf8'));
 const gz = async (path: string) => JSON.parse(gunzipSync(await readFile(path)).toString());
 const rows = [], runs = [];
@@ -38,9 +39,20 @@ for (const seed of [918271, 918272, 918273]) {
       hash: s.hash });
   }
 }
-const continuation = await gz(`${others}/continuation-diff.json.gz`);
-const replays = await Promise.all([1, 7, 30].map(async days => ({ days, ...await gz(`${others}/repeat-day-${days}-diff.json.gz`) })));
-const result = { scope: 'Ordinary autonomous fixture. All persisted canonical fields compared; only envelope savedAt excluded. Horizons are checkpoints along continuous 30-day runs. Outcomes are not health verdicts.', primary, others, runs, rows, continuation, replays };
+const continuation = await gz(`${continuityRoot}/continuation-diff.json.gz`);
+let continuationReview: any = null;
+try { continuationReview = await json(`${continuityRoot}/continuation-review.json`); }
+catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
+if (continuationReview) {
+  const hash = createHash('sha256').update(await readFile(`${continuityRoot}/continuation-diff.json.gz`)).digest('hex');
+  if (continuationReview.comparisonSHA256 !== hash || continuationReview.valueDifferences !== continuation.valueDifferences
+    || JSON.stringify(continuationReview.reviewedOrderDifferences.map(({ path, kind, a, b }: any) => ({ path, kind, a, b }))) !== JSON.stringify(continuation.rows)) {
+    throw Error('Continuation review does not match the exact raw differences');
+  }
+  continuationReview = { ...continuationReview, comparisonMatches: true };
+}
+const replays = await Promise.all([1, 7, 30].map(async days => ({ days, ...await gz(`${continuityRoot}/repeat-day-${days}-diff.json.gz`) })));
+const result = { scope: 'Ordinary autonomous fixture. All persisted canonical fields and property enumeration order compared; only envelope savedAt excluded. Raw differences remain visible alongside any exact-row human review. Horizons are checkpoints along continuous 30-day runs. Each run retains its own source digest. Outcomes are not health verdicts.', primary, others, continuityRoot, runs, rows, continuation, continuationReview, replays };
 await writeFile('.debug/observatory-hardening/validation-summary.json', JSON.stringify(result, null, 2));
 const columns = ['Seed', 'Days', 'Alive', 'Food', 'Stressed households', 'Low-HP bodies', 'Production receipts', 'Purchases', 'Delivered hauls', 'Conflicts started', 'Knowledge', 'Emitted events'];
 const table = [columns.join(' | '), columns.map(() => '---').join(' | '), ...rows.map(r => [r.seed, r.days, r.population, r.food, r.stressedHouseholds, r.lowHealthBodies, r.productionReceipts, r.purchases, r.deliveredHauls, r.conflictsStarted, r.knowledge, r.emittedEvents].join(' | '))].map(s => '| ' + s + ' |').join('\n');

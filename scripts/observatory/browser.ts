@@ -60,7 +60,13 @@ try {
     await page.getByRole('button', { name: /stuck_agent · Father Aldous/ }).click();
     check((await page.locator('#validation-evidence').textContent())?.includes('Failed Actions'), 'Named finding did not expose its blocked-action receipts');
     await page.locator('#validation-evidence').getByText('Final Window', { exact: true }).click();
-    check((await page.locator('#validation-evidence').textContent())?.includes('Switches'), 'Original offending decision receipts missing');
+    // Native details toggles populate the lazy tree on the queued toggle event.
+    // Wait for that content, then prove an actual receipt can be expanded.
+    const switches = page.locator('#validation-evidence').getByText('Switches', { exact: true });
+    await switches.waitFor(); await switches.click();
+    const firstSwitch = switches.locator('..').getByText('Record 1', { exact: true });
+    await firstSwitch.waitFor(); await firstSwitch.click();
+    await firstSwitch.locator('..').getByText('Actor At Emission', { exact: true }).waitFor();
     const downloaded = page.waitForEvent('download');
     await page.getByRole('button', { name: 'Download complete evidence JSON' }).click();
     check((await downloaded).suggestedFilename().includes('baseline-918271'), 'Evidence download missing');
@@ -74,7 +80,12 @@ try {
     const repairedEvidence = await (await repairedResponse).json();
     check(repairedEvidence.originalDiagnoses.findings?.length === 9, 'Reviewed original diagnoses missing');
     check(repairedEvidence.longRunVerification.rows?.length === 9, 'Saved nine-horizon validation missing');
-    check(repairedEvidence.longRunVerification.continuation?.differences === 0, 'Exact long continuation evidence missing');
+    const continuation = repairedEvidence.longRunVerification.continuation;
+    const continuationReview = repairedEvidence.longRunVerification.continuationReview;
+    check(continuation?.valueDifferences === 0, 'Long continuation has canonical value differences');
+    check(continuation.differences === 0 || continuationReview?.comparisonMatches && continuationReview.classification === 'C'
+      && continuationReview.unreviewedDifferences === 0 && continuationReview.reviewedOrderDifferences.length === continuation.differences,
+    'Long continuation has unreviewed ordering differences');
     check(repairedEvidence.longRunVerification.replays?.every((r: { differences: number }) => r.differences === 0), 'Exact repeated-seed evidence missing');
     await page.locator('#load-repaired').click();
     await page.waitForFunction(() => document.getElementById('job-label')?.textContent?.includes('Paused'));
