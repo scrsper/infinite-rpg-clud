@@ -6,7 +6,7 @@ import { makeBody, makeItem, makePlace } from '../src/sim/world/factory';
 import { serialize, deserialize } from '../src/sim/persist/save';
 import { createScenario } from '../src/observatory/scenarios';
 import { B } from '../src/sim/physical/blocks';
-import { noteReportFailed, refreshReport, shouldSeekAuthority } from '../src/sim/mind/reporting';
+import { noteReportFailed, refreshReport, shouldSeekAuthority, canApproachReportListener, noteReportDelivered, REPORT_BACKOFF_SECONDS } from '../src/sim/mind/reporting';
 import { learn } from '../src/sim/mind/knowledge';
 import { createFields } from '../src/sim/world/metabolism';
 import { observeFields } from '../src/sim/mind/routine';
@@ -17,6 +17,73 @@ import { RunDiagnostics } from '../src/observatory/diagnostics';
 import { MAX_TESTIMONY_HOPS } from '../src/sim/mind/knowledge';
 
 describe('progress defects exposed by every-hour 30-day review', () => {
+  it('delivery to a different watchman does not erase the failed listener evidence', () => {
+    const tw = createTestWorld(), w = tw.world;
+    const p = addPerson(tw, 'Witness', 'villager', v(10, 1, 10));
+    const unavailable = addPerson(tw, 'Unavailable watch', 'guard', v(20, 1, 10));
+    const other = addPerson(tw, 'Other watch', 'guard', v(11, 1, 10)), ob = w.primaryBody(other.id)!;
+    learn(w, p, { key: 'case', kind: 'event', claim: { type: 'theft', target: p.id }, confidence: 1, source: { type: 'prior' } });
+    noteReportFailed(w, p, 'case', unavailable.id, 'could not be heard');
+    const failureAt = w.now;
+    p.mind.percepts = [{ entityId: other.id, bodyId: ob.id, how: 'saw', pos: { ...ob.pos }, distance: 1, tick: w.now }];
+    refreshReport(w, p, p.knowledge.case, [unavailable, other]);
+    expect(canApproachReportListener(w, p, unavailable)).toBe(false);
+    w.clock.worldSeconds += 18;
+    expect(tw.sim.tell(p, other, p.knowledge.case)).toBe(true);
+    noteReportDelivered(w, p, 'case', other.id);
+    expect(canApproachReportListener(w, p, unavailable)).toBe(false);
+    const loaded = deserialize(serialize(w))!.world;
+    expect(canApproachReportListener(loaded, loaded.person(p.id)!, loaded.person(unavailable.id)!)).toBe(false);
+    // The attempted listener and failure time remain independent of later delivery.
+    expect(p.mind.reports!.case.lastFailedAt).toBe(failureAt);
+    expect(p.mind.reports!.case.listenerFailures).toBe(1);
+  });
+
+  it('uses the existing report backoff across cases until observed availability or actual delivery changes the evidence', () => {
+    const tw = createTestWorld(), w = tw.world;
+    const p = addPerson(tw, 'Witness', 'villager', v(10, 1, 10));
+    const guard = addPerson(tw, 'Watch', 'guard', v(11, 1, 10)), gb = w.primaryBody(guard.id)!;
+    for (let i = 0; i < 4; i++) {
+      noteReportFailed(w, p, `case-${i}`, guard.id, 'could not deliver');
+      expect(canApproachReportListener(w, p, guard)).toBe(false);
+      w.clock.worldSeconds += REPORT_BACKOFF_SECONDS * 2 ** i;
+      expect(canApproachReportListener(w, p, guard)).toBe(i < 3);
+    }
+    // No new hidden information when the listener changes pose outside perception.
+    gb.pose = 'stand';
+    expect(canApproachReportListener(w, p, guard)).toBe(false);
+    p.mind.percepts = [{ entityId: guard.id, bodyId: gb.id, how: 'saw', pos: { ...gb.pos }, distance: 1, tick: w.now }];
+    expect(canApproachReportListener(w, p, guard)).toBe(true);
+    learn(w, p, { key: 'case-3', kind: 'event', claim: { type: 'theft', target: p.id }, confidence: 1, source: { type: 'prior' } });
+    expect(tw.sim.tell(p, guard, p.knowledge['case-3'])).toBe(true);
+    noteReportDelivered(w, p, 'case-3', guard.id);
+    p.mind.percepts = [];
+    expect(canApproachReportListener(w, p, guard)).toBe(true);
+  });
+
+  it('keeps a failed listener relevant to other cases after turning away from them', () => {
+    const tw = createTestWorld(), w = tw.world;
+    const p = addPerson(tw, 'Witness', 'villager', v(10, 1, 10), { traits: { honesty: 1, sociability: 0 } });
+    const guard = addPerson(tw, 'Watch', 'guard', v(11, 1, 10)), gb = w.primaryBody(guard.id)!;
+    const thief = addPerson(tw, 'Thief', 'villager', v(35, 1, 35));
+    p.schedule = []; gb.pose = 'sleep';
+    for (const key of ['first', 'second']) learn(w, p, { key, kind: 'event', claim: { type: 'theft', actor: thief.id, target: p.id }, confidence: 1, source: { type: 'prior' } });
+    learn(w, p, { key: `loc:${guard.id}`, kind: 'location', claim: { pos: { ...gb.pos } }, confidence: 1, source: { type: 'witnessed' } });
+    p.mind.plan = [{ type: 'tell', status: 'pending', targetEntity: guard.id, data: { key: 'first' } }];
+    (tw.sim as any).act(p, w.primaryBody(p.id), .15, 9);
+    expect(p.mind.plan[0].status).toBe('failed');
+    p.mind.percepts = []; // Turning away cannot erase the failed conversation.
+    (tw.sim as any).think(p, w.primaryBody(p.id));
+    expect(p.mind.decision?.candidates.some(g => g.type === 'report')).toBe(false);
+    // A different, actually available authority remains an ordinary alternative.
+    const other = addPerson(tw, 'Other watch', 'guard', v(12, 1, 10)), ob = w.primaryBody(other.id)!;
+    p.mind.percepts = [{ entityId: other.id, bodyId: ob.id, how: 'saw', pos: { ...ob.pos }, distance: 2, tick: w.now }];
+    (tw.sim as any).think(p, w.primaryBody(p.id));
+    const candidates = p.mind.decision!.candidates.filter(g => g.type === 'report');
+    expect(candidates.length).toBeGreaterThan(0);
+    expect(candidates.every(g => g.key.startsWith(`report:${other.id}:`))).toBe(true);
+  });
+
   it('records an unavailable conversation and detects unchanged failed reports despite repeated sightings', () => {
     const tw = createTestWorld(), w = tw.world;
     const p = addPerson(tw, 'Witness', 'villager', v(10, 1, 10));
@@ -73,6 +140,7 @@ describe('progress defects exposed by every-hour 30-day review', () => {
     (tw.sim as any).think(p, w.primaryBody(p.id));
     expect(p.mind.decision?.candidates.some(g => g.type === 'report')).toBe(true);
     // Unseen unavailability cannot reveal the guard's current state from afar.
+    w.clock.worldSeconds += REPORT_BACKOFF_SECONDS; // The remembered failed approach has backed off.
     p.mind.percepts = []; gb.pose = pose; gb.pos = v(35, 1, 35);
     learn(w, p, { key: `loc:${guard.id}`, kind: 'location', claim: { entityId: guard.id, pos: v(20, 1, 20) }, confidence: 1, source: { type: 'witnessed' } });
     (tw.sim as any).think(p, w.primaryBody(p.id));

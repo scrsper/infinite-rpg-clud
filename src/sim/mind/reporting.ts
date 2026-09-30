@@ -50,6 +50,30 @@ export function reportFor(p: Person, key: string): ReportProgress | undefined {
   return p.mind.reports?.[key];
 }
 
+/** A failed approach concerns its listener as well as its incident. Derive that
+ * shared evidence from the existing report records; changing case cannot erase it.
+ * A currently observed opportunity or a successful delivery supersedes old failures. */
+export function canApproachReportListener(world: World, p: Person, listener: Person): boolean {
+  if (p.mind.percepts.some(pc => pc.entityId === listener.id && pc.how === 'saw' && pc.distance <= 3.5))
+    return conversationReachable(world, p, listener);
+  const records = Object.values(p.mind.reports ?? {});
+  const deliveredAt = records.reduce((at, r) => r.deliveredToId === listener.id ? Math.max(at, r.deliveredAt ?? -Infinity) : at, -Infinity);
+  // A case can be delivered to another authority after this failed attempt. Its
+  // status/lastAttemptAt therefore cannot stand in for the listener's failure.
+  // Legacy failed records have the old attempt time; a delivered legacy record
+  // cannot reconstruct that distinction and does not invent it.
+  const failed = records.filter(r => r.towardId === listener.id).flatMap(r => {
+    const at = r.lastFailedAt ?? (r.deliveredAt === undefined ? r.lastAttemptAt : undefined);
+    return at !== undefined && at >= deliveredAt ? [{ at, attempts: r.listenerFailures ?? r.attempts }] : [];
+  });
+  if (!failed.length) return true;
+  const attempts = failed.reduce((n, r) => n + r.attempts, 0);
+  if (attempts >= MAX_REPORT_ATTEMPTS) return false;
+  const lastAt = Math.max(...failed.map(r => r.at));
+  const backoff = Math.min(MAX_REPORT_BACKOFF_SECONDS, REPORT_BACKOFF_SECONDS * 2 ** Math.max(0, attempts - 1));
+  return world.now >= lastAt + backoff;
+}
+
 /** Is anyone this person could tell already in the know? The existing success test, kept in one
  * place: `tell` pushes the listener onto `sharedWith`, so a guard appearing there IS the report
  * having been delivered. */
@@ -158,6 +182,8 @@ export function noteReportDelivered(world: World, p: Person, key: string, toId: 
 export function noteReportFailed(world: World, p: Person, key: string, towardId: EntityId | undefined, why: string): void {
   const store = reportsOf(p);
   const r = store[key] ?? (store[key] = { key, status: 'seeking', attempts: 0, firstAt: world.now, lastAttemptAt: world.now });
+  r.listenerFailures = r.towardId === towardId ? (r.listenerFailures ?? r.attempts) + 1 : 1;
+  r.lastFailedAt = world.now;
   r.attempts += 1;
   r.lastAttemptAt = world.now;
   r.towardId = towardId;

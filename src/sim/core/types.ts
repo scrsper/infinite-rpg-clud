@@ -667,6 +667,10 @@ export interface ReportProgress {
   attempts: number;
   firstAt: Tick;
   lastAttemptAt: Tick;
+  /** Failure evidence for towardId survives reopening/delivery of this case to
+   * someone else. Optional for schema-25 saves created before this evidence existed. */
+  lastFailedAt?: Tick;
+  listenerFailures?: number;
   /** While set and in the future, this is not proposed — the back-off after a failed approach. */
   deferUntil?: Tick;
   /** Who it was finally told to, and when. */

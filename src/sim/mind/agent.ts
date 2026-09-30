@@ -67,7 +67,7 @@ import { payRecoveryReward, recentlyFailedRequests } from '../core/requests';
 import { haulOffersFrom, activeHaulFor, acceptHaulOffer, progressHaul, abandonHaul, buyMealFrom, eatAtHand, drinkHere, type HaulOffer, type HaulProgress } from '../logistics/participation';
 // v0.9 Social Causality Vertical Slice — the four generic primitives this milestone adds.
 import { noteEventForSituations, maintainSituations } from '../social/situation';
-import { refreshReport, reportFor, shouldSeekAuthority, reportUrgencyFactor, noteReportDelivered, noteReportFailed, pruneReports } from './reporting';
+import { refreshReport, reportFor, shouldSeekAuthority, reportUrgencyFactor, noteReportDelivered, noteReportFailed, pruneReports, canApproachReportListener } from './reporting';
 import { appraiseClaim } from '../social/appraisal';
 import { formConcerns, maintainConcerns, activeConcerns, concernActionable, noteConcernActedOn } from './concern';
 import { selectTopic, type Topic } from './conversation';
@@ -802,9 +802,7 @@ export class Simulation {
     // A nearby observed sleeping/downed listener (or an obstructed conversation) is
     // not made available by changing which incident we want to report. Distant,
     // unseen guards remain approachable from the person's own location evidence.
-    const approachableAuthorities = authorities.filter(g =>
-      !m.percepts.some(pc => pc.entityId === g.id && pc.how === 'saw' && pc.distance <= 3.5)
-      || conversationReachable(w, p, g));
+    const approachableAuthorities = authorities.filter(g => canApproachReportListener(w, p, g));
     for (const k of crimes) {
       const sev = crimeSeverity(k.claim.type); const victimClose = k.claim.target ? isClose(p, k.claim.target) : false; const victimIsMe = k.claim.target === p.id;
       const actorIsMe = k.claim.actor === p.id; if (actorIsMe) continue;
