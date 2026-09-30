@@ -2,6 +2,7 @@ import type { EntityId, KnowledgeItem, Person, ReportProgress, ReportStatus, Tic
 import type { World } from '../core/world';
 import { SECONDS_PER_HOUR } from '../core/time';
 import { situationForEvent, personalSituationView } from '../social/situation';
+import { conversationReachable } from './socialEvidence';
 
 /**
  * v0.10.1 Part XII — telling the watch about a crime, modelled as progress toward a real outcome.
@@ -108,7 +109,8 @@ export function refreshReport(world: World, p: Person, k: KnowledgeItem, authori
   if (r.status === 'unavailable' || r.status === 'no_authority') {
     // Merely seeing the same unreachable guard across a gap is not evidence that the
     // failed approach can now succeed. Reopen when ordinary conversation is in reach.
-    const inSight = p.mind.percepts.some(pc => pc.distance <= 3.5 && authorities.some(g => g.id === pc.entityId));
+    const inSight = p.mind.percepts.some(pc => pc.how === 'saw' && pc.distance <= 3.5
+      && authorities.some(g => g.id === pc.entityId && conversationReachable(world, p, g)));
     if (inSight) { r.status = 'seeking'; r.deferUntil = undefined; r.note = undefined; }
   }
   if (r.status === 'moot' || r.status === 'delivered') { r.status = 'seeking'; r.note = undefined; }

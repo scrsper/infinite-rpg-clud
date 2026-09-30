@@ -14,8 +14,71 @@ import { formConcerns } from '../src/sim/mind/concern';
 import { formPursuits, livePursuits, pursuitSteps, resolvePursuit, satisfiedNow } from '../src/sim/mind/pursuit';
 import { materializeStructure } from '../src/sim/world/construction';
 import { RunDiagnostics } from '../src/observatory/diagnostics';
+import { MAX_TESTIMONY_HOPS } from '../src/sim/mind/knowledge';
 
 describe('progress defects exposed by every-hour 30-day review', () => {
+  it('records an unavailable conversation and detects unchanged failed reports despite repeated sightings', () => {
+    const tw = createTestWorld(), w = tw.world;
+    const p = addPerson(tw, 'Witness', 'villager', v(10, 1, 10));
+    const guard = addPerson(tw, 'Watch', 'guard', v(11, 1, 10)), gb = w.primaryBody(guard.id)!;
+    gb.pose = 'sleep';
+    learn(w, p, { key: 'case', kind: 'event', claim: { type: 'theft', target: p.id }, confidence: 1, source: { type: 'prior' } });
+    const diagnostics = new RunDiagnostics(w);
+    for (let i = 0; i < 5; i++) {
+      const adoption = w.emit('goal_changed', { actor: p.id });
+      p.mind.goal = { type: 'report', key: 'report:case', utility: 1, reasons: [], createdAt: w.now, targetPos: v(11, 1, 10) };
+      p.mind.percepts = [{ entityId: guard.id, bodyId: gb.id, how: 'saw', distance: 1, pos: { ...gb.pos }, tick: w.now }];
+      learn(w, p, { key: `loc:${guard.id}`, kind: 'location', claim: { pos: { ...gb.pos } }, confidence: 1, source: { type: 'witnessed' } });
+      p.mind.plan = [{ type: 'tell', status: 'pending', targetEntity: guard.id, data: { key: 'case', intentionEvent: adoption.id } }];
+      (tw.sim as any).act(p, w.primaryBody(p.id), .15, 9);
+      const action = p.mind.plan[0], receipt = w.event(action.data!.failureEvent)!;
+      expect(action.status).toBe('failed');
+      expect(receipt.causes).toEqual([adoption.id]);
+      expect(receipt.data.reason).toBe('conversation_unavailable');
+      expect(p.knowledge.case.sharedWith).toEqual([]);
+      w.clock.worldSeconds += 18;
+    }
+    expect(diagnostics.checks().find(c => c.id === 'failed-report-retry')?.status).toBe('FAIL');
+  });
+
+  it('does not propose testimony which the same conversation mechanic cannot transmit', () => {
+    const tw = createTestWorld(), w = tw.world;
+    const p = addPerson(tw, 'Witness', 'villager', v(10, 1, 10), { traits: { honesty: 1, sociability: 0 } });
+    const guard = addPerson(tw, 'Watch', 'guard', v(11, 1, 10)), gb = w.primaryBody(guard.id)!;
+    const thief = addPerson(tw, 'Thief', 'villager', v(35, 1, 35));
+    p.schedule = [];
+    p.mind.percepts = [{ entityId: guard.id, bodyId: gb.id, how: 'saw', distance: 1, pos: { ...gb.pos }, tick: w.now }];
+    learn(w, p, { key: 'case', kind: 'event', claim: { type: 'theft', actor: thief.id, target: p.id }, confidence: 1, hops: MAX_TESTIMONY_HOPS, source: { type: 'prior' } });
+    expect(tw.sim.tell(p, guard, p.knowledge.case)).toBe(false);
+    (tw.sim as any).think(p, w.primaryBody(p.id));
+    expect(p.mind.decision?.candidates.some(g => g.type === 'report')).toBe(false);
+  });
+
+  it.each(['sleep', 'downed'] as const)('does not reopen reports or select other cases just because a %s listener is visible', pose => {
+    const tw = createTestWorld(), w = tw.world;
+    const p = addPerson(tw, 'Witness', 'villager', v(10, 1, 10), { traits: { honesty: 1, sociability: 0 } });
+    const guard = addPerson(tw, 'Watch', 'guard', v(11, 1, 10)), gb = w.primaryBody(guard.id)!;
+    const thief = addPerson(tw, 'Thief', 'villager', v(35, 1, 35));
+    p.schedule = []; gb.pose = pose;
+    p.mind.percepts = [{ entityId: guard.id, bodyId: gb.id, how: 'saw', distance: 1, pos: { ...gb.pos }, tick: w.now }];
+    const event = w.emit('theft', { actor: thief.id, target: p.id });
+    for (const key of ['first', 'second']) learn(w, p, { key, kind: 'event', claim: { eventId: event.id, type: 'theft', actor: thief.id, target: p.id }, confidence: 1, source: { type: 'witnessed', viaEvent: event.id } });
+    noteReportFailed(w, p, 'first', guard.id, 'could not be heard');
+    const progress = refreshReport(w, p, p.knowledge.first, [guard]);
+    expect(shouldSeekAuthority(w, progress)).toBe(false);
+    (tw.sim as any).think(p, w.primaryBody(p.id));
+    expect(p.mind.decision?.candidates.some(g => g.type === 'report')).toBe(false);
+    gb.pose = 'stand';
+    expect(shouldSeekAuthority(w, refreshReport(w, p, p.knowledge.first, [guard]))).toBe(true);
+    (tw.sim as any).think(p, w.primaryBody(p.id));
+    expect(p.mind.decision?.candidates.some(g => g.type === 'report')).toBe(true);
+    // Unseen unavailability cannot reveal the guard's current state from afar.
+    p.mind.percepts = []; gb.pose = pose; gb.pos = v(35, 1, 35);
+    learn(w, p, { key: `loc:${guard.id}`, kind: 'location', claim: { entityId: guard.id, pos: v(20, 1, 20) }, confidence: 1, source: { type: 'witnessed' } });
+    (tw.sim as any).think(p, w.primaryBody(p.id));
+    expect(p.mind.decision?.candidates.some(g => g.type === 'report')).toBe(true);
+  });
+
   it('reconsiders failed plans with current candidate parameters even when the goal key is unchanged', () => {
     const tw = createTestWorld(), w = tw.world;
     const p = addPerson(tw, 'Witness', 'villager', v(10, 1, 10), { traits: { honesty: 1, sociability: 0 } });

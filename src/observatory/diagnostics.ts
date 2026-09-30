@@ -57,8 +57,16 @@ export class RunDiagnostics {
       // Changing the incident being reported does not change an absent listener.
       // A new positive sighting, moved search, or successful report does.
       const signature = JSON.stringify({ target: e.target, destination: g?.targetPos,
+        reason: d.reason,
         position: b && [b.pos.x, b.pos.y, b.pos.z].map(n => Number(n.toFixed(2))),
-        observation: loc?.claim.pos ? { pos: loc.claim.pos, at: loc.learnedAt } : null });
+        observation: d.reason === 'conversation_unavailable' || d.reason === 'testimony_exhausted'
+          // Seeing the same sleeping listener again is not changed evidence of
+          // conversation availability. Preserve the actual physical blocker.
+          ? { hops: p.knowledge[d.key]?.hops, listener: w.person(e.target!)?.bodies.map(id => {
+            const body = w.body(id); return body && { present: body.present, dead: body.dead, healthy: body.health > 0,
+              unresponsive: ['sleep', 'downed'].includes(body.pose), pos: body.pos };
+          }) }
+          : loc?.claim.pos ? { pos: loc.claim.pos, at: loc.learnedAt } : null });
       const old = this.reportAttempts.get(p.id);
       if (old?.signature === signature && e.tick - old.firstAt <= 10800) {
         old.count++; old.last = e.id; old.lastAt = e.tick;
@@ -121,7 +129,7 @@ export class RunDiagnostics {
     // Hourly health retains these results. Later attempts must not retroactively
     // insert a finding or increase its count in an earlier sampled observation.
     return structuredClone<HealthCheck[]>([
-      { id: 'failed-report-retry', label: 'Absent listener retried without new evidence', status: this.reportLoops.length ? 'FAIL' : 'PASS', detail: 'Five failed searches within three hours at the same position/destination without a fresh listener-location observation or successful report. Different incident keys do not reset the physical blocker.', evidence: this.reportLoops },
+      { id: 'failed-report-retry', label: 'Failed report retried without changed evidence', status: this.reportLoops.length ? 'FAIL' : 'PASS', detail: 'Five failed reports within three hours at the same position/destination without changed evidence or a successful report. Repeated sightings of the same unresponsive listener and different incident keys do not reset a conversation blocker.', evidence: this.reportLoops },
       { id: 'failed-handoff-retry', label: 'Failed handoff retried without progress', status: this.handoffLoops.length ? 'FAIL' : 'PASS', detail: 'Five autonomous provide failures within three hours with unchanged item holder, actor position, destination and recipient-location evidence. Actual transfers or new spatial evidence reset the attempt sequence.', evidence: this.handoffLoops },
       { id: 'defeated-target-reprocessed', label: 'Same recorded defeat completed repeatedly', status: defeated.length ? 'FAIL' : 'PASS', detail: 'Attack completed again against the same recorded downing without a distinct newly observed combat action. Separate responses to fresh aggression are separate evidence.', evidence: defeated },
       { id: 'delivery-progress', label: 'Completed delivery transferred its item', status: this.falseDeliveries.length ? 'FAIL' : 'PASS', detail: `Physical item holder checked at every provide completion since ${this.from}.`, evidence: this.falseDeliveries },

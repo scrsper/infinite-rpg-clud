@@ -799,6 +799,12 @@ export class Simulation {
       ? w.livingPersons().filter(g => (g.occupation === 'guard' || g.occupation === 'captain')
         && near(pos, this.knownGuardPosition(p, g)))
       : EMPTY_PERSONS;
+    // A nearby observed sleeping/downed listener (or an obstructed conversation) is
+    // not made available by changing which incident we want to report. Distant,
+    // unseen guards remain approachable from the person's own location evidence.
+    const approachableAuthorities = authorities.filter(g =>
+      !m.percepts.some(pc => pc.entityId === g.id && pc.how === 'saw' && pc.distance <= 3.5)
+      || conversationReachable(w, p, g));
     for (const k of crimes) {
       const sev = crimeSeverity(k.claim.type); const victimClose = k.claim.target ? isClose(p, k.claim.target) : false; const victimIsMe = k.claim.target === p.id;
       const actorIsMe = k.claim.actor === p.id; if (actorIsMe) continue;
@@ -813,8 +819,8 @@ export class Simulation {
         // is over as far as THIS person has heard, whether there is anyone to tell, and how many
         // trips have already come to nothing — and it is what decides whether to set out again.
         const progress = refreshReport(w, p, k, authorities);
-        const untold = authorities.filter(g => !k.sharedWith.includes(g.id));
-        const eligible = p.occupation !== 'child' || victimClose;
+        const untold = approachableAuthorities.filter(g => !k.sharedWith.includes(g.id));
+        const eligible = k.hops < MAX_TESTIMONY_HOPS && (p.occupation !== 'child' || victimClose);
         if (eligible && untold.length && shouldSeekAuthority(w, progress)) {
           // Someone already on their way to tell a particular guard keeps going to that guard
           // while they are still untold. Re-picking the nearest every tick flipped the target as
@@ -2430,7 +2436,14 @@ export class Simulation {
           if ((t.occupation === 'guard' || t.occupation === 'captain') && key) {
             if (heard) noteReportDelivered(w, p, key, t.id); else noteReportFailed(w, p, key, t.id, `could not make ${t.name} hear it`);
           }
-          if (!heard) { a.status = 'failed'; break; }
+          if (!heard) {
+            const reason = k.hops >= MAX_TESTIMONY_HOPS ? 'testimony_exhausted' : 'conversation_unavailable';
+            const ev = w.emit('perceived', { actor: p.id, target: t.id, pos: { ...body.pos }, category: 'cognition', significance: .12,
+              causes: a.data?.intentionEvent ? [a.data.intentionEvent] : [], data: { kind: 'failed_report', reason, key },
+              summary: `${p.name} could not deliver the report` });
+            a.data = { ...a.data, failureReason: reason, failureEvent: ev.id };
+            a.status = 'failed'; break;
+          }
         } else if (key) { a.status = 'failed'; break; }
         body.pose = 'talk'; body.poseUntil = w.physicalTime + 2; a.status = 'done'; break;
       }
