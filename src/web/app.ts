@@ -85,7 +85,7 @@ export class App {
     const canvas = document.getElementById('game') as HTMLCanvasElement;
     this.ui = document.getElementById('ui') as HTMLElement;
     const view = this.params.get('view');
-    if (view === 'isometric' || view === 'third-person') this.settings.viewMode = view;
+    if (view === 'isometric' || view === 'third-person' || view === 'orbit') this.settings.viewMode = view;
     this.applyUiSettings();
     window.addEventListener('resize', () => this.applyUiSettings());
     const q = this.params.get('quality') as QualityTier | null;
@@ -101,7 +101,7 @@ export class App {
     this.camera = new FreeCamera('camera', new Vector3(0, 30, 0), this.ctx.scene);
     attachPipeline(this.ctx, this.camera);
     this.rig = new CameraRig(this.camera, () => this.settings, {
-      blocked: (x, y, z) => { const sx = x + this.regions.origin.x, sy = y + this.regions.origin.y, sz = z + this.regions.origin.z; return this.regions.structureAt(sx, sy, sz) || (!this.pivotInPlant && this.regions.plantAt(sx, sy, sz)); },
+      blocked: (x, y, z) => { const sx = x + this.regions.origin.x, sy = y + this.regions.origin.y, sz = z + this.regions.origin.z; return this.regions.cameraStructureAt(sx, sy, sz, this.rig?.orbit ? this.predictor.predicted?.pos ?? null : null) || (!this.pivotInPlant && this.regions.plantAt(sx, sy, sz)); },
       ground: (x, z) => { const g = this.regions.groundAt(x + this.regions.origin.x, z + this.regions.origin.z); return g === null ? null : g - this.regions.origin.y; },
     });
     this.actors = new ActorManager(this.ctx, this.atmosphere, this.regions);
@@ -182,7 +182,7 @@ export class App {
   }
   updateSettings(patch: Partial<Settings>): void {
     this.settings = { ...this.settings, ...patch }; saveSettings(this.settings); this.applyUiSettings();
-    if (patch.viewMode) { this.controller.release(); this.rig.aimYaw = null; if (patch.viewMode === 'isometric') this.input.exitLock(); }
+    if (patch.viewMode) { this.controller.release(); this.rig.aimYaw = null; if (patch.viewMode === 'isometric' || patch.viewMode === 'orbit') this.input.exitLock(); }
     if (patch.quality) { this.governor.reset(performance.now()); const t = patch.quality === 'auto' ? 'balanced' : patch.quality; this.ctx.setQuality(t); this.regions.lights.setSize(this.ctx.quality.maxLights); }
     this.audio.setVolumes({ master: this.settings.masterVolume, music: this.settings.musicVolume, effects: this.settings.effectsVolume, ambience: this.settings.ambienceVolume, voice: this.settings.voiceVolume });
     if (patch.resolutionScale !== undefined) this.ctx.engine.setHardwareScalingLevel(1 / patch.resolutionScale);
@@ -299,7 +299,7 @@ export class App {
   }
   private enterGame(): void {
     this.phase = 'playing'; this.clearScreen(); this.loading = null; this.hud.show(true);
-    const p = this.predictor.predicted; if (p) this.rig.yaw = p.yaw; this.rig.pitch = 0.3;
+    const p = this.predictor.predicted; if (p) this.rig.yaw = p.yaw; this.rig.pitch = this.rig.orbit ? .62 : .3;
     this.hud.toast(`Welcome, ${this.link.hello?.character.name ?? 'traveller'}.`, 'info', 5000);
     if (this.input.device === 'keyboard') this.input.requestLock();
     this.updateHints();
@@ -422,8 +422,9 @@ export class App {
     const k = (a: Parameters<InputManager['promptCode']>[0]) => codeLabel(this.input.promptCode(a), this.input.device);
     const lines: { key: string; text: string }[] = [];
     if (!this.hintState.moved) lines.push({ key: this.input.device === 'keyboard' ? 'WASD' : 'Left stick', text: 'Move' });
+    if (this.rig.orbit) lines.push({ key: 'Middle drag', text: 'Orbit / tilt · Wheel zoom · F target · H strike · Space dodge' });
     if (this.rig.isometric) lines.push({ key: 'Wheel', text: 'Zoom · F target · E interact · H strike · B guard · Space dodge' });
-    if (!this.rig.isometric && !this.hintState.looked) lines.push({ key: this.input.device === 'keyboard' ? 'Mouse' : 'Right stick', text: 'Look around' });
+    if (!this.rig.cutaway && !this.hintState.looked) lines.push({ key: this.input.device === 'keyboard' ? 'Mouse' : 'Right stick', text: 'Look around' });
     if (this.focus.target && !this.hintState.interacted) lines.push({ key: k('interact'), text: 'Interact' });
     if (this.hintState.moved && this.hintState.looked && this.hintState.interacted && !this.hintState.attacked) lines.push({ key: k('journal'), text: 'Journal' });
     this.hud.setHints(lines.slice(0, 3));
@@ -504,7 +505,7 @@ export class App {
       this.pivotInPlant = this.regions.plantAt(vis.pos.x, vis.pos.y + 0.5, vis.pos.z) || this.regions.plantAt(vis.pos.x, vis.pos.y + eye, vis.pos.z);
       this.rig.update(dt, { x: vis.pos.x - this.regions.origin.x, y: vis.pos.y - this.regions.origin.y + eye, z: vis.pos.z - this.regions.origin.z }, vis.yaw);
     }
-    this.regions.updateCutaway(this.rig.isometric ? vis?.pos ?? null : null, this.camera.position);
+    this.regions.updateCutaway(this.rig.cutaway ? vis?.pos ?? null : null, this.camera.position);
     // World.
     const hour = this.params.get('hour') ? Number(this.params.get('hour')) : ((this.regions.worldTime / 3600) % 24 + 24) % 24;
     this.atmosphere.update(hour, this.regions.weather, dt); this.atmosphere.follow(this.camera.position);

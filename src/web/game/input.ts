@@ -55,7 +55,8 @@ export class InputManager {
       if (this.capture) { e.preventDefault(); const c = this.capture; this.capture = null; c(`Mouse${e.button}`); return; }
       this.noteDevice('keyboard'); e.preventDefault();
       // The click that captures the pointer is not an attack: only a locked pointer sends mouse actions.
-      if (this.pointerLocked || this.settings().viewMode === 'isometric') this.down(`Mouse${e.button}`);
+      if (this.settings().viewMode === 'orbit' && e.button === 1) this.orbitDrag = { x: e.clientX, y: e.clientY };
+      else if (this.pointerLocked || this.settings().viewMode === 'isometric' || this.settings().viewMode === 'orbit') this.down(`Mouse${e.button}`);
       else if (e.button === 0 || e.button === 2) this.orbitDrag = { x: e.clientX, y: e.clientY };
     });
     window.addEventListener('pointerup', e => { this.orbitDrag = null; if (e.button >= 3) e.preventDefault(); this.up(`Mouse${e.button}`); });
@@ -95,7 +96,7 @@ export class InputManager {
   }
 
   requestLock(): void {
-    if (this.settings().viewMode === 'isometric' || !this.settings().captureMouse || this.pointerLocked || performance.now() - this.lockRequestedAt < 400) return;
+    if (this.settings().viewMode === 'isometric' || this.settings().viewMode === 'orbit' || !this.settings().captureMouse || this.pointerLocked || performance.now() - this.lockRequestedAt < 400) return;
     this.lockRequestedAt = performance.now();
     // Raw (unadjusted) movement if the browser allows it, else ordinary pointer lock. Every promise is handled: a refusal
     // (menu opening at the same moment, tab not focused, document not valid for lock) is normal and must not surface as an error.

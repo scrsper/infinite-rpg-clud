@@ -84,7 +84,8 @@ export function buildStaticProps(scene: Scene, mats: MaterialLibrary, r: RegionP
   for (const [x, y, z, open] of r.openings) {
     const alongX = cells ? (cells.get(x - 1, y + 1, z) !== 0 && cells.get(x + 1, y + 1, z) !== 0) : true;
     // Swing away from the side that has more free space: outward from the building.
-    const place = r.places.find(p => p.door && Math.abs(p.door.x - x) + Math.abs(p.door.z - z) === 1);
+    const place = r.places.find(p => p.door && Math.abs(p.door.x - x) + Math.abs(p.door.z - z) === 1)
+      ?? r.places.find(p => p.indoor && x >= p.bounds.x0 && x <= p.bounds.x1 && z >= p.bounds.z0 && z <= p.bounds.z1 && y >= p.bounds.y0 && y <= p.bounds.y1);
     const door = buildDoor(scene, mats, r, x, y, z, alongX, out.root, out.meshes, place?.indoor ? place.bounds : undefined);
     let direction: 1 | -1 = 1;
     if (place?.door) direction = alongX ? (place.door.z < z ? -1 : 1) : (place.door.x < x ? 1 : -1);

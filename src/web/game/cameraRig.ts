@@ -2,7 +2,7 @@ import { Camera, FreeCamera, Vector3 } from '@babylonjs/core';
 import type { Settings } from './bindings';
 
 /**
- * Optional fixed isometric projection or third-person camera. Third-person orbits a pivot (the player's head in render space), keeps the player
+ * Fixed isometric, elevated exploration or shoulder perspective camera. Third-person orbits a pivot (the player's head in render space), keeps the player
  * readable in exploration, eases to frame a locked target in combat, and eases to an
  * over-the-shoulder shot for conversation. It never decides anything about the simulation: the pivot
  * and obstruction queries come from what is drawn (terrain height, built structure), and look
@@ -29,6 +29,9 @@ export class CameraRig {
   yaw = Math.PI; pitch = 0.28; distance = 4.6;
   private isoSpan = 10;
   private previousIso = false;
+  private previousOrbit = false;
+  get orbit(): boolean { return this.settings().viewMode === 'orbit'; }
+  get cutaway(): boolean { return this.isometric || this.orbit; }
   aimYaw: number | null = null;
   get isometric(): boolean { return this.settings().viewMode === 'isometric'; }
   private desiredDistance = 4.6;
@@ -52,12 +55,12 @@ export class CameraRig {
 
   addLook(dx: number, dy: number): void {
     if (this.isometric || this.mode === 'talk') return;
-    this.yaw = wrap(this.yaw - dx); this.pitch = Math.max(-0.35, Math.min(1.25, this.pitch + dy));
+    this.yaw = wrap(this.yaw - dx); this.pitch = Math.max(this.orbit ? 0.32 : -0.35, Math.min(this.orbit ? 1.05 : 1.25, this.pitch + dy));
   }
-  zoom(delta: number): void { if (this.isometric) { this.isoSpan = Math.max(6, Math.min(18, this.isoSpan * (1 + delta * 0.08))); return; } this.desiredDistance = Math.max(1.8, Math.min(9, this.desiredDistance * (1 + delta * 0.08))); }
+  zoom(delta: number): void { if (this.isometric) { this.isoSpan = Math.max(6, Math.min(18, this.isoSpan * (1 + delta * 0.08))); return; } this.desiredDistance = Math.max(this.orbit ? 4 : 1.8, Math.min(this.orbit ? 14 : 9, this.desiredDistance * (1 + delta * 0.08))); }
   /** A short impulse (metres of shove, seconds of shake), scaled by the reduced-motion/shake settings. */
   impact(strength: number): void { const s = this.settings(); if (s.reducedMotion) return; this.shake = Math.min(1, this.shake + strength * s.cameraShake); this.kick = Math.min(0.5, this.kick + strength * 0.25 * s.cameraShake); }
-  setMode(mode: CameraMode): void { this.mode = mode; }
+  setMode(mode: CameraMode): void { if (this.orbit && this.mode === 'talk' && mode !== 'talk') this.pitch = .62; this.mode = mode; }
   setLock(target: CameraFocus | null): void { this.lockPivot = target; }
   setTalk(npc: CameraFocus | null): void { this.talkAnchor = npc ? { npc } : null; }
   /** Horizontal camera yaw for camera-relative movement. */
@@ -79,22 +82,27 @@ export class CameraRig {
       return;
     }
     this.camera.mode = Camera.PERSPECTIVE_CAMERA;
-    if (this.previousIso) { this.yaw = playerYaw; this.pitch = .3; this.previousIso = false; this.aimYaw = null; }
+    if (this.orbit !== this.previousOrbit) {
+      this.pitch = this.orbit ? .62 : .3;
+      this.desiredDistance = this.orbit ? 8 : 4.6;
+      this.previousOrbit = this.orbit;
+    }
+    if (this.previousIso) { this.yaw = playerYaw; this.pitch = this.orbit ? .62 : .3; this.previousIso = false; this.aimYaw = null; }
 
     // Mode targets.
-    let targetShoulder = 0.35, targetDist = this.desiredDistance, targetFov = (s.fov * Math.PI) / 180 * 1.0;
+    let targetShoulder = this.orbit ? 0 : 0.35, targetDist = this.desiredDistance, targetFov = (s.fov * Math.PI) / 180 * 1.0;
     let lookYawOverride: number | null = null;
     if (this.mode === 'combat' && this.lockPivot) {
       const dx = this.lockPivot.x - pivot.x, dz = this.lockPivot.z - pivot.z, d = Math.hypot(dx, dz);
       lookYawOverride = Math.atan2(-dx, -dz);
-      targetDist = Math.max(3.4, Math.min(6.4, this.desiredDistance + d * 0.25)); targetFov += 0.04; targetShoulder = 0.75;
-      const dy = this.lockPivot.y - pivot.y; this.pitch += (Math.max(0.06, Math.min(0.5, 0.26 + dy * 0.05 - d * 0.015)) - this.pitch) * damp(3, t);
+      targetDist = Math.max(this.orbit ? 6 : 3.4, Math.min(this.orbit ? 14 : 6.4, this.desiredDistance + d * (this.orbit ? .4 : .25))); targetFov += 0.04; targetShoulder = this.orbit ? 0 : 0.75;
+      const dy = this.lockPivot.y - pivot.y; this.pitch += (Math.max(this.orbit ? .42 : .06, Math.min(this.orbit ? .85 : .5, (this.orbit ? .62 : .26) + dy * .05 - d * .015)) - this.pitch) * damp(3, t);
     } else if (this.mode === 'talk' && this.talkAnchor) {
       // Over the player's shoulder towards the speaker, a little closer than exploration.
       const dx = this.talkAnchor.npc.x - pivot.x, dz = this.talkAnchor.npc.z - pivot.z;
       lookYawOverride = Math.atan2(-dx, -dz) + 0.42; targetDist = 2.55; targetShoulder = 0.6; targetFov -= 0.06;
       this.pitch += (0.12 - this.pitch) * damp(3.5, t);
-    } else if (this.mode === 'explore') { targetShoulder = 0.32; }
+    } else if (this.mode === 'explore') { targetShoulder = this.orbit ? 0 : 0.32; }
     if (lookYawOverride !== null) this.yaw = lerpAngle(this.yaw, lookYawOverride, damp(this.mode === 'talk' ? 3.2 : 4.5, t));
     this.currentDistance += (targetDist - this.currentDistance) * damp(4, t);
     this.shoulderNow += (targetShoulder - this.shoulderNow) * damp(4, t);
@@ -126,6 +134,11 @@ export class CameraRig {
     this.camera.position.copyFrom(this.position);
     // Look at a point slightly ahead of the pivot so the player sits low in frame.
     let tx = px + rx * this.shoulderNow * 0.6, ty = py + 0.05, tz = pz + rz * this.shoulderNow * 0.6;
+    if (this.orbit && this.mode === 'combat' && this.lockPivot) {
+      tx = px * .65 + this.lockPivot.x * .35;
+      ty = py * .65 + this.lockPivot.y * .35;
+      tz = pz * .65 + this.lockPivot.z * .35;
+    }
     if (this.mode === 'talk' && this.talkAnchor) {
       // Frame faces instead of lowering the view onto the player's waist.
       tx = px*.3 + this.talkAnchor.npc.x*.7;

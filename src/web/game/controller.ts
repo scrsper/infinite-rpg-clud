@@ -150,7 +150,7 @@ export class PlayerController {
     const fx = -Math.sin(this.cam.yaw), fz = -Math.cos(this.cam.yaw);
     return this.candidates().filter(c => !c.dead).map(c => {
       const dx = c.pos.x - p.x, dz = c.pos.z - p.z, d = Math.hypot(dx, dz) || 0.001, cosA = (dx * fx + dz * fz) / d;
-      return { c, score: d <= 22 && (this.cam.isometric || cosA > 0.25) ? d * (this.cam.isometric ? 1 : 1.6 - cosA) - (c.hostile ? 2 : 0) : Infinity };
+      return { c, score: d <= 22 && (this.cam.cutaway || cosA > 0.25) ? d * (this.cam.cutaway ? 1 : 1.6 - cosA) - (c.hostile ? 2 : 0) : Infinity };
     }).filter(x => Number.isFinite(x.score)).sort((a, b) => a.score - b.score);
   }
   toggleLock(): void {

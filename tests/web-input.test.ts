@@ -3,13 +3,13 @@ import { InputManager } from '../src/web/game/input';
 import { DEFAULT_SETTINGS } from '../src/web/game/bindings';
 
 afterEach(() => vi.unstubAllGlobals());
-function setup(isometric = false) {
+function setup(isometric = false, orbit = false) {
   const win = new EventTarget();
   const doc = Object.assign(new EventTarget(), { activeElement: null as null | { tagName: string }, hidden: false, pointerLockElement: null as EventTarget | null });
   const canvas = new EventTarget();
   vi.stubGlobal('window', win); vi.stubGlobal('document', doc);
   vi.stubGlobal('navigator', { getGamepads: () => [] });
-  const input = new InputManager(canvas as HTMLCanvasElement, () => ({ ...DEFAULT_SETTINGS, viewMode: isometric ? 'isometric' : 'third-person' }));
+  const input = new InputManager(canvas as HTMLCanvasElement, () => ({ ...DEFAULT_SETTINGS, viewMode: orbit ? 'orbit' : isometric ? 'isometric' : 'third-person' }));
   const key = (type: string, code: string) => win.dispatchEvent(Object.assign(new Event(type), { code, repeat: false }));
   const frame = () => input.beginFrame(1 / 60);
   return { win, doc, canvas, input, key, frame };
@@ -63,4 +63,15 @@ describe('isometric pointer controls', () => {
     frame(); expect(input.pressed('lightAttack')).toBe(true); expect(input.isDown('lightAttack')).toBe(true);
     win.dispatchEvent(new Event('blur')); frame(); expect(input.isDown('lightAttack')).toBe(false);
   });
+});
+
+
+it('elevated orbit reserves middle drag while left click still emits attack without pointer lock', () => {
+  const {canvas,win,input,frame}=setup(false,true);
+  const pointer=(target:EventTarget,type:string,values:object)=>target.dispatchEvent(Object.assign(new Event(type),values));
+  pointer(canvas,'pointerdown',{button:1,clientX:100,clientY:100});
+  pointer(win,'pointermove',{clientX:300,clientY:150});frame();
+  expect(input.look.x).toBeGreaterThan(0);expect(input.pressed('lightAttack')).toBe(false);expect(input.isDown('guard')).toBe(false);
+  pointer(win,'pointerup',{button:1});pointer(canvas,'pointerdown',{button:0});frame();expect(input.pressed('lightAttack')).toBe(true);
+  pointer(win,'pointerup',{button:0});frame();expect(input.isDown('lightAttack')).toBe(false);
 });

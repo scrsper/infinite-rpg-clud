@@ -98,6 +98,18 @@ export class RegionManager {
     const r = this.regions.get(this.regionOf(x, z)); if (!r) return false;
     return r.instances.obstructs(x - r.projection.bounds.x0, y, z - r.projection.bounds.z0);
   }
+  /** Camera collision agrees with the elevated view's clipped upper building geometry. */
+  cameraStructureAt(x: number, y: number, z: number, player: Vec3 | null): boolean {
+    if (player && y > player.y + .8) {
+      const region = this.regions.get(this.regionOf(x, z));
+      for (const place of region?.projection.places ?? []) {
+        const b = place.bounds;
+        if (place.indoor && x >= b.x0 - 1 && x <= b.x1 + 2 && z >= b.z0 - 1 && z <= b.z1 + 2 && y >= b.y0 && y <= b.y1 + 2 && needsCutaway(b, player, { x, y, z })) return false;
+      }
+    }
+    return this.structureAt(x, y, z);
+  }
+
   structureAt(x: number, y: number, z: number): boolean {
     const r = this.regions.get(this.regionOf(x, z)); if (!r?.cells) return false;
     const b = r.cells.get(Math.floor(x), Math.floor(y), Math.floor(z)); return b !== 0 && blocksCamera(b);

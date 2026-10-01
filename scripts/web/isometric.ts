@@ -1,6 +1,6 @@
 /** Isolated isometric UI acceptance. Never uses a saved user world/profile. */
 import { chromium } from 'playwright';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, copyFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve, relative, isAbsolute } from 'node:path';
 import { createServer } from 'node:net';
@@ -12,6 +12,7 @@ import { SAVE_VERSION } from '../../src/sim/persist/save';
 import { B } from '../../src/sim/physical/blocks';
 import { setExternalControl } from '../../src/sim/runtime/controllers';
 
+const orbit = process.env.TVO_CAMERA_VIEW === 'orbit';
 const root = mkdtempSync(join(tmpdir(), 'tvo-dialogue-ui-')), out = resolve(process.env.TVO_ISOMETRIC_EVIDENCE_DIR ?? '.debug/isometric'); mkdirSync(out, { recursive: true });
 const reserve = createServer(); await new Promise<void>(r => reserve.listen(0, '127.0.0.1', r));
 const port = (reserve.address() as { port: number }).port; await new Promise<void>(r => reserve.close(() => r()));
@@ -23,7 +24,7 @@ const release: ReleaseIdentity = { version: 'dialogue-ui', revision: 'test', dir
 const server = new LiveServer(loadConfig(path), release, () => {});
 const gateway = new WebGateway({ port: 0, upstream: { host: '127.0.0.1', port }, credentials: { account: 'dialogue-ui', token }, staticDir: resolve(process.env.TVO_ISOMETRIC_BUNDLE ?? '.debug/isometric/bundle') });
 const browser = await chromium.launch({ channel: 'chrome', headless: false, args: ['--enable-unsafe-webgpu', '--ignore-gpu-blocklist'] });
-const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
+const page = await browser.newPage({ viewport: { width: 1600, height: 1000 }, recordVideo: orbit ? {dir:join(root,'video'),size:{width:1280,height:800}} : undefined });
 const errors: string[] = [], modelRequests: string[] = [];
 page.on('pageerror', e => errors.push(e.message));
 page.on('request', r => { if (/:(11434|1234)\b|chat\/completions/.test(r.url())) modelRequests.push(r.url()); });
@@ -32,18 +33,27 @@ const fetchBefore = globalThis.fetch;
 globalThis.fetch = async () => { throw new Error('No inference HTTP networking permitted'); };
 try {
   await server.open(); await server.listen(); await gateway.listen();
-  await page.goto(gateway.issueLaunchUrl()); await page.goto(`${gateway.url}/?autoplay=1&name=Traveler&view=isometric`);
+  await page.goto(gateway.issueLaunchUrl()); await page.goto(`${gateway.url}/?autoplay=1&name=Traveler&view=${orbit ? 'orbit' : 'isometric'}`);
   await page.waitForFunction(() => (window as any).__tv?.ready === true, undefined, { timeout: 120000 });
   await page.waitForTimeout(3000);
-  const own = () => page.evaluate(() => { const tv = (window as any).__tv; return { pos: {...tv.predictor.predicted.pos}, yaw: tv.predictor.predicted.yaw, mode: tv.settings.viewMode, cameraMode: tv.camera.mode, wealth: tv.own()?.wealth }; });
+  const own = () => page.evaluate(() => { const tv = (window as any).__tv; return { pos: {...tv.predictor.predicted.pos}, yaw: tv.predictor.predicted.yaw, moveYaw:tv.rig.moveYaw, mode: tv.settings.viewMode, cameraMode: tv.camera.mode, wealth: tv.own()?.wealth }; });
   const checks: Record<string, unknown>[] = [];
   const note = (name: string, passed: boolean, evidence: unknown) => { checks.push({ name, passed, evidence }); console.log(JSON.stringify({name,passed,evidence})); };
   await page.screenshot({ path: join(out, '01-isometric-settlement.png') });
+  if (orbit) {
+    const before=await page.evaluate(()=>({yaw:(window as any).__tv.rig.yaw,pitch:(window as any).__tv.rig.pitch}));
+    for(let i=0;i<8;i++) {await page.mouse.move(500,450);await page.mouse.down({button:'middle'});await page.mouse.move(1150,500,{steps:12});await page.mouse.up({button:'middle'});}
+    await page.mouse.wheel(0,-600);await page.waitForTimeout(900);
+    const after=await page.evaluate(()=>({yaw:(window as any).__tv.rig.yaw,pitch:(window as any).__tv.rig.pitch,distance:(window as any).__tv.camera.position.subtract((window as any).__tv.regions.toRender((window as any).__tv.predictor.predicted.pos)).length()}));
+    note('outdoor orbit tilt and zoom',Math.abs(after.yaw-before.yaw)>.1&&after.pitch>=.32&&after.pitch<=1.05&&Number.isFinite(after.distance),{before,after,dragTurns:8});
+    await page.mouse.wheel(0,600);await page.waitForTimeout(900);
+  }
+
   const before = await own();
   await page.keyboard.down('w'); await page.waitForTimeout(1500); await page.keyboard.up('w'); await page.waitForTimeout(300);
-  const walked = await own(); note('screen-up walking', walked.pos.x > before.pos.x + .2 && walked.pos.z < before.pos.z - .2, {before,after:walked});
+  const walked = await own(); note('screen-up walking', orbit ? -(walked.pos.x-before.pos.x)*Math.sin(before.moveYaw)-(walked.pos.z-before.pos.z)*Math.cos(before.moveYaw)>.5 : walked.pos.x > before.pos.x + .2 && walked.pos.z < before.pos.z - .2, {before,after:walked});
   await page.keyboard.down('Shift'); await page.keyboard.down('s'); await page.waitForTimeout(1200); await page.keyboard.up('s'); await page.keyboard.up('Shift'); await page.waitForTimeout(300);
-  const ran = await own(); note('screen-down running', ran.pos.x < walked.pos.x -.2 && ran.pos.z > walked.pos.z+.2, {before:walked,after:ran});
+  const ran = await own(); note('screen-down running', orbit ? (ran.pos.x-walked.pos.x)*Math.sin(walked.moveYaw)+(ran.pos.z-walked.pos.z)*Math.cos(walked.moveYaw)>.5 : ran.pos.x < walked.pos.x -.2 && ran.pos.z > walked.pos.z+.2, {before:walked,after:ran});
   await page.screenshot({ path: join(out, '02-after-movement.png') });
   for(const key of ['i','j']) { await page.keyboard.press(key); await page.waitForFunction(()=>(window as any).__tv.modal.isOpen); await page.keyboard.press('Escape'); await page.waitForFunction(()=>!(window as any).__tv.modal.isOpen); await page.waitForTimeout(300); }
   note('repeat interrupted menu flows', !(await page.evaluate(() => (window as any).__tv.modal.isOpen)), null);
@@ -84,8 +94,8 @@ try {
   await page.mouse.move(repeatedPoint.x,repeatedPoint.y); await page.keyboard.press('e'); await input.waitFor({state:'visible',timeout:12000}); await page.keyboard.press('Escape'); await page.waitForFunction(()=>!(window as any).__tv.dialogue.isOpen);
   note('conversation repeat and interruption', !(await page.evaluate(() => (window as any).__tv.dialogue.isOpen)), {fixture:'NPC co-location and direct observation, disclosed'});
   body.pos = original; setExternalControl(npc, false);
-  const actorRendering=() => page.evaluate(()=>{
-      const tv=(window as any).__tv,id=tv.snapshot.controlledBodyId,a=tv.actors.get(id);
+  const actorRendering=(bodyId?:string) => page.evaluate(targetId=>{
+      const tv=(window as any).__tv,id=targetId??tv.snapshot.controlledBodyId,a=tv.actors.get(id);
       if(!a)return {bodyId:id,actorPresent:false};
       const meshes=a.visual.root.getChildMeshes(false),own=new Set(meshes),head=tv.actors.headPoint(id);
       const Matrix=tv.camera.getWorldMatrix().constructor, Vector=tv.camera.position.constructor;
@@ -93,7 +103,7 @@ try {
       const ray=tv.ctx.scene.createPickingRay(screen.x,screen.y,Matrix.Identity(),tv.camera,false);ray.length=head.subtract(ray.origin).length();
       const hits=(tv.ctx.scene.multiPickWithRay(ray,(m:any)=>!own.has(m)&&m.isEnabled()&&m.isVisible&&m.visibility>0&&!/sky|atmosphere/.test(m.name))??[]).filter((h:any)=>h.pickedPoint&&h.distance<ray.length && !(h.pickedMesh.material?.clipPlane?.signedDistanceTo(h.pickedPoint)>0));
       return {bodyId:id,actorPresent:true,rootEnabled:a.visual.root.isEnabled(),rootPosition:{x:a.visual.root.position.x,y:a.visual.root.position.y,z:a.visual.root.position.z},meshCount:meshes.length,groups:[...new Set(meshes.map((m:any)=>m.renderingGroupId))],enabledMeshes:meshes.filter((m:any)=>m.isEnabled()&&m.isVisible).length,inFrustum:meshes.filter((m:any)=>m.isInFrustum(tv.ctx.scene._frustumPlanes)).length,head:{x:head.x,y:head.y,z:head.z},bounds:meshes.slice(0,3).map((m:any)=>({name:m.name,min:m.getBoundingInfo().boundingBox.minimumWorld,max:m.getBoundingInfo().boundingBox.maximumWorld})),possibleHeadOccluders:hits.map((h:any)=>({name:h.pickedMesh.name,distance:h.distance})).slice(0,10)};
-    });
+    },bodyId);
   const visible = (r:Awaited<ReturnType<typeof actorRendering>>) => r.actorPresent && r.rootEnabled && r.enabledMeshes>0 && r.possibleHeadOccluders?.length===0;
   const walkPath = async (path: {x:number;y:number;z:number}[]) => {
     for(const point of path) {
@@ -101,7 +111,8 @@ try {
       while(Date.now()<deadline) {
         const p=(await own()).pos, dx=point.x-p.x,dz=point.z-p.z;
         if(Math.hypot(dx,dz)<.18)break;
-        const mx=dx+dz,my=dx-dz,keys:string[]=[];
+        const yaw=await page.evaluate(()=>(window as any).__tv.rig.moveYaw);
+        const mx=dx*Math.cos(yaw)-dz*Math.sin(yaw),my=-dx*Math.sin(yaw)-dz*Math.cos(yaw),keys:string[]=[];
         if(Math.abs(mx)>.1)keys.push(mx>0?'d':'a');if(Math.abs(my)>.1)keys.push(my>0?'w':'s');
         for(const key of keys)await page.keyboard.down(key);await page.waitForTimeout(Math.max(16,Math.min(100,Math.hypot(dx,dz)*100)));for(const key of keys)await page.keyboard.up(key);
       }
@@ -119,7 +130,9 @@ try {
     // Disclosed closed-door starting fixture; ordinary movement must perform the same canonical opening as NPCs.
     w.setDoorOpen(doorCell,false,player.id);await page.waitForTimeout(500);
     const closedStart=(await own()).pos,initialClosed=!w.grid.isDoorOpen(doorCell.x,doorCell.y,doorCell.z);
-    const dx=indoor.inside.x-closedStart.x,dz=indoor.inside.z-closedStart.z;
+    const yaw=await page.evaluate(()=>(window as any).__tv.rig.moveYaw);
+    const wx=indoor.inside.x-closedStart.x,wz=indoor.inside.z-closedStart.z;
+    const dx=(wx*Math.cos(yaw)-wz*Math.sin(yaw)-wx*Math.sin(yaw)-wz*Math.cos(yaw))/2,dz=(wx*Math.cos(yaw)-wz*Math.sin(yaw)+wx*Math.sin(yaw)+wz*Math.cos(yaw))/2;
     const blockedKeys=[...(Math.abs(dx+dz)>.22?[dx+dz>0?'d':'a']:[]),...(Math.abs(dx-dz)>.22?[dx-dz>0?'w':'s']:[])];
     for(const key of blockedKeys)await page.keyboard.down(key);await page.waitForTimeout(600);for(const key of blockedKeys)await page.keyboard.up(key);
     await page.waitForTimeout(500);const blocked=(await own()).pos;
@@ -163,6 +176,8 @@ try {
   const hpBefore=body.health;
   await page.waitForTimeout(1800); await page.keyboard.press('f'); await page.waitForTimeout(350);
   await page.keyboard.press('h'); await page.waitForTimeout(1200);
+  const targetRendering=await actorRendering(body.id);
+  note('locked melee target unobscured',visible(targetRendering),targetRendering);
   note('canonical melee contact',body.health<hpBefore,{before:hpBefore,after:body.health,targetBodyId:body.id,playerPosition:{...pb.pos},targetPosition:{...body.pos},action:pb.combatAction,fixture:'upright adult NPC staged beside player after keyboard interior traversal in disposable validation world'});
   await page.keyboard.press('Space'); await page.waitForTimeout(800);
   const combatRendering=await actorRendering();
@@ -172,9 +187,26 @@ try {
   note('combat controls emit canonical commands', !!await page.evaluate(()=>(window as any).__tv.controller.lastCombat), await page.evaluate(()=>{const tv=(window as any).__tv;return {lastCombat:tv.controller.lastCombat,bodyAction:tv.own()?.combatAction}}));
   await page.screenshot({path:join(out,'05-isometric-action.png')});
   await page.evaluate(() => (window as any).__tv.updateSettings({viewMode:'third-person'})); await page.waitForTimeout(500);
-  const third = await own(); const restored=await page.evaluate(()=>(window as any).__tv.ctx.scene.meshes.every((m:any)=>!m.metadata?.cutawayBounds || m.material.clipPlane.d===-1e8)); await page.evaluate(() => (window as any).__tv.updateSettings({viewMode:'isometric'})); await page.waitForTimeout(500);
-  note('view switch round-trip',third.cameraMode===0 && (await own()).cameraMode===1 && restored,{cutawaysRestored:restored});
+  const third = await own(); const restored=await page.evaluate(()=>(window as any).__tv.ctx.scene.meshes.every((m:any)=>!m.metadata?.cutawayBounds || m.material.clipPlane.d===-1e8)); await page.evaluate(view => (window as any).__tv.updateSettings({viewMode:view}),orbit?'orbit':'isometric'); await page.waitForTimeout(500);
+  note('view switch round-trip',third.cameraMode===0 && (await own()).cameraMode===(orbit?0:1) && restored,{cutawaysRestored:restored});
+  if (orbit) {
+    const resources=()=>page.evaluate(()=>{const tv=(window as any).__tv;return {meshes:tv.ctx.scene.meshes.length,materials:tv.ctx.scene.materials.length,pendingBuilds:tv.regions.pendingBuilds,fps:tv.ctx.engine.getFps()};});
+    const before=await resources();
+    for(let i=0;i<6;i++){await page.evaluate(()=>(window as any).__tv.updateSettings({viewMode:'isometric'}));await page.waitForTimeout(150);await page.evaluate(()=>(window as any).__tv.updateSettings({viewMode:'orbit'}));await page.waitForTimeout(150);}
+    const after=await resources();note('repeated projection switches retain scene resources',after.meshes<=before.meshes+5&&after.materials<=before.materials+5,{before,after,roundTrips:6});
+  }
   writeFileSync(join(out,'browser-evidence.json'),JSON.stringify({checks,errors,fixture:'Movement, interior entry/traversal/exit/reentry and menus use ordinary input. Dialogue co-location, doorway starting position, initial canonical closed-door state and adult combat target staging are disclosed fixtures. No human/controller acceptance.',modelRequests},null,2));
   if(errors.length || checks.some(c=>c.passed===false)) throw Error('Browser checks failed; inspect evidence');
   console.log('Isometric browser checks passed.');
-} finally { globalThis.fetch = fetchBefore; await browser.close(); await gateway.close(); await server.stopInProcess('dialogue UI complete'); const ownedRelative=relative(resolve(tmpdir()),resolve(root)); if(!ownedRelative || ownedRelative.startsWith('..') || isAbsolute(ownedRelative)) throw Error('Refusing cleanup outside owned temporary root'); rmSync(root, { recursive: true, force: true }); }
+ } finally {
+  globalThis.fetch = fetchBefore;
+  const videoPath=orbit ? await page.video()?.path() : null;
+  await browser.close();
+  try { if(videoPath)copyFileSync(videoPath,join(out,'orbit-playthrough.webm')); }
+  finally {
+    await gateway.close(); await server.stopInProcess('dialogue UI complete');
+    const ownedRelative=relative(resolve(tmpdir()),resolve(root));
+    if(!ownedRelative || ownedRelative.startsWith('..') || isAbsolute(ownedRelative))throw Error('Refusing cleanup outside owned temporary root');
+    rmSync(root,{recursive:true,force:true});
+  }
+}

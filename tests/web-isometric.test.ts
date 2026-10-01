@@ -48,13 +48,13 @@ describe('isometric presentation preserves control and world boundaries', () => 
     const engine = new NullEngine(), scene = new Scene(engine), root = new TransformNode('region', scene);
     const shared = new StandardMaterial('shared-props', scene);
     const bounds = { x0: 10, x1: 20, z0: 10, z1: 20, y0: 24, y1: 30 };
-    const region = { id: 'test', bounds, furnishings: [], fences: [], paths: [], openings: [[15,24,10,false]],
+    const region = { id: 'test', bounds, furnishings: [], fences: [], paths: [], openings: [[15,24,10,false],[15,24,20,false]],
       places: [{id:'house', indoor:true, bounds, door:{x:15,y:24,z:9}}] } as unknown as RegionProjection;
     const before = JSON.stringify(region);
     const mats = {get:()=>shared, tilesPerMetre:()=>1} as unknown as MaterialLibrary;
     try {
       const props = buildStaticProps(scene, mats, region, null, root);
-      expect(props.meshes.map(m=>m.name)).toEqual(['door-frame-15-24-10','door-leaf-15-24-10']);
+      expect(props.meshes.map(m=>m.name)).toEqual(['door-frame-15-24-10','door-leaf-15-24-10','door-frame-15-24-20','door-leaf-15-24-20']);
       for(const mesh of props.meshes) {
         expect(mesh.material).not.toBe(shared); expect(mesh.metadata.cutawayBounds).toBe(bounds);
         expect(mesh.metadata.ownsCutawayMaterial).toBe(true);
@@ -68,4 +68,36 @@ describe('isometric presentation preserves control and world boundaries', () => 
       expect(props.doors[0].open).toBe(0); expect(props.doors[0].target).toBe(0);
     } finally {scene.dispose();engine.dispose();}
   });
+});
+
+
+describe('elevated perspective exploration', () => {
+  it('orbits through a full turn, bounds tilt/zoom, follows movement and reverses projection/cutaway', () => {
+    const engine=new NullEngine(), scene=new Scene(engine), camera=new FreeCamera('orbit',Vector3.Zero(),scene);
+    const settings={...DEFAULT_SETTINGS,viewMode:'orbit' as 'orbit'|'third-person'|'isometric'};
+    const rig=new CameraRig(camera,()=>settings,{blocked:()=>false,ground:()=>0});
+    try {
+      rig.update(.1,{x:0,y:1.55,z:0},0);expect(rig.cutaway).toBe(true);expect(camera.mode).toBe(Camera.PERSPECTIVE_CAMERA);
+      rig.addLook(Math.PI*2+.7,100);expect(rig.pitch).toBe(1.05);expect(Math.abs(rig.moveYaw)).toBeLessThan(Math.PI);
+      rig.addLook(0,-100);expect(rig.pitch).toBe(.32);rig.zoom(-100);
+      for(let i=0;i<80;i++)rig.update(.1,{x:0,y:1.55,z:0},0);
+      expect(camera.position.length()).toBeGreaterThan(4);expect(camera.position.length()).toBeLessThan(6);
+      rig.setMode('talk');rig.setTalk({x:1,y:1.55,z:1});for(let i=0;i<20;i++)rig.update(.1,{x:0,y:1.55,z:0},0);
+      rig.setMode('explore');expect(rig.pitch).toBe(.62);
+      settings.viewMode='isometric';rig.update(.1,{x:0,y:1.55,z:0},0);expect(camera.mode).toBe(Camera.ORTHOGRAPHIC_CAMERA);
+      settings.viewMode='orbit';rig.update(.1,{x:0,y:1.55,z:0},0);expect(camera.mode).toBe(Camera.PERSPECTIVE_CAMERA);expect(rig.cutaway).toBe(true);
+      settings.viewMode='third-person';rig.update(.1,{x:0,y:1.55,z:0},0);expect(rig.cutaway).toBe(false);
+    }finally{scene.dispose();engine.dispose();}
+  });
+});
+
+
+it('camera cutaway collision only ignores upper indoor geometry, preserves low walls and normal collision', () => {
+  const bounds={x0:10,x1:20,z0:10,z1:20,y0:24,y1:30};
+  const context={regions:new Map([['0,0',{projection:{places:[{indoor:true,bounds}]}}]]),regionOf:()=> '0,0',structureAt:()=>true};
+  const query=(x:number,y:number,z:number,player:any)=>RegionManager.prototype.cameraStructureAt.call(context as unknown as RegionManager,x,y,z,player);
+  expect(query(15,27,15,{x:15,y:24,z:15})).toBe(false);
+  expect(query(15,24.5,15,{x:15,y:24,z:15})).toBe(true);
+  expect(query(15,27,15,null)).toBe(true);
+  expect(query(35,27,35,{x:15,y:24,z:15})).toBe(true);
 });
