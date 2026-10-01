@@ -165,13 +165,14 @@ export class CharacterMaterials {
     const key = (slot: string) => `${slot}:${cl.motif}:${cl.primary}|${cl.secondary}|${cl.accent}|${Math.round(cl.wear * 4)}:${cl.seed % 4}`;
     for (const [slot, kind] of [['TV_Cloth', 'cloth'], ['TV_Under', 'under'], ['TV_Accent', 'accent'], ['TV_Hem', 'hem']] as const) {
       const couture = cl.motif === 'snow' && (kind === 'cloth' || kind === 'hem');
+      const silk = ['blossom', 'brocade', 'snow'].includes(cl.motif);
       const tex = couture ? new Texture('/textures/couture/ivory-sparse-embroidery.png', scene, false, false, Texture.TRILINEAR_SAMPLINGMODE)
         : dyn(scene, key(slot), 256, g => paintCloth(g, 256, cl, kind), this.prints);
       if (couture) this.owned.push(tex);
       make(slot, m => {
-        m.albedoTexture = tex; m.albedoColor = Color3.White(); m.bumpTexture = weaveN; m.bumpTexture.level = 0.22; m.roughness = slot === 'TV_Accent' ? 0.45 : 0.88;
+        m.albedoTexture = tex; m.albedoColor = Color3.White(); m.bumpTexture = weaveN; m.bumpTexture.level = 0.22; m.roughness = slot === 'TV_Accent' ? 0.45 : silk ? .58 : .88;
         if (couture) { m.roughness = .54; m.backFaceCulling = false; tex.anisotropicFilteringLevel = 8; }
-        m.sheen.isEnabled = true; m.sheen.intensity = couture ? .65 : slot === 'TV_Accent' ? 0.5 : 0.25; m.sheen.color = c3(mix(cl.accent, [255, 255, 255], 0.4));
+        m.sheen.isEnabled = true; m.sheen.intensity = silk ? .65 : slot === 'TV_Accent' ? 0.5 : 0.25; m.sheen.color = c3(mix(cl.accent, [255, 255, 255], 0.4));
         if (tex) { tex.uScale = 1; tex.vScale = 1; }
       });
     }

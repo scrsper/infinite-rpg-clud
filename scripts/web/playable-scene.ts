@@ -1,6 +1,6 @@
 /** Disposable human-playable scene: existing village, canonical actors and mechanics. No retained save is opened. */
 import { chromium } from 'playwright';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, copyFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve, relative, isAbsolute } from 'node:path';
 import { createServer } from 'node:net';
@@ -8,6 +8,7 @@ import { LiveServer } from '../../src/server/live';
 import { loadConfig, type ReleaseIdentity } from '../../src/server/config';
 import { AccountRegistry } from '../../src/server/accounts';
 import { WebGateway } from '../../src/webgate/gateway';
+import { appearanceFromTraits } from '../../src/sim/core/appearance';
 import { CAST } from '../../src/sim/world/cast';
 import { makePerson, makeBody } from '../../src/sim/world/factory';
 import { seedStartingSkills } from '../../src/sim/core/skills';
@@ -22,9 +23,9 @@ mkdirSync(join(root, 'credentials')); writeFileSync(join(root, 'credentials', 'a
 const token = new AccountRegistry(join(root, 'credentials', 'accounts.json')).add('dialogue-ui', 'Dialogue UI acceptance');
 const release: ReleaseIdentity = { version: 'dialogue-ui', revision: 'test', dirty: false, builtAtIso: '', protocol: 1, saveSchema: SAVE_VERSION, generatorVersion: 'playable-1', node: process.version };
 const server = new LiveServer(loadConfig(path), release, () => {});
-const gateway = new WebGateway({ port: 0, upstream: { host: '127.0.0.1', port }, credentials: { account: 'dialogue-ui', token }, staticDir: resolve(process.env.TVO_PLAYABLE_BUNDLE ?? '.debug/orbit/bundle') });
+const gateway = new WebGateway({ port: 0, upstream: { host: '127.0.0.1', port }, credentials: { account: 'dialogue-ui', token }, staticDir: resolve(process.env.TVO_PLAYABLE_BUNDLE ?? '.debug/orbit/visual-bundle') });
 const browser = await chromium.launch({ channel: 'chrome', headless: false, args: ['--enable-unsafe-webgpu', '--ignore-gpu-blocklist'] });
-const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
+const page = await browser.newPage({ viewport: { width: 1600, height: 1000 },recordVideo:process.env.TVO_SCENE_VERIFY==='1'?{dir:join(root,'video'),size:{width:1280,height:800}}:undefined });
 
 const done = new Promise<void>(resolveDone => {
   process.once('SIGINT', () => resolveDone());
@@ -34,10 +35,25 @@ try {
   await page.addInitScript('window.__name = (f) => f;');
   await server.open(); await server.listen(); await gateway.listen();
   await page.goto(gateway.issueLaunchUrl());
-  await page.goto(`${gateway.url}/?autoplay=1&name=Traveler&view=orbit&hour=16`);
+  await page.goto(`${gateway.url}/?autoplay=1&name=Traveler&view=orbit&hour=16&look=key:1.05,fill:1.35,exposure:1.20,fog:1.1`);
   await page.waitForFunction(() => (window as any).__tv?.ready === true, undefined, { timeout: 120000 });
   const playerId = await page.evaluate(() => (window as any).__tv.link.hello.playerId);
   const w = server.session.world, playerBody = w.primaryBody(playerId)!;
+  const player=w.person(playerId)!;
+  const originalAppearance=player.appearance.description;
+  if(originalAppearance) {
+    // Disclosed initial scene wardrobe, using existing canonical appearance tokens and kits.
+    // Physiology, wealth and gameplay capabilities remain the ordinary player's.
+    const description={...originalAppearance,garmentSilhouette:player.gender==='f'?'formal_kimono' as const:'hakama_set' as const,
+      garmentPalette:'festival_crimson',hairColor:'honey' as const,hairStyle:'wavy_long' as const,
+      accessories:['hair_ornament','ear_drops'],culturalTags:[...new Set([...originalAppearance.culturalTags,'festival_silk','blossom_motif'])],grooming:.85,wear:.08};
+    player.appearance={...appearanceFromTraits(description),description,height:player.appearance.height,build:player.appearance.build};
+    // Wait for canonical projection, then use the existing presentation reset to realise its tokens.
+    await page.waitForFunction(()=>(window as any).__tv.own()?.appearance?.description?.garmentPalette==='festival_crimson');
+    await page.evaluate(()=>(window as any).__tv.actors.clear());
+    await page.waitForTimeout(500);
+  }
+
   const place = [...w.entities.values()].filter((e:any)=>e.kind==='place' && e.indoor && e.door && e.inside)
     .sort((a:any,b:any)=>(a.type==='tavern'?0:1)-(b.type==='tavern'?0:1)||Math.hypot(a.door.x-playerBody.pos.x,a.door.z-playerBody.pos.z)-Math.hypot(b.door.x-playerBody.pos.x,b.door.z-playerBody.pos.z))[0] as any;
   if(!place) throw Error('Existing canonical interior unavailable');
@@ -71,16 +87,26 @@ try {
   await page.evaluate((position)=>{const tv=(window as any).__tv;const p=tv.predictor.predicted.pos;tv.rig.yaw=Math.atan2(-(position.x-p.x),-(position.z-p.z));tv.rig.pitch=.62;tv.hud.toast('Tavern courtyard · F locks the nearby hostile · H / click strikes · Space dodges. Middle drag orbits.', 'info',12000);},ground.pos);
   console.log('Playable local courtyard ready. Canonical hostile actor and tavern staged in a disposable world. Close Chrome or press Ctrl+C to stop.');
   if (process.env.TVO_SCENE_VERIFY === '1') {
-    const evidence=resolve('docs/evidence/orbit-combat-scene');mkdirSync(evidence,{recursive:true});
+    const evidence=resolve(process.env.TVO_SCENE_EVIDENCE_DIR ?? 'docs/evidence/orbit-combat-scene');mkdirSync(evidence,{recursive:true});
     await page.waitForTimeout(3000);
     await page.screenshot({path:join(evidence,'06-playable-courtyard.png')});
-    const rendering=await page.evaluate(enemyBodyId=>{const tv=(window as any).__tv;return {view:tv.settings.viewMode,playerActor:!!tv.actors.get(tv.snapshot.controlledBodyId),enemyActor:!!tv.actors.get(enemyBodyId),camera:{x:tv.camera.position.x,y:tv.camera.position.y,z:tv.camera.position.z},meshes:tv.ctx.scene.meshes.length,materials:tv.ctx.scene.materials.length,fps:tv.ctx.engine.getFps(),pendingBuilds:tv.regions.pendingBuilds};},enemyBody.id);
-    writeFileSync(join(evidence,'playable-scene.json'),JSON.stringify({rendering,initialHealth,playerHealth:playerBody.health,enemyAction:enemyBody.combatAction,castFallback,placeId:place.id,enemyId:enemy.id,enemyBodyId:enemyBody.id,start,combatGround:ground.pos,fixture:'Disposable initial placement of player and hostile actor outside an existing canonical interior; absent hostiles use the existing Skarn cast via ordinary canonical factories. Ordinary autonomous simulation continues. No human acceptance.'},null,2));
-    if(!rendering.playerActor||!rendering.enemyActor||rendering.pendingBuilds)throw Error('Scene actors or region not ready');
+    const rendering=await page.evaluate(enemyBodyId=>{const tv=(window as any).__tv;return {view:tv.settings.viewMode,playerBodyId:tv.snapshot.controlledBodyId,projectedWardrobe:tv.own()?.appearance?.description,playerMeshes:tv.actors.get(tv.snapshot.controlledBodyId)?.visual.root.getChildMeshes().map((m:any)=>m.name),playerActor:!!tv.actors.get(tv.snapshot.controlledBodyId),enemyActor:!!tv.actors.get(enemyBodyId),camera:{x:tv.camera.position.x,y:tv.camera.position.y,z:tv.camera.position.z},meshes:tv.ctx.scene.meshes.length,materials:tv.ctx.scene.materials.length,fps:tv.ctx.engine.getFps(),pendingBuilds:tv.regions.pendingBuilds};},enemyBody.id);
+    writeFileSync(join(evidence,'playable-scene.json'),JSON.stringify({rendering,wardrobe:player.appearance.description,lighting: {key:1.05,fill:1.35,exposure:1.20,fog:1.1},initialHealth,playerHealth:playerBody.health,enemyAction:enemyBody.combatAction,castFallback,placeId:place.id,enemyId:enemy.id,enemyBodyId:enemyBody.id,start,combatGround:ground.pos,fixture:'Disposable initial placement of player and hostile actor outside an existing canonical interior; absent hostiles use the existing Skarn cast via ordinary canonical factories. Ordinary autonomous simulation continues. No human acceptance.'},null,2));
+    if(!rendering.playerActor||!rendering.enemyActor||rendering.pendingBuilds||rendering.playerBodyId!==playerBody.id||rendering.projectedWardrobe?.garmentPalette!=='festival_crimson')throw Error('Scene actors or region not ready');
+    await page.keyboard.press('f');await page.keyboard.press('h');await page.waitForTimeout(800);await page.keyboard.press('Space');await page.waitForTimeout(500);await page.keyboard.press('f');
+    await page.mouse.wheel(0,-400);await page.waitForTimeout(800);
+    await page.mouse.move(500,400);await page.mouse.down({button:'middle'});await page.mouse.move(1000,420,{steps:15});await page.mouse.up({button:'middle'});await page.waitForTimeout(700);
+    await page.screenshot({path:join(evidence,'07-character-readability.png')});
+
   } else await done;
 } finally {
-  await browser.close(); await gateway.close(); await server.stopInProcess('playable scene closed');
+  const videoPath=process.env.TVO_SCENE_VERIFY==='1'?await page.video()?.path():null;
+  await browser.close();
+  try {if(videoPath)copyFileSync(videoPath,join(resolve(process.env.TVO_SCENE_EVIDENCE_DIR ?? 'docs/evidence/orbit-combat-scene'),'scene-visual-playthrough.webm'));}
+  finally {
+  await gateway.close(); await server.stopInProcess('playable scene closed');
   const ownedRelative=relative(resolve(tmpdir()),resolve(root));
   if(!ownedRelative || ownedRelative.startsWith('..') || isAbsolute(ownedRelative))throw Error('Refusing cleanup outside owned temporary root');
   rmSync(root,{recursive:true,force:true});
+  }
 }

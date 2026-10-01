@@ -2,7 +2,7 @@
 
 ## Launch
 
-Double-click `Play Torn Veil Camera Combat.cmd` in the authoritative Desktop checkout. It reuses `.debug/orbit/bundle`, building it only if absent, then opens a real Chrome window against a **new disposable local world**. Close that Chrome window or press Ctrl+C in the launcher to stop the owned services and remove the owned temporary world. Relaunch for a fresh scene. No retained user world, save, profile or credential is opened. `scripts/web/Play-CameraCombat.ps1 -CheckOnly` verifies the local launcher prerequisites without starting anything. Fresh checkouts need the established dependencies and `npm run web:assets` output.
+Double-click `Play Torn Veil Camera Combat.cmd` in the authoritative Desktop checkout. It reuses `.debug/orbit/visual-bundle`, building it only if absent, then opens a real Chrome window against a **new disposable local world**. Close that Chrome window or press Ctrl+C in the launcher to stop the owned services and remove the owned temporary world. Relaunch for a fresh scene. No retained user world, save, profile or credential is opened. `scripts/web/Play-CameraCombat.ps1 -CheckOnly` verifies the local launcher prerequisites without starting anything. Fresh checkouts need the established dependencies and `npm run web:assets` output.
 
 The scene starts on clear, reachable ground beside the nearest canonical tavern, with its real narrow doorway, furnished interior and tall exterior walls. One hostile person is placed on reachable open ground. Existing hostile persons are reused when available; this seed has none, so the launcher creates the existing Skarn cast with `makePerson`, `makeBody` and `seedStartingSkills`. This is disclosed scenario initialization, not a new simulation mechanic. Ordinary cognition, movement, attacks, damage, perception and consequences continue afterward. The scene is deliberately dangerous: Skarn is autonomous, can attack and can defeat the player. Civilians and the rest of the canonical procedural world remain active.
 
@@ -13,7 +13,7 @@ Settings → View → Elevated exploration also enables the camera in ordinary p
 After later source edits, stop sessions serving this bundle before rebuilding:
 
 ```powershell
-node node_modules/vite/bin/vite.js build --config vite.web.config.ts --outDir ../.debug/orbit/bundle
+node node_modules/vite/bin/vite.js build --config vite.web.config.ts --outDir ../.debug/orbit/visual-bundle
 node --import tsx scripts/web/playable-scene.ts
 ```
 
@@ -34,3 +34,9 @@ Real Chrome acceptance and scene evidence are in `docs/evidence/orbit-combat-sce
 The first orbit pass exposed fixed-isometric assumptions in movement assertions; they now measure displacement against the actual camera basis. The following pass exposed a genuinely unregistered secondary door and missed lock acquisition behind the camera. Both presentation defects were repaired without weakening damage or visibility assertions.
 
 This is a bounded playable camera/combat slice, not finished Diablo IV-level art. Character silhouettes, furniture, repeated terrain and vegetation remain visibly prototype quality. The MPFB test rig was not used because its deformation/import quality is not established. Cutaway coverage is verified at one tavern; other layouts, vegetation occlusion, long sessions and physical gamepads remain unverified. The known multi-day construction-supply and bandit-hunger issues remain outside this task. Full simulation, Unreal and remote CI suites were not rerun for these presentation/scenario-only changes; final relevant web tests, typecheck and private build provide the scoped verification.
+
+## Focused visual follow-up
+
+The dedicated scene now selects an existing canonical festival-crimson wardrobe as a disclosed initial condition, preserving the player physiology and ordinary mechanics. Existing female furisode, long hair, bow and filigree meshes render that wardrobe without fox ears or a tail. Ordinary work clothing and snow couture retain their existing mappings. Silk sheen, restrained terrain normal strength and scene-specific afternoon fill/exposure improve readability. No new asset or simulation subsystem was introduced. The original camera commit and its evidence remain intact; the dedicated scene uses a separate visual bundle.
+
+Final screenshots and a short actual-scene input video are in `docs/evidence/orbit-visual-pass`. The final screenshot was successfully retained in ChatGPT Library. This improves the existing prototype presentation; it does not establish the ornate reference's character, cloth or environment fidelity. See the visual evidence README for validation scope and remaining asset work.

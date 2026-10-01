@@ -1,0 +1,11 @@
+# Focused existing-asset visual pass
+
+Preserves camera foundation commit fe07feb42aee8077540f236bcd3b9f3dad0c0fea. Compare the preceding `../orbit-combat-scene/06-playable-courtyard.png` with `06-playable-courtyard.png` and `07-character-readability.png`. `scene-visual-playthrough.webm` records actual local lock/attack/dodge/zoom/orbit inputs.
+
+Reuses the licensed character kit's furisode, long hair, bow, filigree and ornaments for canonical festival-crimson formal clothing; excludes noncanonical fox anatomy. Scene-only light tuning and less aggressive terrain normals improve character/material readability. All canonical actions remain existing mechanics.
+
+Validation: two focused appearance regression tests passed, typecheck passed, private Vite build passed (3346 modules). The material/lighting pass passed all 22 real Chrome camera/movement/interior/combat/resource checks before the final crimson mesh mapping. That last mapping has focused regression tests and the final actual-scene capture: projected wardrobe and original controlled body agree, ornate meshes loaded, autonomous canonical enemy reduced health from 80 to 63.2235, and no pending actor builds remained. The sampled 107.6 FPS is one local snapshot, not a performance guarantee. No full simulation suite, Unreal, remote CI, long-session or human-controller acceptance was repeated.
+
+Quality gaps remain: coarse base face/hair, simplified garment volume and folds, procedural blossom print rather than the exact reference costume, blocky furniture, repeated terrain, sparse grass and generic foliage. Next asset work should improve one clothed rigged character's garment/hair/ornament geometry and baked textures, validate attack/dodge cloth weights, and upgrade furniture and ground/foliage assets while preserving canonical positions, collision and measured resource budgets. This is an improved prototype, not AAA or finished reference fidelity.
+
+Native evidence delivery: final screenshot upload succeeded, Library file `libfile_f64abb25e42c8191bc0d985139c208fc`, backing file `file_0000000065d48230ae9524c310132839`. Windows Python lacks os.setxattr; local Library version metadata cannot be applied with the provided POSIX helper. Local evidence remains available. No public hosting or Git publication occurred.

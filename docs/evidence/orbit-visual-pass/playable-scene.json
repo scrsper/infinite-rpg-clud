@@ -1,0 +1,170 @@
+{
+  "rendering": {
+    "view": "orbit",
+    "playerBodyId": "b_146",
+    "projectedWardrobe": {
+      "archetype": "hana",
+      "culture": "ashford",
+      "presentation": "feminine",
+      "skinTone": "olive",
+      "faceShape": "heart",
+      "hairStyle": "wavy_long",
+      "hairColor": "honey",
+      "eyeColor": "hazel",
+      "frame": "lean",
+      "stature": "below_average",
+      "garmentSilhouette": "formal_kimono",
+      "garmentPalette": "festival_crimson",
+      "accessories": [
+        "hair_ornament",
+        "ear_drops"
+      ],
+      "culturalTags": [
+        "ashford",
+        "festival_silk",
+        "blossom_motif"
+      ],
+      "grooming": 0.85,
+      "wear": 0.08,
+      "status": "modest",
+      "agePresentation": "young_adult",
+      "roleCues": [
+        "travel_pack"
+      ]
+    },
+    "playerMeshes": [
+      "ch31.__root__",
+      "ch31.Accessory_ear_drops",
+      "ch31.Accessory_travel_pack_primitive0",
+      "ch31.Accessory_travel_pack_primitive1",
+      "ch31.Body",
+      "ch31.Foot_geta",
+      "ch31.G_furisode_hero_primitive0",
+      "ch31.G_furisode_hero_primitive1",
+      "ch31.Hair_hero_long",
+      "ch31.Head_primitive0",
+      "ch31.Head_primitive1",
+      "ch31.Head_primitive2",
+      "ch31.Head_primitive3",
+      "ch31.Head_primitive4",
+      "ch31.Head_primitive5",
+      "ch31.Head_primitive6",
+      "ch31.Head_primitive7",
+      "ch31.Head_primitive8",
+      "ch31.Hero_bow",
+      "ch31.Hero_filigree",
+      "ch31.Hero_flower",
+      "ch31.Hero_ornaments",
+      "ch31.Ornament_pins"
+    ],
+    "playerActor": true,
+    "enemyActor": true,
+    "camera": {
+      "x": 242.70783283247738,
+      "y": 29.906282571970795,
+      "z": 80.54882578450697
+    },
+    "meshes": 1090,
+    "materials": 255,
+    "fps": 107.60401723504704,
+    "pendingBuilds": 0
+  },
+  "wardrobe": {
+    "archetype": "hana",
+    "culture": "ashford",
+    "presentation": "feminine",
+    "skinTone": "olive",
+    "faceShape": "heart",
+    "hairStyle": "wavy_long",
+    "hairColor": "honey",
+    "eyeColor": "hazel",
+    "frame": "lean",
+    "stature": "below_average",
+    "garmentSilhouette": "formal_kimono",
+    "garmentPalette": "festival_crimson",
+    "accessories": [
+      "hair_ornament",
+      "ear_drops"
+    ],
+    "culturalTags": [
+      "ashford",
+      "festival_silk",
+      "blossom_motif"
+    ],
+    "grooming": 0.85,
+    "wear": 0.08,
+    "status": "modest"
+  },
+  "lighting": {
+    "key": 1.05,
+    "fill": 1.35,
+    "exposure": 1.2,
+    "fog": 1.1
+  },
+  "initialHealth": 80,
+  "playerHealth": 63.22347377903142,
+  "enemyAction": {
+    "id": "action_3",
+    "actorBodyId": "b_147",
+    "kind": "attack",
+    "targetBodyId": "b_146",
+    "weaponId": null,
+    "definition": "unarmed_high",
+    "trajectory": "high",
+    "startedAt": 20.10000000000014,
+    "startTick": 1206,
+    "activeAt": 20.36000000000014,
+    "recoveryAt": 20.51000000000014,
+    "completeAt": 20.78000000000014,
+    "phase": "recovery",
+    "outcome": "hit",
+    "facing": -1.4397790851756453,
+    "initialFacing": -1.4397790851756453,
+    "trackingUntil": 20.26000000000014,
+    "turnRate": 1.5707963267948966,
+    "turnBudget": 0.2617993877991494,
+    "reach": 0.9,
+    "radius": 0.12,
+    "impact": 6.097464808718567,
+    "exertionCost": 0.03333333333333333,
+    "intent": "subdue",
+    "direction": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "distance": 0,
+    "appliedDistance": 0,
+    "eventId": "e_1543",
+    "variant": "direct",
+    "moveId": "jab",
+    "repertoireRevision": 2,
+    "techniqueId": "motor:basic-punch",
+    "contact": {
+      "bodyId": "b_146",
+      "region": "head",
+      "position": {
+        "x": 12013.24952452309,
+        "y": 25.51139185341539,
+        "z": 20051.58972077333
+      },
+      "at": 20.46937154542769,
+      "eventId": "e_1558"
+    }
+  },
+  "castFallback": true,
+  "placeId": "pl_3",
+  "enemyId": "p_129",
+  "enemyBodyId": "b_147",
+  "start": {
+    "x": 12013.5,
+    "y": 24,
+    "z": 20051.5
+  },
+  "combatGround": {
+    "x": 12006.5,
+    "y": 24,
+    "z": 20055.5
+  },
+  "fixture": "Disposable initial placement of player and hostile actor outside an existing canonical interior; absent hostiles use the existing Skarn cast via ordinary canonical factories. Ordinary autonomous simulation continues. No human acceptance."
+}

@@ -123,7 +123,11 @@ export class MaterialLibrary {
       m.subSurface.isTranslucencyEnabled = true; m.subSurface.translucencyIntensity = .25;
     }
     m.maxSimultaneousLights = 8;
-    if (name === 'terrain') new GroundCover(m);
+    if (name === 'terrain') {
+      // Keep scanned ground detail without overpowering actor silhouettes at gameplay distance.
+      if (m.bumpTexture) m.bumpTexture.level = .55;
+      new GroundCover(m);
+    }
     if (s.alpha === undefined && !s.emissive) m.freeze();
     this.cache.set(name, m);
     return m;

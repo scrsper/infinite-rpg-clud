@@ -83,13 +83,16 @@ export function realize(id: string, desc: AppearanceDescription | undefined, pro
   if (acc.has('arm_wrap')) parts.push('Accessory_arm_wrap');
   if (acc.has('prayer_beads') || cues.has('prayer_beads')) parts.push('Accessory_prayer_beads');
   if (acc.has('travel_pack') || cues.has('travel_pack')) parts.push('Accessory_travel_pack');
-  // Reference-quality couture realises the existing snow-moon appearance family in play.
+  // Existing couture geometry realises snow-moon and festival-silk clothing in play.
   // Human anatomy remains human: the showroom's fox ears/tail are never added here.
-  const couture = kit === 'f' && desc.garmentPalette === 'snow_moon' && desc.garmentSilhouette === 'layered_kimono';
+  const snowCouture = desc.garmentPalette === 'snow_moon' && desc.garmentSilhouette === 'layered_kimono';
+  const festivalCouture = desc.garmentPalette === 'festival_crimson' && desc.garmentSilhouette === 'formal_kimono';
+  const couture = kit === 'f' && (snowCouture || festivalCouture);
   if (couture) {
-    cloth.primary = [238, 236, 227]; cloth.secondary = [26, 37, 70]; cloth.accent = [34, 47, 86];
+    if (snowCouture) { cloth.primary = [238, 236, 227]; cloth.secondary = [26, 37, 70]; cloth.accent = [34, 47, 86]; }
     for (let i = parts.length - 1; i >= 0; i--) if (/^(G_|Hair_|Foot_)/.test(parts[i])) parts.splice(i, 1);
-    parts.push('G_furisode_hero', 'Hair_hero_long', 'Foot_geta', 'Hero_stole', 'Hero_bow', 'Hero_filigree', 'Hero_gemstones');
+    parts.push('G_furisode_hero', 'Hair_hero_long', 'Foot_geta', 'Hero_bow', 'Hero_filigree');
+    if (snowCouture) parts.push('Hero_stole', 'Hero_gemstones');
     if (acc.has('hair_ornament')) parts.push('Hero_ornaments', 'Hero_flower');
   }
   const morphs: Record<string, number> = {};
