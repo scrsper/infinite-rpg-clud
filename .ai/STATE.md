@@ -1,4 +1,12 @@
-# Current: Optional isometric playable slice (2026-10-01)
+# Current: Checkpoint worker loader compatibility repair (2026-10-01)
+
+The isometric slice at 3b8f02b passed local normal regression (168 files / 1,811 tests), but CI run 36817546294 finished RED at npm test: the Node 20 runner could not load checkpointWorker.ts. Its build and smoke steps were skipped. PR56 records the failure.
+
+Source workers now use a JavaScript entry and tsx's scoped import API. The compiled release worker path and all checkpoint capture/packing/ownership/durability behavior are unchanged. All 38 tests in the five CI-failing suites pass locally; typecheck passes. A small actual Node 20/22 worker check precedes the full CI gate. New exact-head CI remains to be verified; no success is inferred from the local Node 22 result.
+
+The already-authorized interior visibility task remains unstarted pending these checks. Portrait work stays outside that bounded follow-up. Details and prior evidence remain in docs/web/ISOMETRIC_PLAYABLE_SLICE.md.
+
+# Previous: Optional isometric playable slice (2026-10-01)
 
 Branch codex/isometric-playable-slice preserves inherited work in 21be4e2 and licensed source assets in af9eab8. Optional fixed orthographic Babylon presentation, screen-relative walking/running, pointer interaction, canonical dialogue/trade/combat and per-building cutaways are implemented. Third-person remains available; canonical simulation and Unreal mechanics were not changed by this slice.
 

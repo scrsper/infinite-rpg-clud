@@ -29,8 +29,9 @@ export class CheckpointEncoder {
   private startWorker(): void {
     if (!this.worker) {
       const source = import.meta.url.endsWith('.ts');
-      this.worker = new Worker(new URL(source ? './checkpointWorker.ts' : './checkpointWorker.mjs', import.meta.url), {
-        execArgv: source ? ['--import', 'tsx'] : [],
+      this.worker = new Worker(new URL(source ? './checkpointWorkerLoader.mjs' : './checkpointWorker.mjs', import.meta.url), {
+        // Source workers bootstrap their loader inside a JavaScript entry on Node 20 and newer.
+        execArgv: [],
       });
       this.worker.on('message', value => {
         clearTimeout(this.timer);
