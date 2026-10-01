@@ -17,6 +17,7 @@ export class PortraitRenderer implements PortraitSource {
   constructor(private readonly scene: Scene, private readonly actors: ActorManager) {
     this.rtt = new RenderTargetTexture('portrait', { width: this.size.w, height: this.size.h }, scene, { generateMipMaps: false, generateDepthBuffer: true, type: 0 });
     this.rtt.clearColor = new Color4(0.09, 0.11, 0.16, 1);
+    this.rtt.noPrePassRenderer = true;
     this.rtt.refreshRate = RenderTargetTexture.REFRESHRATE_RENDER_ONEVERYFRAME; this.rtt.skipInitialClear = false;
     this.camera = new FreeCamera('portrait-cam', new Vector3(0, 1.6, 2), scene); this.camera.fov = 0.42; this.camera.minZ = 0.05; this.camera.maxZ = 8; this.camera.parent = null;
     this.rtt.activeCamera = this.camera;

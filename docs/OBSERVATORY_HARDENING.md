@@ -1,3 +1,5 @@
+> Historical milestone report. Its local-model integration and measurements are superseded by [deterministic dialogue](DETERMINISTIC_DIALOGUE.md); no model is used by current gameplay or Observatory.
+
 # Observatory integrity investigation
 
 The original RED investigation and bounded validation are complete. Overall integrity remains **AMBER**: the original findings are explained, confirmed simulation defects are repaired, and incomplete evidence and performance warnings remain visible. All runs use disposable development worlds. Live, staging, web gameplay presentation, Unreal, and model capabilities were not modified.

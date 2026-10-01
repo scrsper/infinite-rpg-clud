@@ -11,6 +11,7 @@ import type { DialogueProjection } from '../net/messages';
 export interface PortraitSource { attach(canvas: HTMLCanvasElement, bodyId: string | null, name: string): () => void }
 export interface DialogueDeps {
   choose(optionId: string, label: string): Promise<{ result: string }>;
+  speak?(text: string, revision: number): Promise<{ result: string; speech?: string; fallback?: boolean }>;
   close(): void;
   portrait: PortraitSource;
   keyLabel(n: number): string;
@@ -64,14 +65,23 @@ export class DialoguePanel {
   private readonly log: { who: string; text: string; you: boolean }[] = [];
   private revision = -1; private speakerBodyId: string | null = null; private current: DialogueProjection | null = null;
   private busy = false; private detach: (() => void) | null = null; private pendingLabel = '';
+  private readonly input: HTMLTextAreaElement; private readonly sendButton: HTMLButtonElement; private readonly speechStatus: HTMLElement;
+  private group: GroupId = 'talk';
+  private generation = 0;
   constructor(parent: HTMLElement, private readonly deps: DialogueDeps) {
     this.title = h('div', { class: 'tv-h2', style: 'margin:0' });
     this.transcript = h('div', { class: 'tv-transcript', tabindex: 0, aria: { label: 'Conversation' } });
     this.options = h('div', { class: 'tv-options' });
     this.confirmEl = h('div');
     this.portrait = h('figure', { class: 'tv-portrait', style: 'margin:0' });
+    this.input = h('textarea', { class: 'tv-speech-input', rows: 2, maxlength: 1000, placeholder: 'Ask about this place, introduce yourself, share news…', aria: { label: 'Say something' } });
+    this.sendButton = h('button', { class: 'tv-btn primary', type: 'submit' }, 'Speak');
+    this.speechStatus = h('div', { class: 'tv-speech-status', role: 'status', 'aria-live': 'polite' });
+    const form = h('form', { class: 'tv-speech-form', on: { submit: e => { e.preventDefault(); void this.speak(); } } },
+      h('label', { class: 'tv-speech-label' }, 'In your own words', this.input), this.sendButton, this.speechStatus);
+    this.input.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void this.speak(); } });
     this.root = h('div', { class: 'tv-talk tv-panel', style: 'display:none', role: 'dialog', aria: { label: 'Conversation' } }, this.portrait,
-      h('div', { style: 'min-width:0' }, this.title, this.transcript, this.confirmEl, this.options));
+      h('div', { class: 'tv-talk-content' }, h('div', { class: 'tv-talk-header' }, h('div', {}, h('div', { class: 'tv-eyebrow' }, 'Conversation'), this.title), h('button', { class: 'tv-btn quiet', type: 'button', on: { click: () => this.requestClose() } }, 'Goodbye', h('span', { class: 'tv-key' }, 'Esc'))), this.transcript, this.confirmEl, this.options, this.deps.speak ? form : null));
     parent.append(this.root);
     window.addEventListener('keydown', e => this.onKey(e));
   }
@@ -90,7 +100,9 @@ export class DialoguePanel {
   update(d: DialogueProjection | null): void {
     if (!d) { if (this.current) this.closeUi(); return; }
     const isNew = !this.current || d.speakerBodyId !== this.speakerBodyId;
-    if (isNew) { this.log.length = 0; this.openUi(d); }
+    if (isNew) { this.log.length = 0; this.group = 'talk'; this.openUi(d); this.input.value = ''; this.speechStatus.textContent = ''; }
+    this.title.textContent = d.name;
+    this.current = d;
     if (d.revision !== this.revision) {
       if (this.pendingLabel) { this.log.push({ who: 'You', text: this.pendingLabel, you: true }); this.pendingLabel = ''; }
       for (const line of d.lines) this.log.push({ who: d.name, text: line, you: false });
@@ -100,17 +112,19 @@ export class DialoguePanel {
     }
   }
   private openUi(d: DialogueProjection): void {
+    this.generation++; this.busy = false; this.input.disabled = false; this.sendButton.disabled = false;
     this.current = d; this.speakerBodyId = d.speakerBodyId; this.revision = -1; this.root.style.display = 'grid';
     clear(this.portrait); const canvas = h('canvas', { width: 320, height: 400, 'aria-hidden': 'true' }); this.portrait.append(canvas, h('figcaption', { text: d.name }));
     this.detach = this.deps.portrait.attach(canvas, d.speakerBodyId, d.name);
   }
   private closeUi(): void {
+    this.generation++;
     this.detach?.(); this.detach = null; this.current = null; this.speakerBodyId = null; this.revision = -1; this.pendingLabel = ''; this.root.style.display = 'none'; this.busy = false;
   }
   /** Close from the player's side (Escape / B). The server is told; the panel hides when the projection clears. */
   requestClose(): void { if (this.current) this.deps.close(); }
 
-  private renderAll(d: DialogueProjection): void {
+  private renderAll(d: DialogueProjection, focus = false): void {
     this.title.textContent = d.name;
     clear(this.transcript);
     for (const l of this.log) this.transcript.append(h('div', { class: `tv-line${l.you ? ' you' : ''}` }, h('span', { class: 'who', text: l.who }), l.text));
@@ -119,7 +133,13 @@ export class DialoguePanel {
     let n = 0;
     const buckets = new Map<GroupId, { id: string; label: string }[]>();
     for (const o of d.options) { const g = classify(o.label); (buckets.get(g) ?? buckets.set(g, []).get(g)!).push(o); }
+    const available = GROUPS.filter(g => g.id !== 'leave' && buckets.has(g.id));
+    if (!available.some(g => g.id === this.group)) this.group = available[0]?.id ?? 'talk';
+    const tabs = h('nav', { class: 'tv-dialogue-tabs', aria: { label: 'Conversation topics' } });
+    for (const g of available) tabs.append(h('button', { type: 'button', class: `tv-topic${g.id === this.group ? ' active' : ''}`, 'aria-pressed': String(g.id === this.group), on: { click: () => { this.group = g.id; this.renderAll(d); } } }, g.title));
+    this.options.append(tabs);
     for (const g of GROUPS) {
+      if (g.id !== this.group) continue;
       const list = buckets.get(g.id); if (!list?.length) continue;
       const box = h('div', { class: 'list' });
       for (const o of list) {
@@ -130,7 +150,24 @@ export class DialoguePanel {
       }
       this.options.append(h('div', { class: 'tv-opt-group' }, h('h4', { text: g.title }), box));
     }
-    queueMicrotask(() => { (this.options.querySelector('button.tv-opt') as HTMLElement | null)?.focus({ preventScroll: true }); });
+    if (focus && document.activeElement !== this.input) queueMicrotask(() => { if (document.activeElement !== this.input) (this.options.querySelector('button.tv-opt') as HTMLElement | null)?.focus({ preventScroll: true }); });
+  }
+
+  private async speak(): Promise<void> {
+    const d = this.current, text = this.input.value.trim(), generation = this.generation;
+    if (!d || !text || this.busy || !this.deps.speak) return;
+    this.busy = true; this.sendButton.disabled = true; this.input.disabled = true;
+    this.speechStatus.textContent = 'Listening…';
+    this.log.push({ who: 'You', text, you: true }); this.renderAll(d);
+    for (const b of this.options.querySelectorAll('button')) b.disabled = true;
+    try {
+      const reply = await this.deps.speak(text, d.revision);
+      if (this.generation !== generation || this.current?.speakerBodyId !== d.speakerBodyId) return;
+      if (reply.speech) { this.log.push({ who: this.current.name, text: reply.speech, you: false }); this.input.value = ''; this.speechStatus.textContent = ''; }
+      else this.speechStatus.textContent = 'The conversation changed. Try speaking again.';
+      while (this.log.length > 30) this.log.shift();
+    } catch { if (this.generation === generation) this.speechStatus.textContent = 'The connection was interrupted. Your message was not repeated.'; }
+    finally { if (this.generation === generation) { this.busy = false; this.input.disabled = false; this.sendButton.disabled = false; if (this.current) { this.renderAll(this.current); this.input.focus(); } } }
   }
 
   private pick(o: { id: string; label: string }): void {
@@ -145,11 +182,13 @@ export class DialoguePanel {
     void this.send(o);
   }
   private async send(o: { id: string; label: string }): Promise<void> {
+    const generation = this.generation;
     this.busy = true; this.confirmEl.replaceChildren(); this.pendingLabel = /^(goodbye|leave)/i.test(o.label) ? '' : splitPrice(o.label).text;
     for (const b of this.options.querySelectorAll('button')) (b as HTMLButtonElement).disabled = true;
     try {
       const r = await this.deps.choose(o.id, o.label);
+      if (generation !== this.generation) return;
       if (r.result !== 'accepted') { this.pendingLabel = ''; this.deps.toast(this.deps.describe(r.result), 'bad'); if (this.current) this.renderAll(this.current); }
-    } finally { this.busy = false; }
+    } finally { if (generation === this.generation) this.busy = false; }
   }
 }

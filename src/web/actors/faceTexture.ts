@@ -22,6 +22,24 @@ const clamp = (v: number) => Math.max(0, Math.min(255, v));
 const rgb = (c: [number, number, number], a = 1) => `rgba(${clamp(c[0]) | 0},${clamp(c[1]) | 0},${clamp(c[2]) | 0},${a})`;
 const mixc = (a: [number, number, number], b: [number, number, number], t: number): [number, number, number] => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 
+/** Paired iris layout for the imported beta base face; colour is always canonical appearance. */
+export function paintPairedIris(g: CanvasRenderingContext2D, color: [number, number, number]): void {
+  g.clearRect(0,0,1024,512);
+  for (const cx of [256,768]) {
+    g.save(); g.translate(cx,256); g.scale(1,1.13);
+    g.beginPath(); g.arc(0,0,118,0,Math.PI*2); g.clip();
+    const iris=g.createRadialGradient(0,34,18,0,0,119);
+    iris.addColorStop(0,rgb(mixc(color,[210,232,245],.55))); iris.addColorStop(.55,rgb(color)); iris.addColorStop(.9,rgb(mixc(color,[12,18,30],.65))); iris.addColorStop(1,'#09111e');
+    g.fillStyle=iris; g.fillRect(-120,-120,240,240);
+    const rnd=mulberry(432);
+    for(let i=0;i<140;i++) { const a=i/140*Math.PI*2, r=43+rnd()*17; g.strokeStyle=rgb(mixc(color,[10,20,32],.5),.3+rnd()*.3); g.lineWidth=.8+rnd()*1.3; g.beginPath(); g.moveTo(Math.cos(a)*r,Math.sin(a)*r); g.lineTo(Math.cos(a+.01)*112,Math.sin(a+.01)*112); g.stroke(); }
+    const shade=g.createLinearGradient(0,-100,0,95); shade.addColorStop(0,'rgba(4,8,22,.86)'); shade.addColorStop(.65,'rgba(4,8,22,.05)'); shade.addColorStop(1,'rgba(4,8,22,0)'); g.fillStyle=shade; g.fillRect(-120,-120,240,240);
+    g.fillStyle='#070d18';g.beginPath();g.ellipse(0,-3,36,49,0,0,Math.PI*2);g.fill();
+    g.fillStyle='rgba(237,248,255,.9)';g.beginPath();g.ellipse(-31,-48,14,19,-.3,0,Math.PI*2);g.fill();
+    g.fillStyle='rgba(237,248,255,.65)';g.beginPath();g.arc(39,34,6,0,Math.PI*2);g.fill();g.restore();
+  }
+}
+
 export function paintFace(ctx: CanvasRenderingContext2D, size: number, f: FaceSpec): void {
   const S = size, X = (u: number) => u * S, Y = (v: number) => (1 - v) * S;   // unit-face coords -> canvas
   const nx = (x: number) => X(0.5 + x * 0.5), nz = (z: number) => Y(0.5 + z * 0.5);

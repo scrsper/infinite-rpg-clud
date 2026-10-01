@@ -1,5 +1,6 @@
 import { Color3, PBRMaterial, RawTexture, Scene, Texture, type Nullable } from '@babylonjs/core';
 import { paintTexture, type PaintedTexture, type TextureKind } from './textures';
+import { GroundCover } from './groundCover';
 
 /**
  * Shared materials for the world. Each is a PBR material over procedural texture detail, tinted
@@ -10,6 +11,15 @@ export type MatName =
   | 'plaster' | 'planks' | 'darkwood' | 'log' | 'stone' | 'cobble' | 'moss' | 'roofTile' | 'roofSlate' | 'thatch' | 'cloth' | 'clothRed' | 'clothBlue'
   | 'terrain' | 'path' | 'glass' | 'iron' | 'gold' | 'hay' | 'water' | 'bark' | 'leaf' | 'leafDark' | 'rock' | 'farmland' | 'wood' | 'props';
 interface Spec { texture: TextureKind; tint: [number, number, number]; metres: number; roughness?: number; metallic?: number; bump?: number; alpha?: number; emissive?: [number, number, number] }
+
+// A restrained family of scanned stone, timber, plaster and ground. Colour remains a material
+// property; region vertex colours supply local dampness and wear without duplicating textures.
+const SURFACES: Partial<Record<MatName, string>> = {
+  plaster: 'plastered_wall', planks: 'weathered_planks', darkwood: 'weathered_planks', wood: 'weathered_planks', log: 'weathered_planks',
+  stone: 'rock_wall_08', moss: 'rock_wall_08', rock: 'mossy_rock', cobble: 'cobblestone_floor_08', bark: 'bark_brown_02',
+  roofSlate: 'roof_slates_02', roofTile: 'roof_slates_02', thatch: 'reed_roof_04', hay: 'reed_roof_04',
+  terrain: 'forest_ground_04', path: 'brown_mud', farmland: 'brown_mud',
+};
 
 const c = (hex: number): [number, number, number] => [((hex >> 16) & 255) / 255, ((hex >> 8) & 255) / 255, (hex & 255) / 255];
 const SPECS: Record<MatName, Spec> = {
@@ -46,6 +56,8 @@ const SPECS: Record<MatName, Spec> = {
 export class MaterialLibrary {
   private readonly cache = new Map<MatName, PBRMaterial>();
   private readonly textures = new Map<TextureKind, { albedo: RawTexture; normal: RawTexture; roughness: number }>();
+  private readonly scanned = new Map<string, { albedo: Texture; normal: Texture; arm: Texture }>();
+  private readonly foliage = new Map<string, Texture>();
   constructor(private readonly scene: Scene) {}
 
   private tex(kind: TextureKind) {
@@ -70,20 +82,54 @@ export class MaterialLibrary {
     if (m) return m;
     const s = SPECS[name], t = this.tex(s.texture);
     m = new PBRMaterial(`mat-${name}`, this.scene);
-    m.albedoTexture = t.albedo; m.albedoColor = new Color3(...s.tint);
-    m.bumpTexture = t.normal; m.bumpTexture.level = s.bump ?? 1; m.invertNormalMapY = true;
+    const surface = SURFACES[name];
+    if (surface) {
+      let maps = this.scanned.get(surface);
+      if (!maps) {
+        const texture = (slot: string, srgb: boolean) => {
+          const tx = new Texture(`/textures/world/${surface}-${slot}.jpg`, this.scene, false, false, Texture.TRILINEAR_SAMPLINGMODE);
+          tx.gammaSpace = srgb; tx.anisotropicFilteringLevel = 8;
+          tx.wrapU = Texture.WRAP_ADDRESSMODE; tx.wrapV = Texture.WRAP_ADDRESSMODE;
+          return tx;
+        };
+        maps = { albedo: texture('albedo', true), normal: texture('normal', false), arm: texture('arm', false) };
+        this.scanned.set(surface, maps);
+      }
+      m.albedoTexture = maps.albedo;
+      // The scans already contain the wood colour. The former brown tint multiplied it
+      // a second time, losing the grain entirely on the shaded side of buildings.
+      m.albedoColor = name === 'darkwood' ? new Color3(1, .94, .87) : ['planks', 'wood', 'log'].includes(name) ? new Color3(1.6, 1.5, 1.35) : name === 'roofSlate' ? new Color3(.8, .88, 1) : Color3.White();
+      m.bumpTexture = maps.normal; m.invertNormalMapY = true;
+      m.metallicTexture = maps.arm; m.useAmbientOcclusionFromMetallicTextureRed = true;
+      m.useRoughnessFromMetallicTextureGreen = true; m.useRoughnessFromMetallicTextureAlpha = false; m.useMetallnessFromMetallicTextureBlue = true;
+      m.ambientTextureStrength = .8;
+    } else {
+      m.albedoTexture = t.albedo; m.albedoColor = new Color3(...s.tint);
+      m.bumpTexture = t.normal; m.invertNormalMapY = true;
+    }
     m.metallic = s.metallic ?? 0; m.roughness = s.roughness ?? t.roughness;
-    m.environmentIntensity = 0.55; m.directIntensity = 1.15;
+    m.environmentIntensity = 0.8; m.directIntensity = 1;
     m.specularIntensity = 0.5;
     if (s.alpha !== undefined) { m.alpha = s.alpha; m.transparencyMode = PBRMaterial.PBRMATERIAL_ALPHABLEND; m.backFaceCulling = false; m.needDepthPrePass = false; }
     if (s.emissive) m.emissiveColor = new Color3(...s.emissive);
+    if (name === 'leaf' || name === 'leafDark') {
+      const path = name === 'leafDark' ? '/textures/world/foliage-pine.png' : '/textures/world/foliage-branch.png';
+      let foliage = this.foliage.get(path);
+      if (!foliage) { foliage = new Texture(path, this.scene, false, false, Texture.TRILINEAR_SAMPLINGMODE); this.foliage.set(path, foliage); }
+      foliage.hasAlpha = true; foliage.anisotropicFilteringLevel = 8;
+      m.albedoTexture = foliage; m.albedoColor = Color3.White(); m.bumpTexture = null;
+      m.useAlphaFromAlbedoTexture = true; m.transparencyMode = PBRMaterial.PBRMATERIAL_ALPHATEST; m.alphaCutOff = .42;
+      m.backFaceCulling = false; m.twoSidedLighting = true; m.roughness = .85;
+      m.subSurface.isTranslucencyEnabled = true; m.subSurface.translucencyIntensity = .25;
+    }
     m.maxSimultaneousLights = 8;
+    if (name === 'terrain') new GroundCover(m);
     if (s.alpha === undefined && !s.emissive) m.freeze();
     this.cache.set(name, m);
     return m;
   }
   /** A per-mesh tinted variant is done through vertex colours; this returns the shared, frozen material. */
-  dispose(): void { for (const m of this.cache.values()) m.dispose(); for (const t of this.textures.values()) { t.albedo.dispose(); t.normal.dispose(); } this.cache.clear(); this.textures.clear(); }
+  dispose(): void { for (const m of this.cache.values()) m.dispose(); for (const t of this.textures.values()) { t.albedo.dispose(); t.normal.dispose(); } for (const t of this.scanned.values()) { t.albedo.dispose(); t.normal.dispose(); t.arm.dispose(); } for (const t of this.foliage.values()) t.dispose(); this.foliage.clear(); this.scanned.clear(); this.cache.clear(); this.textures.clear(); }
   tintOf(name: MatName): [number, number, number] { return SPECS[name].tint; }
   water(): Nullable<PBRMaterial> { return this.cache.get('water') ?? null; }
 }

@@ -6,7 +6,7 @@ import { MeshBatch, type V } from './meshBatch';
 import type { TerrainBuild } from './terrain';
 
 /**
- * Trees, bushes, rocks and stumps built as code. Every species is a two-material prototype (bark
+ * Trees, bushes, rocks and stumps built as code. Every species is a two-material asset (bark
  * + leaf) with a few seeded variants; regions instance them with thin instances. Canonical
  * resource nodes (the trees people actually fell, the rocks they quarry) use the same prototypes at
  * their exact positions; decorative scatter only fills the space between and never touches routes.
@@ -17,6 +17,23 @@ type Tint = [number, number, number];
 const mixT = (a: Tint, b: Tint, t: number): Tint => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 
 let DETAIL = 0;
+/** Layered branch sprays give a permeable canopy and soft silhouette at both LODs. */
+function foliage(b: MeshBatch, cx: number, cy: number, cz: number, rx: number, ry: number, rz: number, low: Tint, high: Tint, seed: number, ..._unused: number[]): void {
+  const rnd = mulberry(seed), count = DETAIL ? 18 : 38;
+  for (let i = 0; i < count; i++) {
+    const a = rnd()*Math.PI*2, ny = rnd()*2-1, radial = Math.sqrt(1-ny*ny), radius = .5 + rnd()*.5;
+    const nx = Math.cos(a)*radial, nz = Math.sin(a)*radial;
+    const c: V = [cx+nx*rx*radius, cy+ny*ry*radius, cz+nz*rz*radius];
+    const normal = norm([nx, .5+Math.abs(ny), nz]);
+    const u = norm(cross(normal, [0,1,.01])), v = cross(normal,u);
+    const size = (DETAIL ? .95 : .7)*Math.max(.45, Math.min(rx,ry,rz))*(.7+rnd()*.6);
+    const corner = (x: number, y: number): V => [c[0]+size*(u[0]*x+v[0]*y),c[1]+size*(u[1]*x+v[1]*y),c[2]+size*(u[2]*x+v[2]*y)];
+    const start=b.uvs.length, shade=.72 + Math.max(0,ny)*.2 + rnd()*.12;
+    b.quad(corner(-1,-1),corner(1,-1),corner(1,1),corner(-1,1),[shade,shade,shade],1,{normal});
+    b.uvs.splice(start,8,0,1,1,1,1,0,0,0);
+  }
+  void low; void high;
+}
 function blobGradient(b: MeshBatch, cx: number, cy: number, cz: number, rx: number, ry: number, rz: number, low: Tint, high: Tint, seed: number, seg = 9, ring = 6, jitter = 0.32): void {
   if (DETAIL) { seg = Math.max(5, Math.round(seg * 0.62)); ring = Math.max(3, Math.round(ring * 0.55)); }
   const pt = (i: number, j: number): { p: V; t: Tint } => {
@@ -42,7 +59,15 @@ function tube(b: MeshBatch, from: V, to: V, r0: number, r1: number, sides: numbe
   for (let i = 0; i < sides; i++) {
     const j = (i + 1) % sides, m = i / sides * Math.PI * 2 + Math.PI / sides;
     const nrm: V = [u[0] * Math.cos(m) + v[0] * Math.sin(m), u[1] * Math.cos(m) + v[1] * Math.sin(m), u[2] * Math.cos(m) + v[2] * Math.sin(m)];
+    const start = b.normals.length, uvStart = b.uvs.length;
     b.quad(r0s[j], r0s[i], r1s[i], r1s[j], tint, 0.7, { normal: nrm });
+    for (const [k, angle] of [j, i, i, j].map((q, k) => [k, q / sides * Math.PI * 2])) {
+      b.normals[start+k*3] = u[0]*Math.cos(angle)+v[0]*Math.sin(angle);
+      b.normals[start+k*3+1] = u[1]*Math.cos(angle)+v[1]*Math.sin(angle);
+      b.normals[start+k*3+2] = u[2]*Math.cos(angle)+v[2]*Math.sin(angle);
+    }
+    const around = Math.PI*(r0+r1), u0=i/sides*around, u1=(i+1)/sides*around;
+    b.uvs.splice(uvStart,8,u1,0,u0,0,u0,len*.65,u1,len*.65);
   }
 }
 const cross = (a: V, b: V): V => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
@@ -59,49 +84,65 @@ function buildSpecies(species: Species, seed: number, lod = 0): { bark: MeshBatc
   switch (species) {
     case 'oak': {
       const h = lerp(4.6, 6), lean = lerp(-0.4, 0.4), tk: Tint = [0.33, 0.24, 0.17];
-      tube(bark, [0, -0.2, 0], [lean * 0.4, h * 0.55, 0], 0.42, 0.3, 8, tk); tube(bark, [lean * 0.4, h * 0.55, 0], [lean, h, lerp(-0.3, 0.3)], 0.3, 0.18, 7, tk);
+      tube(bark, [0, -.2, 0], [lean*.08, .75, 0], .49, .32, 14, tk);
+      tube(bark, [lean*.08,.75,0], [lean*.4,h*.55,0], .32,.24,14,tk);
+      tube(bark, [lean * 0.4, h * 0.55, 0], [lean, h, lerp(-0.3, 0.3)], .24, .055, 12, tk);
+      for (let root=0; root<6; root++) { const a=root*2.4; tube(bark,[0,.45,0],[Math.cos(a)*.85,-.07,Math.sin(a)*.85],.19,.03,8,tk); }
       const branches = 4 + Math.floor(r() * 3);
       for (let i = 0; i < branches; i++) {
         const a = i / branches * Math.PI * 2 + r(), len = lerp(1.6, 2.6), by = h * lerp(0.62, 0.9), tx = lean * 0.7 + Math.cos(a) * len, tz = Math.sin(a) * len, ty = by + lerp(0.6, 1.4);
-        tube(bark, [lean * 0.6, by, 0], [tx, ty, tz], 0.13, 0.06, 6, tk);
-        blobGradient(leaf, tx, ty + 0.7, tz, lerp(1.5, 2.1), lerp(1.2, 1.7), lerp(1.5, 2.1), greens.oak[0], greens.oak[1], seed * 17 + i);
+        const elbow: V=[tx*.55,by+.18,tz*.55], tip: V=[tx,ty,tz];
+        tube(bark, [lean * 0.6, by, 0], elbow, .16,.085,10,tk);
+        tube(bark, elbow, tip, .085,.012,8,tk);
+        for (let fork=0;fork<3;fork++) { const fa=a+(fork-1)*.65; tube(bark,elbow,[tx+Math.cos(fa)*.65,ty+.3+fork*.15,tz+Math.sin(fa)*.65],.038,.006,7,tk); }
+        foliage(leaf, tx, ty + 0.7, tz, lerp(1.5, 2.1), lerp(1.2, 1.7), lerp(1.5, 2.1), greens.oak[0], greens.oak[1], seed * 17 + i);
       }
-      blobGradient(leaf, lean, h + 1.2, 0, lerp(2.2, 2.9), lerp(1.7, 2.2), lerp(2.2, 2.9), greens.oak[0], greens.oak[1], seed * 13);
+      foliage(leaf, lean, h + 1.2, 0, lerp(2.2, 2.9), lerp(1.7, 2.2), lerp(2.2, 2.9), greens.oak[0], greens.oak[1], seed * 13);
       break;
     }
     case 'birch': {
       const h = lerp(6.5, 8.5), lean = lerp(-0.3, 0.3), tk: Tint = [0.86, 0.84, 0.78];
       tube(bark, [0, -0.2, 0], [lean, h, 0], 0.16, 0.06, 6, tk);
       for (let i = 0; i < 5; i++) { const y = lerp(0.25, 0.9) * h; tube(bark, [lean * y / h, y, 0], [lean * y / h + Math.cos(i * 2.4) * 0.05, y + 0.02, Math.sin(i * 2.4) * 0.05], 0.17, 0.17, 6, [0.14, 0.13, 0.12]); }
-      for (let i = 0; i < 5; i++) { const a = i * 2.4 + r(), y = h * lerp(0.55, 0.95), len = lerp(0.9, 1.6); blobGradient(leaf, lean + Math.cos(a) * len, y, Math.sin(a) * len, lerp(0.9, 1.3), lerp(1.1, 1.6), lerp(0.9, 1.3), greens.birch[0], greens.birch[1], seed * 11 + i, 8, 5); }
-      blobGradient(leaf, lean, h + 0.6, 0, 1.2, 1.4, 1.2, greens.birch[0], greens.birch[1], seed * 3, 8, 5);
+      for (let i = 0; i < 5; i++) { const a = i * 2.4 + r(), y = h * lerp(0.55, 0.95), len = lerp(0.9, 1.6); foliage(leaf, lean + Math.cos(a) * len, y, Math.sin(a) * len, lerp(0.9, 1.3), lerp(1.1, 1.6), lerp(0.9, 1.3), greens.birch[0], greens.birch[1], seed * 11 + i, 8, 5); }
+      foliage(leaf, lean, h + 0.6, 0, 1.2, 1.4, 1.2, greens.birch[0], greens.birch[1], seed * 3, 8, 5);
       break;
     }
     case 'pine': {
       const h = lerp(7, 10), tk: Tint = [0.28, 0.2, 0.15];
-      tube(bark, [0, -0.2, 0], [0, h, 0], 0.26, 0.08, 7, tk);
-      const tiers = DETAIL ? 4 : 6; for (let i = 0; i < tiers; i++) {
-        const t = i / tiers, y = h * (0.22 + 0.72 * t), rad = lerp(2.4, 2.8) * (1 - t) + 0.45, hh = lerp(1.7, 2.3);
-        const rot = r() * 6, seg = DETAIL ? 6 : 9; const apex: V = [0, y + hh, 0];
-        for (let s = 0; s < seg; s++) {
-          const a0 = rot + s / seg * Math.PI * 2, a1 = rot + (s + 1) / seg * Math.PI * 2, m = (a0 + a1) / 2, j = 1 + (hash2(s, i, seed) - 0.5) * 0.25;
-          const p0: V = [Math.cos(a0) * rad * j, y, Math.sin(a0) * rad * j], p1: V = [Math.cos(a1) * rad * j, y, Math.sin(a1) * rad * j];
-          const low = mixT(greens.pine[0], greens.pine[1], 0.2 + t * 0.4), high = mixT(greens.pine[0], greens.pine[1], 0.45 + t * 0.5);
-          const nrm = norm([Math.cos(m) * hh, rad * 0.9, Math.sin(m) * hh]);
-          leaf.quad(p1, p0, apex, apex, [low, low, high, high], 0.6, { normal: nrm });
+      tube(bark, [0, -.2, 0], [.09,h*.5,0], .34,.17,14,tk);
+      tube(bark, [.09,h*.5,0], [-.07,h,0], .17,.015,12,tk);
+      // Individually swept needle boughs replace opaque conical tiers. Their broken ends
+      // let the sky through and stay readable against the darker inner crown.
+      const tiers = DETAIL ? 6 : 9;
+      for (let i=0;i<tiers;i++) {
+        const t=i/(tiers-1), y=h*(.27+.7*t), radius=(1-t)*2.3+.18;
+        const count=DETAIL?5:7;
+        for(let k=0;k<count;k++) {
+          const a=k/count*Math.PI*2+i*1.91+r()*.35, len=radius*lerp(.8,1.1);
+          const tip: V=[Math.cos(a)*len,y-.25+ t*.5,Math.sin(a)*len];
+          tube(bark,[.05,y,0],tip,.07*(1-t)+.009,.005,7,tk);
+          for(let spray=0;spray<(DETAIL?2:4);spray++) {
+            const u=.28+spray/(DETAIL?2:4)*.75, c: V=[tip[0]*u,y+(tip[1]-y)*u,tip[2]*u];
+            const radial: V=[Math.cos(a),.2,Math.sin(a)], across: V=[-Math.sin(a),.5,Math.cos(a)];
+            const w=(.44+.6*(1-t))*(.7+r()*.3), l=(.38+.48*(1-t));
+            const p=(x:number,z:number):V=>[c[0]+radial[0]*x*l+across[0]*z*w,c[1]+radial[1]*x*l+across[1]*z*w,c[2]+radial[2]*x*l+across[2]*z*w];
+            const uv=leaf.uvs.length; leaf.quad(p(-1,-1),p(1,-1),p(1,1),p(-1,1),[.9,.96,.92],1,{normal:norm([tip[0]*.15,1,tip[2]*.15])});
+            leaf.uvs.splice(uv,8,0,1,1,1,1,0,0,0);
+          }
         }
       }
       break;
     }
     case 'bush': case 'berry': {
       const n = 3 + Math.floor(r() * 3);
-      for (let i = 0; i < n; i++) blobGradient(leaf, Math.cos(i * 2.1) * 0.5, lerp(0.35, 0.6), Math.sin(i * 2.1) * 0.5, lerp(0.55, 0.85), lerp(0.4, 0.62), lerp(0.55, 0.85), greens[species][0], greens[species][1], seed * 19 + i, 7, 5);
-      if (species === 'berry') for (let i = 0; i < 9; i++) { const a = r() * 6.28, rr = lerp(0.3, 0.75); blobGradient(leaf, Math.cos(a) * rr, lerp(0.35, 0.8), Math.sin(a) * rr, 0.06, 0.06, 0.06, [0.55, 0.08, 0.16], [0.8, 0.15, 0.25], seed + i, 5, 3, 0); }
+      for (let i = 0; i < n; i++) foliage(leaf, Math.cos(i * 2.1) * 0.5, lerp(0.35, 0.6), Math.sin(i * 2.1) * 0.5, lerp(0.55, 0.85), lerp(0.4, 0.62), lerp(0.55, 0.85), greens[species][0], greens[species][1], seed * 19 + i, 7, 5);
+      if (species === 'berry') for (let i = 0; i < 9; i++) { const a = r() * 6.28, rr = lerp(0.3, 0.75); blobGradient(bark, Math.cos(a) * rr, lerp(0.35, 0.8), Math.sin(a) * rr, 0.04, 0.04, 0.04, [0.55, 0.08, 0.16], [0.8, 0.15, 0.25], seed + i, 7, 4, 0); }
       break;
     }
     case 'sapling': {
       const h = lerp(1.2, 2); tube(bark, [0, -0.1, 0], [0, h, 0], 0.05, 0.025, 5, [0.36, 0.26, 0.18]);
-      for (let i = 0; i < 3; i++) blobGradient(leaf, Math.cos(i * 2.1) * 0.3, h * (0.55 + i * 0.2), Math.sin(i * 2.1) * 0.3, 0.42, 0.34, 0.42, greens.sapling[0], greens.sapling[1], seed * 7 + i, 7, 4);
+      for (let i = 0; i < 3; i++) foliage(leaf, Math.cos(i * 2.1) * 0.3, h * (0.55 + i * 0.2), Math.sin(i * 2.1) * 0.3, 0.42, 0.34, 0.42, greens.sapling[0], greens.sapling[1], seed * 7 + i, 7, 4);
       break;
     }
     case 'rock': {
@@ -129,7 +170,13 @@ export class VegetationLibrary {
     let m = this.protos.get(key); if (m) return m;
     const { bark, leaf } = buildSpecies(species, variant % VARIANTS + 1, lod);
     const meshes: Mesh[] = [];
-    const barkMat: Material = this.mats.get('bark'), leafMat: Material = this.mats.get(species === 'rock' ? 'rock' : 'leaf');
+    // Scans carry their own base colour. The earlier colour-only asset palette must not
+    // multiply brown bark and grey stone a second time into near-black reflectance.
+    for (let i=0;i<bark.colors.length;i+=4) {
+      const tone=.76+.24*Math.max(bark.colors[i],bark.colors[i+1],bark.colors[i+2]);
+      bark.colors[i]=bark.colors[i+1]=bark.colors[i+2]=tone;
+    }
+    const barkMat: Material = this.mats.get(species === 'rock' ? 'rock' : 'bark'), leafMat: Material = this.mats.get(species === 'pine' ? 'leafDark' : 'leaf');
     const bm = bark.linearize().build(`veg-${key}-bark`, this.scene, barkMat, { receiveShadow: true }); if (bm) meshes.push(bm);
     const lm = leaf.linearize().build(`veg-${key}-leaf`, this.scene, leafMat, { receiveShadow: true }); if (lm) meshes.push(lm);
     m = meshes.length > 1 ? Mesh.MergeMeshes(meshes, true, true, undefined, false, true)! : meshes[0];

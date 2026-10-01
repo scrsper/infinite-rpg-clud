@@ -7,8 +7,9 @@ import { classify, splitPrice, needsConfirm } from '../src/web/ui/dialoguePanel'
  * Pure client logic that a player's experience rests on: what the bindings say, how stored settings are
  * trusted, how a canonical result code is worded, and how a dialogue menu is grouped. No DOM, no renderer.
  */
-/** Movement is analog on the left stick and has no button binding; crouch is keyboard/Abilities-menu only. */
-const STICK_OR_KEY_ONLY = new Set(['moveForward', 'moveBack', 'moveLeft', 'moveRight', 'crouch']);
+/** Movement is analog on the left stick; continuous walk is a keyboard convenience.
+ * Crouch is available through the keyboard or the controller's Abilities menu. */
+const STICK_OR_KEY_ONLY = new Set(['moveForward', 'moveBack', 'moveLeft', 'moveRight', 'crouch', 'autoWalk']);
 
 describe('bindings', () => {
   it('every rebindable action has a keyboard binding, and every action a pad binding or a reason not to', () => {

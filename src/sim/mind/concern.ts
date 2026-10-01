@@ -47,7 +47,7 @@ export function concernsOf(p: Person): Concern[] {
   return (p.mind.concerns ??= []);
 }
 export function activeConcerns(p: Person): Concern[] {
-  return concernsOf(p).filter(c => c.status === 'active');
+  return (p.mind.concerns ?? []).filter(c => c.status === 'active');
 }
 /**
  * What makes two concerns THE SAME concern. Deliberately kind-specific, because "the same

@@ -123,10 +123,10 @@ export class Showroom {
     app.atmosphere.setStage(new Color3(0.06, 0.10, 0.20)); if (app.ctx.pipeline) app.ctx.pipeline.imageProcessing.exposure = 0.95;
     (this.stage?.material as PBRMaterial | null)?.albedoColor.copyFromFloats(0.02, 0.035, 0.07);
     // Studio lighting: a cool key from the front-left, a blue rim from behind, a warm low fill; the sun/moon of the world are not used.
-    app.atmosphere.key.direction = new Vector3(0.5, -0.55, -0.7).normalize(); app.atmosphere.key.intensity = 3.2; app.atmosphere.key.diffuse = new Color3(0.86, 0.92, 1);
+    app.atmosphere.key.direction = new Vector3(0.5, -0.55, -0.7).normalize(); app.atmosphere.key.intensity = 1.15; app.atmosphere.key.diffuse = new Color3(1, .95, .89);
     app.atmosphere.fill.intensity = 0.9; app.atmosphere.fill.diffuse = new Color3(0.55, 0.65, 0.9); app.atmosphere.fill.groundColor = new Color3(0.22, 0.2, 0.28);
-    const rim = new PointLight('rim', new Vector3(-1.6, 2.2, 2.4), scene); rim.diffuse = new Color3(0.4, 0.62, 1); rim.intensity = 9; rim.range = 9;
-    const warm = new PointLight('warm', new Vector3(1.6, 0.8, -2.2), scene); warm.diffuse = new Color3(1, 0.82, 0.62); warm.intensity = 2.4; warm.range = 8;
+    const rim = new PointLight('rim', new Vector3(-1.6, 2.2, 2.4), scene); rim.diffuse = new Color3(0.4, 0.62, 1); rim.intensity = 1.5; rim.range = 9;
+    const warm = new PointLight('warm', new Vector3(1.6, 0.8, -2.2), scene); warm.diffuse = new Color3(1, 0.82, 0.62); warm.intensity = .6; warm.range = 8;
     const b = document.createElement('div'); b.className = 'tv-badge preview'; b.style.cssText = 'position:absolute;left:14px;bottom:14px;pointer-events:none'; b.textContent = 'Art preview — hero concept. Fox ears, tail and frost effects are not simulation features.'; app.ctx.canvas.parentElement?.appendChild(b); this.badge = b;
   }
 

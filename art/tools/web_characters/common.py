@@ -40,10 +40,10 @@ class Dims:
         self.chest = 0.725 * H        # mid chest
         self.shoulder_z = 0.818 * H
         self.neck_base = 0.845 * H
-        self.neck_top = 0.900 * H
-        self.head_c = 0.936 * H
-        self.head_h = (0.128 if not c else 0.150) * H      # crown to chin
-        self.head_w = (0.092 if not c else 0.100) * H * (0.93 if f else 1.0)
+        self.neck_top = (0.860 if f or c else 0.868) * H
+        self.head_c = (0.926 if f else 0.930 if not c else 0.913) * H
+        self.head_h = (0.148 if f else 0.140 if not c else 0.174) * H
+        self.head_w = (0.116 if f else 0.109 if not c else 0.123) * H * (0.93 if f else 1.0)
         self.head_d = (0.112 if not c else 0.120) * H * (0.96 if f else 1.0)
         # Widths (half-widths, metres).
         self.shoulder_x = (0.104 if f else 0.114) * H if not c else 0.092 * H

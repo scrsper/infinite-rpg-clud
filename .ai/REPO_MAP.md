@@ -13,8 +13,8 @@ Read only the section relevant to the current task.
 Developer Observatory: `src/observatory/` hosts a loopback-only disposable world, read-only
 inspectors, stored-event causal graph, derived metrics, WorldLab checks and scenario controls.
 `Torn Veil Observatory.cmd` / `scripts/observatory/Launch.ps1` launch it without save-directory
-access. `src/language/` owns bounded single-mind context, exact grounded response validation,
-OpenAI-compatible local transport and queue/cancellation. The text-free canonical intent adapter
+access. `src/language/` owns deterministic phrase scoring, conversational references, small follow-up context,
+semantic response planning and grounded template realization; there is no model transport. The text-free canonical intent adapter
 is `src/sim/mind/conversationalIntent.ts`; it delegates knowledge transfer to ordinary `tell`.
 Guide and limits: `docs/OBSERVATORY.md`. Checks: `npm run observatory:check`; real-browser and
 benchmark harnesses are in `scripts/observatory/`. This is separate from both game renderers.

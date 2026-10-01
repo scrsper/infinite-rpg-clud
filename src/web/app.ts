@@ -58,6 +58,7 @@ export class App {
   private titleOrbit = 0;
   private readonly frameMs: number[] = []; private lastFrame = performance.now();
   private readyFrames = 0;
+  private wantedRegions: string[] = [];
   ready = false;
   showroom: Showroom | null = null;
   characters = new CharacterFactory();
@@ -117,6 +118,7 @@ export class App {
     this.portrait = new PortraitRenderer(this.ctx.scene, this.actors);
     this.dialogue = new DialoguePanel(this.overlay, {
       choose: async (id, label) => { this.audio.ui('confirm'); const r = await this.link.intent({ type: 'dialogue_option', optionId: id }); void label; return { result: r.result }; },
+      speak: (text, revision) => this.link.intent({ type: 'dialogue_text', text, revision }, 5000),
       close: () => void this.link.intent({ type: 'dialogue_close' }),
       portrait: this.portrait,
       keyLabel: n => String(n), toast: (t, tone) => this.hud.toast(t, tone), describe: r => describeResult(r).text, silver: () => Math.round(this.own()?.wealth ?? 0),
@@ -160,7 +162,9 @@ export class App {
       }
       this.impactFx.burst(base, false);
       await scene.whenReadyAsync();
-      for (let i = 0; i < 3; i++) { scene.render(); await new Promise<void>(r => requestAnimationFrame(() => r())); }
+      // The engine's render loop owns begin/endFrame and the WebGPU swap texture.
+      // Rendering here between frames submits a texture the browser has already retired.
+      for (let i = 0; i < 3; i++) await new Promise<void>(r => requestAnimationFrame(() => r()));
     } catch (e) { console.warn('renderer warm-up skipped', e); }
     finally { for (const v of made) { try { v.dispose(); } catch { /* already gone */ } } }
   }
@@ -205,7 +209,7 @@ export class App {
       const u = await fetch('/api/upstream-health', { cache: 'no-store' }).then(x => x.json()).catch(() => null) as { reachable?: boolean; health?: { state?: string; release?: string; env?: string } } | null;
       if (!u?.reachable) return { ok: false, note: 'The game server is not reachable. Nothing has been started for you; use the launcher to see its state.' };
       if (u.health?.state && u.health.state !== 'ready') return { ok: false, note: `The server is ${u.health.state}. Try again in a moment.` };
-      return { ok: true, note: `Connected to ${u.health?.env ?? 'the'} world · server ${u.health?.release ?? ''}` };
+      return { ok: true, note: u.health?.env === 'dev' ? 'Isolated development world · your progress is saved here' : `Connected to ${u.health?.env ?? 'the'} world` };
     } catch { return { ok: false, note: 'Could not reach the local game gateway.' }; }
   }
   showCharacter(error?: string): void {
@@ -223,7 +227,7 @@ export class App {
 
   // ── connection ───────────────────────────────────────────────────────────────────────────────
   play(choice: CharacterChoice): void {
-    this.clearScreen(); this.phase = 'connecting'; this.closedFinal = false; this.choice = choice; this.snapshot = null; this.predictor.reset(); this.actors.clear();
+    this.clearScreen(); this.phase = 'connecting'; this.closedFinal = false; this.choice = choice; this.snapshot = null; this.wantedRegions = []; this.predictor.reset(); this.actors.clear();
     this.loading = loadingScreen(this.overlay, choice.kind === 'new' ? 'Being born…' : 'Entering the world…'); this.screen = this.loading as { remove(): void };
     this.link.connect(choice);
   }
@@ -231,7 +235,7 @@ export class App {
     const l = this.link;
     l.on('hello', m => { this.ownBodyId = m.interaction?.bodyId ?? ''; this.remember(m.character.name); this.loading?.set('Loading the land…'); });
     l.on('scene', s => { this.regions.regionSize = s.geography?.regionSize ?? 256; this.regions.setOrigin(s.origin); });
-    l.on('regions_state', s => { this.regions.setOrigin(s.origin); for (const id of s.unload) this.regions.unload(id); });
+    l.on('regions_state', s => { this.wantedRegions = s.resident; this.regions.setOrigin(s.origin); for (const id of s.unload) this.regions.unload(id); });
     l.on('presentation', p => this.regions.applyPresentation(p.payload, () => requestAnimationFrame(() => requestAnimationFrame(() => p.applied()))));
     l.on('local_state', s => { this.predictor.applyLocalState(s); if (s.bodyId) this.ownBodyId = s.bodyId; this.physTick = s.tick; this.physAt = performance.now(); });
     l.on('receipt', r => { this.predictor.applyReceipt(r); if (r.status === 'rejected' || r.status === 'cancelled') this.actors.cancelPredicted(this.ownBodyId, r.commandId); });
@@ -264,16 +268,30 @@ export class App {
   private onSnapshot(s: SnapshotMessage): void {
     this.snapshot = s; this.ownBodyId = s.controlledBodyId; this.lastSnapAt = performance.now();
     this.actors.sync(s, s.controlledBodyId, performance.now());
+    const wasTalking = this.dialogue.isOpen;
     this.dialogue.update(s.dialogue as DialogueProjection | null);
+    if (!wasTalking && this.dialogue.isOpen) {
+      // The speaker's projection opens the conversation. Release gameplay input only after
+      // opening it, so pointer-lock exit cannot accidentally open Pause over the dialogue.
+      this.controller.release(); this.input.exitLock();
+    } else if (wasTalking && !this.dialogue.isOpen) {
+      this.input.releaseAll(); this.afterModal();
+    }
     this.computeFocus(s);
     if (this.modal.isOpen && this.modal.currentTab && ['items', 'abilities', 'journal'].includes(this.modal.currentTab)) this.modal.refresh();
     const own = this.own();
     if (own?.dead && this.phase === 'playing' && !this.screen) { this.controller.release(); this.input.exitLock(); this.modal.close(false); this.screen = deathScreen(this.overlay, own.name, { onNew: () => { this.forget(); this.link.disconnect(); this.showCharacter(); }, onQuit: () => { this.link.disconnect(); this.showTitle(); } }); }
   }
-  /** The world is ready when the land under the player is resident and the first authoritative state has arrived. */
+  /** Wait for the nearby streamed scenery too: a region boundary must not reveal a void on entry. */
   private tryEnter(): void {
     const p = this.predictor.predicted;
-    if (this.snapshot && p && this.regions.regions.size >= 1 && this.regions.groundAt(p.pos.x, p.pos.z) !== null) this.enterGame();
+    if (!this.snapshot || !p || this.regions.groundAt(p.pos.x, p.pos.z) === null) return;
+    const size = this.regions.regionSize;
+    const nearby = this.wantedRegions.filter(id => {
+      const [x, z] = id.split(',').map(Number);
+      return x*size < p.pos.x+90 && (x+1)*size > p.pos.x-90 && z*size < p.pos.z+90 && (z+1)*size > p.pos.z-90;
+    });
+    if (nearby.every(id => this.regions.regions.has(id))) this.enterGame();
   }
   private enterGame(): void {
     this.phase = 'playing'; this.clearScreen(); this.loading = null; this.hud.show(true);
@@ -285,7 +303,7 @@ export class App {
 
   private computeFocus(s: SnapshotMessage): void {
     const p = this.predictor.predicted?.pos; if (!p) { this.focus = { target: null, refusal: null }; return; }
-    const yaw = this.predictor.predicted!.yaw, fx = -Math.sin(yaw), fz = -Math.cos(yaw);
+    const yaw = this.rig.moveYaw, fx = -Math.sin(yaw), fz = -Math.cos(yaw);
     let best: InteractionTarget | null = null, bestScore = Infinity;
     for (const t of s.interactionTargets) {
       const dx = t.pos.x - p.x, dz = t.pos.z - p.z, d = Math.hypot(dx, dz);
@@ -447,7 +465,7 @@ export class App {
     }
     // Talk camera.
     const partner = this.speakerPos();
-    if (this.dialogue.isOpen && partner) { this.rig.setMode('talk'); this.rig.setTalk({ x: partner.x - this.regions.origin.x, y: partner.y - this.regions.origin.y, z: partner.z - this.regions.origin.z }); }
+    if (this.dialogue.isOpen && partner) { this.rig.setMode('talk'); this.rig.setTalk({ x: partner.x - this.regions.origin.x, y: partner.y - this.regions.origin.y + 1.5, z: partner.z - this.regions.origin.z }); }
     else if (now < this.combatUntil || this.controller.guardHeld || this.controller.lockedBodyId) { this.rig.setMode('combat'); this.rig.setTalk(null); }
     else { this.rig.setMode('explore'); this.rig.setTalk(null); }
     // Movement, prediction and commands.
@@ -500,7 +518,7 @@ export class App {
     this.hud.setVitals({ health: own.health ?? 1, maxHealth: own.maxHealth ?? 1, effort: 1 - cond.fatigue, hunger: own.needs?.hunger ?? 0, thirst: own.needs?.thirst ?? 0, tiredness: own.needs?.energy ?? 0, wealth: own.wealth ?? 0 });
     const place = this.regions.placeAt(own.pos.x, own.pos.y, own.pos.z);
     this.hud.setPlace(place.kind === 'building' ? titleCase(place.type) : place.kind === 'settlement' ? 'Settlement' : 'Open country', s.worldTime, this.regions.weather.kind);
-    const rtt = (this.link as GameLink).rttMs; this.hud.setNet(this.link.status === 'live' ? `${Math.round(rtt)} ms` : 'Reconnecting…', this.link.status !== 'live' || rtt > 250);
+    const rtt = (this.link as GameLink).rttMs; this.hud.setNet(this.link.status === 'live' ? rtt > 250 ? 'Connection delayed' : '' : 'Reconnecting…', this.link.status !== 'live' || rtt > 250);
     const t = this.focus.target, k = codeLabel(this.input.promptCode('interact'), this.input.device);
     if (this.dialogue.isOpen || this.modal.isOpen) this.hud.setPrompt(null);
     else if (t) this.hud.setPrompt({ keyLabel: k, text: t.label });
@@ -516,7 +534,7 @@ export class App {
   get slowEvents() { return slowEvents(); }
   /** With quality on auto: sustained slow frames step the renderer down a tier (or its scale). Never steps up. */
   private runGovernor(now: number): void {
-    const recent = this.frameMs.slice(-120); if (recent.length < 60 || document.hidden) return;
+    const recent = this.frameMs.slice(-120); if (recent.length < 60 || document.hidden || this.regions.pendingBuilds || !this.ready || this.params.has('quality')) return;
     const a = [...recent].sort((x, y) => x - y), median = a[a.length >> 1], p95 = a[Math.min(a.length - 1, Math.floor(a.length * 0.95))];
     const act = this.governor.evaluate(median, p95, now, this.ctx.quality.tier);
     if (!act) return;

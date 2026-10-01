@@ -208,15 +208,33 @@ def prayer_beads(d: Dims, arm):
 
 
 def travel_pack(d: Dims, arm):
+    """A compact leather travelling satchel with a folded flap, straps and brass fittings."""
     H = d.height
     bm = bmesh.new()
-    cy = 0.10 * H / 1.66
-    tube_mesh(bm, [(Vector((0, cy + 0.03 * H, d.chest + 0.02 * H)), 0.070 * H, 0.030 * H), (Vector((0, cy + 0.05 * H, d.chest + 0.07 * H)), 0.085 * H, 0.055 * H), (Vector((0, cy + 0.05 * H, d.chest + 0.15 * H)), 0.080 * H, 0.055 * H),
-                   (Vector((0, cy + 0.04 * H, d.chest + 0.19 * H)), 0.060 * H, 0.040 * H)], segments=16, kind='limb')
-    tube_mesh(bm, [(Vector((0, cy + 0.02 * H, d.chest + 0.20 * H)), 0.030 * H, 0.030 * H), (Vector((0, cy + 0.02 * H, d.chest + 0.27 * H)), 0.030 * H, 0.030 * H)], segments=10, kind='limb')  # rolled blanket
-    obj = _obj_from_bm(bm, 'Accessory_travel_pack', ['Leather'], 'accessory')
+    x,y,z=.12*H,.018*H,d.waist-.03*H
+    tube_mesh(bm,[(Vector((x,y,z-.065*H)),.037*H,.023*H), (Vector((x,y,z-.05*H)),.052*H,.028*H),
+                  (Vector((x,y,z+.035*H)),.050*H,.026*H),(Vector((x,y,z+.05*H)),.035*H,.020*H)],segments=28)
+    # Folded front flap and raised seams, all within the satchel silhouette.
+    for side in (-1,1):
+        tube_mesh(bm,[(Vector((x+side*.040*H,y-.026*H,z-.049*H)),.0018*H,.0018*H),
+                      (Vector((x+side*.040*H,y-.028*H,z+.031*H)),.0018*H,.0018*H)],segments=6)
+    tube_mesh(bm,[(Vector((x,y-.015*H,z+.05*H)),.036*H,.015*H),
+                  (Vector((x,y-.03*H,z+.018*H)),.036*H,.004*H)],segments=24)
+    # Shoulder strap follows the back instead of adding a head-height block.
+    points=[Vector((x*.9,.065*H,d.waist)),Vector((.055*H,.069*H,d.chest)),Vector((-.055*H,.041*H,d.shoulder_z))]
+    tube_mesh(bm,[(p,.008*H,.002*H) for p in points],segments=8)
+    prior=set(bm.faces)
+    for side in (-1,1):
+        tube_mesh(bm,[(Vector((x+side*.006*H,y-.036*H,z+.015*H)),.0018*H,.0018*H),
+                      (Vector((x+side*.006*H,y-.036*H,z-.002*H)),.0018*H,.0018*H)],segments=8)
+    tube_mesh(bm,[(Vector((x-.007*H,y-.036*H,z+.015*H)),.0018*H,.0018*H),
+                  (Vector((x+.007*H,y-.036*H,z+.015*H)),.0018*H,.0018*H)],segments=8)
+    for face in bm.faces:
+        if face not in prior: face.material_index=1
+    bmesh.ops.recalc_face_normals(bm,faces=list(bm.faces))
+    obj = _obj_from_bm(bm, 'Accessory_travel_pack', ['Leather','Metal'], 'accessory')
     obj['tv_style'] = 'travel_pack'
-    _rigid(obj, arm, 'spine_03')
+    _rigid(obj, arm, 'pelvis')
     return obj
 
 

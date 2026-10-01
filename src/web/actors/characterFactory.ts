@@ -55,9 +55,9 @@ export class CharacterFactory {
     const mat = mesh.material;
     if (mat instanceof MultiMaterial) {
       const multi = new MultiMaterial(`${mesh.name}.multi`, mesh.getScene());
-      for (const sub of mat.subMaterials) { const rep = sub ? mats.bySlot.get(baseSlot(sub.name)) : undefined; multi.subMaterials.push(sub ? rep ?? sub : null); if (sub && rep) orphans.add(sub); }
+      for (const sub of mat.subMaterials) { const rep = sub ? mats.bySlot.get(baseSlot(sub.name)) : undefined; multi.subMaterials.push(sub ? rep ?? sub : null); if (sub && rep) orphans.add(sub); else if (sub instanceof PBRMaterial) mats.adaptImported(sub); }
       mesh.material = multi; orphans.add(mat);
-    } else if (mat) { const rep = mats.bySlot.get(baseSlot(mat.name)); if (rep) { mesh.material = rep; orphans.add(mat); } }
+    } else if (mat) { const rep = mats.bySlot.get(baseSlot(mat.name)); if (rep) { mesh.material = rep; orphans.add(mat); } else if (mat instanceof PBRMaterial) mats.adaptImported(mat); }
   }
 }
 const baseSlot = (n: string) => { const m = /TV_[A-Za-z]+/.exec(n); return m ? m[0] : n; };

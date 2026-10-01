@@ -19,7 +19,8 @@ export class MeshBatch {
 
   /** A planar quad, corners counter-clockwise seen from the side the normal points to. UVs are projected from the dominant axis of the normal. */
   quad(p0: V, p1: V, p2: V, p3: V, tint: V | V[], tpm: number, opts: { flip?: boolean; normal?: V; uv?: 'auto' | 'along' } = {}): void {
-    const n = opts.normal ?? norm(cross(sub(p1, p0), sub(p3, p0)));
+    const geometric = norm(cross(sub(p1, p0), sub(p3, p0)));
+    const n = opts.normal ?? (opts.flip ? mul(geometric, -1) : geometric);
     const ax = Math.abs(n[0]), ay = Math.abs(n[1]), az = Math.abs(n[2]);
     const base = this.vertexCount;
     const perVertex = Array.isArray(tint[0]);

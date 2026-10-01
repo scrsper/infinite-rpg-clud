@@ -1,0 +1,474 @@
+{
+  "license": "https://polyhaven.com/license",
+  "resolution": "1k",
+  "assets": [
+    {
+      "id": "weathered_planks",
+      "slot": "albedo",
+      "path": "textures/world/weathered_planks-albedo.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/weathered_planks/weathered_planks_diff_1k.jpg",
+      "md5": "5d7c9e7088bfa54490ba03ba15b660d8",
+      "sha256": "01c9a372cfd7a7bf471b59c2458ed3ccecc93448aebf7ba0cc5b3b5b6ed24349",
+      "bytes": 599581,
+      "source": "https://polyhaven.com/a/weathered_planks",
+      "authors": {
+        "Dario Barresi": "Processing",
+        "Dimitrios Savva": "Photography"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "weathered_planks",
+      "slot": "normal",
+      "path": "textures/world/weathered_planks-normal.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/weathered_planks/weathered_planks_nor_gl_1k.jpg",
+      "md5": "119541f6b143f21f0a6e9774e9208905",
+      "sha256": "381d298f3194ec4961b04b4912b9b6efea4b2ff7b914dac57e24c8b6b0be6a25",
+      "bytes": 681552,
+      "source": "https://polyhaven.com/a/weathered_planks",
+      "authors": {
+        "Dario Barresi": "Processing",
+        "Dimitrios Savva": "Photography"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "weathered_planks",
+      "slot": "arm",
+      "path": "textures/world/weathered_planks-arm.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/weathered_planks/weathered_planks_arm_1k.jpg",
+      "md5": "54f44833fd158b22c3419d416debc113",
+      "sha256": "f0d81d945dbb267ed8b411af4db55141ae52b87313403667dd06aead9532fbef",
+      "bytes": 528272,
+      "source": "https://polyhaven.com/a/weathered_planks",
+      "authors": {
+        "Dario Barresi": "Processing",
+        "Dimitrios Savva": "Photography"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "plastered_wall",
+      "slot": "albedo",
+      "path": "textures/world/plastered_wall-albedo.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/plastered_wall/plastered_wall_diff_1k.jpg",
+      "md5": "9f64cd14ded4938e64ab6c6bb3de3c19",
+      "sha256": "73312ebb6eabc8e0a55addd8a82a8924bcd1e717b9488a887cc77f14b6ea554e",
+      "bytes": 617080,
+      "source": "https://polyhaven.com/a/plastered_wall",
+      "authors": {
+        "Amal Kumar": "All"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "plastered_wall",
+      "slot": "normal",
+      "path": "textures/world/plastered_wall-normal.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/plastered_wall/plastered_wall_nor_gl_1k.jpg",
+      "md5": "e3e00c5d9a589621bf3cc541d9fb7d81",
+      "sha256": "504e1f7baf4b68714c64b6670e7954bebe99efe31c49f7ce5a2089e4b76023b5",
+      "bytes": 1072153,
+      "source": "https://polyhaven.com/a/plastered_wall",
+      "authors": {
+        "Amal Kumar": "All"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "plastered_wall",
+      "slot": "arm",
+      "path": "textures/world/plastered_wall-arm.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/plastered_wall/plastered_wall_arm_1k.jpg",
+      "md5": "8f2c972159e4d346f37224b6886709d4",
+      "sha256": "cd927f46fa85b7e5c1a9747b90258c505529d7347d5f4dd356ae0ed2bda34d4f",
+      "bytes": 624131,
+      "source": "https://polyhaven.com/a/plastered_wall",
+      "authors": {
+        "Amal Kumar": "All"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "rock_wall_08",
+      "slot": "albedo",
+      "path": "textures/world/rock_wall_08-albedo.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rock_wall_08/rock_wall_08_diff_1k.jpg",
+      "md5": "d75a5bea1a06474902c3af8cbfd5960b",
+      "sha256": "9cd907e8d8ce9317bc51a840a9e87b547fdf768aa61f5288aaee0f6fbcaac2ac",
+      "bytes": 768570,
+      "source": "https://polyhaven.com/a/rock_wall_08",
+      "authors": {
+        "Amal Kumar": "All"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "rock_wall_08",
+      "slot": "normal",
+      "path": "textures/world/rock_wall_08-normal.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rock_wall_08/rock_wall_08_nor_gl_1k.jpg",
+      "md5": "9c969040b794c63238577cf770001d8d",
+      "sha256": "862f7ed95069bc629d63d0dc18c6c2ad7a96c7c9534b7629e9e90e3896793168",
+      "bytes": 1236281,
+      "source": "https://polyhaven.com/a/rock_wall_08",
+      "authors": {
+        "Amal Kumar": "All"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "rock_wall_08",
+      "slot": "arm",
+      "path": "textures/world/rock_wall_08-arm.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rock_wall_08/rock_wall_08_arm_1k.jpg",
+      "md5": "3fe2ca4b52bd8182dabe749f2799dc91",
+      "sha256": "c53192d14045adae2f29eea048b58f30c74cfd935b268ab352b79f8c0c3bd403",
+      "bytes": 641390,
+      "source": "https://polyhaven.com/a/rock_wall_08",
+      "authors": {
+        "Amal Kumar": "All"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "cobblestone_floor_08",
+      "slot": "albedo",
+      "path": "textures/world/cobblestone_floor_08-albedo.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/cobblestone_floor_08/cobblestone_floor_08_diff_1k.jpg",
+      "md5": "bb640125356d18e3ad8515b9d5bfccef",
+      "sha256": "ec131f7a99a1e7f9df25d4725609c55a6dad1df487630685e9a66ecbf41ec33a",
+      "bytes": 585727,
+      "source": "https://polyhaven.com/a/cobblestone_floor_08",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "cobblestone_floor_08",
+      "slot": "normal",
+      "path": "textures/world/cobblestone_floor_08-normal.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/cobblestone_floor_08/cobblestone_floor_08_nor_gl_1k.jpg",
+      "md5": "7a90780c7c49a1307e928d4d32c4773c",
+      "sha256": "26bfff70b266a4e86983814c7e56a9b48daf93cd34dcdc16a5db13e4fabcfbb6",
+      "bytes": 1002410,
+      "source": "https://polyhaven.com/a/cobblestone_floor_08",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "cobblestone_floor_08",
+      "slot": "arm",
+      "path": "textures/world/cobblestone_floor_08-arm.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/cobblestone_floor_08/cobblestone_floor_08_arm_1k.jpg",
+      "md5": "23e72b4638e0f6fe990a9a9b36ff31e0",
+      "sha256": "4b2548135784852f07befc3bb0abb7c83738a3c022997c30527a15d5caa7a389",
+      "bytes": 198270,
+      "source": "https://polyhaven.com/a/cobblestone_floor_08",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "forest_ground_04",
+      "slot": "albedo",
+      "path": "textures/world/forest_ground_04-albedo.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forest_ground_04/forest_ground_04_diff_1k.jpg",
+      "md5": "6ad9df4d731a238299806f739a26af83",
+      "sha256": "50a4dda30875020c64385261aa7e00e2155b592302fa6794165f58fae73cbd2c",
+      "bytes": 1113899,
+      "source": "https://polyhaven.com/a/forest_ground_04",
+      "authors": {
+        "Rob Tuytel": "Photography, Processing",
+        "Rico Cilliers": "Minor adjustment"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "forest_ground_04",
+      "slot": "normal",
+      "path": "textures/world/forest_ground_04-normal.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forest_ground_04/forest_ground_04_nor_gl_1k.jpg",
+      "md5": "a010a0802c2d9a930c6f00d3b1f196d2",
+      "sha256": "9c3a0200e02ce40edffbbf9f5f623ef08ea9b1b7812b556182ec978f88887151",
+      "bytes": 1326812,
+      "source": "https://polyhaven.com/a/forest_ground_04",
+      "authors": {
+        "Rob Tuytel": "Photography, Processing",
+        "Rico Cilliers": "Minor adjustment"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "forest_ground_04",
+      "slot": "arm",
+      "path": "textures/world/forest_ground_04-arm.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forest_ground_04/forest_ground_04_arm_1k.jpg",
+      "md5": "3fbb079d961f59b8fac7ec4f6dab9f20",
+      "sha256": "1dea651a5626530a08544804a616847bfb47b97bb93ecb8c84f13c4f1d498d83",
+      "bytes": 882694,
+      "source": "https://polyhaven.com/a/forest_ground_04",
+      "authors": {
+        "Rob Tuytel": "Photography, Processing",
+        "Rico Cilliers": "Minor adjustment"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "reed_roof_04",
+      "slot": "albedo",
+      "path": "textures/world/reed_roof_04-albedo.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/reed_roof_04/reed_roof_04_diff_1k.jpg",
+      "md5": "4ba30d52babf87bacc4aaff24aced8c9",
+      "sha256": "3f779402c569424200b5898114dd9daa85505bce296044254d595b9e4afe7584",
+      "bytes": 727872,
+      "source": "https://polyhaven.com/a/reed_roof_04",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "reed_roof_04",
+      "slot": "normal",
+      "path": "textures/world/reed_roof_04-normal.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/reed_roof_04/reed_roof_04_nor_gl_1k.jpg",
+      "md5": "a6a758ca10874374793d207ef13d96af",
+      "sha256": "4b775ad177610bdcc0d8f081da4bd56ef3ae778c12cf1090376b6d67c5fddf4d",
+      "bytes": 1234920,
+      "source": "https://polyhaven.com/a/reed_roof_04",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "reed_roof_04",
+      "slot": "arm",
+      "path": "textures/world/reed_roof_04-arm.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/reed_roof_04/reed_roof_04_arm_1k.jpg",
+      "md5": "6d40f2b14191bcfc31edc01af3b25dad",
+      "sha256": "84010888f8440e10033bbfc12c9ec54751847cf52884b073c80bce8137f88b18",
+      "bytes": 283531,
+      "source": "https://polyhaven.com/a/reed_roof_04",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "roof_slates_02",
+      "slot": "albedo",
+      "path": "textures/world/roof_slates_02-albedo.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/roof_slates_02/roof_slates_02_diff_1k.jpg",
+      "md5": "d7683ac63f6d46159790186f2e19919f",
+      "sha256": "de3d2729ab385c5f7dd7106d3b435c737f6d2c3ea8883cea37de53cec2a34867",
+      "bytes": 515626,
+      "source": "https://polyhaven.com/a/roof_slates_02",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "roof_slates_02",
+      "slot": "normal",
+      "path": "textures/world/roof_slates_02-normal.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/roof_slates_02/roof_slates_02_nor_gl_1k.jpg",
+      "md5": "e661093ac3305df7de9159ad07ef5f75",
+      "sha256": "32be0c0ba1565856156a315dc98a773d72f1a03415930657b8a8ad62bf60c1bf",
+      "bytes": 763206,
+      "source": "https://polyhaven.com/a/roof_slates_02",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "roof_slates_02",
+      "slot": "arm",
+      "path": "textures/world/roof_slates_02-arm.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/roof_slates_02/roof_slates_02_arm_1k.jpg",
+      "md5": "2727e9ad576a3d22c90a6936346161c0",
+      "sha256": "a43d670bb04a70d32502e8b976b0cb97dd975ccab04b8a612ac6543f2b89ad2a",
+      "bytes": 224234,
+      "source": "https://polyhaven.com/a/roof_slates_02",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "brown_mud",
+      "slot": "albedo",
+      "path": "textures/world/brown_mud-albedo.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/brown_mud/brown_mud_diff_1k.jpg",
+      "md5": "b141af27b413db140818d0a4998c394c",
+      "sha256": "df3f135c899f10a3b018738343b222cbc67d13e7c76c5d8da834a3d34c984417",
+      "bytes": 501955,
+      "source": "https://polyhaven.com/a/brown_mud",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "brown_mud",
+      "slot": "normal",
+      "path": "textures/world/brown_mud-normal.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/brown_mud/brown_mud_nor_gl_1k.jpg",
+      "md5": "62df05266fa5a0adc7733a7184a15dea",
+      "sha256": "ac517ca39eb507ae0f27e2b3db431c60888f9b5c3c52bec49d2c0775da0920cb",
+      "bytes": 1011780,
+      "source": "https://polyhaven.com/a/brown_mud",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "brown_mud",
+      "slot": "arm",
+      "path": "textures/world/brown_mud-arm.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/brown_mud/brown_mud_arm_1k.jpg",
+      "md5": "4f528864a1edbe9fff8c9b52a0922b9f",
+      "sha256": "40a5ac438f23ea454ff45f3f62f0fe4ac5b89c42fd070d10e7d41c51252caf88",
+      "bytes": 224431,
+      "source": "https://polyhaven.com/a/brown_mud",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "grass_ground",
+      "slot": "albedo",
+      "path": "textures/world/grass_ground-albedo.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/grass_ground/grass_ground_diff_1k.jpg",
+      "md5": "299047258586c762735b7284d3c662c3",
+      "sha256": "a79cc5ed65af0f80261b39a383b64a8c5272c5144d724deb43dbc29f0e4cd19b",
+      "bytes": 876584,
+      "source": "https://polyhaven.com/a/grass_ground",
+      "authors": {
+        "Charlotte Baglioni": "All"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "grass_ground",
+      "slot": "normal",
+      "path": "textures/world/grass_ground-normal.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/grass_ground/grass_ground_nor_gl_1k.jpg",
+      "md5": "d518c5b2af6f2c0297bc807b351f511f",
+      "sha256": "7000e2ccd479bb7b66dcdf4faef7b47554324566886314ca620cbf03e274e826",
+      "bytes": 1310516,
+      "source": "https://polyhaven.com/a/grass_ground",
+      "authors": {
+        "Charlotte Baglioni": "All"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "grass_ground",
+      "slot": "arm",
+      "path": "textures/world/grass_ground-arm.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/grass_ground/grass_ground_arm_1k.jpg",
+      "md5": "e0499d084eaddc110671ebfee26bd941",
+      "sha256": "b8c13e5972827dda6465fc98bbb8b3a0e67215bf8e864c729072fc9c1cc502ef",
+      "bytes": 896135,
+      "source": "https://polyhaven.com/a/grass_ground",
+      "authors": {
+        "Charlotte Baglioni": "All"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "bark_brown_02",
+      "slot": "albedo",
+      "path": "textures/world/bark_brown_02-albedo.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/bark_brown_02/bark_brown_02_diff_1k.jpg",
+      "md5": "6669cca520594bdca19f94084984ab72",
+      "sha256": "920fa0bed0c9d78c1d530e99795113afd532d7db746de440f4a85d7c83ed0f1a",
+      "bytes": 659592,
+      "source": "https://polyhaven.com/a/bark_brown_02",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "bark_brown_02",
+      "slot": "normal",
+      "path": "textures/world/bark_brown_02-normal.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/bark_brown_02/bark_brown_02_nor_gl_1k.jpg",
+      "md5": "1cad3fe0349a44df2d4d1c2859c79920",
+      "sha256": "0d5e691e8ad8bcd093a3587887fda2a6b4a948b5708a4f256f7919584c6eb857",
+      "bytes": 1015623,
+      "source": "https://polyhaven.com/a/bark_brown_02",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "bark_brown_02",
+      "slot": "arm",
+      "path": "textures/world/bark_brown_02-arm.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/bark_brown_02/bark_brown_02_arm_1k.jpg",
+      "md5": "6a566390a8930454c9ad4056273b08fb",
+      "sha256": "6bd86d37b3b9b40cc30a4b661e382ec41fa7463a8b1144ff44708b19fa675af1",
+      "bytes": 232742,
+      "source": "https://polyhaven.com/a/bark_brown_02",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "mossy_rock",
+      "slot": "albedo",
+      "path": "textures/world/mossy_rock-albedo.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/mossy_rock/mossy_rock_diff_1k.jpg",
+      "md5": "a57fbbf55269eb64f8d40708fe3af26c",
+      "sha256": "4dbf37f1b0465c9c8914213163923be159716f5b97fb6946437b6c5e143ef540",
+      "bytes": 1124438,
+      "source": "https://polyhaven.com/a/mossy_rock",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "mossy_rock",
+      "slot": "normal",
+      "path": "textures/world/mossy_rock-normal.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/mossy_rock/mossy_rock_nor_gl_1k.jpg",
+      "md5": "59370f9b3d068271c2bccfb414dc325b",
+      "sha256": "232cdd6a9fdfd01bb8bb1f8f604c53dbca79fa0d3d7995edf85c9945757aa8df",
+      "bytes": 995727,
+      "source": "https://polyhaven.com/a/mossy_rock",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "mossy_rock",
+      "slot": "arm",
+      "path": "textures/world/mossy_rock-arm.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/mossy_rock/mossy_rock_arm_1k.jpg",
+      "md5": "aa606bf7dda9c12bfea7702ea0507d7b",
+      "sha256": "1c1b8da603c93e863ccb68a8f4fcc6ff02774b83d9a6e9422c7d4aa77397b6a3",
+      "bytes": 926941,
+      "source": "https://polyhaven.com/a/mossy_rock",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "license": "CC0-1.0"
+    }
+  ]
+}

@@ -18,7 +18,7 @@ def export_glb(path, objects, armature=None, animations=False):
     bpy.ops.export_scene.gltf(
         filepath=path, export_format='GLB', use_selection=True, export_apply=False, export_yup=True,
         export_skins=True, export_morph=True, export_morph_normal=False, export_animations=animations,
-        export_materials='EXPORT', export_image_format='NONE', export_texcoords=True, export_normals=True,
+        export_materials='EXPORT', export_image_format='AUTO', export_texcoords=True, export_normals=True,
         export_vertex_color='ACTIVE', export_active_vertex_color_when_no_material=True, export_extras=True,
         export_cameras=False, export_lights=False, export_influence_nb=4,
     )

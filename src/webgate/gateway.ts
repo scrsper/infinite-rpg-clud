@@ -45,7 +45,7 @@ export interface GatewayOptions {
  * legacy unbound `move`/`attack` forms are deliberately absent. */
 export const BROWSER_MESSAGE_TYPES = new Set([
   'command', 'presentation_ack', 'clock_probe', 'save',
-  'person_action', 'talk', 'dialogue_option', 'dialogue_close', 'interact', 'container_transfer', 'hush',
+  'person_action', 'talk', 'dialogue_text', 'dialogue_option', 'dialogue_close', 'interact', 'container_transfer', 'hush',
 ]);
 /** The server's own maxPayload is 4096; matching it means a message the gateway lets through can be read. */
 export const MAX_BROWSER_MESSAGE_BYTES = 4096;

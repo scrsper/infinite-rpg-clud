@@ -277,8 +277,9 @@ def build_body_mesh(d: Dims, voxel=0.010, target_tris=12000):
     H = d.height
     bm = bmesh.new()
     tube_mesh(bm, torso_rings(d), segments=28)
-    tube_mesh(bm, [(Vector((0, 0.008 * H, d.neck_base - 0.02 * H)), 0.038 * H, 0.040 * H), (Vector((0, 0.011 * H, d.neck_base + 0.02 * H)), 0.030 * H, 0.033 * H),
-                   (Vector((0, 0.016 * H, d.neck_top - 0.004 * H)), 0.028 * H, 0.031 * H)], segments=18)
+    neck_f = d.sex == 'f'
+    tube_mesh(bm, [(Vector((0, 0.008 * H, d.neck_base - 0.02 * H)), (0.033 if neck_f else 0.038) * H, (0.033 if neck_f else 0.040) * H), (Vector((0, 0.011 * H, d.neck_base + (0.007 if neck_f else 0.02) * H)), (0.024 if neck_f else 0.030) * H, (0.025 if neck_f else 0.033) * H),
+                   (Vector((0, 0.016 * H, d.neck_top - 0.004 * H)), (0.022 if neck_f else 0.028) * H, (0.023 if neck_f else 0.031) * H)], segments=24)
     for s in ('l', 'r'):
         tube_mesh(bm, round_start(arm_rings(d, s)), segments=18, cap_start=True)
         tube_mesh(bm, round_start(leg_rings(d, s)), segments=20, cap_start=True)
@@ -352,6 +353,22 @@ def shape_body(obj, d: Dims):
     bm.free()
     for poly in obj.data.polygons:
         poly.use_smooth = True
+    obj.data.update()
+
+    # Voxel smoothing can inflate the capped neck above its authored rest landmark.
+    # Restore that contour before binding; the face and skeleton retain their own scale.
+    start=.812*H
+    for v in obj.data.vertices:
+        if v.co.z <= start or abs(v.co.x) > .08*H: continue
+        t=min(1,max(0,(v.co.z-start)/(.065*H)))
+        v.co.z=start+(d.neck_top-.002*H-start)*t
+        throat=(.0215 if f else .0255)*H
+        radius=throat+(.038*H-throat)*(1-t)**2
+        cy=.012*H
+        radial=Vector((v.co.x,v.co.y-cy,0))
+        if radial.length>radius:
+            radial*=radius/radial.length
+            v.co.x=radial.x; v.co.y=radial.y+cy
     obj.data.update()
 
 

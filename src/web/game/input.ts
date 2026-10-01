@@ -15,6 +15,8 @@ export class InputManager {
   pointerLocked = false;
   /** Set true when a menu is open: gameplay reads should be ignored by callers; UI actions still work. */
   readonly move: MoveVector = { x: 0, y: 0 };
+  autoWalking = false;
+  stopAutoWalk(): void { this.autoWalking = false; }
   readonly look = { x: 0, y: 0 };
   wheel = 0;
   padConnected = false;
@@ -24,6 +26,7 @@ export class InputManager {
   private framePressed = new Set<string>(); private frameReleased = new Set<string>();
   private lookAccum = { x: 0, y: 0 };
   private wheelAccum = 0;
+  private orbitDrag: { x: number; y: number } | null = null;
   private padPrev: boolean[] = [];
   private capture: ((code: string) => void) | null = null;
   private lastPadActivity = 0;
@@ -35,24 +38,36 @@ export class InputManager {
   constructor(private readonly canvas: HTMLCanvasElement, private readonly settings: () => Settings) {
     const typing = () => { const a = document.activeElement as HTMLElement | null; return !!a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT' || a.isContentEditable); };
     window.addEventListener('keydown', e => {
-      if (typing()) return;
+      if (typing() && e.code !== 'Escape') return;
       if (this.capture && e.code !== 'Escape') { e.preventDefault(); const c = this.capture; this.capture = null; c(e.code); return; }
       this.noteDevice('keyboard');
       if (['Tab', 'Space', 'AltLeft', 'AltRight', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'F5', 'F6', 'F7'].includes(e.code)) e.preventDefault();
       if (e.repeat) return;
       this.down(e.code);
     });
-    window.addEventListener('keyup', e => { if (typing()) return; if (['AltLeft', 'AltRight'].includes(e.code)) e.preventDefault(); this.up(e.code); });
-    canvas.addEventListener('mousedown', e => {
+    // Focus can move into a text field between down and up. Always release the physical key,
+    // even though a text field's key presses never become gameplay intentions.
+    window.addEventListener('keyup', e => { if (['AltLeft', 'AltRight'].includes(e.code) && !typing()) e.preventDefault(); this.up(e.code); });
+    // Babylon consumes pointerdown and may suppress compatibility mouse events. Listen to
+    // the original pointer stream so camera motion and combat work on the real canvas.
+    canvas.addEventListener('pointerdown', e => {
       if (this.capture) { e.preventDefault(); const c = this.capture; this.capture = null; c(`Mouse${e.button}`); return; }
       this.noteDevice('keyboard'); e.preventDefault();
       // The click that captures the pointer is not an attack: only a locked pointer sends mouse actions.
       if (this.pointerLocked) this.down(`Mouse${e.button}`);
+      else if (e.button === 0 || e.button === 2) this.orbitDrag = { x: e.clientX, y: e.clientY };
     });
-    window.addEventListener('mouseup', e => { if (e.button >= 3) e.preventDefault(); this.up(`Mouse${e.button}`); });
+    window.addEventListener('pointerup', e => { this.orbitDrag = null; if (e.button >= 3) e.preventDefault(); this.up(`Mouse${e.button}`); });
+    window.addEventListener('pointercancel', () => this.releaseAll());
     window.addEventListener('auxclick', e => { if (e.button >= 1) e.preventDefault(); });
     canvas.addEventListener('contextmenu', e => e.preventDefault());
-    window.addEventListener('mousemove', e => { if (this.pointerLocked) { this.lookAccum.x += e.movementX; this.lookAccum.y += e.movementY; } });
+    window.addEventListener('pointermove', e => {
+      if (this.pointerLocked) { this.lookAccum.x += e.movementX; this.lookAccum.y += e.movementY; }
+      else if (this.orbitDrag) {
+        this.lookAccum.x += e.clientX - this.orbitDrag.x; this.lookAccum.y += e.clientY - this.orbitDrag.y;
+        this.orbitDrag = { x: e.clientX, y: e.clientY };
+      }
+    });
     canvas.addEventListener('wheel', e => { e.preventDefault(); this.wheelAccum += Math.sign(e.deltaY) * Math.min(3, Math.abs(e.deltaY) / 100 + 0.3); }, { passive: false });
     window.addEventListener('blur', () => this.releaseAll());
     document.addEventListener('visibilitychange', () => { if (document.hidden) this.releaseAll(); });
@@ -68,10 +83,17 @@ export class InputManager {
   private noteDevice(d: Device): void { if (this.device !== d) { this.device = d; this.onDeviceChange?.(d); } }
   private down(code: string): void { if (!this.held.has(code)) { this.held.add(code); this.pendingPressed.add(code); } }
   private up(code: string): void { if (this.held.delete(code)) this.pendingReleased.add(code); }
-  private releaseAll(): void { for (const c of [...this.held]) { this.held.delete(c); this.pendingReleased.add(c); } this.lookAccum.x = this.lookAccum.y = 0; }
+  releaseAll(): void {
+    this.autoWalking = false; this.orbitDrag = null;
+    for (const c of [...this.held]) { this.held.delete(c); this.pendingReleased.add(c); }
+    // Pointer-lock exit can open Pause before the Escape key reaches beginFrame. That same
+    // edge must not immediately close the newly opened menu or activate its focused button.
+    this.pendingPressed.clear(); this.framePressed.clear();
+    this.move.x = this.move.y = this.lookAccum.x = this.lookAccum.y = 0;
+  }
 
   requestLock(): void {
-    if (this.pointerLocked || performance.now() - this.lockRequestedAt < 400) return;
+    if (!this.settings().captureMouse || this.pointerLocked || performance.now() - this.lockRequestedAt < 400) return;
     this.lockRequestedAt = performance.now();
     // Raw (unadjusted) movement if the browser allows it, else ordinary pointer lock. Every promise is handled: a refusal
     // (menu opening at the same moment, tab not focused, document not valid for lock) is normal and must not surface as an error.
@@ -126,6 +148,9 @@ export class InputManager {
     // Move: keyboard digital plus pad analog; the larger magnitude wins per axis, then clamp to the unit circle.
     const kx = (this.isDown('moveRight') ? 1 : 0) - (this.isDown('moveLeft') ? 1 : 0), ky = (this.isDown('moveForward') ? 1 : 0) - (this.isDown('moveBack') ? 1 : 0);
     let mx = Math.abs(padMoveX) > Math.abs(kx) ? padMoveX : kx, my = Math.abs(padMoveY) > Math.abs(ky) ? padMoveY : ky;
+    if (this.pressed('autoWalk')) this.autoWalking = !this.autoWalking;
+    if (mx || my || ['interact', 'lightAttack', 'heavyAttack', 'guard', 'dodge', 'pause', 'items', 'journal', 'abilities'].some(a => this.pressed(a as Action))) this.autoWalking = false;
+    if (this.autoWalking) my = 1;
     const mag = Math.hypot(mx, my); if (mag > 1) { mx /= mag; my /= mag; }
     this.move.x = mx; this.move.y = my;
 

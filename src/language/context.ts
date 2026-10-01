@@ -3,7 +3,7 @@ import { knownName } from '../sim/mind/people';
 
 export interface ExpressibleKnowledge {
   knowledgeId: string; text: string; confidence: number; source: string;
-  learnedAt: number; hops: number;
+  learnedAt: number; hops: number; sourceName?: string; placeName?: string;
 }
 /** Deliberately accepts one mind, never World. No nameOf, event lookup or other minds. */
 export function expressibleFact(p: Person, k: KnowledgeItem): ExpressibleKnowledge | null {
@@ -24,7 +24,9 @@ export function expressibleFact(p: Person, k: KnowledgeItem): ExpressibleKnowled
     text = lines[c.type];
     // A recorded rumor is itself a belief, not a canonical assertion. The qualifier below is mandatory.
     if (c.type === 'rumor' && typeof c.text === 'string') text = c.text;
-  } else if (k.kind === 'fact' && typeof c.text === 'string') text = c.text;
+  } else if (k.kind === 'fact' && c.occupation?.subject && typeof c.occupation.role === 'string') text = `${name(c.occupation.subject)} works as a ${safeWord(c.occupation.role)}`;
+  else if (k.kind === 'fact' && typeof c.text === 'string') text = c.text;
+  else if (k.kind === 'state' && typeof c.text === 'string') text = c.text;
   else if (k.kind === 'service' && Array.isArray(c.offers)) text = `a place I know offers ${c.offers.filter((x: unknown) => typeof x === 'string').join(', ')}`;
   else if (k.kind === 'location' && c.pos && [c.pos.x, c.pos.z].every(Number.isFinite)) {
     // Location records also concern items. The mind-only record does not establish entity kind.
@@ -33,18 +35,18 @@ export function expressibleFact(p: Person, k: KnowledgeItem): ExpressibleKnowled
   }
   else if (k.kind === 'ownership') text = `an item belongs to ${name(c.ownerId)}`;
   if (!text || text.length > 400 || !Number.isFinite(k.confidence)) return null;
-  return { knowledgeId: k.key, text, confidence: k.confidence, source: k.source.type, learnedAt: k.learnedAt, hops: k.hops };
+  return { knowledgeId: k.key, text, confidence: k.confidence, source: k.source.type, sourceName: k.source.from ? knownName(p, k.source.from) : undefined, learnedAt: k.learnedAt, hops: k.hops };
 }
 function safeWord(value: unknown): string { return typeof value === 'string' && /^[a-z_ ]{1,35}$/.test(value) ? value.replaceAll('_', ' ') : 'materials'; }
 
 export function factSentence(f: ExpressibleKnowledge): string {
-  // Source and uncertainty cannot be removed or upgraded by the language model.
+  // Realization must retain the actual source and uncertainty.
   const qualifier = f.source === 'told' || f.hops > 0 ? 'I heard, though I cannot be certain, that '
     : f.source === 'heard' ? 'From what I heard, '
     : f.source === 'inferred' ? 'I suspect that '
     : f.confidence < .8 ? 'As far as I know, '
     : f.source === 'witnessed' ? 'I saw that ' : 'I believe that ';
-  return `${qualifier}${f.text.replace(/[.!?]+$/, '')}.`;
+  return `${qualifier}${f.text.replace(/[.!?]+$/, '')}.${f.sourceName && ['told', 'heard'].includes(f.source) ? ` I heard it from ${f.sourceName}.` : ''}`;
 }
 
 export function buildContext(p: Person, listenerId?: string, preferredKeys: string[] = []) {

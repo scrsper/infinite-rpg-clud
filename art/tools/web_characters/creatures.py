@@ -6,6 +6,7 @@ Vertex colours carry the coat pattern (belly, rump patch, leg socks, face mask) 
 species' base coat colour, which the client sets. The figure faces -Y; +X is its left.
 """
 import math
+import random
 
 import bmesh
 import bpy
@@ -39,7 +40,7 @@ def joints(sp):
     nb = Vector((0, chest_y + 0.02, h + 0.02))
     j['neck_b'] = nb
     nl = S['neck']
-    ang = 0.75 if not S.get('sit') else 0.6
+    ang = .20 if S.get('tusk') else 0.75 if not S.get('sit') else 0.6
     j['neck_m'] = nb + Vector((0, -math.cos(ang) * nl * 0.5, math.sin(ang) * nl * 0.5))
     j['neck_t'] = nb + Vector((0, -math.cos(ang) * nl, math.sin(ang) * nl))
     hl = S['head']
@@ -141,7 +142,8 @@ def build_body(sp, voxel=None, target_tris=22000):
     _tube(bm, [j['neck_b'] + Vector((0, 0.14, -0.05)), j['neck_b'], j['neck_m'], j['neck_t']], [(nr * 1.15, nr * 1.2), (nr * 1.1, nr * 1.15), (nr * 0.95, nr), (nr * 0.75, nr * 0.8)], segments=14)
     # Head: skull and a tapering muzzle.
     hr = S['head_r']
-    _tube(bm, [j['neck_t'] + Vector((0, 0.03, 0.0)), j['head_c'], j['head_c'].lerp(j['muzzle'], 0.6), j['muzzle']], [(hr * 1.0, hr * 1.05), (hr * 1.05, hr * 1.1), (hr * 0.72, hr * 0.68), (hr * 0.5, hr * 0.42)], segments=14)
+    snout = .78 if S.get('tusk') else .5
+    _tube(bm, [j['neck_t'] + Vector((0, 0.03, 0.0)), j['head_c'], j['head_c'].lerp(j['muzzle'], 0.6), j['muzzle']], [(hr * 1.0, hr * 1.05), (hr * 1.12, hr * 1.1), (hr * .92, hr * .78), (hr * snout, hr * .52)], segments=20)
     for s in ('l', 'r'):
         f, b = 'f' + s, 'b' + s
         lr = S['leg_r']
@@ -359,14 +361,16 @@ def tusks(sp, arm):
 
 
 def mane(sp, arm):
-    """A ridge of bristles along the boar's back."""
+    """Swept, overlapping bristle tufts along the shoulder ridge and back."""
     j = joints(sp)
     bm = bmesh.new()
-    n = 9
+    rng = random.Random(4017)
+    n = 460
     for i in range(n):
         u = i / (n - 1)
-        p = j['withers'].lerp(j['rump'], u) + Vector((0, 0, 0.02 + 0.03 * math.sin(u * math.pi)))
-        _tube(bm, [p, p + Vector((0, 0.01, 0.04)), p + Vector((0, 0.025, 0.075))], [(0.01, 0.006), (0.007, 0.004), (0.002, 0.002)], segments=5)
+        p = j['withers'].lerp(j['rump'], u) + Vector((rng.uniform(-.04,.04), rng.uniform(-.012,.012), -.026 + .036 * math.sin(u * math.pi)))
+        length = (.045 + rng.random()*.065)*(1-u*.55)
+        _tube(bm, [p, p + Vector((0,length*.3,length*.55)), p + Vector((rng.uniform(-.008,.008),length*.75,length))], [(0.0024,.0015),(.0015,.0009),(.00012,.00012)], segments=4)
     obj = _obj(bm, 'Mane', 'Hide', 'mane')
     for name in ('spine_01', 'spine_02', 'pelvis'):
         obj.vertex_groups.new(name=name)
@@ -378,3 +382,35 @@ def mane(sp, arm):
     m.object = arm
     m.use_vertex_groups = True
     return obj
+
+
+def boar_details(sp, arm, body):
+    """Anatomical surface detail fitted to the same body and skeleton, with no new mechanics."""
+    from couture import ball, path
+    j=joints(sp); bm=bmesh.new(); wet=bmesh.new(); horn=bmesh.new(); iris=bmesh.new()
+    muzzle=j['muzzle']
+    ball(bm,muzzle+Vector((0,-.005,0)),(.066,.018,.042),28,18)
+    for sg in (-1,1):
+        ball(wet,muzzle+Vector((sg*.027,-.021,.012)),(.012,.004,.008),16,10)
+        c=j['head_c']+Vector((sg*sp['head_r']*.9,-.03*(sp['head']/.23),sp['head_r']*.32))
+        ball(bm,c+Vector((sg*.001,.005,.011)),(.020,.035,.012),20,12)
+        ball(iris,c+Vector((sg*.013,-.003,0)),(.004,.010,.010),20,12)
+        path(wet,[muzzle+Vector((sg*x,y,z)) for x,y,z in [(.04,.005,-.018),(.067,.06,-.02),(.087,.14,-.005)]],[.002]*3,6)
+    # Separate toes and dewclaws, so the feet read as cloven hooves in motion.
+    for pre in ('fl','fr','bl','br'):
+        toe=j[pre+'_toe']
+        for sg in (-1,1): ball(horn,toe+Vector((sg*.014,-.008,.023)),(.013,.036,.025),16,10)
+    out=[]
+    for mesh,name,slot in [(bm,'BoarMuzzle','Hide'),(wet,'BoarNostrils','Nose'),(iris,'BoarIris','Iris')]:
+        ob=_obj(mesh,name,slot,'detail'); rigid(ob,arm,'head'); out.append(ob)
+    ob=_obj(horn,'ClovenHooves','Hoof','detail'); assign(ob,arm,sp); out.append(ob)
+    # A short coat follows the actual welded surface instead of a floating fur shell.
+    fur=bmesh.new(); rng=random.Random(19274)
+    vertices=[v for v in body.data.vertices if v.co.z > .20 and v.normal.z > -.25]
+    for v in rng.sample(vertices,min(3200,len(vertices))):
+        normal=v.normal.normalized(); root=v.co-normal*.001
+        length=rng.uniform(.005,.016)
+        tip=root+normal*length+Vector((0,length*.7,-length*.2))
+        path(fur,[root,root.lerp(tip,.6),tip],[.0008,.00045,.00004],3)
+    ob=_obj(fur,'ShortBristles','Fur','detail'); assign(ob,arm,sp); out.append(ob)
+    return out

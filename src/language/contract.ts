@@ -10,17 +10,6 @@ export function validateIntent(value: unknown, shareKeys: readonly string[]): In
   if (o.intent === 'offer_information' ? typeof o.knowledgeId !== 'string' || !shareKeys.includes(o.knowledgeId) : o.knowledgeId !== null) throw new Error('Unsupported knowledge reference');
   return o as Intent;
 }
-export function fallbackIntent(text: string, shares: ExpressibleKnowledge[]): Intent {
-  const t = text.toLowerCase().trim();
-  let intent: Intent['intent'] = /^(hi|hello|greetings|hey)\b/.test(t) ? 'greet'
-    : /^(bye|goodbye|farewell)\b/.test(t) ? 'goodbye'
-    : /sorry|apolog/.test(t) ? 'apologize' : /trade|sell|buy|price/.test(t) ? 'ask_about_trade'
-    : /who are you|your name/.test(t) ? 'ask_about_person' : /where/.test(t) ? 'ask_about_place'
-    : /help|work going/.test(t) ? 'ask_for_help' : 'ask_about_event';
-  const share = /^(i heard|i saw|let me tell|tell them|share)\b/.test(t) ? shares.find(f => t.includes(f.knowledgeId.toLowerCase()) || t.includes(f.text.toLowerCase())) : undefined;
-  if (share) intent = 'offer_information';
-  return { intent, topic: text.slice(0, 160), knowledgeId: share?.knowledgeId ?? null };
-}
 export interface DialogueOutput { speech: string; intent: 'inform' | 'acknowledge' | 'refuse'; topics: string[]; claims: { knowledgeId: string; confidence: number }[] }
 export function responseChoices(line: string, facts: ExpressibleKnowledge[] = []): DialogueOutput[] {
   const base = facts.length ? facts.map(factSentence).join(' ') : line;

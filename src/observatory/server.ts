@@ -39,7 +39,6 @@ export function createObservatoryServer(runtime = new Observatory()) {
         if (path === '/api/entity') return send(runtime.world.get(id) ?? runtime.world.resourceNodes.find(n => n.id === id) ?? null);
         if (path === '/api/metric') { const metric = settlementMetrics(runtime.world).find(m => m.key === id); return send(metric ?? null); }
         if (path === '/api/language') return send(runtime.latestLanguage);
-        if (path === '/api/probe') return send(await runtime.client.probe());
         if (path === '/api/events') {
           const group = url.searchParams.get('group'), q = (url.searchParams.get('q') ?? '').slice(0, 100).toLowerCase();
           const offset = Math.max(0, Math.min(1000000, Number(url.searchParams.get('offset')) || 0));
@@ -59,7 +58,6 @@ export function createObservatoryServer(runtime = new Observatory()) {
         if (path === '/api/verify') return send(runtime.verify());
         if (path === '/api/checkpoint') return send(runtime.saveCheckpoint());
         if (path === '/api/restore') { runtime.loadCheckpoint(); return send({ ok: true }); }
-        if (path === '/api/config') { runtime.configure(body); return send({ ok: true }); }
         if (path === '/api/ask') return send(await runtime.ask(body.npcId, body.speakerId, body.text));
         if (path === '/api/thought') return send(await runtime.thought(body.npcId));
       }
@@ -74,7 +72,6 @@ if (process.argv[1] && fileURLToPath(import.meta.url).toLowerCase() === process.
   const port = Number(process.env.TORN_VEIL_OBSERVATORY_PORT ?? 7480);
   if (!Number.isInteger(port) || port < 1024 || port > 65535) throw new Error('Invalid Observatory port');
   const { server, runtime } = createObservatoryServer();
-  runtime.configure({ ...runtime.client.config, baseUrl: process.env.TORN_VEIL_LLM_BASE_URL ?? runtime.client.config.baseUrl, model: process.env.TORN_VEIL_LLM_MODEL ?? runtime.client.config.model });
   server.listen(port, '127.0.0.1', () => { runtime.startLoop(); console.log(`Torn Veil Observatory: http://127.0.0.1:${port} — disposable in-memory development world`); });
   for (const signal of ['SIGINT', 'SIGTERM'] as const) process.on(signal, () => { runtime.close(); server.close(); });
 }

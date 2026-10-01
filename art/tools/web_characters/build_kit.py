@@ -17,6 +17,14 @@ import hair as Hr
 import garments_web as G
 import accessories as A
 import export as X
+import couture as C
+import vroid_head
+
+# The component builders keep the established mesh tags and skeleton contract.
+Hd.face_position = C.face_position
+Hr.face_position = C.face_position
+Hd.eye_meshes = C.eye_meshes
+B.hand_parts = C.hand_parts
 
 argv = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
 sex = argv[0] if argv else 'f'
@@ -46,6 +54,7 @@ PALETTE = {
     'TV_Hair': ((0.3, 0.2, 0.14, 1), 0.45, 0.0), 'TV_Cloth': ((0.7, 0.72, 0.8, 1), 0.85, 0.0), 'TV_Under': ((0.2, 0.25, 0.4, 1), 0.85, 0.0), 'TV_Accent': ((0.7, 0.55, 0.25, 1), 0.7, 0.0),
     'TV_Metal': ((0.85, 0.72, 0.35, 1), 0.35, 1.0), 'TV_Leather': ((0.32, 0.2, 0.13, 1), 0.7, 0.0), 'TV_Fur': ((0.95, 0.93, 0.88, 1), 0.9, 0.0), 'TV_Hem': ((0.55, 0.58, 0.68, 1), 0.9, 0.0),
     'TV_Straw': ((0.8, 0.68, 0.38, 1), 0.9, 0.0), 'TV_Lacquer': ((0.12, 0.1, 0.12, 1), 0.3, 0.0), 'TV_Crystal': ((0.7, 0.85, 1.0, 1), 0.1, 0.0),
+    'TV_Lash': ((0.045, 0.023, 0.031, 1), 0.55, 0.0),
 }
 for name, (col, r, m) in PALETTE.items():
     material(name, col, r, m)
@@ -57,26 +66,18 @@ if want('body'):
     body['tv_part'] = 'body'
     parts.append(body)
 if want('head'):
-    head = Hd.build_head(d, arm)
-    head.data.materials.append(bpy.data.materials['TV_SkinHead'])
-    Hd.weight_all(head)
-    Hd.bind(head, arm)
-    head['tv_part'] = 'head'
-    parts.append(head)
-    for e in Hd.eye_meshes(d, arm):
-        e.data.materials.append(bpy.data.materials['TV_Eye'])
-        Hd.weight_all(e)
-        Hd.bind(e, arm)
-        e['tv_part'] = 'eye'
-        parts.append(e)
+    parts.append(vroid_head.build(d, arm))
 fit = G.Fit(d)
 if want('garments'):
     for kind in G.REGISTRY:
-        parts.append(G.make_garment(kind, fit, body, arm))
+        parts.append(C.couture_garment(d, body, arm) if kind == 'furisode_hero' else G.make_garment(kind, fit, body, arm))
     for style in ('zori', 'geta', 'boots'):
         parts.append(A.footwear(d, style, body, arm))
 if want('hair'):
     for style in Hr.HAIR_STYLES:
+        if style == 'hero_long':
+            parts.append(C.couture_hair(d, arm))
+            continue
         h = Hr.build_hair(d, style)
         Hr.weight_hair(h, arm, d)
         h.data.materials[0] = bpy.data.materials['TV_Hair']
@@ -92,10 +93,11 @@ if want('accessories'):
 if want('hero') and sex == 'f':
     parts.append(A.hero_ears(d, arm))
     parts.append(A.hero_tail(d, arm))
-    parts.append(A.hero_stole(d, arm, body))
+    parts.append(C.couture_stole(d, arm))
     parts.append(A.hero_ornaments(d, arm))
     parts.append(A.hero_bow(d, arm))
     parts.append(A.hero_flower(d, arm))
+    parts.extend(C.couture_jewels(d, arm))
 
 tris = sum(sum(len(p.vertices) - 2 for p in o.data.polygons) for o in parts if o.type == 'MESH')
 print('KIT', sex, 'parts', len(parts), 'tris', tris)

@@ -7,7 +7,7 @@ import { Simulation } from '../sim/mind/agent';
 import { setExternalControl } from '../sim/runtime/controllers';
 import type { World } from '../sim/core/world';
 import type { Observation } from '../headless/worldlab/types';
-import { LocalLanguageClient, type LocalConfig } from '../language/client';
+import type { ConversationContext } from '../language/parser';
 import { LanguageService } from '../language/service';
 import { RunDiagnostics } from './diagnostics';
 
@@ -16,8 +16,8 @@ export function stepWorld(w: World, sim: Simulation, dt = STEP) { const wd = w.c
 export class Observatory {
   state = createScenario();
   diagnostics = new RunDiagnostics(this.state.world);
-  readonly client = new LocalLanguageClient();
-  readonly language = new LanguageService(this.client);
+  readonly language = new LanguageService();
+  private conversationContexts = new Map<string, ConversationContext>();
   paused = true; speed = 1; revision = 0;
   start = this.state.world.now;
   initial = worldOverview(this.state.world);
@@ -48,7 +48,7 @@ export class Observatory {
       catch (e) { this.paused = true; this.job = { active: false, from: this.world.now, to: this.world.now, mode: 'Realtime stepping failed', elapsedMs: 0, error: String(e) }; }
     }, 25);
   }
-  close() { clearInterval(this.interval); this.jobCancel = true; this.askController?.abort(); this.client.cancelAll(); }
+  close() { clearInterval(this.interval); this.jobCancel = true; this.askController?.abort(); this.conversationContexts.clear(); }
   private step(dt = STEP) {
     const t = performance.now(); stepWorld(this.world, this.sim, dt); this.stepMs = performance.now() - t;
     if (this.world.now - this.healthAt >= 3600) { this.health = this.sampleHealth(); this.healthAt = this.world.now; }
@@ -61,7 +61,7 @@ export class Observatory {
     return report;
   }
   snapshot() { return { ...worldOverview(this.world), scenario: this.state.scenario, initialEvents: this.state.initialEvents, paused: this.paused, speed: this.speed, debtSeconds: this.wallAccum, revision: this.revision,
-    job: this.job, health: this.health, report: this.report, language: { config: this.client.config, queue: this.client.status }, checkpoint: !!this.checkpoint,
+    job: this.job, health: this.health, report: this.report, language: { mode: 'deterministic' }, checkpoint: !!this.checkpoint,
     isolation: 'Disposable in-memory development world. No live/staging/save-directory APIs.', clock: 'Fixed headless step 0.15 physical seconds at the existing 60:1 world clock. 1x/6x/60x change pacing, not the quantum.' }; }
   reset(id: string, seed: number) {
     this.requireIdle(); this.cancelLanguage(); this.paused = true;
@@ -71,7 +71,7 @@ export class Observatory {
   }
   control(paused: boolean, speed: number) { this.requireIdle(); if (![1, 6, 60].includes(speed) || typeof paused !== 'boolean') throw new Error('Invalid time control'); this.paused = paused; this.speed = speed; this.wallAt = performance.now(); }
   cancel() { this.jobCancel = true; this.paused = true; this.cancelLanguage(); }
-  private cancelLanguage() { this.askController?.abort(); this.client.cancelAll(); }
+  private cancelLanguage() { this.askController?.abort(); this.conversationContexts.clear(); }
   requireIdle() { if (this.job?.active) throw new Error('A world run is active; cancel it first'); }
   async advance(seconds: number, noPlayer = false) {
     this.requireIdle(); if (![3600, 86400, 604800, 2592000].includes(seconds)) throw new Error('Unsupported horizon');
@@ -135,7 +135,6 @@ export class Observatory {
     ];
     this.health = this.sampleHealth(); return this.verification;
   }
-  configure(config: LocalConfig) { this.cancelLanguage(); this.client.configure(config); }
   async thought(npcId: string) {
     this.requireIdle(); if (this.askController) throw new Error('A language request is active');
     const npc = this.world.person(npcId); if (!npc?.alive) throw new Error('Select a living person');
@@ -147,7 +146,7 @@ export class Observatory {
     this.requireIdle(); if (this.askController) throw new Error('A conversation request is active');
     const npc = this.world.person(npcId), speaker = this.world.person(speakerId); if (!npc || !speaker) throw new Error('Choose a person and a nearby speaker');
     const controller = new AbortController(); this.askController = controller; const revision = this.revision;
-    try { const result = await this.language.ask(this.sim, speaker, npc, text, controller.signal); if (revision !== this.revision || controller.signal.aborted) throw new Error('Language request cancelled; any already accepted canonical conversation remains in history.'); this.latestLanguage = result; return result; }
+    try { const key = `${speaker.id}:${npc.id}`, result = await this.language.ask(this.sim, speaker, npc, text, controller.signal, () => revision === this.revision, this.conversationContexts.get(key)); this.conversationContexts.set(key, result.nextContext); if (revision !== this.revision || controller.signal.aborted) throw new Error('Language request cancelled; any already accepted canonical conversation remains in history.'); this.latestLanguage = result; return result; }
     finally { if (this.askController === controller) this.askController = null; }
   }
 }

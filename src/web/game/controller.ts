@@ -53,6 +53,7 @@ export class PlayerController {
   ) {}
 
   release(): void {
+    this.input.releaseAll();
     this.sendGuard(false); this.guardHeld = this.focusHeld = this.sprintHeld = this.crouchHeld = false; this.moving = false;
   }
 
@@ -66,7 +67,7 @@ export class PlayerController {
   update(dt: number): void {
     const s = this.settings();
     const acting = this.hooks.canAct();
-    if (!acting) { if (this.guardHeld || this.guardWanted) this.release(); this.stepMovement(dt, false); return; }
+    if (!acting) { this.input.stopAutoWalk(); if (this.guardHeld || this.guardWanted) this.release(); this.stepMovement(dt, false); return; }
 
     // Held-state toggles.
     const sprintNow = s.sprintToggle ? (this.input.pressed('sprint') ? !this.sprintHeld : this.sprintHeld) : this.input.isDown('sprint');

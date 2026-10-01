@@ -59,21 +59,13 @@
   the raw comparator result remains unchanged. Acceptance attaches only a SHA-bound review
   matching every exact difference row; it never normalizes or automatically excuses new rows.
 
-## Developer Observatory and bounded local language
+## Developer Observatory and deterministic dialogue
 
-- Observatory worlds are disposable, process-local fixtures; no API accepts a save path or an
-  alpha environment. It never connects its developer truth endpoints to the web gateway.
-- Observation reads existing state and stored event causes. Missing causality is disclosed.
-  Dashboard event counts explicitly cover retained records; source drill-downs and existing
-  canonical tallies are distinct from newly invented counters.
-- Language is outside `src/sim`. The model receives a detached allowlist from one person,
-  never World or another mind. Generated text is not persisted as knowledge, memory or speech.
-  A bounded intent adapter inside simulation delegates consequences to ordinary mechanics.
-- Claim references do not prove arbitrary prose is grounded. This first slice accepts only
-  reviewed realizations of the canonical answer, with immutable uncertainty/reference fields.
-  One malformed-output repair precedes deterministic fallback; no tools or model-driven world edits.
-- The local transport is loopback-only and provider-neutral, with bounded queue, cancellation,
-  size/time/token limits. It runs only on demand. Offline language cannot stop cognition.
+- Observatory worlds remain disposable and process-local; no developer truth is projected to players.
+- The active language layer uses weighted phrase dictionaries and a small ephemeral conversation context. No inference backend, model configuration, queue or repair path remains.
+- Recognition proposes bounded canonical intents; it never supplies an NPC's answer. Canonical reach, knowledge, willingness, testimony and transactions remain authoritative.
+- Response plans contain only adjudicated evidence. Templates preserve source attribution, uncertainty and age; wording is never a second memory or source of world truth.
+- Free text and suggested purchases use the same canonical dispatcher and transaction path. Existing social mechanics determine effects; speech recognition does not add relationship modifiers.
 
 ## Wildlife on the realtime foundation
 

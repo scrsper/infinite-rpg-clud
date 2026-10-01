@@ -83,6 +83,15 @@ export function realize(id: string, desc: AppearanceDescription | undefined, pro
   if (acc.has('arm_wrap')) parts.push('Accessory_arm_wrap');
   if (acc.has('prayer_beads') || cues.has('prayer_beads')) parts.push('Accessory_prayer_beads');
   if (acc.has('travel_pack') || cues.has('travel_pack')) parts.push('Accessory_travel_pack');
+  // Reference-quality couture realises the existing snow-moon appearance family in play.
+  // Human anatomy remains human: the showroom's fox ears/tail are never added here.
+  const couture = kit === 'f' && desc.garmentPalette === 'snow_moon' && desc.garmentSilhouette === 'layered_kimono';
+  if (couture) {
+    cloth.primary = [238, 236, 227]; cloth.secondary = [26, 37, 70]; cloth.accent = [34, 47, 86];
+    for (let i = parts.length - 1; i >= 0; i--) if (/^(G_|Hair_|Foot_)/.test(parts[i])) parts.splice(i, 1);
+    parts.push('G_furisode_hero', 'Hair_hero_long', 'Foot_geta', 'Hero_stole', 'Hero_bow', 'Hero_filigree', 'Hero_gemstones');
+    if (acc.has('hair_ornament')) parts.push('Hero_ornaments', 'Hero_flower');
+  }
   const morphs: Record<string, number> = {};
   const fs = desc.faceShape; if (fs && fs !== 'oval') morphs[`face_${fs}`] = 0.85;
   if (desc.presentation === 'feminine') morphs.feminine = 0.7; else if (desc.presentation === 'masculine') morphs.masculine = 0.7;
@@ -92,7 +101,7 @@ export function realize(id: string, desc: AppearanceDescription | undefined, pro
   const ageK = desc.agePresentation === 'adolescent' ? 0.93 : desc.agePresentation === 'elder' ? 0.97 : 1;
   return {
     kit, heightScale: kit === 'c' ? Math.max(0.85, Math.min(1.1, stature)) : Math.max(0.86, Math.min(1.12, stature)) * ageK, buildScale: Math.max(0.85, Math.min(1.18, build)), parts, morphs,
-    materials: { skin, hair, eye, lip, face, cloth, hairShine: 0.5 }, hairStyle: desc.hairStyle, garment: desc.garmentSilhouette, tools,
+    materials: { skin, hair, eye, lip, face, cloth, hairShine: couture ? .75 : .5 }, hairStyle: couture ? 'hero_long' : desc.hairStyle, garment: desc.garmentSilhouette, tools,
   };
 }
 
@@ -116,10 +125,10 @@ export function heroRealization(): Realization {
     garmentSilhouette: 'layered_kimono', garmentPalette: 'snow_moon', accessories: ['hair_ornament', 'ear_drops'], culturalTags: ['ashford', 'snow_moon'], grooming: 1, wear: 0, status: 'noble', agePresentation: 'adult', roleCues: [],
   };
   const r = realize('hero-preview', desc, undefined);
-  r.parts = ['Body', 'Head', 'EyeL', 'EyeR', 'G_furisode_hero', 'Hair_hero_long', 'Foot_geta', 'Hero_ears', 'Hero_tail', 'Hero_stole', 'Hero_ornaments', 'Hero_bow', 'Hero_flower', 'Accessory_ear_drops'];
+  r.parts = ['Body', 'Head', 'EyeL', 'EyeR', 'G_furisode_hero', 'Hair_hero_long', 'Foot_geta', 'Hero_ears', 'Hero_tail', 'Hero_stole', 'Hero_ornaments', 'Hero_bow', 'Hero_flower', 'Hero_filigree', 'Hero_gemstones', 'Accessory_ear_drops'];
   r.materials.cloth = { primary: [168, 200, 236], secondary: [30, 44, 96], accent: [26, 38, 84], motif: 'snow', wear: 0, seed: 7 };
   r.materials.fur = [244, 240, 232]; r.materials.furGlow = true; r.materials.hairShine = 0.9; r.materials.hairEmissive = 0.06;
-  r.materials.face.makeup = 'kitsune';
+  r.materials.face.makeup = 'court';
   r.morphs = { face_heart: 0.8, feminine: 0.9 };
   r.hero = true; r.hairStyle = 'hero_long'; r.garment = 'furisode_hero';
   return r;

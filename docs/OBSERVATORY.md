@@ -1,4 +1,4 @@
-# Torn Veil Observatory and local language
+# Torn Veil Observatory
 
 The original 30-day RED investigation is complete within the documented scope; overall health remains **AMBER**. [OBSERVATORY_HARDENING.md](OBSERVATORY_HARDENING.md) contains the diagnoses, repairs, before/after metrics, three-seed matrix and explicit limits. The repaired primary ends with 33 living people, 107 edible units and 14 pressured households. Same-seed 30-day replay matches exactly; day-15 save/reload continuation matches all canonical values, with four disclosed nonsemantic concern-field order differences. Performance and remaining decision leads keep the verdict AMBER. The original verification below is preserved as baseline evidence.
 
@@ -17,32 +17,15 @@ The Observatory runs a **disposable development world** in a separate loopback p
 7. **Save checkpoint / Restore checkpoint** uses the existing save serializer in memory only. **Check replay + save/load** creates independent disposable copies, checks 20-step replay and 20-step continuation with complete persisted-state hashes (excluding only the wall-clock `savedAt` envelope). This is bounded evidence, not a general proof of determinism.
 8. In **30-day integrity investigation**, **Original RED evidence** opens the unchanged seed-918271 receipts. Click a named finding for decisions, failed actions and repeated cases. The hourly finding selector also opens earlier worst windows and downloads their complete receipts. **Repaired run evidence** shows the new ledger and profiles; **Inspect repaired saved world** opens its final state paused. **Reproduce 30-day validation** starts the same ordinary seed using the current simulation in a new disposable world. It can be stopped with the existing stop control.
 
-## Local AI
+## Deterministic dialogue
 
-The measured default is the **already installed `qwen3:8b`**, Q4_K_M, 8.2B parameters. No download was performed. In Language debug, use:
+Gameplay and Observatory share one lightweight language service. No language model, endpoint, inference queue, token budget or background worker is needed. Type natural questions in **Dialogue parser debug** and select a nearby speaker. The panel shows original and normalized text, phrases, entity references, candidate scores, chosen intent/slots, small conversation context, canonical result, semantic response and selected template.
 
-| Backend | Base URL | Model |
-| --- | --- | --- |
-| Ollama | `http://127.0.0.1:11434/v1` | `qwen3:8b` or an installed local model ID |
-| LM Studio | `http://127.0.0.1:1234/v1` | ID exposed by its local server |
+Recognition uses available conversational references; it does not grant knowledge. Responses use the NPC's own evidence, sources and uncertainty. Follow-ups such as **When?**, **Who told you?** and **Are you sure?** refer to the previously shared account. A new unsupported topic clears that account. World reset and restore clear disposable context. Thought expression is a deterministic read-only view of self state.
 
-Start the chosen backend's local server, click **Detect local models**, enter its exact ID, and **Apply configuration**. Root URLs without `/v1` also work. Only literal loopback HTTP hosts are accepted; redirects and cloud model tags are rejected. The adapter uses streamed `/v1/chat/completions`, JSON output, token/time limits and no tools. Protocol references: [Ollama compatibility](https://docs.ollama.com/api/openai-compatibility), [LM Studio structured output](https://lmstudio.ai/docs/developer/openai-compat/structured-output). Ollama's `reasoning_effort: none` disables optional thinking for this short text-processing task.
+Free text and suggested purchases dispatch the same validated conversation transaction. Money, stock and ownership remain canonical. Ambiguous, negated and hypothetical transactions ask for clarification. Apologies reuse the existing social mechanic; other supported speech acts record ordinary perceptible conversation without inventing relationship modifiers.
 
-Configuration is session-local. Launcher defaults can be set with `TORN_VEIL_LLM_BASE_URL`, `TORN_VEIL_LLM_MODEL` and `TORN_VEIL_OBSERVATORY_PORT`. The UI exposes timeout and token limit; the shared client also supports temperature and concurrency (1 or 2). Default concurrency is 1, with at most 8 waiting requests. Each active request has a timeout, a 1 MiB streaming-wire bound and a 16 KiB content bound. Cancellation removes queued requests and aborts active transport. It does not undo an already accepted canonical action.
-
-If the endpoint or model is missing, the app shows setup guidance and uses deterministic fallback. Unchecking **Enable language processor** tests this without stopping another application. No per-NPC/per-tick model calls occur.
-
-## Free text and thoughts
-
-For a reproducible first conversation, create **Rumor / testimony**, select **Edda Ironhand**, and speak as the nearby **Garrick Ironhand**. Ask “What did you hear about the old road?” The response preserves hearsay and uncertainty. Ask “Who are you?” to exercise ordinary introduction. Disable the model and repeat. **Express current thought** is a read-only expression of that person's current needs/goal, with no new memory or event.
-
-**Speak as** borrows an existing nearby person for this isolated developer interaction; it does not spawn or teleport a privileged player. Dead, sleeping, distant, obstructed and unwilling partners are rejected by canonical conversation mechanics. The regular web game's menus remain intact; free text is currently exposed in the Observatory, not added to the web HUD or Unreal.
-
-The parser receives player text, a small intent set, and a bounded set of that speaker's existing knowledge references. `offer_information` must reference one of those facts. Arbitrary new testimony, item transfers, threats and help requests that require a further ordinary action are refused rather than inventing a new mechanic. Questions use the NPC's own beliefs; `Simulation.tell` owns knowledge transfer, provenance, trust effects and social consequences. Greeting uses ordinary introduction; apology uses the existing dialogue option.
-
-The response model receives a detached allowlist from **one mind**, plus the adjudicated reply choices. It never receives World, other minds, canonical event payloads, developer names for unknown people, filesystem access or tools. Raw legacy memory prose is omitted because it may have been formatted using developer names. Unsupported knowledge shapes are omitted and listed in the developer exclusion panel; this is intentionally incomplete linguistic coverage.
-
-The present expression contract is deliberately constrained: the model selects among reviewed, grounded natural-language realizations, including tone variants. **Arbitrary paraphrases are rejected**, even when they cite valid knowledge IDs. Checking a claim ID alone cannot establish that every clause of generated prose is supported. Speech, topics, intent, reference IDs and confidence all validate against the supplied choices. Malformed output gets exactly one repair, then fallback. No generated wording is saved into World or used to replace canonical memory. Debug panels display raw rejected output as escaped text, separately from accepted speech.
+Run `npm run observatory:benchmark` for 1,000 parser samples, and `npm run observatory:check` for canonical and network-isolation acceptance. The 378-input corpus is in `tests/fixtures/dialogueCorpus.ts`. Detailed current evidence: [Deterministic dialogue](DETERMINISTIC_DIALOGUE.md).
 
 ## Observation limits
 
@@ -81,22 +64,4 @@ node --import tsx scripts/observatory/worldrun.ts 30 ordinary
 
 The browser harness starts its own ephemeral loopback server/world and closes only that server and its own Chrome instance. It verifies real browser interactions at 1600×1000 and 1100×800. Evidence is under `.debug/observatory/`: screenshots, `browser-evidence.json`, `language-benchmark.json`, `model-resources.json`, and bounded-run reports. These are disposable evidence files, not simulation saves.
 
-Measured on this machine with Ollama and the installed Qwen 3 8B, while regression tests also ran: three parse-plus-response samples took **1.83 s, 7.82 s and 3.26 s**, all accepted without fallback. They covered introduction, uncertain hearsay and an unsupported/injection question, which correctly returned that the person did not know. Response-stage first-content latency was **0.070 s, 3.528 s and 0.494 s**; full response stages were **0.657 s, 5.696 s and 1.190 s**. Three simultaneous NPC thought requests used one active slot and two queued slots, finished in **7.08 s**, and waited **0, 3,253 and 3,934 ms** before transport. All three validated. These are small samples, not percentile guarantees. A real-browser request with colder context took **22.12 s**; loading and machine contention matter.
-
-Ollama reported **6,261,959,556 bytes** allocated for the model, all on GPU, with a 16,384-token backend context. The model runner working set was about **6.67 GB**. The latest benchmark's Node process used **81.8 MB RSS**, separate from that backend; system free RAM was **4.44 GB**. The system CPU busy fraction during the benchmark was **32.7%**, including other active applications. GPU adapter usage likewise includes other applications; the backend allocation is the useful model-specific number. LM Studio's actual model execution has not been benchmarked in this task.
-
-| Requested area | Status | Evidence / remaining limit |
-| --- | --- | --- |
-| Simulation observability | VERIFIED | Browser selection, detached inspectors, stepping, source drill-downs; coverage limits above |
-| Causal explanation | PARTIAL | Stored graph and real acquisition/adoption links verified; missing causes remain unknown |
-| Economy observation | PARTIAL | Live stock, households, derived vacant posts, retained economic events; no full material audit |
-| Knowledge observation | VERIFIED | Explicit belief/truth separation, confidence/source/hops, privacy and opposing-belief tests |
-| Scenario lab | VERIFIED | 15 reproducible setups; browser creation/advance/restore; long-run findings reported separately |
-| Determinism | PARTIAL | Independent seeded setup and bounded full-state replay/continuation; not a universal proof |
-| Local LLM | VERIFIED | Real local Ollama 8B responses; LM Studio execution unverified |
-| Free-text dialogue | PARTIAL | Grounded questions, existing testimony and introduction; limited intent/claim coverage; Observatory only |
-| Performance | PARTIAL | TTFT, latency, model allocation, working set, CPU and queue samples; no sustained concurrent-NPC load claim |
-| Security | VERIFIED | Loopback/token/origin/size limits, strict schema/wording, no tools, injection and unknown-mind tests |
-| Fallback mode | VERIFIED | Disabled/offline/malformed responses; real browser conversation and canonical-state equivalence tests |
-
-No acceptance label in this table certifies the simulation as a whole. See the final handoff for the exact regression and long-run results from this development session.
+Historical local-model performance and transport behavior are superseded by deterministic dialogue. Older acceptance receipts remain in Git history and the explicitly historical hardening report.

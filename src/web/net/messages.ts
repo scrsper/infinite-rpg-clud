@@ -152,7 +152,7 @@ export interface CommandReceiptMessage {
   type: 'command_receipt'; commandId: string; sequence: number; epoch: string; status: 'received' | 'applied' | 'rejected' | 'cancelled';
   result: string; tick: number; receivedAtMs: number; serverTimeMs: number; clientTimeMs: number;
 }
-export interface ResultMessage { type: 'result'; sequence: number; result: string; generation?: number; savedAtIso?: string }
+export interface ResultMessage { type: 'result'; sequence: number; result: string; generation?: number; savedAtIso?: string; speech?: string; fallback?: boolean }
 export interface MaintenanceMessage { type: 'maintenance'; message: string; atMs: number; inMs: number }
 
 export type InteractionCommand =

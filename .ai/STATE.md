@@ -1,4 +1,23 @@
-# Current: Observatory simulation integrity — reviewed AMBER handoff (2026-09-30)
+# Current: Stage one — deterministic dialogue replacement (2026-09-30)
+
+The authoritative Desktop checkout now uses deterministic dialogue for gameplay and Observatory.
+The model transport, endpoint configuration, model toggle, model benchmark and isolation code
+have been removed. No isometric conversion was started. Existing unrelated web/art changes
+remain in this checkout.
+
+- One weighted parser, bounded canonical intents, player-available references, small follow-up
+  context, adjudicated response plans and deterministic templates; no inference worker or API.
+- The authenticated web gateway admits free-text dialogue. Player payloads contain only speech
+  and status; Observatory exposes the parser evidence and grounded semantic result.
+- Purchases use the same dispatcher/transaction from text and suggested choices. Source/time
+  follow-ups, uncertainty, occupation testimony and perceptible social speech use canonical state.
+- Final focused regression passed 417 tests in 9 files; typecheck, production builds, real Chrome
+  Observatory and isolated production-game UI acceptance passed with inference unavailable.
+  Broad regression passed 165 files / 1,803 tests; its three dialogue failures were resolved and
+  the affected files passed in the final focused run. Full broad suite was not repeated.
+- Details and final verification record: `docs/DETERMINISTIC_DIALOGUE.md`.
+
+# Previous: Observatory simulation integrity — reviewed AMBER handoff (2026-09-30)
 
 Authoritative Desktop checkout, branch `codex/observatory-local-language`. Completed prior
 Observatory/local-language work was preserved in `e59b7da` / `633a5d2`; original seed-918271

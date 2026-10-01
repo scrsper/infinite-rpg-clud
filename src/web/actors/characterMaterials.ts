@@ -1,7 +1,7 @@
 import { Color3, DynamicTexture, PBRMaterial, RawTexture, Scene, Texture } from '@babylonjs/core';
 import { mulberry } from '../render/noise';
 import { paintTexture } from '../render/textures';
-import { paintEye, paintFace, type FaceSpec } from './faceTexture';
+import { paintEye, paintFace, paintPairedIris, type FaceSpec } from './faceTexture';
 
 /**
  * PBR materials for one character, keyed by the kit's slot names (TV_SkinBody, TV_SkinHead, TV_Eye,
@@ -133,27 +133,45 @@ const c3 = (c: [number, number, number]) => new Color3(c[0] / 255, c[1] / 255, c
 
 export class CharacterMaterials {
   readonly bySlot = new Map<string, PBRMaterial>();
-  private readonly owned: (PBRMaterial | DynamicTexture)[] = [];
+  private readonly owned: (PBRMaterial | Texture)[] = [];
   private readonly prints: string[] = [];
+  private readonly skinTint: Color3;
   constructor(private readonly scene: Scene, readonly id: string, spec: CharacterMaterialSpec) {
+    this.skinTint = c3(spec.skin);
     const make = (slot: string, cfg: (m: PBRMaterial) => void) => { const m = new PBRMaterial(`${id}.${slot}`, scene); m.metallic = 0; m.roughness = 0.8; m.environmentIntensity = 0.6; m.maxSimultaneousLights = 8; cfg(m); this.bySlot.set(slot, m); this.owned.push(m); return m; };
 
-    make('TV_SkinBody', m => { m.albedoColor = c3(spec.skin); m.roughness = 0.58; m.subSurface.isTranslucencyEnabled = false; });
+    make('TV_SkinBody', m => { m.albedoColor = c3(spec.skin).multiply(new Color3(.88, .75, .69)); m.roughness = 0.58; m.subSurface.isTranslucencyEnabled = false; });
+    make('TV_Lash', m => { m.albedoColor = new Color3(.035, .019, .025); m.roughness = .65; });
     const faceKey = `face:${id}`;
     const faceTex = new DynamicTexture(faceKey, { width: 512, height: 512 }, scene, true, Texture.TRILINEAR_SAMPLINGMODE);
     paintFace(faceTex.getContext() as CanvasRenderingContext2D, 512, spec.face); faceTex.update(false); faceTex.anisotropicFilteringLevel = 8; this.owned.push(faceTex);
     make('TV_SkinHead', m => { m.albedoTexture = faceTex; m.albedoColor = Color3.White(); m.roughness = 0.5; });
     const eyeTex = new DynamicTexture(`eye:${id}`, { width: 128, height: 128 }, scene, true); paintEye(eyeTex.getContext() as CanvasRenderingContext2D, 128, spec.eye); eyeTex.update(false); this.owned.push(eyeTex);
     make('TV_Eye', m => { m.albedoTexture = eyeTex; m.albedoColor = Color3.White(); m.roughness = 0.08; m.environmentIntensity = 1; m.clearCoat.isEnabled = true; m.clearCoat.intensity = 0.6; m.clearCoat.roughness = 0.03; });
-    make('TV_Hair', m => { m.albedoColor = c3(spec.hair); m.roughness = 0.42; m.metallic = 0.0; if (spec.hairEmissive) m.emissiveColor = c3(spec.hair).scale(spec.hairEmissive); m.sheen.isEnabled = true; m.sheen.intensity = spec.hairShine ?? 0.5; m.sheen.color = c3(mix(spec.hair, [255, 255, 255], 0.5)); });
+    const paired = new DynamicTexture(`iris-pair:${id}`, { width: 1024, height: 512 }, scene, true);
+    paintPairedIris(paired.getContext() as CanvasRenderingContext2D, spec.eye); paired.update(false); paired.hasAlpha=true; this.owned.push(paired);
+    make('TV_BaseIris', m => { m.albedoTexture=paired; m.useAlphaFromAlbedoTexture=true; m.transparencyMode=PBRMaterial.PBRMATERIAL_ALPHATEST; m.alphaCutOff=.2; m.roughness=.12; m.environmentIntensity=1; m.clearCoat.isEnabled=true; m.clearCoat.intensity=.6; m.backFaceCulling=false; });
+    const hairTex = dyn(scene, 'hair-strands-v2', 256, g => {
+      const rnd = mulberry(917); g.fillStyle = '#f4f4f4'; g.fillRect(0, 0, 256, 256);
+      for (let x = 0; x < 256; x++) {
+        const v = Math.round(220 + rnd()*35);
+        g.strokeStyle = `rgb(${v},${v},${v})`; g.lineWidth = .6 + rnd()*.8;
+        g.beginPath(); g.moveTo(x,0); g.bezierCurveTo(x-2,80,x+2,180,x,256); g.stroke();
+      }
+    }, this.prints);
+    make('TV_Hair', m => { m.albedoColor = c3(spec.hair); m.albedoTexture = hairTex; m.roughness = .42; m.metallic = 0; m.backFaceCulling = false; m.anisotropy.isEnabled = true; m.anisotropy.intensity = .75; m.anisotropy.direction.set(0, 1); m.sheen.isEnabled = true; m.sheen.intensity = spec.hairShine ?? .5; m.sheen.color = c3(mix(spec.hair, [255, 255, 255], .5)); });
 
     const cl = spec.cloth, weaveN = weaveNormal(scene);
     const key = (slot: string) => `${slot}:${cl.motif}:${cl.primary}|${cl.secondary}|${cl.accent}|${Math.round(cl.wear * 4)}:${cl.seed % 4}`;
     for (const [slot, kind] of [['TV_Cloth', 'cloth'], ['TV_Under', 'under'], ['TV_Accent', 'accent'], ['TV_Hem', 'hem']] as const) {
-      const tex = dyn(scene, key(slot), 256, g => paintCloth(g, 256, cl, kind), this.prints);
+      const couture = cl.motif === 'snow' && (kind === 'cloth' || kind === 'hem');
+      const tex = couture ? new Texture('/textures/couture/ivory-sparse-embroidery.png', scene, false, false, Texture.TRILINEAR_SAMPLINGMODE)
+        : dyn(scene, key(slot), 256, g => paintCloth(g, 256, cl, kind), this.prints);
+      if (couture) this.owned.push(tex);
       make(slot, m => {
         m.albedoTexture = tex; m.albedoColor = Color3.White(); m.bumpTexture = weaveN; m.bumpTexture.level = 0.22; m.roughness = slot === 'TV_Accent' ? 0.45 : 0.88;
-        m.sheen.isEnabled = true; m.sheen.intensity = slot === 'TV_Accent' ? 0.5 : 0.25; m.sheen.color = c3(mix(cl.accent, [255, 255, 255], 0.4));
+        if (couture) { m.roughness = .54; m.backFaceCulling = false; tex.anisotropicFilteringLevel = 8; }
+        m.sheen.isEnabled = true; m.sheen.intensity = couture ? .65 : slot === 'TV_Accent' ? 0.5 : 0.25; m.sheen.color = c3(mix(cl.accent, [255, 255, 255], 0.4));
         if (tex) { tex.uScale = 1; tex.vScale = 1; }
       });
     }
@@ -162,7 +180,15 @@ export class CharacterMaterials {
     make('TV_Fur', m => { const f = spec.fur ?? [238, 232, 220]; m.albedoColor = c3(f); m.roughness = 0.96; if (spec.furGlow) m.emissiveColor = c3(f).scale(0.12); m.sheen.isEnabled = true; m.sheen.intensity = 0.8; m.sheen.color = new Color3(1, 1, 1); });
     make('TV_Straw', m => { const s = spec.straw ?? [204, 172, 98]; m.albedoColor = c3(s); m.roughness = 0.92; });
     make('TV_Lacquer', m => { const l = spec.lacquer ?? [30, 26, 30]; m.albedoColor = c3(l); m.roughness = 0.28; m.clearCoat.isEnabled = true; m.clearCoat.intensity = 0.8; });
-    make('TV_Crystal', m => { m.albedoColor = new Color3(0.72, 0.88, 1); m.roughness = 0.08; m.alpha = 0.85; m.emissiveColor = new Color3(0.25, 0.4, 0.6); });
+    make('TV_Crystal', m => { m.albedoColor = new Color3(.07, .28, .55).toLinearSpace(); m.roughness = .14; m.metallic = .25; m.clearCoat.isEnabled = true; m.clearCoat.intensity = 1; m.clearCoat.roughness = .06; m.environmentIntensity = 1.3; });
+  }
+  /** Retained CC0 face maps follow the same canonical complexion as the body. */
+  adaptImported(m: PBRMaterial): void {
+    if (!m.name.includes('TV_Base')) return;
+    if (m.name.includes('TV_BaseSkin')) m.albedoColor = this.skinTint.clone();
+    m.environmentIntensity = .65; m.maxSimultaneousLights = 8;
+    if (m.name.includes('TV_BaseWhite')) { m.roughness = .16; m.clearCoat.isEnabled = true; m.clearCoat.intensity = .4; }
+    if (!this.owned.includes(m)) this.owned.push(m);
   }
   dispose(): void { for (const o of this.owned) o.dispose(); this.bySlot.clear(); releasePrints(this.prints); this.prints.length = 0; }
 }

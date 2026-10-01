@@ -30,7 +30,7 @@ page.on('console', m => { const t = m.text(); if (m.type() === 'error' || m.type
 page.on('pageerror', e => logs.push(`pageerror: ${String(e).slice(0, 400)}`));
 if (flag('gateway')) {
   // Mint a one-time launch link from the running gateway (operator secret stays in the local state file), open it so the session cookie is set, then load the requested page.
-  const st = JSON.parse(readFileSync(join(homedir(), 'TornVeilAlpha', 'web-gateway', 'gateway.json'), 'utf8')) as { origin: string; operator: string };
+  const st = JSON.parse(readFileSync(join(homedir(), 'TornVeilAlpha', process.env.TV_GW_DIR ?? 'web-gateway', 'gateway.json'), 'utf8')) as { origin: string; operator: string };
   const r = await fetch(`${st.origin}/api/operator/launch`, { method: 'POST', headers: { 'x-torn-veil-gateway-operator': st.operator } });
   const { url: launch } = await r.json() as { url: string };
   const front = flag('devhost') ?? st.origin;          // --devhost http://127.0.0.1:5180 reaches the gateway through Vite's proxy

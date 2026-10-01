@@ -6,7 +6,7 @@
  * `Pad<index>` (Standard Gamepad button index). Sticks are analog and are not rebindable per-axis.
  */
 export type Action =
-  | 'moveForward' | 'moveBack' | 'moveLeft' | 'moveRight' | 'sprint' | 'crouch'
+  | 'moveForward' | 'moveBack' | 'moveLeft' | 'moveRight' | 'sprint' | 'crouch' | 'autoWalk'
   | 'interact' | 'lightAttack' | 'heavyAttack' | 'guard' | 'dodge' | 'focus'
   | 'lockTarget' | 'switchTarget' | 'hush' | 'quickItem'
   | 'abilities' | 'items' | 'journal' | 'pause'
@@ -14,6 +14,7 @@ export type Action =
 
 export interface ActionInfo { id: Action; label: string; group: 'Movement' | 'Interaction' | 'Combat' | 'Menus'; rebindable: boolean; description?: string }
 export const ACTIONS: ActionInfo[] = [
+  { id: 'autoWalk', label: 'Walk continuously / stop', group: 'Movement', rebindable: true, description: 'Walk in the camera direction. Any movement key, menu or combat action stops it.' },
   { id: 'moveForward', label: 'Move forward', group: 'Movement', rebindable: true },
   { id: 'moveBack', label: 'Move back', group: 'Movement', rebindable: true },
   { id: 'moveLeft', label: 'Move left', group: 'Movement', rebindable: true },
@@ -41,7 +42,8 @@ type Map3 = Partial<Record<Action, string[]>>;
 export const DEFAULT_KEYBOARD: Map3 = {
   moveForward: ['KeyW', 'ArrowUp'], moveBack: ['KeyS', 'ArrowDown'], moveLeft: ['KeyA', 'ArrowLeft'], moveRight: ['KeyD', 'ArrowRight'],
   sprint: ['ShiftLeft', 'ShiftRight'], crouch: ['KeyC', 'ControlLeft'],
-  interact: ['KeyE'], lightAttack: ['Mouse0'], heavyAttack: ['Mouse3', 'KeyG'], guard: ['Mouse2'], dodge: ['AltLeft', 'Space'], focus: ['Mouse4', 'KeyZ'],
+  autoWalk: ['NumLock', 'KeyV'],
+  interact: ['KeyE'], lightAttack: ['Mouse0', 'KeyH'], heavyAttack: ['Mouse3', 'KeyG'], guard: ['Mouse2', 'KeyB'], dodge: ['AltLeft', 'Space'], focus: ['Mouse4', 'KeyZ'],
   lockTarget: ['KeyF', 'Mouse1'], switchTarget: ['KeyT'], hush: ['KeyQ'], quickItem: ['KeyR'],
   abilities: ['Tab'], items: ['KeyI'], journal: ['KeyJ'], pause: ['Escape'],
   uiConfirm: ['Enter', 'Space'], uiBack: ['Escape', 'Backspace'], uiUp: ['ArrowUp', 'KeyW'], uiDown: ['ArrowDown', 'KeyS'], uiLeft: ['ArrowLeft', 'KeyA'], uiRight: ['ArrowRight', 'KeyD'],
@@ -72,6 +74,7 @@ export interface Settings {
   highContrast: boolean;
   subtitles: boolean;
   showHints: boolean;
+  captureMouse: boolean;
   colorAssist: 'off' | 'protanopia' | 'deuteranopia' | 'tritanopia';
   keyboard: Map3; pad: Map3;
 }
@@ -79,7 +82,7 @@ export const DEFAULT_SETTINGS: Settings = {
   mouseSensitivity: 2.2, padSensitivityX: 3.2, padSensitivityY: 2.2, invertY: false, padInvertY: false, moveDeadZone: 0.16, lookDeadZone: 0.12, vibration: true,
   sprintToggle: false, focusToggle: false, guardToggle: false, fov: 62, cameraShake: 1, reducedMotion: false, quality: 'auto', resolutionScale: 1,
   masterVolume: 0.8, musicVolume: 0.6, effectsVolume: 0.9, ambienceVolume: 0.8, voiceVolume: 0.9, uiScale: 1, textSize: 'normal', highContrast: false, subtitles: true, showHints: true, colorAssist: 'off',
-  keyboard: {}, pad: {},
+  keyboard: {}, pad: {}, captureMouse: true,
 };
 
 const KEY = 'torn-veil-web.settings.v1';
@@ -88,7 +91,7 @@ const RANGES: Partial<Record<keyof Settings, [number, number]>> = {
   mouseSensitivity: [0.2, 12], padSensitivityX: [0.5, 10], padSensitivityY: [0.5, 10], moveDeadZone: [0, 0.6], lookDeadZone: [0, 0.6], fov: [40, 100], cameraShake: [0, 1], resolutionScale: [0.5, 1],
   masterVolume: [0, 1], musicVolume: [0, 1], effectsVolume: [0, 1], ambienceVolume: [0, 1], voiceVolume: [0, 1], uiScale: [0.85, 1.4],
 };
-const BOOLS: (keyof Settings)[] = ['invertY', 'padInvertY', 'vibration', 'sprintToggle', 'focusToggle', 'guardToggle', 'reducedMotion', 'highContrast', 'subtitles', 'showHints'];
+const BOOLS: (keyof Settings)[] = ['invertY', 'padInvertY', 'vibration', 'sprintToggle', 'focusToggle', 'guardToggle', 'reducedMotion', 'highContrast', 'subtitles', 'showHints', 'captureMouse'];
 const ENUMS: Partial<Record<keyof Settings, readonly string[]>> = { quality: ['auto', 'high', 'balanced', 'low'], textSize: ['normal', 'large'], colorAssist: ['off', 'protanopia', 'deuteranopia', 'tritanopia'] };
 const validCode = (c: unknown): c is string => typeof c === 'string' && /^(Key[A-Z]|Digit\d|Mouse[0-4]|Pad\d{1,2}|Arrow(Up|Down|Left|Right)|Shift(Left|Right)|Control(Left|Right)|Alt(Left|Right)|Space|Tab|Enter|Escape|Backspace|Bracket(Left|Right)|Page(Up|Down)|F\d{1,2})$/.test(c);
 function sanitizeMap(m: unknown): Map3 {

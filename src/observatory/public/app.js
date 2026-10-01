@@ -180,7 +180,6 @@ async function refresh() {
     $('world-time').textContent = state.time; $('pause').textContent = state.paused ? 'Resume' : 'Pause'; $('speed').value = String(state.speed); $('health-light').textContent = state.health.status; $('health-light').className = 'pill ' + state.health.status.toLowerCase(); $('clock-info').textContent = state.clock;
     $('restore').disabled = !state.checkpoint;
     $('job-label').textContent = state.job?.error ? `${state.job.mode}: ${state.job.error}` : state.job?.active ? `${state.job.mode} · ${Math.min(100, (state.tick - state.job.from) / (state.job.to - state.job.from) * 100).toFixed(1)}% · ${(state.job.elapsedMs / 1000).toFixed(1)} s` : state.paused ? 'Paused · no wall-time catch-up' : `${state.speed}× · backlog ${state.debtSeconds.toFixed(1)} s`;
-    if (!configLoaded) { const c = state.language.config; $('ai-enabled').checked = c.enabled; $('base-url').value = c.baseUrl; $('model').value = c.model; $('timeout').value = c.timeoutMs; $('tokens').value = c.maxTokens; configLoaded = true; }
     if (beforeRevision !== undefined && beforeRevision !== state.revision) { selected = null; person = null; inspectionRequest++; clear($('person-inspector'), []); clear($('cause-detail'), []); clear($('metric-detail'), []); clear($('report'), []); clear($('language-debug'), []); clear($('speaker'), [node('option', 'Select an NPC first')]); $('ask').disabled = true; $('ask-target').textContent = '— select a person'; $('speech').textContent = ''; $('selected-name').textContent = 'Select a person'; $('selection-hint').hidden = false; lastReport = null; lastHealth = null; }
     if (!selected) $('selected-occupation').textContent = '';
     renderPeople(); drawMap(); renderMetrics(); renderHealth(); renderReport(); await renderEvents();
@@ -206,23 +205,21 @@ $('baseline-evidence').onclick = () => safe(() => archiveEvidence('baseline'));
 $('repaired-evidence').onclick = () => safe(() => archiveEvidence('repaired'));
 $('load-repaired').onclick = () => safe(() => post('validation-load', { run: 'repaired' }));
 $('run-diagnostics').onclick = () => safe(async () => clear($('validation-evidence'), [tree(await api('/api/diagnostics'))]));
-$('config-form').onsubmit = ev => { ev.preventDefault(); safe(async () => { await post('config', { enabled: $('ai-enabled').checked, baseUrl: $('base-url').value, model: $('model').value, timeoutMs: Number($('timeout').value), maxTokens: Number($('tokens').value), temperature: .2, concurrency: 1 }); $('model-status').textContent = 'Configuration applied. Disabled/offline models use deterministic fallback.'; }); };
 $('thought').onclick = () => safe(async () => {
   if (!selected) throw new Error('Select a living person first.');
   $('thought').disabled = true;
   try { const r = await api('/api/thought', { npcId: selected }); $('speech').textContent = r.generated.output.speech;
-    clear($('language-debug'), [node('h3', r.mode), node('p', r.note, 'muted'), details('Exact context / allowed expression', node('pre', JSON.stringify(r.modelInput, null, 2))), details('Model response / validation / timing', node('pre', JSON.stringify(r.generated, null, 2)))]);
+    clear($('language-debug'), [node('h3', r.mode), node('p', r.note, 'muted'), details('Selected response template', tree(r.generated))]);
   } finally { $('thought').disabled = false; }
 });
-$('probe').onclick = () => safe(async () => { const r = await api('/api/probe'); $('model-status').textContent = r.online ? `${r.models.length} model IDs available. Configured model ${r.configuredModelInstalled ? 'found' : 'not found; select a listed model'}.` : 'Local endpoint unavailable. Start Ollama, or start LM Studio’s local server on port 1234, then apply its URL. Gameplay uses fallback.'; clear($('models'), r.models.map(id => { const o = node('option'); o.value = id; return o; })); });
 $('ask-form').onsubmit = ev => { ev.preventDefault(); safe(async () => {
   if (!selected || !person.nearbySpeakers.length) throw new Error('Select an NPC with an awake speaker nearby.');
   $('ask').disabled = true; $('speech').textContent = 'Interpreting your words…';
   try {
     const r = await api('/api/ask', { npcId: selected, speakerId: $('speaker').value, text: $('player-text').value });
     $('speech').textContent = r.generated.output.speech;
-    const pipeline = node('div'); pipeline.append(node('h3', `${r.parsed.output.intent} → ${r.canonical.reason} → ${r.generated.fallback ? 'DETERMINISTIC FALLBACK' : 'VALIDATED LOCAL MODEL'}`), node('p', `${(r.elapsedMs / 1000).toFixed(2)} s total · knowledge transferred only through canonical conversation`, 'muted'));
-    clear($('language-debug'), [pipeline, details('Player text and parsed intent', tree({ text: r.playerText, request: r.parseInput, ...r.parsed })), details('Canonical conversation result', tree(r.canonical), true), details('Exact context sent to the response model', node('pre', JSON.stringify(r.modelInput, null, 2))), details('Knowledge excluded', tree(r.excluded)), details('Raw model responses / validation / fallback / latency / tokens', node('pre', JSON.stringify(r.generated, null, 2))), node('p', r.note, 'muted')]);
+    const pipeline = node('div'); pipeline.append(node('h3', `${r.parsed.output.intent} → ${r.canonical.reason} → ${'DETERMINISTIC DIALOGUE'}`), node('p', `${(r.elapsedMs / 1000).toFixed(2)} s total · knowledge transferred only through canonical conversation`, 'muted'));
+    clear($('language-debug'), [pipeline, details('Parser: normalization, phrases, entities, scores and slots', tree(r.parsed), true), details('Canonical conversation result', tree(r.canonical), true), details('Semantic response', tree(r.semantic)), details('Conversation context', tree(r.nextContext)), details('Selected response template', tree(r.generated)), node('p', r.note, 'muted')]);
     await refresh(); await selectPerson(selected, true);
   } finally { $('ask').disabled = !person?.nearbySpeakers.length; }
 }); };

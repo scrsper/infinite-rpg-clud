@@ -27,19 +27,12 @@ try {
   await page.locator('#cause-detail .cause-edge').first().waitFor();
   check((await page.locator('#cause-detail').textContent())?.includes('stored event.causes'), 'Stored flood/death causality missing');
   await page.locator('.person', { hasText: 'Edda Ironhand' }).click();
-  await page.locator('#ai-enabled').uncheck(); await page.locator('#config-form button[type=submit]').click();
   await page.locator('#player-text').fill('What did you hear about the old road?'); await page.locator('#ask').click();
   await page.waitForFunction(() => document.getElementById('speech')?.textContent?.includes('cannot be certain'));
-  check((await page.locator('#language-debug').textContent())?.includes('DETERMINISTIC FALLBACK'), 'Offline mode missing');
+  check((await page.locator('#language-debug').textContent())?.includes('DETERMINISTIC DIALOGUE'), 'Deterministic parser debug missing');
   await page.locator('.language-panel').scrollIntoViewIfNeeded(); await page.screenshot({ path: `${output}/observatory-language.png` });
-  if (process.argv.includes('--live')) {
-    await page.locator('#ai-enabled').check(); await page.locator('#config-form button[type=submit]').click();
-    await page.locator('#player-text').fill('Who are you?'); await page.locator('#ask').click();
-    await page.waitForFunction(() => document.getElementById('language-debug')?.textContent?.includes('VALIDATED LOCAL MODEL'), undefined, { timeout: 120000 });
-    await page.locator('.language-panel').scrollIntoViewIfNeeded(); await page.screenshot({ path: `${output}/observatory-local-model.png` });
-    await page.locator('#thought').click();
-    await page.waitForFunction(() => document.getElementById('language-debug')?.textContent?.includes('Read-only expression of current self state'), undefined, { timeout: 120000 });
-  }
+  await page.locator('#thought').click();
+  await page.waitForFunction(() => document.getElementById('language-debug')?.textContent?.includes('Read-only deterministic self expression'));
   await page.locator('#checkpoint').click(); await page.locator('[data-advance="3600"]').click();
   await page.waitForFunction(() => document.getElementById('report')?.textContent?.includes('Completed'), undefined, { timeout: 120000 });
   const acting = runtime.world.livingPersons().find(p => p.mind.goal);
@@ -102,6 +95,6 @@ try {
     check(!runtime.job?.active && runtime.paused, 'Isolated reproduction did not stop cleanly');
   }
   check(errors.length === 0, 'Browser errors: ' + errors.join('; '));
-  await writeFile(`${output}/browser-evidence.json`, JSON.stringify({ passed: true, hardening: process.argv.includes('--hardening'), liveModel: process.argv.includes('--live'), viewport: [1600, 1000], secondViewport: [1100, 800], errors, checks: ['select person', 'truth/belief separation', 'causal event source', 'click aggregate', 'offline free text', 'uncertain testimony', 'advance 1 hour', 'current goal reasons and adoption cause', 'checkpoint restore', 'replay check', 'no horizontal overflow', ...(process.argv.includes('--hardening') ? ['original evidence drilldown and download', 'repaired evidence', 'load repaired world paused', 'ledger', 'start and stop exact 30-day reproduction'] : []), ...(process.argv.includes('--live') ? ['local model UI response', 'read-only thought UI'] : [])] }, null, 2));
+  await writeFile(`${output}/browser-evidence.json`, JSON.stringify({ passed: true, hardening: process.argv.includes('--hardening'), dialogue: 'deterministic', viewport: [1600, 1000], secondViewport: [1100, 800], errors, checks: ['select person', 'truth/belief separation', 'causal event source', 'click aggregate', 'offline free text', 'uncertain testimony', 'advance 1 hour', 'current goal reasons and adoption cause', 'checkpoint restore', 'replay check', 'no horizontal overflow', ...(process.argv.includes('--hardening') ? ['original evidence drilldown and download', 'repaired evidence', 'load repaired world paused', 'ledger', 'start and stop exact 30-day reproduction'] : []), 'read-only thought UI'] }, null, 2));
   console.log('Observatory browser acceptance passed; screenshots saved in ' + output);
 } finally { await browser.close(); runtime.close(); await new Promise<void>(resolve => server.close(() => resolve())); }

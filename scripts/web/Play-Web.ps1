@@ -2,32 +2,32 @@
   Play Torn Veil Web - safe launcher for the browser client.
 
   What it does, in order:
-    1. Preflight (read-only): Node, the built client (dist-web), the client profile, the world
-       service's /health, and that the service's config admits the loopback web gateway.
+    1. For the default web-quality profile only, prepare a separate development save if absent
+       and start its single-writer service. Validate its immutable identity before connecting.
+       Existing saves are retained; other explicit profiles use the read-only preflight.
     2. Starts (or reuses) the loopback web gateway for that profile.
     3. Asks the gateway for a one-time launch link and opens it in the default browser.
 
-  What it never does: start, stop, restart, update, reset, back up or otherwise touch the world
-  service; edit a world's config; open a second writer; bind anything except 127.0.0.1; print a
-  token. If the world is not ready, or does not admit the web gateway, it stops and says why.
+  It never overwrites an existing save/configuration, restarts a service, opens a second writer,
+  binds beyond loopback, or prints a credential. The default does not open live/staging files.
 
   -CheckOnly  run the preflight and report; start nothing.
-  -Profile    client profile name (%LOCALAPPDATA%\TornVeil\Client\<name>.json). Default: web-preview,
+  -Profile    client profile name (%LOCALAPPDATA%\TornVeil\Client\<name>.json). Default: web-quality,
               the isolated preview world. Pass your own profile to play another world.
-  -Port       gateway port (default 7470).
-  -Build      run `npm run web:build` first when dist-web is missing or older than the sources.
+  -Port       gateway port (default 7491).
+  -Build      rebuild a stale client; automatic for the default isolated candidate.
   -NoBrowser  start the gateway and print nothing but the state; do not open a browser.
 #>
 param(
-    [string]$Profile = 'web-preview',
-    [int]$Port = 7470,
+    [string]$Profile = 'web-quality',
+    [int]$Port = 7491,
     [switch]$CheckOnly,
     [switch]$Build,
     [switch]$NoBrowser
 )
 $ErrorActionPreference = 'Stop'
 $repo = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
-$home_ = if ($env:TORN_VEIL_ALPHA_HOME) { $env:TORN_VEIL_ALPHA_HOME } else { Join-Path $env:USERPROFILE 'TornVeilAlpha' }
+$home_ = if ($Profile -ne 'web-quality' -and $env:TORN_VEIL_ALPHA_HOME) { $env:TORN_VEIL_ALPHA_HOME } else { Join-Path $env:USERPROFILE 'TornVeilAlpha' }
 $problems = New-Object System.Collections.Generic.List[string]
 function Ok($m)   { Write-Host "  [ok]   $m" -ForegroundColor Green }
 function Warn($m) { Write-Host "  [note] $m" -ForegroundColor Yellow }
@@ -42,13 +42,57 @@ if ($node) { Ok "Node: $node" } else { Bad 'Node.js was not found on PATH or und
 $tsx = Join-Path $repo 'node_modules\tsx\dist\cli.mjs'
 if (Test-Path -LiteralPath $tsx) { Ok 'Gateway runner (tsx) is installed.' } else { Bad 'node_modules is missing; run `npm install` in the repository once.' }
 
+# The default candidate is an explicitly isolated development world. It has its own
+# immutable identity, credentials and single-writer lock. Other profiles remain read-only.
+$previewRoot = Join-Path $env:USERPROFILE 'TornVeilAlpha\web-quality'
+$previewConfig = Join-Path $previewRoot 'config.json'
+if ($Profile -eq 'web-quality') {
+    Write-Host '  ISOLATED PLAYTEST - development save, separate from live and staging.' -ForegroundColor Yellow
+    if ($Port -ne 7491) { Bad 'The isolated candidate uses gateway port 7491.' }
+    if (-not $CheckOnly -and $problems.Count -eq 0) {
+        Push-Location $repo
+        try {
+            & $node --import tsx scripts/web/prepare-preview.ts
+            if ($LASTEXITCODE -ne 0) { throw 'Preview setup refused; existing saves were preserved.' }
+        } finally { Pop-Location }
+    }
+    if (Test-Path -LiteralPath $previewConfig) {
+        $pc = Get-Content -LiteralPath $previewConfig -Raw | ConvertFrom-Json
+        if ($pc.env -ne 'dev' -or $pc.port -ne 7490 -or [IO.Path]::GetFullPath($pc.root) -ne [IO.Path]::GetFullPath($previewRoot) -or $pc.webGateway -ne $true -or $pc.createWorldIfMissing -ne $false -or @($pc.bind).Count -ne 1 -or $pc.bind[0] -ne '127.0.0.1' -or $pc.stateDir -or $pc.credentialsDir -or $pc.backupDir -or $pc.logDir) {
+            Bad 'Preview configuration differs from its isolated development contract; refusing to start it.'
+        } elseif (-not $CheckOnly -and $problems.Count -eq 0) {
+            $running = Get-NetTCPConnection -State Listen -LocalPort 7490 -ErrorAction SilentlyContinue | Select-Object -First 1
+            if (-not $running) {
+                $serverArgs = @('--import', 'tsx', ('"' + (Join-Path $repo 'src\server\main.ts') + '"'), '--config', ('"' + $previewConfig + '"'))
+                $previewProcess = Start-Process -FilePath $node -ArgumentList $serverArgs -WorkingDirectory $repo -WindowStyle Hidden -RedirectStandardOutput (Join-Path $previewRoot 'launcher-server.log') -RedirectStandardError (Join-Path $previewRoot 'launcher-server.err.log') -PassThru
+                $deadline = (Get-Date).AddSeconds(45)
+                do {
+                    Start-Sleep -Milliseconds 400
+                    if ($previewProcess.HasExited) { throw 'The isolated service refused to start. See web-quality\launcher-server.err.log; no save was replaced.' }
+                    $ready = $null
+                    try { $ready = Invoke-RestMethod 'http://127.0.0.1:7490/ready' -TimeoutSec 2 } catch {}
+                } while (-not $ready -and (Get-Date) -lt $deadline)
+                if (-not $ready) { throw 'The isolated service did not become ready within 45 seconds.' }
+            }
+            # Authenticate an identity read before opening a player connection. A different process
+            # on the expected port cannot silently become this candidate's world.
+            $identity = Get-Content -LiteralPath (Join-Path $previewRoot 'state\world\WORLD.json') -Raw | ConvertFrom-Json
+            $admin = (Get-Content -LiteralPath (Join-Path $previewRoot 'credentials\admin.token') -Raw).Trim()
+            $status = Invoke-RestMethod 'http://127.0.0.1:7490/admin/status' -Headers @{ 'x-torn-veil-admin' = $admin } -TimeoutSec 5
+            if ($status.env -ne 'dev' -or $status.worldId -ne $identity.worldId) { throw 'The listening service is not the isolated preview identity.' }
+            $admin = $null
+        }
+    } else { Bad 'The isolated preview has not been created. Launch without -CheckOnly to create its separate development save.' }
+    if (-not $CheckOnly) { $Build = $true }
+}
+
 # 2. The built client ---------------------------------------------------------------------------
 $dist = Join-Path $repo 'dist-web'
 $index = Join-Path $dist 'index.html'
 $stale = $false
 if (Test-Path -LiteralPath $index) {
     $built = (Get-Item -LiteralPath $index).LastWriteTimeUtc
-    $newest = Get-ChildItem (Join-Path $repo 'src\web'), (Join-Path $repo 'web\index.html') -Recurse -File -ErrorAction SilentlyContinue | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1
+    $newest = Get-ChildItem (Join-Path $repo 'src\web'), (Join-Path $repo 'web'), (Join-Path $repo 'vite.web.config.ts') -Recurse -File -ErrorAction SilentlyContinue | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1
     if ($newest -and $newest.LastWriteTimeUtc -gt $built) { $stale = $true }
 }
 if ((-not (Test-Path -LiteralPath $index)) -or $stale) {
@@ -96,6 +140,7 @@ if ($envName) {
     $candidates = @(
         (Join-Path $home_ "$envName\config.json"),
         (Join-Path $home_ "web-preview\$envName\config.json")
+        $previewConfig
     ) | Where-Object { Test-Path -LiteralPath $_ }
     $matched = $null
     foreach ($c in $candidates) {
@@ -131,7 +176,7 @@ if ($CheckOnly) { Write-Host ''; Write-Host 'Preflight passed. -CheckOnly: no ga
 New-Item -ItemType Directory -Path $stateDir -Force | Out-Null
 if (-not $reuse) {
     $log = Join-Path $stateDir 'gateway.log'
-    $args_ = @($tsx, (Join-Path $repo 'src\webgate\main.ts'), '--profile', $Profile, '--port', "$Port", '--static', $dist, '--state-dir', $stateDir)
+    $args_ = @('--import', 'tsx', ('"' + (Join-Path $repo 'src\webgate\main.ts') + '"'), '--profile', $Profile, '--port', "$Port", '--static', ('"' + $dist + '"'), '--state-dir', ('"' + $stateDir + '"'))
     $t0 = (Get-Date).ToUniversalTime().AddSeconds(-1)
     # tsx runs the gateway in a child process, so ready is recognised by the state file it writes, not by this pid.
     $proc = Start-Process -FilePath $node -ArgumentList $args_ -WorkingDirectory $repo -WindowStyle Hidden -RedirectStandardOutput $log -RedirectStandardError (Join-Path $stateDir 'gateway.err.log') -PassThru

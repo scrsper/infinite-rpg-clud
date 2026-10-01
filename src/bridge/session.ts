@@ -564,6 +564,12 @@ export class BridgeSession {
     return 'accepted';
   }
 
+  /** Async presentation adapters must revalidate the same ordinary speaking boundary. */
+  canContinueDialogue(channelId: string, revision: number): boolean {
+    const ch = this.channel(channelId), player = ch ? this.personOf(ch) : undefined;
+    return !!(ch?.dialogueState && player && ch.dialogueRevision === revision && this.talkTargets(ch, player).some(t => t.bodyId === ch.dialogueSpeakerBodyId));
+  }
+
   private chooseDialogue(ch: ControllerChannel, optionId: string): string {
     if (!ch.dialogueState) return 'no_dialogue';
     const prefix = `dialogue:${ch.dialogueRevision}:`;

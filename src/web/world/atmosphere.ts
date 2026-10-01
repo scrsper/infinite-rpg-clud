@@ -34,7 +34,7 @@ export class Atmosphere {
   sunDirection = new Vector3(0, -1, 0);
   hour = 12;
   /** Art-direction multipliers (tuned live with ?look=key:1.2,fill:1.3,exposure:1.4). */
-  readonly look = { key: 1.05, fill: 1.3, exposure: 1.18, fog: 1 };
+  readonly look = { key: 1.05, fill: 1.15, exposure: 1.12, fog: 1 };
   fogColor = new Color3(0.6, 0.66, 0.74);
 
   constructor(private readonly ctx: RenderContext) {
@@ -50,7 +50,7 @@ export class Atmosphere {
     this.shadow.numCascades = q.shadowCascades; this.shadow.lambda = 0.8; this.shadow.shadowMaxZ = q.shadowDistance;
     this.shadow.stabilizeCascades = true; this.shadow.filteringQuality = 1; this.shadow.usePercentageCloserFiltering = true;
     this.shadow.bias = 0.0006; this.shadow.normalBias = 0.02; this.shadow.depthClamp = true; this.shadow.autoCalcDepthBounds = false;
-    this.shadow.setDarkness(0.32);
+    this.shadow.setDarkness(0.15);
 
     this.skyTex = new DynamicTexture('sky-gradient', { width: 4, height: 256 }, scene, false);
     this.skyTex.wrapV = Texture.CLAMP_ADDRESSMODE;
@@ -96,6 +96,7 @@ export class Atmosphere {
 
     const day = S(-0.05, 0.28, elev), dusk = S(0.28, -0.02, elev) * S(-0.28, -0.02, elev), night = 1 - S(-0.3, 0.02, elev);
     this.daylight = clamp01(day * (1 - overcast * 0.45) + night * 0.06);
+    this.ctx.scene.environmentIntensity = lerp(.18, .8, day) * (1 - overcast*.18);
 
     // Key light: sun by day, moon at night (both from the sky towards the ground).
     const keyFromSun = elev > -0.06;
@@ -118,7 +119,7 @@ export class Atmosphere {
     const horizon = mix(mix(mix([0.06, 0.08, 0.16], [0.63, 0.7, 0.8], day), [1.0, 0.62, 0.4], dusk * 0.85), [0.58, 0.62, 0.68], overcast * 0.6);
     this.fogColor = new Color3(...horizon);
     const s = this.ctx.scene; s.fogColor = this.fogColor;
-    s.fogDensity = (0.00075 + overcast * 0.0011 + fog * 0.0075) * this.ctx.quality.fogDensityScale * lerp(1.25, 1, day) * this.look.fog;
+    s.fogDensity = (0.0035 + overcast * 0.002 + fog * 0.006) * this.ctx.quality.fogDensityScale * lerp(1.25, 1, day) * this.look.fog;
     s.clearColor = new Color4(horizon[0], horizon[1], horizon[2], 1);
 
     // Exposure keeps night readable and noon from clipping.

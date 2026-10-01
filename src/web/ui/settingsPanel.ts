@@ -38,6 +38,11 @@ const select = (svc: SettingsServices, label: string, key: keyof Settings, optio
 export function settingsTabs(svc: SettingsServices, rerender: () => void): TabDef[] {
   return [
     {
+      id: 'dialogue', label: 'Dialogue', render(body) {
+        body.append(h('h2', { class: 'tv-h2' }, 'Conversation'), h('p', { class: 'tv-sub' }, 'Your words can ask questions or share an account. Purchases, lessons and other commitments use the conversation choices.'));
+      },
+    },
+    {
       id: 'controls', label: 'Controls', render(body) {
         const device: 'keyboard' | 'pad' = svc.input.device === 'keyboard' ? 'keyboard' : 'pad';
         const dev = svc.input.device;
@@ -72,6 +77,7 @@ export function settingsTabs(svc: SettingsServices, rerender: () => void): TabDe
     {
       id: 'input', label: 'Input', render(body) {
         body.append(h('h2', { class: 'tv-h2', text: 'Mouse and camera' }),
+          toggle(svc, 'Capture mouse for camera', 'captureMouse', 'Turn off to drag the view with the mouse or trackpad. Keyboard combat controls remain available.'),
           slider(svc, 'Mouse sensitivity', 'mouseSensitivity', 0.5, 8, 0.1, v => v.toFixed(1)), toggle(svc, 'Invert mouse Y', 'invertY'),
           slider(svc, 'Field of view', 'fov', 50, 90, 1, v => `${Math.round(v)}°`), slider(svc, 'Camera shake', 'cameraShake', 0, 1, 0.05, v => `${Math.round(v * 100)}%`),
           h('h2', { class: 'tv-h2', style: 'margin-top:1rem', text: 'Gamepad' }),

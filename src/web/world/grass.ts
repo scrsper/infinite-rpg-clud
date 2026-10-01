@@ -1,4 +1,4 @@
-import { Matrix, Mesh, PBRMaterial, Quaternion, Scene, Vector3, VertexData, Color3 } from '@babylonjs/core';
+import { Material, Matrix, Mesh, PBRMaterial, Quaternion, Scene, Vector3, VertexData, Color3 } from '@babylonjs/core';
 import { hash2, worldNoise } from '../render/noise';
 import type { RegionManager } from './regionManager';
 
@@ -21,15 +21,15 @@ export class GrassField {
     this.radius = opts.radius; this.cap = opts.capacity;
     this.matrices = new Float32Array(this.cap * 16); this.colors = new Float32Array(this.cap * 4);
     const pos: number[] = [], nrm: number[] = [], col: number[] = [], idx: number[] = [];
-    // Five blades: each a tapered triangle leaning outward, dark at the root and bright at the tip.
-    for (let b = 0; b < 7; b++) {
-      const a = b / 7 * Math.PI * 2 + 0.3 * b, lean = 0.16 + 0.12 * (b % 2), h = 0.22 + 0.10 * ((b * 7) % 3), w = 0.030 + 0.008 * (b % 2);
+    // Narrow, curved blades; three sections replace the prototype's broad rigid triangles.
+    for (let b = 0; b < 5; b++) {
+      const a = b / 5 * Math.PI * 2 + 0.3 * b, lean = 0.5 + 0.4 * (b % 2), h = 0.21 + 0.08 * ((b * 7) % 3), w = 0.011 + 0.004 * (b % 2);
       const cx = Math.cos(a), cz = Math.sin(a), px = -cz, pz = cx, base = pos.length / 3;
-      const r = 0.035;
-      pos.push(cx * r - px * w, 0, cz * r - pz * w, cx * r + px * w, 0, cz * r + pz * w, cx * (r + lean * h) + px * 0.002, h, cz * (r + lean * h) + pz * 0.002);
-      for (let k = 0; k < 3; k++) nrm.push(cx * 0.3, 0.9, cz * 0.3);
-      col.push(0.32, 0.32, 0.32, 1, 0.32, 0.32, 0.32, 1, 1.0, 1.0, 1.0, 1);
-      idx.push(base, base + 1, base + 2);
+      for (let row=0; row<=3; row++) {
+        const t=row/3, r=.02+lean*h*t*t, width=w*(1-t)+.0002, shade=.45+.45*t;
+        for (const side of [-1,1]) { pos.push(cx*r+px*width*side, h*t,cz*r+pz*width*side); nrm.push(cx*.8,.6,cz*.8); col.push(shade,shade,shade,1); }
+        if(row<3) { const j=base+row*2; idx.push(j,j+1,j+2,j+1,j+3,j+2); }
+      }
     }
     this.host = new Mesh('grass', scene);
     const vd = new VertexData(); vd.positions = pos; vd.normals = nrm; vd.colors = col; vd.indices = idx; vd.applyToMesh(this.host);
@@ -40,13 +40,13 @@ export class GrassField {
     this.host.thinInstanceSetBuffer('matrix', this.matrices, 16, false); this.host.thinInstanceSetBuffer('color', this.colors, 4, false); this.host.thinInstanceCount = 0;
   }
 
-  /** The blades' own colours are light; at full white albedo daylight blows them out to white. Scale them to a natural green by day, and dimmer still under moonlight (where they otherwise glow violet against the dark ground). */
-  tint(daylight: number): void { const k = Math.max(0, Math.min(1, daylight)); this.mat.albedoColor.set(0.14 + 0.08 * k, 0.24 + 0.18 * k, 0.14 + 0.06 * k); }
+  /** Illumination follows the sky; material colour is already carried by the instances. */
+  tint(_daylight: number): void { this.mat.albedoColor.set(.9, .96, .8); }
   /** Scatter around `cam` (simulation coordinates). Cheap enough to run whenever the camera has moved a few metres. */
   update(camX: number, camZ: number, force = false): void {
     if (!force && Math.hypot(camX - this.last.x, camZ - this.last.z) < 3.5) return;
     this.last.x = camX; this.last.z = camZ;
-    const R = this.radius, step = 0.30, x0 = Math.floor((camX - R) / step), x1 = Math.floor((camX + R) / step), z0 = Math.floor((camZ - R) / step), z1 = Math.floor((camZ + R) / step);
+    const R = this.radius, step = 0.22, x0 = Math.floor((camX - R) / step), x1 = Math.floor((camX + R) / step), z0 = Math.floor((camZ - R) / step), z1 = Math.floor((camZ + R) / step);
     const o = this.regions.origin; let n = 0;
     const q = new Quaternion(), s = new Vector3(), p = new Vector3(), m = new Matrix();
     for (let ix = x0; ix <= x1 && n < this.cap; ix++) for (let iz = z0; iz <= z1 && n < this.cap; iz++) {
@@ -62,7 +62,11 @@ export class GrassField {
       Matrix.ComposeToRef(s, q, p, m); m.copyToArray(this.matrices, n * 16);
       this.colors[n * 4] = Math.pow(r, 2.2); this.colors[n * 4 + 1] = Math.pow(gr, 2.2); this.colors[n * 4 + 2] = Math.pow(b, 2.2); this.colors[n * 4 + 3] = 1; n++;
     }
+    const wasEmpty = this.count === 0;
     this.count = n; this.host.thinInstanceCount = n; this.host.setEnabled(n > 0);
+    // Readiness can compile the hidden, empty host before its first scatter. Crossing
+    // zero changes INSTANCESCOLOR even though the vertex-buffer layout stays the same.
+    if (wasEmpty !== (n === 0)) this.mat.markAsDirty(Material.AttributesDirtyFlag);
     this.host.thinInstanceBufferUpdated('matrix'); this.host.thinInstanceBufferUpdated('color');
   }
   /** The scene origin moved: positions were built against the old one, so rebuild on the next update. */
