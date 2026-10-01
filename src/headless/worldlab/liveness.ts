@@ -45,11 +45,16 @@ export const LIVENESS: LivenessCheck[] = [
     id: 'grain-flour-bread-chain-progresses',
     category: 'production',
     boundHours: 36,
-    description: 'Grain + a functioning mill/bakery + labor eventually turns into flour/bread (resource transforms keep happening while raw stock sits idle).',
+    description: 'Outstanding flour/bread demand with delivered batch inputs eventually progresses at that workplace.',
     check: (_world, series) => {
-      const stuck = findStuckWindow(series, 36, o => (o.summary.metabolism.stock.grain ?? 0) > 0 || (o.summary.metabolism.stock.flour ?? 0) > 0, o => o.summary.metabolism.resourceTransforms);
-      if (!stuck) return [];
-      return [finding('WL-PRODUCTION-IDLE', 'production', `Grain/flour sat available (grain=${stuck.start.summary.metabolism.stock.grain}, flour=${stuck.start.summary.metabolism.stock.flour}) with zero resource transforms from day ${stuck.start.atWorldDays} to day ${stuck.end.atWorldDays} — a mill or bakery may be idle despite available inputs.`)];
+      const places = new Set(series.flatMap(o => o.productionProgress.map(p => p.placeId)));
+      const out: Finding[] = [];
+      for (const placeId of places) {
+        const at = (o: Observation) => o.productionProgress.find(p => p.placeId === placeId);
+        const stuck = findStuckWindow(series, 36, o => { const p = at(o); return !!p && p.inputReady && p.demand > 0; }, o => at(o)?.fulfilled ?? 0);
+        if (stuck) out.push(finding('WL-PRODUCTION-IDLE', 'production', 'Production at ' + placeId + ' had outstanding demand and delivered batch inputs with no fulfilled output from day ' + stuck.start.atWorldDays + ' to day ' + stuck.end.atWorldDays + '.'));
+      }
+      return out;
     },
   },
   {

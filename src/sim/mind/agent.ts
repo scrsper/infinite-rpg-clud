@@ -2002,7 +2002,11 @@ export class Simulation {
           }
         };
         let dest = a.pos ?? null;
-        if (a.targetEntity) { const tb = w.primaryBody(a.targetEntity); if (!tb) { failGoto('target has no body'); break; } dest = tb.pos; if (dist2(body.pos, dest) < 1.8) { body.path = null; a.status = 'done'; body.pose = 'stand'; body.yaw = Math.atan2(-(dest.x - body.pos.x), -(dest.z - body.pos.z)); break; } if (!body.path || !body.pathGoal || dist2(body.pathGoal, dest) > 2.5) this.pathTo(body, dest, a); }
+        const attackApproach = !!a.targetEntity && m.plan.some(next => next.type === 'attack' && next.targetEntity === a.targetEntity && (next.status === 'pending' || next.status === 'active'));
+        // Arrival must satisfy the action this approach serves. Social distance can
+        // exceed an unarmed reach, otherwise done-goto/attack retries never progress.
+        const arrivalReach = attackApproach ? Math.min(1.8, combatReach(w, p)) : 1.8;
+        if (a.targetEntity) { const tb = w.primaryBody(a.targetEntity); if (!tb) { failGoto('target has no body'); break; } dest = tb.pos; if (dist2(body.pos, dest) < arrivalReach) { body.path = null; a.status = 'done'; body.pose = 'stand'; body.yaw = Math.atan2(-(dest.x - body.pos.x), -(dest.z - body.pos.z)); break; } if (!body.path || !body.pathGoal || dist2(body.pathGoal, dest) > 2.5) this.pathTo(body, dest, a); }
         if (!dest) { failGoto('no destination'); break; }
         const withinArrival = !a.targetEntity && dist2(body.pos, dest) < 1.2
           && Math.abs(body.pos.y - dest.y) <= 1 && w.nav.clearWalk(body.pos, dest);
@@ -2023,6 +2027,7 @@ export class Simulation {
         if (arrived) {
           body.path = null;
           body.vel.x = 0; body.vel.z = 0; body.pose = 'stand';
+          if (attackApproach && dist2(body.pos, dest) > arrivalReach) { failGoto('attack target is out of reach'); break; }
           if (!a.targetEntity && dist2(body.pos, dest) > 3) { failGoto('destination is out of reach'); break; }
           a.status = 'done';
           if (a.data?.flee) w.emit('fled', { actor: p.id, pos: body.pos, significance: 0.3, summary: `${p.name} fled to ${w.placeAt(body.pos)?.name ?? 'safety'}` });
@@ -2502,7 +2507,8 @@ export class Simulation {
           // v0.2.3: bound the pursuit (Constitution §11 disengagement — "do not create endless
           // world-spanning pursuit"). Give up after a few failed approaches, or if the target has
           // simply outrun us; the conflict then lapses to disengaging/deterrence via maintenance.
-          const chased = (a.data && (a.data._chase = (a.data._chase ?? 0) + (m.plan[0]?.status === 'failed' ? 1 : 0)));
+          a.data ??= {};
+          const chased = a.data._chase = (a.data._chase ?? 0) + 1;
           if (d > 46 || (chased ?? 0) > 4) {
             if (a.targetEntity) this.losePursuit(p, a.targetEntity);
             a.status = 'done'; break;
@@ -2512,7 +2518,14 @@ export class Simulation {
           m.plan.unshift({ type: 'goto', targetEntity: a.targetEntity, run: true, status: 'pending' });
           break;
         }
-        if (w.physicalTime - body.lastAttackAt > MELEE_SWING_SECONDS) this.attack(p, body, tb, a.data?.intent as ConflictIntent | undefined);
+        if (w.physicalTime - body.lastAttackAt > MELEE_SWING_SECONDS) {
+          const result = this.attack(p, body, tb, a.data?.intent as ConflictIntent | undefined);
+          if (!result.attempted && result.rejection !== 'cooldown') {
+            a.data = { ...a.data, attackRejection: result.rejection };
+            if (a.targetEntity) this.losePursuit(p, a.targetEntity);
+            a.status = 'failed';
+          }
+        }
         // If that blow put the target down/out, the guard at the top of this case re-runs next
         // substep and takes over (custody escort / disengage). Here just stop on a kill.
         if (tb.dead) a.status = 'done';

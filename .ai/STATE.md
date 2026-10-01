@@ -840,3 +840,8 @@ Original milestone: `docs/PLAYABLE_SEEDED_WORLD.md`; journey evidence:
 This is a functioning continuous-world foundation, not an all-conditions showcase PASS. Starting settlements have primitive technical education and wind boundaries, with no guaranteed finished mechanism. The menu is verified using the existing disclosed workshop. Full human keyboard-driven regional PIE travel and every activity/repair/combat animation have not been visually accepted. Terrain/water, modular roofs/interiors, component geometry and item/crop presentation remain prototypes. No ecology/hydrology, bridges, shipping package, simulation LOD, multiplayer or offline catch-up.
 
 Next: Regional Life and Interaction Acceptance — natural technical history/artifacts, procurement/construction access, complete live Unreal survival/mechanism journey, stronger region/material/facade rendering and recorded animation/performance evidence. Do not manufacture prosperity or disable distant systems for a demonstration.
+
+
+## PR56 scoped production/pursuit/deadline repair (2026-10-01)
+
+Request-aware per-workplace WorldLab probes and bounded shared combat approaches are locally verified (47 focused + 53 adjacent tests, typecheck). Profiled pure geography/navigation/visibility optimizations retain original test deadlines and baseline geographic output. The three-day baseline no longer reports production/conflict stalls but still reports construction supply and bandit hunger; no universal health claim is made. Evidence: `docs/evidence/worldlab-pr56-repair/`. Exact pushed-head PR56 CI is the final aggregate and must be read from the PR checks; no merge/deployment is authorized.

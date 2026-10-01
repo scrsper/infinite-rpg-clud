@@ -1,0 +1,96 @@
+{
+  "baselineCommit": "ea74f201984f2e9d8e42389f93575f2100ae5a4c",
+  "scope": "Request-aware diagnostic plus reproduced canonical combat-approach failures and profiled CPU cost. No timeout/assertion/seed/step-budget change. No work or danger utility change.",
+  "sources": [
+    {
+      "path": "src/headless/worldlab/liveness.ts",
+      "sha256": "9741895e584bd59668eee76d4883092bd4e70997856377b3af484f550b7ffcde"
+    },
+    {
+      "path": "src/headless/worldlab/probe.ts",
+      "sha256": "d574f2baf17ef9b6c84ef653a7d014f192de0662646afe881562694fe8e5b827"
+    },
+    {
+      "path": "src/headless/worldlab/types.ts",
+      "sha256": "93fbd7713f41d23c2cb7b52e9e63b259a8c1258c586785cc7d9fa929c21d00bb"
+    },
+    {
+      "path": "src/sim/ecology/sensing.ts",
+      "sha256": "e5f6ccd7ba0286781af5c0035f75e3d7b228f9bb47aa6644a6946a98db753329"
+    },
+    {
+      "path": "src/sim/mind/agent.ts",
+      "sha256": "715762be6eb0e95e9a6c2a937c8ad1dfe6fcec267f54f077f205384295dd2ca9"
+    },
+    {
+      "path": "src/sim/physical/nav.ts",
+      "sha256": "2f351b70bb28329ab06e9e21c3ccbbb6622da0305974d596d3ae6e37215164be"
+    },
+    {
+      "path": "src/sim/world/geography.ts",
+      "sha256": "955d98fa9905d2ba80974694d9c8dd8411bb94f46b56722f905a3319dc557c74"
+    },
+    {
+      "path": "tests/conflict-resolution.test.ts",
+      "sha256": "85b4bd20e1321d43e26f7f21e9eefade75c1f0ed87e4ba455c0836e0c7b8af16"
+    },
+    {
+      "path": "tests/geography-route-baseline.test.ts",
+      "sha256": "6b709737840afeefbd4c98d193c0ace1f1b10caef79d46504b2820920aed45c6"
+    },
+    {
+      "path": "tests/worldlab-production.test.ts",
+      "sha256": "773ba4d4d0ba69f65b8ac3e9cafd18d8e13b8895d37576b7329bd0eba222c93b"
+    }
+  ],
+  "checks": [
+    {
+      "log": ".debug/isometric/repair-pursuit-before-tests.log",
+      "result": "EXPECTED FAIL",
+      "passed": 18,
+      "failed": 2,
+      "reason": "New approach-arrival and exhausted-attack regressions reproduced on pre-repair action code."
+    },
+    {
+      "log": ".debug/isometric/repair-causal-focused.log",
+      "result": "PASS",
+      "files": 6,
+      "tests": 47,
+      "durationSeconds": 17.54
+    },
+    {
+      "log": ".debug/isometric/repair-combat-social.log",
+      "result": "PASS",
+      "files": 4,
+      "tests": 53,
+      "durationSeconds": 4.29
+    },
+    {
+      "log": ".debug/isometric/repair-causal-typecheck.log",
+      "result": "PASS"
+    },
+    {
+      "log": ".debug/isometric/repair-integration.log",
+      "result": "PASS before subsequent shared-action repair",
+      "files": 4,
+      "tests": 41
+    },
+    {
+      "log": ".debug/isometric/repair-focused.log",
+      "result": "PASS before subsequent shared-action and partial-progress refinements",
+      "files": 5,
+      "tests": 22
+    },
+    {
+      "log": ".debug/isometric/repair-baseline-three-day.log",
+      "result": "FAIL; repaired production/conflict findings absent, other longer-horizon failures retained",
+      "report": "after-three-day-baseline.json"
+    }
+  ],
+  "limits": [
+    "Full final aggregate is delegated to the exact pushed-head PR gate; not yet claimed green.",
+    "Three-day construction supply and bandit deprivation remain genuine reported limits; no unrelated hardening was attempted.",
+    "No multi-seed long soak, Unreal, human/gamepad or new browser acceptance run for this repair.",
+    "Original untracked VRoid ZIPs and ignored uncommitted timeout proposal are preserved."
+  ]
+}

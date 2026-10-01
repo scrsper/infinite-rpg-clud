@@ -25,7 +25,7 @@ export function ecologyQueries(world: World): EcologyQueries {
 }
 export const distance = (a: Vec3, b: Vec3): number => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
 export function visible(world: World, from: Vec3, to: Vec3, radius: number): boolean {
-  return distance(from, to) <= radius && world.grid.lineOfSight({ ...from, y: from.y + 0.45 }, { ...to, y: to.y + 0.45 }, radius + 1);
+  return distance(from, to) <= radius && world.grid.lineOfSight({ x: from.x, y: from.y + 0.45, z: from.z }, { x: to.x, y: to.y + 0.45, z: to.z }, radius + 1);
 }
 export function senseResources(world: World, queries: EcologyQueries, body: Body, spec: SpeciesSpec): ResourceNode[] {
   return queries.resources.query(body.pos, spec.senses.localRadiusM).filter(n =>

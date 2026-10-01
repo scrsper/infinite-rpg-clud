@@ -1,0 +1,368 @@
+{
+  "source": ".debug/isometric/repair-conflict-before.log",
+  "worldDaysElapsed": 1.25,
+  "ageHours": 22.7575,
+  "conflict": {
+    "id": "cf_26",
+    "participants": [
+      "p_15",
+      "p_28"
+    ],
+    "initiator": "p_15",
+    "cause": "crime_response",
+    "intent": "subdue",
+    "status": "active",
+    "escalation": 0.24,
+    "attackCount": 2,
+    "startedAt": 8692401,
+    "lastMeaningfulInteraction": 8692473,
+    "startEventId": "e_12494"
+  },
+  "participants": [
+    {
+      "id": "p_15",
+      "name": "Dunstan Mole",
+      "goal": {
+        "type": "sleep",
+        "utility": 0.6868648253563578,
+        "reasons": [
+          "energy need 0.49",
+          "it is my time to sleep"
+        ],
+        "createdAt": 8773860,
+        "key": "sleep:pl_13",
+        "targetPlace": "pl_13"
+      },
+      "plan": [
+        {
+          "status": "active",
+          "type": "goto",
+          "pos": {
+            "x": 94,
+            "y": 14,
+            "z": 122
+          },
+          "placeId": "pl_13",
+          "startedAt": 8773860
+        },
+        {
+          "status": "pending",
+          "type": "manage_household"
+        },
+        {
+          "status": "pending",
+          "type": "sleep",
+          "pos": {
+            "x": 94,
+            "y": 14,
+            "z": 122
+          },
+          "duration": 10800
+        }
+      ],
+      "bodies": [
+        {
+          "id": "b_15",
+          "pos": {
+            "x": 90.9096378150455,
+            "y": 14,
+            "z": 125.64492104127964
+          },
+          "pose": "walk",
+          "path": [
+            {
+              "x": 91.5,
+              "y": 14,
+              "z": 140.5
+            },
+            {
+              "x": 91.5,
+              "y": 14,
+              "z": 134.5
+            },
+            {
+              "x": 91.5,
+              "y": 14,
+              "z": 128.5
+            },
+            {
+              "x": 90.5,
+              "y": 14,
+              "z": 123.5
+            },
+            {
+              "x": 90.5,
+              "y": 14,
+              "z": 117.5
+            },
+            {
+              "x": 90.5,
+              "y": 14,
+              "z": 113.5
+            },
+            {
+              "x": 96.5,
+              "y": 14,
+              "z": 113.5
+            },
+            {
+              "x": 96.5,
+              "y": 14,
+              "z": 115.5
+            },
+            {
+              "x": 94.5,
+              "y": 14,
+              "z": 121.5
+            },
+            {
+              "x": 94.5,
+              "y": 14,
+              "z": 122.5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "p_28",
+      "name": "Bors Ashwood",
+      "goal": {
+        "type": "attack",
+        "utility": 0.9841502795896726,
+        "reasons": [
+          "an unfamiliar person is a threat (fear 1.10)",
+          "I am armed, my tolerance for danger",
+          "intent: defend"
+        ],
+        "createdAt": 8692482,
+        "key": "attack:p_15",
+        "targetEntity": "p_15",
+        "data": {
+          "intent": "defend",
+          "_chase": 0
+        }
+      },
+      "plan": [
+        {
+          "type": "goto",
+          "targetEntity": "p_15",
+          "run": true,
+          "status": "active",
+          "startedAt": 8774373
+        },
+        {
+          "type": "goto",
+          "targetEntity": "p_15",
+          "run": true,
+          "status": "done",
+          "startedAt": 8774292
+        },
+        {
+          "type": "goto",
+          "targetEntity": "p_15",
+          "run": true,
+          "status": "done",
+          "startedAt": 8774193
+        },
+        {
+          "type": "goto",
+          "targetEntity": "p_15",
+          "run": true,
+          "status": "done",
+          "startedAt": 8774103
+        },
+        {
+          "type": "goto",
+          "targetEntity": "p_15",
+          "run": true,
+          "status": "done",
+          "startedAt": 8774022
+        },
+        {
+          "type": "goto",
+          "targetEntity": "p_15",
+          "run": true,
+          "status": "done",
+          "startedAt": 8773230
+        },
+        {
+          "type": "goto",
+          "targetEntity": "p_15",
+          "run": true,
+          "status": "done",
+          "startedAt": 8773113
+        },
+        {
+          "type": "defend",
+          "status": "done",
+          "data": {
+            "kind": "sidestep",
+            "side": 1,
+            "evidenceEvent": "e_31094"
+          },
+          "startedAt": 8772996
+        },
+        {
+          "type": "goto",
+          "targetEntity": "p_15",
+          "run": true,
+          "status": "done",
+          "startedAt": 8771817
+        },
+        {
+          "type": "goto",
+          "targetEntity": "p_15",
+          "run": true,
+          "status": "done",
+          "startedAt": 8771763
+        },
+        {
+          "type": "goto",
+          "targetEntity": "p_15",
+          "run": true,
+          "status": "done",
+          "startedAt": 8771664
+        },
+        {
+          "type": "goto",
+          "targetEntity": "p_15",
+          "run": true,
+          "status": "done",
+          "startedAt": 8771565
+        },
+        {
+          "type": "goto",
+          "targetEntity": "p_15",
+          "run": true,
+          "status": "done",
+          "startedAt": 8771466
+        },
+        {
+          "type": "goto",
+          "targetEntity": "p_15",
+          "run": true,
+          "status": "done",
+          "startedAt": 8771367
+        },
+        {
+          "type": "goto",
+          "targetEntity": "p_15",
+          "run": true,
+          "status": "done",
+          "startedAt": 8771259
+        },
+        {
+          "type": "goto",
+          "targetEntity": "p_15",
+          "run": true,
+          "status": "done",
+          "startedAt": 8771160
+        },
+        {
+          "type": "goto",
+          "targetEntity": "p_15",
+          "run": true,
+          "status": "done",
+          "startedAt": 8771061
+        },
+        {
+          "type": "goto",
+          "targetEntity": "p_15",
+          "run": true,
+          "status": "done",
+          "startedAt": 8770971
+        },
+        {
+          "type": "goto",
+          "targetEntity": "p_15",
+          "run": true,
+          "status": "done",
+          "startedAt": 8770431
+        },
+        {
+          "type": "goto",
+          "targetEntity": "p_15",
+          "run": true,
+          "status": "done",
+          "startedAt": 8770296
+        },
+        {
+          "type": "goto",
+          "targetEntity": "p_15",
+          "run": true,
+          "status": "done",
+          "startedAt": 8770197
+        },
+        {
+          "type": "goto",
+          "targetEntity": "p_15",
+          "run": true,
+          "status": "done",
+          "startedAt": 8770089
+        },
+        {
+          "type": "goto",
+          "targetEntity": "p_15",
+          "run": true,
+          "status": "done",
+          "startedAt": 8769999
+        },
+        {
+          "type": "goto",
+          "targetEntity": "p_15",
+          "run": true,
+          "status": "done",
+          "startedAt": 8769891
+        },
+        {
+          "type": "goto",
+          "targetEntity": "p_15",
+          "run": true,
+          "status": "done",
+          "startedAt": 8769801
+        },
+        {
+          "type": "goto",
+          "targetEntity": "p_15",
+          "run": true,
+          "status": "done",
+          "startedAt": 8769720
+        },
+        {
+          "status": "pending",
+          "type": "attack",
+          "targetEntity": "p_15",
+          "data": {
+            "intent": "defend",
+            "_chase": 0
+          },
+          "startedAt": 8774337
+        }
+      ],
+      "bodies": [
+        {
+          "id": "b_28",
+          "pos": {
+            "x": 91.5,
+            "y": 14,
+            "z": 127.66264099171143
+          },
+          "pose": "run",
+          "path": [
+            {
+              "x": 91.5,
+              "y": 14,
+              "z": 128.5
+            },
+            {
+              "x": 91.5,
+              "y": 14,
+              "z": 126.5
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
