@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { Camera, FreeCamera, NullEngine, Scene, Vector3 } from '@babylonjs/core';
+import { Camera, FreeCamera, NullEngine, Scene, StandardMaterial, TransformNode, Vector3 } from '@babylonjs/core';
 import { CameraRig } from '../src/web/game/cameraRig';
 import { DEFAULT_SETTINGS, sanitizeSettings } from '../src/web/game/bindings';
 import { predictMovement } from '../src/sim/physical/prediction';
 import { needsCutaway } from '../src/web/world/cutaway';
+import { buildStaticProps } from '../src/web/world/props';
+import { RegionManager } from '../src/web/world/regionManager';
+import type { MaterialLibrary } from '../src/web/render/materials';
+import type { RegionProjection } from '../src/web/net/messages';
 
 describe('isometric presentation preserves control and world boundaries', () => {
   it('keeps the movement basis fixed through combat, conversation and look input; switches back reversibly', () => {
@@ -39,5 +43,29 @@ describe('isometric presentation preserves control and world boundaries', () => 
     let blocked=corner, passed=centered;
     for(let i=0;i<30;i++){blocked=predictMovement(blocked,input,1/60,column);passed=predictMovement(passed,input,1/60,column);}
     expect(blocked.pos.z).toBe(1); expect(passed.pos.z).toBeLessThan(0);
+  });
+  it('registers door frame and leaf for reversible building cutaways without changing the opening', () => {
+    const engine = new NullEngine(), scene = new Scene(engine), root = new TransformNode('region', scene);
+    const shared = new StandardMaterial('shared-props', scene);
+    const bounds = { x0: 10, x1: 20, z0: 10, z1: 20, y0: 24, y1: 30 };
+    const region = { id: 'test', bounds, furnishings: [], fences: [], paths: [], openings: [[15,24,10,false]],
+      places: [{id:'house', indoor:true, bounds, door:{x:15,y:24,z:9}}] } as unknown as RegionProjection;
+    const before = JSON.stringify(region);
+    const mats = {get:()=>shared, tilesPerMetre:()=>1} as unknown as MaterialLibrary;
+    try {
+      const props = buildStaticProps(scene, mats, region, null, root);
+      expect(props.meshes.map(m=>m.name)).toEqual(['door-frame-15-24-10','door-leaf-15-24-10']);
+      for(const mesh of props.meshes) {
+        expect(mesh.material).not.toBe(shared); expect(mesh.metadata.cutawayBounds).toBe(bounds);
+        expect(mesh.metadata.ownsCutawayMaterial).toBe(true);
+      }
+      const context = {origin:{x:0,y:0,z:0},regions:new Map([['test',{meshes:props.meshes}]])};
+      RegionManager.prototype.updateCutaway.call(context as unknown as RegionManager,{x:15,y:24,z:15},new Vector3(0,45,35));
+      for(const mesh of props.meshes) expect(mesh.material!.clipPlane!.d).toBe(-24.8);
+      RegionManager.prototype.updateCutaway.call(context as unknown as RegionManager,null,new Vector3(0,45,35));
+      for(const mesh of props.meshes) expect(mesh.material!.clipPlane!.d).toBe(-1e8);
+      expect(shared.clipPlane).toBeFalsy(); expect(JSON.stringify(region)).toBe(before);
+      expect(props.doors[0].open).toBe(0); expect(props.doors[0].target).toBe(0);
+    } finally {scene.dispose();engine.dispose();}
   });
 });

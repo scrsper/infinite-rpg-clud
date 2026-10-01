@@ -1,10 +1,20 @@
-# Current: Checkpoint worker loader compatibility repair (2026-10-01)
+# Current: Interior door visibility implemented and locally verified (2026-10-01)
+
+The controlled actor was hidden by unregistered upper door-frame geometry after the building roof/wall cutaway. Frame and hinged leaf now participate in the existing reversible per-building cutaway with owned materials. Canonical collision, automatic door operation, perception, simulation and Unreal source are unchanged.
+
+- Eight focused web files / 55 tests, typecheck and separate private production build pass.
+- Disposable real Chrome acceptance: 19 checks pass, no browser errors/inference requests. Actual keyboard entry/traversal/exit/reentry, interrupted menus, automatic door operation, interior head contact (health 80 to 75.00), defense and camera/cutaway restoration pass. Reviewed screenshots show the player throughout.
+- The harness's original closed-door assumption contradicted existing canonical automatic opening; its verification now follows the real mechanic. Tightened waypoint approach avoids fixture corner cutting; the adult combat fixture requires clear body space/line of passage. No simulation rule or gameplay assertion was weakened.
+- Evidence: docs/evidence/isometric-interior-visibility; details: docs/web/ISOMETRIC_PLAYABLE_SLICE.md. One tavern is covered; other layouts, portrait, human/gamepad and Unreal acceptance remain outside this slice.
+- Loader-repair CI 36821844547 at 302aa8c completed RED: worker loading is fixed (Node 20/22 checks pass), but six wall-clock timeouts remain across five other files; 1,805 tests pass. All 68 affected tests pass locally with unchanged budgets. The full gate now uses documented Desktop/live Node 22, retaining Node 20/22 worker compatibility checks. New-head CI is recorded in draft PR56; check its exact-head result before integration. Main stays unchanged.
+
+# Previous: Checkpoint worker loader compatibility repair (2026-10-01)
 
 The isometric slice at 3b8f02b passed local normal regression (168 files / 1,811 tests), but CI run 36817546294 finished RED at npm test: the Node 20 runner could not load checkpointWorker.ts. Its build and smoke steps were skipped. PR56 records the failure.
 
 Source workers now use a JavaScript entry and tsx's scoped import API. The compiled release worker path and all checkpoint capture/packing/ownership/durability behavior are unchanged. All 38 tests in the five CI-failing suites pass locally; typecheck passes. A small actual Node 20/22 worker check precedes the full CI gate. New exact-head CI remains to be verified; no success is inferred from the local Node 22 result.
 
-The already-authorized interior visibility task remains unstarted pending these checks. Portrait work stays outside that bounded follow-up. Details and prior evidence remain in docs/web/ISOMETRIC_PLAYABLE_SLICE.md.
+The actual Node 20/22 compatibility jobs pass. The full gate reached RED from six unrelated wall-clock timeouts; the locally verified door visibility follow-up and execution-environment adjustment are recorded above. Portrait work stays outside that follow-up. Details and prior evidence remain in docs/web/ISOMETRIC_PLAYABLE_SLICE.md.
 
 # Previous: Optional isometric playable slice (2026-10-01)
 

@@ -2,17 +2,17 @@
 import { chromium } from 'playwright';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { join, resolve, relative, isAbsolute } from 'node:path';
 import { createServer } from 'node:net';
 import { LiveServer } from '../../src/server/live';
 import { loadConfig, type ReleaseIdentity } from '../../src/server/config';
 import { AccountRegistry } from '../../src/server/accounts';
 import { WebGateway } from '../../src/webgate/gateway';
 import { SAVE_VERSION } from '../../src/sim/persist/save';
-import { createAnimal } from '../../src/sim/ecology/animals';
+import { B } from '../../src/sim/physical/blocks';
 import { setExternalControl } from '../../src/sim/runtime/controllers';
 
-const root = mkdtempSync(join(tmpdir(), 'tvo-dialogue-ui-')), out = resolve('.debug/isometric'); mkdirSync(out, { recursive: true });
+const root = mkdtempSync(join(tmpdir(), 'tvo-dialogue-ui-')), out = resolve(process.env.TVO_ISOMETRIC_EVIDENCE_DIR ?? '.debug/isometric'); mkdirSync(out, { recursive: true });
 const reserve = createServer(); await new Promise<void>(r => reserve.listen(0, '127.0.0.1', r));
 const port = (reserve.address() as { port: number }).port; await new Promise<void>(r => reserve.close(() => r()));
 const path = join(root, 'config.json');
@@ -21,7 +21,7 @@ mkdirSync(join(root, 'credentials')); writeFileSync(join(root, 'credentials', 'a
 const token = new AccountRegistry(join(root, 'credentials', 'accounts.json')).add('dialogue-ui', 'Dialogue UI acceptance');
 const release: ReleaseIdentity = { version: 'dialogue-ui', revision: 'test', dirty: false, builtAtIso: '', protocol: 1, saveSchema: SAVE_VERSION, generatorVersion: 'playable-1', node: process.version };
 const server = new LiveServer(loadConfig(path), release, () => {});
-const gateway = new WebGateway({ port: 0, upstream: { host: '127.0.0.1', port }, credentials: { account: 'dialogue-ui', token }, staticDir: resolve('.debug/isometric/bundle') });
+const gateway = new WebGateway({ port: 0, upstream: { host: '127.0.0.1', port }, credentials: { account: 'dialogue-ui', token }, staticDir: resolve(process.env.TVO_ISOMETRIC_BUNDLE ?? '.debug/isometric/bundle') });
 const browser = await chromium.launch({ channel: 'chrome', headless: false, args: ['--enable-unsafe-webgpu', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
 const errors: string[] = [], modelRequests: string[] = [];
@@ -84,42 +84,97 @@ try {
   await page.mouse.move(repeatedPoint.x,repeatedPoint.y); await page.keyboard.press('e'); await input.waitFor({state:'visible',timeout:12000}); await page.keyboard.press('Escape'); await page.waitForFunction(()=>!(window as any).__tv.dialogue.isOpen);
   note('conversation repeat and interruption', !(await page.evaluate(() => (window as any).__tv.dialogue.isOpen)), {fixture:'NPC co-location and direct observation, disclosed'});
   body.pos = original; setExternalControl(npc, false);
-  const indoor = [...w.entities.values()].find((e: any) => e.kind === 'place' && e.indoor && e.inside && Math.hypot(e.inside.x-pb.pos.x,e.inside.z-pb.pos.z)<90) as any;
-  if(indoor?.door) {
-    // Explicit test start at the canonical doorway; keyboard travel through the actual collision follows.
-    pb.pos = {...indoor.door,x:indoor.door.x+.5,z:indoor.door.z+.5}; await page.waitForTimeout(1500); await page.keyboard.press('e'); await page.waitForTimeout(300);
-    const path = w.nav.findPath(pb.pos,indoor.inside) ?? [indoor.inside];
-    let arrived = false;
-    if(path) for(const point of path) {
-      const deadline = Date.now()+4000;
+  const actorRendering=() => page.evaluate(()=>{
+      const tv=(window as any).__tv,id=tv.snapshot.controlledBodyId,a=tv.actors.get(id);
+      if(!a)return {bodyId:id,actorPresent:false};
+      const meshes=a.visual.root.getChildMeshes(false),own=new Set(meshes),head=tv.actors.headPoint(id);
+      const Matrix=tv.camera.getWorldMatrix().constructor, Vector=tv.camera.position.constructor;
+      const screen=Vector.Project(head,Matrix.Identity(),tv.ctx.scene.getTransformMatrix(),tv.camera.viewport.toGlobal(1600,1000));
+      const ray=tv.ctx.scene.createPickingRay(screen.x,screen.y,Matrix.Identity(),tv.camera,false);ray.length=head.subtract(ray.origin).length();
+      const hits=(tv.ctx.scene.multiPickWithRay(ray,(m:any)=>!own.has(m)&&m.isEnabled()&&m.isVisible&&m.visibility>0&&!/sky|atmosphere/.test(m.name))??[]).filter((h:any)=>h.pickedPoint&&h.distance<ray.length && !(h.pickedMesh.material?.clipPlane?.signedDistanceTo(h.pickedPoint)>0));
+      return {bodyId:id,actorPresent:true,rootEnabled:a.visual.root.isEnabled(),rootPosition:{x:a.visual.root.position.x,y:a.visual.root.position.y,z:a.visual.root.position.z},meshCount:meshes.length,groups:[...new Set(meshes.map((m:any)=>m.renderingGroupId))],enabledMeshes:meshes.filter((m:any)=>m.isEnabled()&&m.isVisible).length,inFrustum:meshes.filter((m:any)=>m.isInFrustum(tv.ctx.scene._frustumPlanes)).length,head:{x:head.x,y:head.y,z:head.z},bounds:meshes.slice(0,3).map((m:any)=>({name:m.name,min:m.getBoundingInfo().boundingBox.minimumWorld,max:m.getBoundingInfo().boundingBox.maximumWorld})),possibleHeadOccluders:hits.map((h:any)=>({name:h.pickedMesh.name,distance:h.distance})).slice(0,10)};
+    });
+  const visible = (r:Awaited<ReturnType<typeof actorRendering>>) => r.actorPresent && r.rootEnabled && r.enabledMeshes>0 && r.possibleHeadOccluders?.length===0;
+  const walkPath = async (path: {x:number;y:number;z:number}[]) => {
+    for(const point of path) {
+      const deadline=Date.now()+4000;
       while(Date.now()<deadline) {
         const p=(await own()).pos, dx=point.x-p.x,dz=point.z-p.z;
-        if(Math.hypot(dx,dz)<.45)break;
+        if(Math.hypot(dx,dz)<.18)break;
         const mx=dx+dz,my=dx-dz,keys:string[]=[];
-        if(Math.abs(mx)>.22)keys.push(mx>0?'d':'a');if(Math.abs(my)>.22)keys.push(my>0?'w':'s');
-        for(const key of keys)await page.keyboard.down(key);await page.waitForTimeout(100);for(const key of keys)await page.keyboard.up(key);
+        if(Math.abs(mx)>.1)keys.push(mx>0?'d':'a');if(Math.abs(my)>.1)keys.push(my>0?'w':'s');
+        for(const key of keys)await page.keyboard.down(key);await page.waitForTimeout(Math.max(16,Math.min(100,Math.hypot(dx,dz)*100)));for(const key of keys)await page.keyboard.up(key);
       }
     }
     await page.waitForTimeout(700);
+  };
+  const indoor = [...w.entities.values()].find((e: any) => e.kind === 'place' && e.indoor && e.inside && Math.hypot(e.inside.x-pb.pos.x,e.inside.z-pb.pos.z)<90) as any;
+  if(!indoor?.door)throw Error('Required interior fixture unavailable');
+  if(indoor?.door) {
+    // Explicit test start at the canonical doorway; keyboard travel through the actual collision follows.
+    pb.pos = {...indoor.door,x:indoor.door.x+.5,z:indoor.door.z+.5}; await page.waitForTimeout(1500);
+    const doorway={...pb.pos};
+    const doorCell=[{x:1,z:0},{x:-1,z:0},{x:0,z:1},{x:0,z:-1}].map(d=>({x:indoor.door.x+d.x,y:indoor.door.y,z:indoor.door.z+d.z})).find(p=>w.grid.get(p.x,p.y,p.z)===B.Door);
+    if(!doorCell)throw Error('No canonical door cell');
+    // Disclosed closed-door starting fixture; ordinary movement must perform the same canonical opening as NPCs.
+    w.setDoorOpen(doorCell,false,player.id);await page.waitForTimeout(500);
+    const closedStart=(await own()).pos,initialClosed=!w.grid.isDoorOpen(doorCell.x,doorCell.y,doorCell.z);
+    const dx=indoor.inside.x-closedStart.x,dz=indoor.inside.z-closedStart.z;
+    const blockedKeys=[...(Math.abs(dx+dz)>.22?[dx+dz>0?'d':'a']:[]),...(Math.abs(dx-dz)>.22?[dx-dz>0?'w':'s']:[])];
+    for(const key of blockedKeys)await page.keyboard.down(key);await page.waitForTimeout(600);for(const key of blockedKeys)await page.keyboard.up(key);
+    await page.waitForTimeout(500);const blocked=(await own()).pos;
+    note('keyboard movement canonically opens the closed door',initialClosed && w.grid.isDoorOpen(doorCell.x,doorCell.y,doorCell.z) && Math.hypot(blocked.x-closedStart.x,blocked.z-closedStart.z)>.5,{before:closedStart,after:blocked,doorCell,initialClosed,opened:w.grid.isDoorOpen(doorCell.x,doorCell.y,doorCell.z),fixture:'closed starting state through canonical setDoorOpen in disposable world; movement opens it normally'});
+    const path = w.nav.findPath(pb.pos,indoor.inside) ?? [indoor.inside];
+    await walkPath(path);
+    let arrived=false;
     const at=(await own()).pos; arrived=Math.hypot(at.x-indoor.inside.x,at.z-indoor.inside.z)<1.2;
     const cut=await page.evaluate(()=>(window as any).__tv.ctx.scene.meshes.filter((m:any)=>m.metadata?.cutawayBounds && m.material?.clipPlane?.d>-100000).length);
+    const rendering=await actorRendering();
+    note('interior entry actor unobscured',visible(rendering),rendering);
     await page.screenshot({path:join(out,'04-isometric-cutaway.png')});note('keyboard entry and occupied cutaway',arrived&&cut>0,{arrived,at,goal:indoor.inside,path,clippedMeshes:cut,fixture:'test begins at canonical doorway; actual keys enter the physical building'});
+    const candidates=[];
+    for(let dx=-2;dx<=2;dx++)for(let dz=-2;dz<=2;dz++) {
+      if(Math.hypot(dx,dz)<1.5)continue;
+      const goal={x:Math.floor(at.x)+dx+.5,y:at.y,z:Math.floor(at.z)+dz+.5},b=indoor.bounds;
+      if(goal.x<=b.x0+.6||goal.x>=b.x1-.6||goal.z<=b.z0+.6||goal.z>=b.z1-.6)continue;
+      const route=w.nav.findPath(pb.pos,goal);if(route?.length)candidates.push({goal,route});
+    }
+    const traversal=candidates.sort((a,b)=>a.route.length-b.route.length)[0];
+    if(!traversal)throw Error('No traversable interior fixture');
+    await walkPath(traversal.route);const traversed=(await own()).pos,traversalRendering=await actorRendering();
+    note('interior traversal actor unobscured',Math.hypot(traversed.x-traversal.goal.x,traversed.z-traversal.goal.z)<.65&&visible(traversalRendering),{at:traversed,goal:traversal.goal,rendering:traversalRendering});
+    await page.screenshot({path:join(out,'04b-interior-traversal.png')});
+    for(const key of ['i','j']) {await page.keyboard.press(key);await page.waitForFunction(()=>(window as any).__tv.modal.isOpen);await page.keyboard.press('Escape');await page.waitForFunction(()=>!(window as any).__tv.modal.isOpen);}
+    const returnPath=w.nav.findPath(pb.pos,doorway);if(!returnPath)throw Error('No interior exit path');
+    await walkPath(returnPath);const exited=(await own()).pos,exitRendering=await actorRendering();
+    note('keyboard exit actor unobscured',Math.hypot(exited.x-doorway.x,exited.z-doorway.z)<.65&&visible(exitRendering),{at:exited,goal:doorway,rendering:exitRendering});
+    await page.screenshot({path:join(out,'04c-interior-exit.png')});
+    const reentry=w.nav.findPath(pb.pos,indoor.inside);if(!reentry)throw Error('No repeat interior entry path');await walkPath(reentry);const retraverse=w.nav.findPath(pb.pos,traversal.goal);if(!retraverse)throw Error('No repeat interior traversal');await walkPath(retraverse);
+    note('repeated keyboard entry after menus',Math.hypot(pb.pos.x-traversal.goal.x,pb.pos.z-traversal.goal.z)<.65,{at:{...pb.pos},goal:traversal.goal});
+    const combatApproach=w.nav.findPath(pb.pos,indoor.inside);if(!combatApproach)throw Error('No interior combat approach');await walkPath(combatApproach);
   }
   // A high unarmed jab requires an upright human hurt volume, not a low boar's silhouette.
-  // Both combatants are staged in the previously traversed open ground; actual commands resolve contact.
-  pb.pos={...ran.pos}; body.pos={...ran.pos,x:ran.pos.x+.65,z:ran.pos.z-.65}; body.pose='stand'; setExternalControl(npc,true);
+  // Only the upright NPC is staged beside the player after actual interior travel; commands resolve contact.
+  const targetPosition=[{x:.55,z:-.55},{x:-.55,z:-.55},{x:.55,z:.55},{x:-.55,z:.55},{x:.8,z:0},{x:-.8,z:0},{x:0,z:-.8},{x:0,z:.8}]
+    .map(d=>({...pb.pos,x:pb.pos.x+d.x,z:pb.pos.z+d.z}))
+    .find(p=>[-.3,.3].every(dx=>[-.3,.3].every(dz=>[.1,1.1].every(dy=>!w.grid.isSolidAt(p.x+dx,p.y+dy,p.z+dz)))) && w.grid.lineOfPassage({...pb.pos,y:pb.pos.y+1.4},{...p,y:p.y+1.4}));
+  if(!targetPosition)throw Error('No clear nearby upright combat fixture');
+  body.pos=targetPosition; body.pose='stand'; setExternalControl(npc,true);
   const hpBefore=body.health;
   await page.waitForTimeout(1800); await page.keyboard.press('f'); await page.waitForTimeout(350);
   await page.keyboard.press('h'); await page.waitForTimeout(1200);
-  note('canonical melee contact',body.health<hpBefore,{before:hpBefore,after:body.health,targetBodyId:body.id,action:pb.combatAction,fixture:'upright adult NPC staged nearby on traversed open ground in disposable validation world'});
+  note('canonical melee contact',body.health<hpBefore,{before:hpBefore,after:body.health,targetBodyId:body.id,playerPosition:{...pb.pos},targetPosition:{...body.pos},action:pb.combatAction,fixture:'upright adult NPC staged beside player after keyboard interior traversal in disposable validation world'});
   await page.keyboard.press('Space'); await page.waitForTimeout(800);
+  const combatRendering=await actorRendering();
+  note('interior combat actor unobscured',visible(combatRendering),combatRendering);
+  await page.screenshot({path:join(out,'05-interior-combat.png')});
   body.pos=original; setExternalControl(npc,false);
   note('combat controls emit canonical commands', !!await page.evaluate(()=>(window as any).__tv.controller.lastCombat), await page.evaluate(()=>{const tv=(window as any).__tv;return {lastCombat:tv.controller.lastCombat,bodyAction:tv.own()?.combatAction}}));
   await page.screenshot({path:join(out,'05-isometric-action.png')});
   await page.evaluate(() => (window as any).__tv.updateSettings({viewMode:'third-person'})); await page.waitForTimeout(500);
   const third = await own(); const restored=await page.evaluate(()=>(window as any).__tv.ctx.scene.meshes.every((m:any)=>!m.metadata?.cutawayBounds || m.material.clipPlane.d===-1e8)); await page.evaluate(() => (window as any).__tv.updateSettings({viewMode:'isometric'})); await page.waitForTimeout(500);
   note('view switch round-trip',third.cameraMode===0 && (await own()).cameraMode===1 && restored,{cutawaysRestored:restored});
-  writeFileSync(join(out,'browser-evidence.json'),JSON.stringify({checks,errors,fixture:'Only movement/menu checks are ordinary-input travel. Dialogue co-location and interior relocation are explicit UI/projection fixtures. No human/controller acceptance.',modelRequests},null,2));
+  writeFileSync(join(out,'browser-evidence.json'),JSON.stringify({checks,errors,fixture:'Movement, interior entry/traversal/exit/reentry and menus use ordinary input. Dialogue co-location, doorway starting position, initial canonical closed-door state and adult combat target staging are disclosed fixtures. No human/controller acceptance.',modelRequests},null,2));
   if(errors.length || checks.some(c=>c.passed===false)) throw Error('Browser checks failed; inspect evidence');
   console.log('Isometric browser checks passed.');
-} finally { globalThis.fetch = fetchBefore; await browser.close(); await gateway.close(); await server.stopInProcess('dialogue UI complete'); rmSync(root, { recursive: true, force: true }); }
+} finally { globalThis.fetch = fetchBefore; await browser.close(); await gateway.close(); await server.stopInProcess('dialogue UI complete'); const ownedRelative=relative(resolve(tmpdir()),resolve(root)); if(!ownedRelative || ownedRelative.startsWith('..') || isAbsolute(ownedRelative)) throw Error('Refusing cleanup outside owned temporary root'); rmSync(root, { recursive: true, force: true }); }

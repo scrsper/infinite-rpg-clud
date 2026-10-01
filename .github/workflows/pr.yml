@@ -42,7 +42,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # Match the documented Desktop/live runtime; source-worker compatibility still runs on 20 and 22 above.
+          node-version: 22
           cache: npm
       - run: npm ci
       - run: npm run typecheck

@@ -1,7 +1,7 @@
-import { Mesh, Scene, TransformNode } from '@babylonjs/core';
+import { Mesh, Plane, Scene, TransformNode } from '@babylonjs/core';
 import type { MaterialLibrary } from '../render/materials';
 import { hash2 } from '../render/noise';
-import type { RegionProjection } from '../net/messages';
+import type { PlaceProjection, RegionProjection } from '../net/messages';
 import { MeshBatch } from './meshBatch';
 import { COLORS, PropBuilder, furnishing } from './propGeometry';
 import type { Cells } from './structures';
@@ -83,9 +83,9 @@ export function buildStaticProps(scene: Scene, mats: MaterialLibrary, r: RegionP
   // ── doors ──────────────────────────────────────────────────────────────────────────────────────
   for (const [x, y, z, open] of r.openings) {
     const alongX = cells ? (cells.get(x - 1, y + 1, z) !== 0 && cells.get(x + 1, y + 1, z) !== 0) : true;
-    const door = buildDoor(scene, mats, r, x, y, z, alongX, out.root);
     // Swing away from the side that has more free space: outward from the building.
     const place = r.places.find(p => p.door && Math.abs(p.door.x - x) + Math.abs(p.door.z - z) === 1);
+    const door = buildDoor(scene, mats, r, x, y, z, alongX, out.root, out.meshes, place?.indoor ? place.bounds : undefined);
     let direction: 1 | -1 = 1;
     if (place?.door) direction = alongX ? (place.door.z < z ? -1 : 1) : (place.door.x < x ? 1 : -1);
     door.direction = direction; door.open = door.target = open ? 1 : 0; applyDoor(door);
@@ -94,7 +94,7 @@ export function buildStaticProps(scene: Scene, mats: MaterialLibrary, r: RegionP
   return out;
 }
 
-function buildDoor(scene: Scene, mats: MaterialLibrary, r: RegionProjection, x: number, y: number, z: number, alongX: boolean, parent: TransformNode): DoorHandle {
+function buildDoor(scene: Scene, mats: MaterialLibrary, r: RegionProjection, x: number, y: number, z: number, alongX: boolean, parent: TransformNode, meshes: Mesh[], bounds?: PlaceProjection['bounds']): DoorHandle {
   const lx = x - r.bounds.x0, lz = z - r.bounds.z0;
   // Frame: fixed, in region space.
   const frame = new MeshBatch(), dk = COLORS.darkOak, t = 0.12;
@@ -110,6 +110,17 @@ function buildDoor(scene: Scene, mats: MaterialLibrary, r: RegionProjection, x: 
   for (let i = 1; i < 5; i++) lb.box(i * 0.172 - 0.006, 0.05, -0.05, 0.012, 1.9, 0.1, [0.6, 0.45, 0.28]);
   lb.cbox(0.74, 0.95, -0.08, 0.05, 0.05, 0.06, COLORS.brass); lb.box(0.74, 0.95, 0.03, 0.05, 0.05, 0.03, COLORS.brass);
   const leafMesh = leaf.build(`door-leaf-${x}-${y}-${z}`, scene, mats.get('props'), { receiveShadow: true }); if (leafMesh) leafMesh.parent = node;
+  // Door geometry participates in the same region-owned cutaway as its building.
+  // Clipping is presentation only; the canonical opening and swing state stay intact.
+  for (const mesh of [frameMesh, leafMesh]) if (mesh) {
+    if (bounds) {
+      const material = mesh.material!.clone(mesh.name + '-cutaway')!;
+      material.clipPlane = new Plane(0, 1, 0, -1e8);
+      mesh.material = material;
+      mesh.metadata = { cutawayBounds: bounds, ownsCutawayMaterial: true };
+    }
+    meshes.push(mesh);
+  }
   // Hinge position in region space: half a cell along the wall from the cell centre.
   const hx = lx + 0.5 + (alongX ? -0.43 : 0), hz = lz + 0.5 + (alongX ? 0 : -0.43);
   node.position.set(hx, y, hz);
