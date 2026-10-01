@@ -1,4 +1,15 @@
-# Current: Stage one — deterministic dialogue replacement (2026-09-30)
+# Current: Optional isometric playable slice (2026-10-01)
+
+Branch codex/isometric-playable-slice preserves inherited work in 21be4e2 and licensed source assets in af9eab8. Optional fixed orthographic Babylon presentation, screen-relative walking/running, pointer interaction, canonical dialogue/trade/combat and per-building cutaways are implemented. Third-person remains available; canonical simulation and Unreal mechanics were not changed by this slice.
+
+- Private production build/typecheck passed. Final focused web verification passed 54 tests in eight files; the full invocation was still running at this checkpoint.
+- Real isolated Chrome acceptance passes 13 checks, including actual keyboard doorway entry, canonical adult melee damage, repeated menus/dialogue/purchase and camera/cutaway reversal. Root-cause fixture corrections and a stale-pointer interaction fix are disclosed in docs/web/ISOMETRIC_PLAYABLE_SLICE.md.
+- Launcher: Play Torn Veil Isometric.cmd; separate bundle/gateway 7492 uses retained isolated web-quality save/world 7490. CheckOnly correctly stopped because the persistent preview world was offline; it started nothing. Ordinary launch can start the existing isolated preview.
+- Generated textures have byte-verified provenance; Poly Haven HDR is CC0. Original ZIP archives and generated GLBs remain local. No saves/services were overwritten or stopped.
+- Draft review only: main stays unchanged; no merge/deploy. Branch ancestry also includes earlier Observatory and deterministic-dialogue work, not just isometric code. Previous AMBER limits remain.
+- Visual review shows interior furniture can hide the player and the inherited portrait is badly framed. Next bounded task should resolve controlled-actor interior visibility with visible entry/traversal/exit/combat evidence; no new art-tool installation is needed.
+
+# Previous: Stage one — deterministic dialogue replacement (2026-09-30)
 
 The authoritative Desktop checkout now uses deterministic dialogue for gameplay and Observatory.
 The model transport, endpoint configuration, model toggle, model benchmark and isolation code

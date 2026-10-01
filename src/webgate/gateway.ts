@@ -157,7 +157,9 @@ export class WebGateway {
       this.launches.delete(nonce); // single use
       const id = token(32), ttl = this.options.sessionTtlMs ?? 12 * 3600_000;
       this.sessions.set(id, { id, createdAt: Date.now(), expiresAt: Date.now() + ttl, sockets: new Set(), launched: true });
-      res.writeHead(302, { location: '/', 'set-cookie': `${COOKIE}=${id}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${Math.floor(ttl / 1000)}`, 'cache-control': 'no-store' });
+      const view = url.searchParams.get('view');
+      const destination = view === 'isometric' || view === 'third-person' ? '/?view=' + view : '/';
+      res.writeHead(302, { location: destination, 'set-cookie': `${COOKIE}=${id}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${Math.floor(ttl / 1000)}`, 'cache-control': 'no-store' });
       return void res.end();
     }
     if (path === '/api/operator/launch' && req.method === 'POST') {

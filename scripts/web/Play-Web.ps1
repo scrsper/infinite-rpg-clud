@@ -20,12 +20,14 @@
 #>
 param(
     [string]$Profile = 'web-quality',
+    [ValidateSet('third-person', 'isometric')][string]$View = 'third-person',
     [int]$Port = 7491,
     [switch]$CheckOnly,
     [switch]$Build,
     [switch]$NoBrowser
 )
 $ErrorActionPreference = 'Stop'
+if ($View -eq 'isometric' -and -not $PSBoundParameters.ContainsKey('Port')) { $Port = 7492 }
 $repo = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $home_ = if ($Profile -ne 'web-quality' -and $env:TORN_VEIL_ALPHA_HOME) { $env:TORN_VEIL_ALPHA_HOME } else { Join-Path $env:USERPROFILE 'TornVeilAlpha' }
 $problems = New-Object System.Collections.Generic.List[string]
@@ -48,7 +50,8 @@ $previewRoot = Join-Path $env:USERPROFILE 'TornVeilAlpha\web-quality'
 $previewConfig = Join-Path $previewRoot 'config.json'
 if ($Profile -eq 'web-quality') {
     Write-Host '  ISOLATED PLAYTEST - development save, separate from live and staging.' -ForegroundColor Yellow
-    if ($Port -ne 7491) { Bad 'The isolated candidate uses gateway port 7491.' }
+    $expectedPort = if ($View -eq 'isometric') { 7492 } else { 7491 }
+    if ($Port -ne $expectedPort) { Bad "The isolated $View candidate uses gateway port $expectedPort." }
     if (-not $CheckOnly -and $problems.Count -eq 0) {
         Push-Location $repo
         try {
@@ -87,8 +90,20 @@ if ($Profile -eq 'web-quality') {
 }
 
 # 2. The built client ---------------------------------------------------------------------------
-$dist = Join-Path $repo 'dist-web'
+$dist = Join-Path $repo $(if ($View -eq 'isometric') { '.debug\isometric\bundle' } else { 'dist-web' })
 $index = Join-Path $dist 'index.html'
+function BundleIsServed {
+    if (Get-NetTCPConnection -State Listen -LocalPort $Port -ErrorAction SilentlyContinue) { return $true }
+    # New gateways record the resolved bundle path. Older launcher gateways served dist-web.
+    foreach ($file in Get-ChildItem -Path (Join-Path $home_ 'web-gateway*\gateway.json') -File -ErrorAction SilentlyContinue) {
+        try {
+            $state = Get-Content -LiteralPath $file.FullName -Raw | ConvertFrom-Json
+            $served = if ($state.staticDir) { [IO.Path]::GetFullPath($state.staticDir) } else { Join-Path $repo 'dist-web' }
+            if ($served -eq $dist -and (Get-NetTCPConnection -State Listen -LocalPort $state.port -ErrorAction SilentlyContinue | Where-Object { $_.OwningProcess -eq $state.pid })) { return $true }
+        } catch { continue }
+    }
+    return $false
+}
 $stale = $false
 if (Test-Path -LiteralPath $index) {
     $built = (Get-Item -LiteralPath $index).LastWriteTimeUtc
@@ -96,9 +111,11 @@ if (Test-Path -LiteralPath $index) {
     if ($newest -and $newest.LastWriteTimeUtc -gt $built) { $stale = $true }
 }
 if ((-not (Test-Path -LiteralPath $index)) -or $stale) {
-    if ($Build -and -not $CheckOnly) {
+    if ($Build -and -not $CheckOnly -and (BundleIsServed)) {
+        Bad "Gateway :$Port is serving this candidate; refusing to rebuild a served bundle. Stop that gateway explicitly before rebuilding."
+    } elseif ($Build -and -not $CheckOnly) {
         Write-Host '  building the client (npm run web:build)...'
-        Push-Location $repo; try { & npm run web:build; if ($LASTEXITCODE -ne 0) { Bad 'The client build failed; see the output above.' } } finally { Pop-Location }
+        Push-Location $repo; try { if ($View -eq 'isometric') { & $node (Join-Path $repo 'node_modules\vite\bin\vite.js') build --config vite.web.config.ts --outDir ../.debug/isometric/bundle } else { & npm run web:build };  if ($LASTEXITCODE -ne 0) { Bad 'The client build failed; see the output above.' } } finally { Pop-Location }
     } elseif (-not (Test-Path -LiteralPath $index)) {
         Bad 'The web client has not been built. Run `npm run web:build`, or launch with -Build.'
     } else {
@@ -196,5 +213,5 @@ if (-not $reuse) {
 $resp = Invoke-RestMethod -Method Post -Uri "$($reuse.origin)/api/operator/launch" -Headers @{ 'x-torn-veil-gateway-operator' = $reuse.operator } -TimeoutSec 5
 if ($NoBrowser) { Write-Host 'Gateway is ready; -NoBrowser: no link opened.'; return }
 Write-Host 'Opening the game in your default browser (a WebGPU-capable Chrome or Edge is recommended)...' -ForegroundColor Cyan
-Start-Process $resp.url
+Start-Process ($resp.url + "?view=$View")
 Write-Host 'The launch link is single-use and expires in two minutes. To stop the gateway later, close its process (pid in web-gateway\gateway.json); the world service is unaffected.'

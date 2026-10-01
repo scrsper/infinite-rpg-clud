@@ -19,6 +19,7 @@ export class InputManager {
   stopAutoWalk(): void { this.autoWalking = false; }
   readonly look = { x: 0, y: 0 };
   wheel = 0;
+  readonly pointer = { x: 0, y: 0, active: false };
   padConnected = false;
   padName = '';
   private readonly held = new Set<string>();
@@ -54,7 +55,7 @@ export class InputManager {
       if (this.capture) { e.preventDefault(); const c = this.capture; this.capture = null; c(`Mouse${e.button}`); return; }
       this.noteDevice('keyboard'); e.preventDefault();
       // The click that captures the pointer is not an attack: only a locked pointer sends mouse actions.
-      if (this.pointerLocked) this.down(`Mouse${e.button}`);
+      if (this.pointerLocked || this.settings().viewMode === 'isometric') this.down(`Mouse${e.button}`);
       else if (e.button === 0 || e.button === 2) this.orbitDrag = { x: e.clientX, y: e.clientY };
     });
     window.addEventListener('pointerup', e => { this.orbitDrag = null; if (e.button >= 3) e.preventDefault(); this.up(`Mouse${e.button}`); });
@@ -62,6 +63,7 @@ export class InputManager {
     window.addEventListener('auxclick', e => { if (e.button >= 1) e.preventDefault(); });
     canvas.addEventListener('contextmenu', e => e.preventDefault());
     window.addEventListener('pointermove', e => {
+      this.pointer.x = e.clientX; this.pointer.y = e.clientY; this.pointer.active = true;
       if (this.pointerLocked) { this.lookAccum.x += e.movementX; this.lookAccum.y += e.movementY; }
       else if (this.orbitDrag) {
         this.lookAccum.x += e.clientX - this.orbitDrag.x; this.lookAccum.y += e.clientY - this.orbitDrag.y;
@@ -93,7 +95,7 @@ export class InputManager {
   }
 
   requestLock(): void {
-    if (!this.settings().captureMouse || this.pointerLocked || performance.now() - this.lockRequestedAt < 400) return;
+    if (this.settings().viewMode === 'isometric' || !this.settings().captureMouse || this.pointerLocked || performance.now() - this.lockRequestedAt < 400) return;
     this.lockRequestedAt = performance.now();
     // Raw (unadjusted) movement if the browser allows it, else ordinary pointer lock. Every promise is handled: a refusal
     // (menu opening at the same moment, tab not focused, document not valid for lock) is normal and must not surface as an error.

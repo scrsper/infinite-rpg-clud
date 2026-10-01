@@ -3,13 +3,13 @@ import { InputManager } from '../src/web/game/input';
 import { DEFAULT_SETTINGS } from '../src/web/game/bindings';
 
 afterEach(() => vi.unstubAllGlobals());
-function setup() {
+function setup(isometric = false) {
   const win = new EventTarget();
   const doc = Object.assign(new EventTarget(), { activeElement: null as null | { tagName: string }, hidden: false, pointerLockElement: null as EventTarget | null });
   const canvas = new EventTarget();
   vi.stubGlobal('window', win); vi.stubGlobal('document', doc);
   vi.stubGlobal('navigator', { getGamepads: () => [] });
-  const input = new InputManager(canvas as HTMLCanvasElement, () => DEFAULT_SETTINGS);
+  const input = new InputManager(canvas as HTMLCanvasElement, () => ({ ...DEFAULT_SETTINGS, viewMode: isometric ? 'isometric' : 'third-person' }));
   const key = (type: string, code: string) => win.dispatchEvent(Object.assign(new Event(type), { code, repeat: false }));
   const frame = () => input.beginFrame(1 / 60);
   return { win, doc, canvas, input, key, frame };
@@ -53,5 +53,14 @@ describe('gameplay input and UI focus boundaries', () => {
     walk(); key('keydown', 'KeyS'); frame(); expect(input.autoWalking).toBe(false);
     key('keyup', 'KeyS'); frame(); expect(input.move.y).toBe(0);
     walk(); win.dispatchEvent(new Event('blur')); frame(); expect(input.move.y).toBe(0);
+  });
+});
+
+describe('isometric pointer controls', () => {
+  it('accepts mouse combat without pointer lock and releases it on blur', () => {
+    const { canvas, win, input, frame } = setup(true);
+    canvas.dispatchEvent(Object.assign(new Event('pointerdown'), { button: 0, clientX: 120, clientY: 90 }));
+    frame(); expect(input.pressed('lightAttack')).toBe(true); expect(input.isDown('lightAttack')).toBe(true);
+    win.dispatchEvent(new Event('blur')); frame(); expect(input.isDown('lightAttack')).toBe(false);
   });
 });

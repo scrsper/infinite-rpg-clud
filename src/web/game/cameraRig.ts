@@ -1,8 +1,8 @@
-import { FreeCamera, Vector3 } from '@babylonjs/core';
+import { Camera, FreeCamera, Vector3 } from '@babylonjs/core';
 import type { Settings } from './bindings';
 
 /**
- * Third-person camera. It orbits a pivot (the player's head in render space), keeps the player
+ * Optional fixed isometric projection or third-person camera. Third-person orbits a pivot (the player's head in render space), keeps the player
  * readable in exploration, eases to frame a locked target in combat, and eases to an
  * over-the-shoulder shot for conversation. It never decides anything about the simulation: the pivot
  * and obstruction queries come from what is drawn (terrain height, built structure), and look
@@ -27,6 +27,10 @@ const damp = (rate: number, dt: number) => 1 - Math.exp(-rate * dt);
 
 export class CameraRig {
   yaw = Math.PI; pitch = 0.28; distance = 4.6;
+  private isoSpan = 10;
+  private previousIso = false;
+  aimYaw: number | null = null;
+  get isometric(): boolean { return this.settings().viewMode === 'isometric'; }
   private desiredDistance = 4.6;
   private currentDistance = 4.6;
   private shoulder = 0.35;          // metres to the right of the pivot
@@ -47,20 +51,36 @@ export class CameraRig {
   }
 
   addLook(dx: number, dy: number): void {
-    if (this.mode === 'talk') return;
+    if (this.isometric || this.mode === 'talk') return;
     this.yaw = wrap(this.yaw - dx); this.pitch = Math.max(-0.35, Math.min(1.25, this.pitch + dy));
   }
-  zoom(delta: number): void { this.desiredDistance = Math.max(1.8, Math.min(9, this.desiredDistance * (1 + delta * 0.08))); }
+  zoom(delta: number): void { if (this.isometric) { this.isoSpan = Math.max(6, Math.min(18, this.isoSpan * (1 + delta * 0.08))); return; } this.desiredDistance = Math.max(1.8, Math.min(9, this.desiredDistance * (1 + delta * 0.08))); }
   /** A short impulse (metres of shove, seconds of shake), scaled by the reduced-motion/shake settings. */
   impact(strength: number): void { const s = this.settings(); if (s.reducedMotion) return; this.shake = Math.min(1, this.shake + strength * s.cameraShake); this.kick = Math.min(0.5, this.kick + strength * 0.25 * s.cameraShake); }
   setMode(mode: CameraMode): void { this.mode = mode; }
   setLock(target: CameraFocus | null): void { this.lockPivot = target; }
   setTalk(npc: CameraFocus | null): void { this.talkAnchor = npc ? { npc } : null; }
   /** Horizontal camera yaw for camera-relative movement. */
-  get moveYaw(): number { return this.yaw; }
+  get moveYaw(): number { return this.isometric ? -Math.PI / 4 : this.yaw; }
 
   update(dt: number, pivot: CameraFocus, playerYaw: number): void {
     const s = this.settings(), t = Math.min(dt, 0.1);
+    if (this.isometric) {
+      this.camera.mode = Camera.ORTHOGRAPHIC_CAMERA;
+      const aspect = this.camera.getEngine().getAspectRatio(this.camera);
+      this.camera.orthoTop = this.isoSpan; this.camera.orthoBottom = -this.isoSpan;
+      this.camera.orthoLeft = -this.isoSpan * aspect; this.camera.orthoRight = this.isoSpan * aspect;
+      const yaw = this.moveYaw, pitch = Math.atan(1 / Math.sqrt(2)), d = 32;
+      const target = new Vector3(pivot.x, pivot.y - .65 - this.pivotDrop, pivot.z);
+      // Combat and conversation never rotate the screen's movement basis.
+      this.position.set(target.x + Math.sin(yaw) * Math.cos(pitch) * d, target.y + Math.sin(pitch) * d, target.z + Math.cos(yaw) * Math.cos(pitch) * d);
+      this.camera.position.copyFrom(this.position); this.camera.setTarget(target);
+      this.forward.copyFrom(target.subtract(this.position).normalize()); this.previousIso = true;
+      return;
+    }
+    this.camera.mode = Camera.PERSPECTIVE_CAMERA;
+    if (this.previousIso) { this.yaw = playerYaw; this.pitch = .3; this.previousIso = false; this.aimYaw = null; }
+
     // Mode targets.
     let targetShoulder = 0.35, targetDist = this.desiredDistance, targetFov = (s.fov * Math.PI) / 180 * 1.0;
     let lookYawOverride: number | null = null;

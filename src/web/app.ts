@@ -1,4 +1,4 @@
-import { Color3, FreeCamera, Vector3 } from '@babylonjs/core';
+import { Color3, FreeCamera, Matrix, Plane, Vector3 } from '@babylonjs/core';
 import { INTERACTION_SPEC } from '../sim/physical/prediction';
 import { createRenderer, attachPipeline, QUALITY, type QualityTier, type RenderContext } from './render/engine';
 import { Atmosphere } from './world/atmosphere';
@@ -84,6 +84,8 @@ export class App {
     document.documentElement.dataset.motion = this.settings.reducedMotion ? 'reduced' : 'normal';
     const canvas = document.getElementById('game') as HTMLCanvasElement;
     this.ui = document.getElementById('ui') as HTMLElement;
+    const view = this.params.get('view');
+    if (view === 'isometric' || view === 'third-person') this.settings.viewMode = view;
     this.applyUiSettings();
     window.addEventListener('resize', () => this.applyUiSettings());
     const q = this.params.get('quality') as QualityTier | null;
@@ -113,7 +115,7 @@ export class App {
     this.input = new InputManager(canvas, () => this.settings);
     this.nav = new UiNav(this.input);
     this.overlay = h('div', { class: 'tv-layer', style: 'pointer-events:none' }); this.modalLayer = h('div', { class: 'tv-layer', style: 'pointer-events:none' });
-    this.hud = new Hud(this.ui); this.ui.append(this.overlay, this.modalLayer);
+    this.hud = new Hud(this.ui); this.hud.onInteract = () => { if (this.phase === 'playing' && !this.modal.isOpen && !this.dialogue.isOpen) void this.doInteract(); }; this.ui.append(this.overlay, this.modalLayer);
     this.modal = new ModalHost(this.modalLayer, this.nav);
     this.portrait = new PortraitRenderer(this.ctx.scene, this.actors);
     this.dialogue = new DialoguePanel(this.overlay, {
@@ -171,6 +173,7 @@ export class App {
 
   // ── settings ─────────────────────────────────────────────────────────────────────────────────
   applyUiSettings(): void {
+    this.ui.dataset.view = this.settings.viewMode;
     const s = this.settings, h1 = window.innerHeight, base = 17 * Math.max(1, Math.min(1.6, h1 / 1080)) * s.uiScale * (s.textSize === 'large' ? 1.15 : 1);
     document.documentElement.style.setProperty('--root-size', `${base.toFixed(2)}px`);
     document.documentElement.dataset.contrast = s.highContrast ? 'high' : 'normal';
@@ -179,6 +182,7 @@ export class App {
   }
   updateSettings(patch: Partial<Settings>): void {
     this.settings = { ...this.settings, ...patch }; saveSettings(this.settings); this.applyUiSettings();
+    if (patch.viewMode) { this.controller.release(); this.rig.aimYaw = null; if (patch.viewMode === 'isometric') this.input.exitLock(); }
     if (patch.quality) { this.governor.reset(performance.now()); const t = patch.quality === 'auto' ? 'balanced' : patch.quality; this.ctx.setQuality(t); this.regions.lights.setSize(this.ctx.quality.maxLights); }
     this.audio.setVolumes({ master: this.settings.masterVolume, music: this.settings.musicVolume, effects: this.settings.effectsVolume, ambience: this.settings.ambienceVolume, voice: this.settings.voiceVolume });
     if (patch.resolutionScale !== undefined) this.ctx.engine.setHardwareScalingLevel(1 / patch.resolutionScale);
@@ -303,7 +307,7 @@ export class App {
 
   private computeFocus(s: SnapshotMessage): void {
     const p = this.predictor.predicted?.pos; if (!p) { this.focus = { target: null, refusal: null }; return; }
-    const yaw = this.rig.moveYaw, fx = -Math.sin(yaw), fz = -Math.cos(yaw);
+    const yaw = this.rig.isometric ? (this.predictor.predicted?.yaw ?? this.rig.moveYaw) : this.rig.moveYaw, fx = -Math.sin(yaw), fz = -Math.cos(yaw);
     let best: InteractionTarget | null = null, bestScore = Infinity;
     for (const t of s.interactionTargets) {
       const dx = t.pos.x - p.x, dz = t.pos.z - p.z, d = Math.hypot(dx, dz);
@@ -311,7 +315,14 @@ export class App {
       const cos = d > 0.05 ? (dx * fx + dz * fz) / d : 1;
       // A locked target the player is already attending to wins; people are preferred over things at similar range.
       const locked = this.controller.lockedBodyId !== null && t.targetId === this.controller.lockedBodyId ? 4 : 0;
-      const score = d + (1 - cos) * 1.4 - (this.focus.target?.actionId === t.actionId ? 0.45 : 0) - (t.kind === 'person' ? 0.35 : 0) - locked;
+      let hovered = false;
+      if (this.rig.isometric && this.input.pointer.active) {
+        const rect = this.ctx.canvas.getBoundingClientRect();
+        const projected = Vector3.Project(this.regions.toRender(t.pos), Matrix.Identity(), this.ctx.scene.getTransformMatrix(), this.camera.viewport.toGlobal(this.ctx.engine.getRenderWidth(), this.ctx.engine.getRenderHeight()));
+        const px = projected.x * rect.width / this.ctx.engine.getRenderWidth() + rect.left, py = projected.y * rect.height / this.ctx.engine.getRenderHeight() + rect.top;
+        hovered = projected.z >= 0 && projected.z <= 1 && Math.hypot(px - this.input.pointer.x, py - this.input.pointer.y) < 55;
+      }
+      const score = d + (1 - cos) * 1.4 - (hovered ? 5 : 0) - (this.focus.target?.actionId === t.actionId ? 0.45 : 0) - (t.kind === 'person' ? 0.35 : 0) - locked;
       if (score < bestScore) { bestScore = score; best = t; }
     }
     let refusal: string | null = null;
@@ -325,6 +336,8 @@ export class App {
     this.hud.toast(r.result === 'accepted' ? `${label}.` : d.text, r.result === 'accepted' ? 'good' : d.tone === 'info' ? 'bad' : d.tone);
   }
   private async doInteract(): Promise<void> {
+    // Pointer input can change between server snapshots; choose from the latest projection at activation.
+    if (this.rig.isometric && this.snapshot) this.computeFocus(this.snapshot);
     const t = this.focus.target; if (!t) return;
     this.hintState.interacted = true;
     if (t.kind === 'person') { const r = await this.link.intent({ type: 'talk', targetBodyId: t.targetId }); if (r.result !== 'accepted') { const d = describeResult(r.result); this.hud.toast(d.text, 'bad'); } return; }
@@ -409,7 +422,8 @@ export class App {
     const k = (a: Parameters<InputManager['promptCode']>[0]) => codeLabel(this.input.promptCode(a), this.input.device);
     const lines: { key: string; text: string }[] = [];
     if (!this.hintState.moved) lines.push({ key: this.input.device === 'keyboard' ? 'WASD' : 'Left stick', text: 'Move' });
-    if (!this.hintState.looked) lines.push({ key: this.input.device === 'keyboard' ? 'Mouse' : 'Right stick', text: 'Look around' });
+    if (this.rig.isometric) lines.push({ key: 'Wheel', text: 'Zoom · F target · E interact · H strike · B guard · Space dodge' });
+    if (!this.rig.isometric && !this.hintState.looked) lines.push({ key: this.input.device === 'keyboard' ? 'Mouse' : 'Right stick', text: 'Look around' });
     if (this.focus.target && !this.hintState.interacted) lines.push({ key: k('interact'), text: 'Interact' });
     if (this.hintState.moved && this.hintState.looked && this.hintState.interacted && !this.hintState.attacked) lines.push({ key: k('journal'), text: 'Journal' });
     this.hud.setHints(lines.slice(0, 3));
@@ -469,6 +483,12 @@ export class App {
     else if (now < this.combatUntil || this.controller.guardHeld || this.controller.lockedBodyId) { this.rig.setMode('combat'); this.rig.setTalk(null); }
     else { this.rig.setMode('explore'); this.rig.setTalk(null); }
     // Movement, prediction and commands.
+    if (this.rig.isometric && this.input.pointer.active && this.predictor.predicted) {
+      const rect = this.ctx.canvas.getBoundingClientRect(), p = this.predictor.predicted.pos;
+      const ray = this.ctx.scene.createPickingRay((inp.pointer.x - rect.left) * this.ctx.engine.getRenderWidth() / rect.width, (inp.pointer.y - rect.top) * this.ctx.engine.getRenderHeight() / rect.height, Matrix.Identity(), this.camera);
+      const distance = ray.intersectsPlane(new Plane(0, 1, 0, -(p.y - this.regions.origin.y)));
+      if (distance !== null && distance >= 0) { const at = ray.origin.add(ray.direction.scale(distance)); this.rig.aimYaw = Math.atan2(-(at.x + this.regions.origin.x - p.x), -(at.z + this.regions.origin.z - p.z)); }
+    }
     this.controller.update(dt);
     if (this.controller.moving) this.hintState.moved = true;
     // Own body.
@@ -484,6 +504,7 @@ export class App {
       this.pivotInPlant = this.regions.plantAt(vis.pos.x, vis.pos.y + 0.5, vis.pos.z) || this.regions.plantAt(vis.pos.x, vis.pos.y + eye, vis.pos.z);
       this.rig.update(dt, { x: vis.pos.x - this.regions.origin.x, y: vis.pos.y - this.regions.origin.y + eye, z: vis.pos.z - this.regions.origin.z }, vis.yaw);
     }
+    this.regions.updateCutaway(this.rig.isometric ? vis?.pos ?? null : null, this.camera.position);
     // World.
     const hour = this.params.get('hour') ? Number(this.params.get('hour')) : ((this.regions.worldTime / 3600) % 24 + 24) % 24;
     this.atmosphere.update(hour, this.regions.weather, dt); this.atmosphere.follow(this.camera.position);

@@ -1,4 +1,4 @@
-import { Mesh, Scene } from '@babylonjs/core';
+import { Mesh, Plane, Scene } from '@babylonjs/core';
 import { B } from '../../sim/physical/blocks';
 import type { MaterialLibrary, MatName } from '../render/materials';
 import { hash2 } from '../render/noise';
@@ -75,8 +75,9 @@ export function* buildStructuresSteps(scene: Scene, mats: MaterialLibrary, r: Re
   if (!r.structures?.runs.length) return out;
   const x0 = r.bounds.x0, z0 = r.bounds.z0, cells = decodeStructure(r.structures.runs, x0, z0);
   out.stats.cells = cells.size;
-  const batches = new Map<MatName, MeshBatch>();
-  const batch = (m: MatName) => { let b = batches.get(m); if (!b) batches.set(m, b = new MeshBatch()); return b; };
+  let activePlace: PlaceProjection | undefined;
+  const batches = new Map<string, { batch: MeshBatch; material: MatName; place?: PlaceProjection }>();
+  const batch = (m: MatName) => { const key = (activePlace?.id ?? '') + ':' + m; let b = batches.get(key); if (!b) { b = { batch: new MeshBatch(), material: m, place: activePlace }; batches.set(key, b); } return b.batch; };
   const L = (x: number, z: number): [number, number] => [x - x0, z - z0];
   const buildings = r.places.filter(p => p.indoor);
   const placeOf = (x: number, z: number): PlaceProjection | undefined => buildings.find(p => x >= p.bounds.x0 - 1 && x <= p.bounds.x1 + 1 && z >= p.bounds.z0 - 1 && z <= p.bounds.z1 + 1);
@@ -90,7 +91,7 @@ export function* buildStructuresSteps(scene: Scene, mats: MaterialLibrary, r: Re
     const fit = fitRoof(cells, p);
     if (!fit) { out.stats.roofsVoxel++; continue; }
     fits.set(p.id, fit); out.stats.roofsAnalytic++;
-    buildGableRoof(batch, mats, p, fit, x0, z0);
+    activePlace = p; buildGableRoof(batch, mats, p, fit, x0, z0);
   }
   const insideFittedRoof = (x: number, y: number, z: number, b: number): boolean => {
     const p = placeOf(x, z); if (!p) return false;
@@ -105,6 +106,7 @@ export function* buildStructuresSteps(scene: Scene, mats: MaterialLibrary, r: Re
     if ((++visited & 127) === 0 && performance.now() - sliceAt > 3) { yield; sliceAt = performance.now(); }
     if (insideFittedRoof(x, y, z, b)) continue;
     const place = placeOf(x, z), variation = 0.95 + hash2(x, z, 11) * 0.05 + hash2(x + y * 7, z, 3) * 0.04;
+    activePlace = place;
     const buildingTint = place ? 0.92 + hash2(place.visualSeed | 0, 5, 1) * 0.16 : 1;
     if (b === B.Glass) { windowAt(x, y, z, place); continue; }
     if (b === B.Torch) { out.lights.push({ x: x - x0 + 0.5, y: y + 0.75, z: z - z0 + 0.5, color: [1, 0.66, 0.32], intensity: 1.1, range: 9, kind: 'torch' }); torchAt(x, y, z); continue; }
@@ -176,14 +178,25 @@ export function* buildStructuresSteps(scene: Scene, mats: MaterialLibrary, r: Re
     }
     if (place && litPlaces.has(place.id)) out.lights.push({ x: lx + 0.5, y: y + 0.5, z: lz + 0.5, color: [1, 0.72, 0.4], intensity: 0.5, range: 6, kind: 'window' });
   }
-  for (const [mat, bt] of batches) {
-    const mesh = bt.build(`structure-${r.id}-${mat}`, scene, mats.get(mat), { receiveShadow: true });
-    if (mesh) out.meshes.push(mesh);
+  for (const [key, entry] of batches) {
+    const mesh = entry.batch.build(`structure-${r.id}-${key}`, scene, mats.get(entry.material), { receiveShadow: true });
+    if (mesh) {
+      if (entry.place) {
+        const material = mesh.material!.clone(mesh.name + '-cutaway')!;
+        material.clipPlane = new Plane(0, 1, 0, -1e8); mesh.material = material;
+        mesh.metadata = { cutawayBounds: entry.place.bounds, ownsCutawayMaterial: true };
+      }
+      out.meshes.push(mesh);
+    }
     yield;
   }
   for (const [id, gb] of glassBatches) {
     const mesh = gb.build(`panes-${r.id}-${id}`, scene, mats.get('glass'), { receiveShadow: false });
-    if (mesh) { out.meshes.push(mesh); out.panes.set(id, mesh); }
+    if (mesh) {
+      const place = buildings.find(p => p.id === id);
+      if (place) { const material = mesh.material!.clone(mesh.name + '-cutaway')!; material.clipPlane = new Plane(0, 1, 0, -1e8); mesh.material = material; mesh.metadata = { cutawayBounds: place.bounds, ownsCutawayMaterial: true }; }
+      out.meshes.push(mesh); out.panes.set(id, mesh);
+    }
     yield;
   }
   return out;

@@ -18,6 +18,7 @@ export class Hud {
   private readonly promptEl: HTMLElement; private readonly targetEl: HTMLElement; private readonly toasts: HTMLElement; private readonly subtitle: HTMLElement; private readonly hints: HTMLElement;
   private readonly reticle: HTMLElement;
   private readonly plates: HTMLElement;
+  onInteract: (() => void) | null = null;
   private lastPrompt = ''; private lastNeeds = '';
 
   constructor(parent: HTMLElement) {
@@ -25,7 +26,7 @@ export class Hud {
     this.effortBar = h('div', { class: 'tv-bar effort' }, h('i'), h('b', { text: 'Effort' }));
     this.needs = h('div', { style: 'display:flex;gap:.4rem;flex-wrap:wrap' });
     this.place = h('div', { class: 'place', text: '' }); this.time = h('div', { class: 'time', text: '' }); this.net = h('div', { class: 'net', text: '' }); this.wealth = h('div', { class: 'tv-sub', text: '' });
-    this.promptEl = h('div', { class: 'tv-prompt', style: 'display:none', role: 'status' });
+    this.promptEl = h('button', { class: 'tv-prompt', type: 'button', style: 'display:none;pointer-events:auto', aria: { label: 'Interact with nearby target' }, on: { click: () => this.onInteract?.() } });
     this.targetEl = h('div', { class: 'tv-target', style: 'display:none' });
     this.toasts = h('div', { class: 'tv-toasts', role: 'log', aria: { live: 'polite' } });
     this.subtitle = h('div', { class: 'tv-subtitle', style: 'display:none', role: 'status' });

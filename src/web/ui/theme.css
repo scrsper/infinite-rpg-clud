@@ -190,3 +190,7 @@ body { font-family: var(--sans); color: var(--ivory); -webkit-font-smoothing: an
 /* An offer the player cannot afford: still readable (the server is the authority), but clearly out of reach. */
 .tv-opt.tv-short { opacity: .55; cursor: not-allowed; }
 .tv-opt.tv-short .price { color: var(--crimson); }
+
+/* The isometric view uses the visible pointer and nearby interaction button. */
+#ui[data-view="isometric"] .tv-reticle { display: none !important; }
+.tv-prompt { color: inherit; font: inherit; cursor: pointer; }

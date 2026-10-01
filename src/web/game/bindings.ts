@@ -63,6 +63,7 @@ export interface Settings {
   moveDeadZone: number; lookDeadZone: number;
   vibration: boolean;
   sprintToggle: boolean; focusToggle: boolean; guardToggle: boolean;
+  viewMode: 'third-person' | 'isometric';
   fov: number;
   cameraShake: number;              // 0..1 scale on hit shake
   reducedMotion: boolean;
@@ -80,7 +81,7 @@ export interface Settings {
 }
 export const DEFAULT_SETTINGS: Settings = {
   mouseSensitivity: 2.2, padSensitivityX: 3.2, padSensitivityY: 2.2, invertY: false, padInvertY: false, moveDeadZone: 0.16, lookDeadZone: 0.12, vibration: true,
-  sprintToggle: false, focusToggle: false, guardToggle: false, fov: 62, cameraShake: 1, reducedMotion: false, quality: 'auto', resolutionScale: 1,
+  viewMode: 'third-person', sprintToggle: false, focusToggle: false, guardToggle: false, fov: 62, cameraShake: 1, reducedMotion: false, quality: 'auto', resolutionScale: 1,
   masterVolume: 0.8, musicVolume: 0.6, effectsVolume: 0.9, ambienceVolume: 0.8, voiceVolume: 0.9, uiScale: 1, textSize: 'normal', highContrast: false, subtitles: true, showHints: true, colorAssist: 'off',
   keyboard: {}, pad: {}, captureMouse: true,
 };
@@ -92,7 +93,7 @@ const RANGES: Partial<Record<keyof Settings, [number, number]>> = {
   masterVolume: [0, 1], musicVolume: [0, 1], effectsVolume: [0, 1], ambienceVolume: [0, 1], voiceVolume: [0, 1], uiScale: [0.85, 1.4],
 };
 const BOOLS: (keyof Settings)[] = ['invertY', 'padInvertY', 'vibration', 'sprintToggle', 'focusToggle', 'guardToggle', 'reducedMotion', 'highContrast', 'subtitles', 'showHints', 'captureMouse'];
-const ENUMS: Partial<Record<keyof Settings, readonly string[]>> = { quality: ['auto', 'high', 'balanced', 'low'], textSize: ['normal', 'large'], colorAssist: ['off', 'protanopia', 'deuteranopia', 'tritanopia'] };
+const ENUMS: Partial<Record<keyof Settings, readonly string[]>> = { viewMode: ['third-person', 'isometric'], quality: ['auto', 'high', 'balanced', 'low'], textSize: ['normal', 'large'], colorAssist: ['off', 'protanopia', 'deuteranopia', 'tritanopia'] };
 const validCode = (c: unknown): c is string => typeof c === 'string' && /^(Key[A-Z]|Digit\d|Mouse[0-4]|Pad\d{1,2}|Arrow(Up|Down|Left|Right)|Shift(Left|Right)|Control(Left|Right)|Alt(Left|Right)|Space|Tab|Enter|Escape|Backspace|Bracket(Left|Right)|Page(Up|Down)|F\d{1,2})$/.test(c);
 function sanitizeMap(m: unknown): Map3 {
   const out: Map3 = {}; if (!m || typeof m !== 'object') return out;

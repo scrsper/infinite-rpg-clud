@@ -84,13 +84,12 @@ export class PlayerController {
     if (this.input.pressed('switchTarget')) this.cycleLock();
     if (this.lockedBodyId) { const c = this.candidates().find(x => x.bodyId === this.lockedBodyId); if (!c || c.dead) this.setLock(null); else { const p = this.ownPos(); if (p && Math.hypot(c.pos.x - p.x, c.pos.z - p.z) > 26) this.setLock(null); } }
 
+    this.stepMovement(dt, true);
     // Combat edges.
     const now = performance.now();
     if (this.input.pressed('lightAttack')) this.attack('light', now);
     if (this.input.pressed('heavyAttack')) this.attack('heavy', now);
     if (this.input.pressed('dodge')) this.dodge(now);
-
-    this.stepMovement(dt, true);
   }
 
   private target(): Candidate | undefined { return this.lockedBodyId ? this.candidates().find(c => c.bodyId === this.lockedBodyId) : undefined; }
@@ -106,13 +105,14 @@ export class PlayerController {
     this.predictor.advanceBy(dt, () => {
       const p = this.predictor.predicted; if (!p) return null;
       const settled = (p.crouch ?? 0) === (this.crouchHeld ? 1 : 0) || (!this.crouchHeld && (p.crouch ?? 0) <= 0);
-      if (!this.moving && settled && !combatPosture && !this.lockedBodyId && !this.hooks.conversationPartner()) { this.idleSteps++; if (this.idleSteps > 24 && !this.guardHeld) return null; } else this.idleSteps = 0;
+      if (!this.moving && settled && !combatPosture && !this.lockedBodyId && !this.hooks.conversationPartner() && !(this.cam.isometric && this.cam.aimYaw !== null)) { this.idleSteps++; if (this.idleSteps > 24 && !this.guardHeld) return null; } else this.idleSteps = 0;
       let facing: number | undefined;
       const partner = this.hooks.conversationPartner(), lock = this.target();
       if (lock) facing = Math.atan2(-(lock.pos.x - p.pos.x), -(lock.pos.z - p.pos.z));
       else if (partner && !this.moving) facing = Math.atan2(-(partner.x - p.pos.x), -(partner.z - p.pos.z));
       else if (this.moving && !combatPosture) facing = Math.atan2(-wx, -wz);
-      else if (combatPosture) facing = yaw;   // guard or focus: face where the camera looks
+      else if (this.cam.isometric && this.cam.aimYaw !== null && !this.moving) facing = this.cam.aimYaw;
+      else if (combatPosture) facing = this.cam.aimYaw ?? yaw;   // guard or focus: face where the camera looks
       const sprint = this.sprintHeld && this.moving && !combatPosture && !this.crouchHeld;
       const input: StepInput = { x: this.moving ? Math.max(-1, Math.min(1, wx)) : 0, z: this.moving ? Math.max(-1, Math.min(1, wz)) : 0, sprint, ...(facing !== undefined ? { facing } : {}), crouch: this.crouchHeld };
       return input;
@@ -150,7 +150,7 @@ export class PlayerController {
     const fx = -Math.sin(this.cam.yaw), fz = -Math.cos(this.cam.yaw);
     return this.candidates().filter(c => !c.dead).map(c => {
       const dx = c.pos.x - p.x, dz = c.pos.z - p.z, d = Math.hypot(dx, dz) || 0.001, cosA = (dx * fx + dz * fz) / d;
-      return { c, score: d <= 22 && cosA > 0.25 ? d * (1.6 - cosA) - (c.hostile ? 2 : 0) : Infinity };
+      return { c, score: d <= 22 && (this.cam.isometric || cosA > 0.25) ? d * (this.cam.isometric ? 1 : 1.6 - cosA) - (c.hostile ? 2 : 0) : Infinity };
     }).filter(x => Number.isFinite(x.score)).sort((a, b) => a.score - b.score);
   }
   toggleLock(): void {

@@ -1,0 +1,39 @@
+# Isometric playable slice
+
+The Babylon.js client has an optional fixed orthographic isometric view over the same canonical world. Third-person remains the default. This is a 3D presentation slice, not a pre-rendered sprite pipeline or finished art milestone. Unreal and canonical mechanics remain authoritative as before.
+
+## Launch
+
+On Bernhaldt, double-click `Play Torn Veil Isometric.cmd` in the authoritative Desktop checkout. Alternatively:
+
+`powershell -NoProfile -ExecutionPolicy Bypass -File scripts/web/Play-Web.ps1 -View isometric`
+
+The default uses the existing isolated web-quality development save on world port 7490 and a separate gateway on 7492, with bundle `.debug/isometric/bundle`. It preserves the third-person bundle and gateway on 7491. Existing saves are retained; ordinary launch prepares/starts the isolated preview only when absent/offline. CheckOnly starts nothing and requires an already-running world. The verified CheckOnly run stopped because 7490 was offline, with bundle/models present and 7492 free. No persistent preview world was started during validation.
+
+The launcher refuses to rebuild a bundle while its gateway port is listening. It does not restart or kill services. The same account follows the existing client takeover policy; close its other client before playing. Fresh checkouts need installed dependencies and generated GLBs: `npm run web:assets` uses the existing Blender tools and checked-in CC0 VRoid sources. Generated GLBs remain ignored. Duplicate original ZIP archives remain local and untouched.
+
+Camera view can also be changed in settings or selected with `?view=isometric`. WASD/arrows are screen-relative, Shift runs, wheel zooms, the pointer aims, E or the nearby prompt interacts, F locks a target, H/left click strikes, G makes a heavy strike, B/right click guards, Space dodges, I/J open items/journal, and Escape interrupts a menu/conversation. The view stays fixed through conversation and combat. Current attacks use the existing high trajectory; an upright human is a valid jab target, while low wildlife may require an existing low attack not yet exposed by this client.
+
+## Boundaries and visibility
+
+Input sends canonical movement, interaction and combat commands. UI never applies damage or purchase outcomes. Canonical collision still decides entry. Per-building material clipping removes occupied or view-blocking roofs/upper walls and restores them on return to third-person; it does not change collision, place identity or simulation state. Building meshes own their cloned materials, while texture resources remain shared. NPC/player equivalent mechanics are unchanged.
+
+## Validation
+
+- Private production build passed (3,346 modules); the served third-person dist-web was not rebuilt.
+- Final typecheck passed. Eight web files passed 54 tests (42 in seven files plus 12 gateway tests), including doorway clearance, camera reversal, unlocked pointer input, canonical prediction and gateway admission.
+- Real Chrome acceptance uses a disposable temporary world and ephemeral gateway. It passed walking/running, repeated menus, grounded dialogue, trade confirmation/cancellation/purchase, repeated interrupted conversation, real keyboard doorway entry with occupied cutaway, real canonical melee contact and dodge commands, and reversible view switching. Final settled-frame report is kept beside screenshots.
+- The doorway fixture originally started at the cell corner, intersecting the adjacent wall. Cell-center staging plus actual keyboard travel passes; a regression retains the corner-blocked/center-passes distinction. The original high-jab boar fixture was unsuitable: canonical quadruped hurt volumes are low. The corrected upright adult fixture records head contact and health loss from 80 to about 74.4; no hit assertion or simulation rule was weakened.
+- Full normal regression and exact-head PR CI are separate gates; both were still pending at this documentation checkpoint. Final results belong in the PR verification record. Specialized multi-day soaks, Unreal checks and human/gamepad acceptance were not run for this presentation slice. Previous Observatory AMBER limits remain unchanged.
+
+`node --import tsx scripts/web/isometric.ts` reproduces browser acceptance after building the private bundle. Movement/menu flows use ordinary input; dialogue/combat positions and the doorway starting position are disclosed test fixtures, not proof of unattended travel or human acceptance. No saved user world/profile is used. The script closes only its own browser/server/gateway and removes its own temporary root.
+
+## Scope and remaining limits
+
+The dedicated branch preserves inherited Observatory and deterministic dialogue work in its ancestry, checkpointed before this slice (21be4e2); CC0 source/material assets are preserved in af9eab8. The main-targeted draft therefore includes inherited simulation and web changes, not just this presentation patch. No merge or deployment is part of this task.
+
+Asset provenance is in `art/reference/web-rebirth/generated-texture-provenance.json`: four authorized generated PNGs match their original outputs byte-for-byte; the environment HDR is a recorded Poly Haven CC0 download. Existing material-manifest and VRoid license records remain in place. The Scenario iso-cycles page informed directional presentation only; no Scenario assets were downloaded or redistributed.
+
+Art remains a prototype: repeated ground materials and small actor silhouettes need polish. Furniture can still obscure the actor locally even after wall/roof cutaway. Screenshots are bounded evidence of this slice, not a final visual-quality claim. The strongest next bounded improvement is interior player visibility: determine which presentation geometry hides the controlled actor after roof/wall cutaway, fix that occlusion without changing canonical collision/perception, and verify visible entry, traversal, exit and combat. The inherited portrait is also badly framed and needs a separate presentation repair. Exposing the already-supported low strike for low wildlife is a subsequent bounded control task.
+
+Reviewed screenshot evidence: [conversation](../evidence/isometric-playable-slice/03-isometric-conversation.png), [cutaway](../evidence/isometric-playable-slice/04-isometric-cutaway.png), [action](../evidence/isometric-playable-slice/05-isometric-action.png), and [canonical browser report](../evidence/isometric-playable-slice/browser-evidence.json). These intentionally retain the observed visual defects.

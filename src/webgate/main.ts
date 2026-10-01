@@ -46,7 +46,7 @@ const gateway = new WebGateway({
   log: (level, event, data) => process.stdout.write(JSON.stringify({ t: new Date().toISOString(), level, event, ...data }) + '\n'),
 });
 await gateway.listen();
-writeFileSync(join(stateDir, 'gateway.json'), JSON.stringify({ pid: process.pid, port: gateway.port, origin: gateway.url, profile: profileName, upstream: profile.server, operator: gateway.operatorSecret, startedAtIso: new Date().toISOString() }, null, 2));
+writeFileSync(join(stateDir, 'gateway.json'), JSON.stringify({ pid: process.pid, port: gateway.port, origin: gateway.url, profile: profileName, staticDir, upstream: profile.server, operator: gateway.operatorSecret, startedAtIso: new Date().toISOString() }, null, 2));
 process.stdout.write(JSON.stringify({ t: new Date().toISOString(), level: 'info', event: 'gateway_ready', origin: gateway.url, staticDir: existsSync(staticDir) ? staticDir : null, state: join(stateDir, 'gateway.json') }) + '\n');
 const stop = async () => { await gateway.close(); process.exit(0); };
 process.on('SIGINT', stop); process.on('SIGTERM', stop);
