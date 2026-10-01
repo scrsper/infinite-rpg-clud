@@ -52,9 +52,10 @@ export class Navigator {
     // retain their ordinary accessor; no geographic or door interpretation is cached.
     const dense = !g.sparse && g.get === VoxelGrid.prototype.get ? g.data : null;
     const offset = i * g.H;
-    // find highest walkable floor: a solid block with 2 clear (non-solid) blocks above. Prefer the lowest such floor near ground (interiors).
+    // Find the lowest walkable floor: a solid block with two clear blocks above.
+    // Ascending order can stop at the same floor the former descending scan retained.
     let best = -1, bestCost = 1;
-    for (let y = g.H - 3; y >= 0; y--) {
+    for (let y = 0; y <= g.H - 3; y++) {
       const b = dense ? dense[offset + y] : g.get(x, y, z); const def = BLOCKS[b];
       if (b === B.Air || !def.solid || b === B.Fence || b === B.Door) continue;
       if (def.shape === 'cross') continue;
@@ -63,7 +64,7 @@ export class Navigator {
       if ((!d1.solid || a1 === B.Door) && (!d2.solid || a2 === B.Door)) {
         best = y + 1; bestCost = Math.max(def.walkCost, a1 === B.Door ? BLOCKS[B.Door].walkCost : d1.walkCost, a2 === B.Air ? 1 : a2 === B.Door ? BLOCKS[B.Door].walkCost : d2.walkCost * 0.5);
         if (b === B.Water) bestCost = 30;
-        // keep the lowest floor (interiors under roofs) — continue scanning downward
+        break; // The lowest valid floor preserves interiors under roofs.
       }
     }
     // water surfaces: treat as non-walkable unless shallow

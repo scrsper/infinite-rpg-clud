@@ -31,7 +31,16 @@ export class SpatialIndex<T extends { id: string }> {
     this.cells.set(e, keys);
     for (const k of keys) { let b = this.buckets.get(k); if (!b) this.buckets.set(k, b = new Set()); b.add(e); }
   }
-  point(e: T, pos: Vec3 | null): void { this.update(e, pos ? { x0: pos.x, x1: pos.x, z0: pos.z, z1: pos.z } : null); }
+  point(e: T, pos: Vec3 | null): void {
+    if (pos) {
+      const old = this.cells.get(e);
+      // Moving within a point's existing cell changes no broad-phase membership.
+      // Avoid constructing an update box, key array and comparison closure on this hot path.
+      if (old?.length === 1 && !this.oversized.has(e)
+        && old[0] === `${Math.floor(pos.x / this.size)},${Math.floor(pos.z / this.size)}`) return;
+    }
+    this.update(e, pos ? { x0: pos.x, x1: pos.x, z0: pos.z, z1: pos.z } : null);
+  }
   query(pos: Vec3, radius: number): T[] {
     const x0 = Math.floor((pos.x - radius) / this.size), x1 = Math.floor((pos.x + radius) / this.size);
     const z0 = Math.floor((pos.z - radius) / this.size), z1 = Math.floor((pos.z + radius) / this.size);

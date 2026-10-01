@@ -6,7 +6,7 @@ import type { EntityId, Person, Vec3, WorldEvent } from '../../sim/core/types';
 import { SECONDS_PER_HOUR } from '../../sim/core/time';
 import { appraiseClaim } from '../../sim/social/appraisal';
 import { activeConcerns, describeConcern } from '../../sim/mind/concern';
-import { personalSituationView, situationsInvolving, describeSituation } from '../../sim/social/situation';
+import { personalSituationView, situationsInvolving, situationForEvent, describeSituation } from '../../sim/social/situation';
 import { selectTopic, scoreTopic, MENTION_THRESHOLD } from '../../sim/mind/conversation';
 import { realizeTopic } from '../../sim/mind/realize';
 import { describeRel, getRel } from '../../sim/mind/relationships';
@@ -312,14 +312,7 @@ export function runSocialTrace(spec: TraceSpec): SocialTrace {
   //    (`missing:<itemId>`, its own `loss` situation) rather than as the theft itself — which is
   //    the honest outcome, and reporting only the theft key would show the whole village as
   //    knowing "nothing about it" when in fact the loss is exactly what is circulating.
-  const opened = situationsInvolving(world, subject.id).filter(s => s.openedAt >= traceStart);
-  const rootKeys = [
-    ...new Set([
-      ...opened.flatMap(s => s.eventIds.map(id => `ev:${id}`)),
-      ...opened.filter(s => s.itemId).map(s => `missing:${s.itemId}`),
-      ...(triggerEvent ? [`ev:${triggerEvent.id}`] : []),
-    ]),
-  ];
+  const rootKeys = socialTraceMatterKeys(world, subject.id, triggerEvent, spec.trigger, traceStart);
   const perspectiveIds = pickPerspectives(world, subject, actor, rootKeys);
   const perspectives = perspectiveIds.map(p => reportPerspective(world, sim, p, subject, actor, rootKeys, goalsBy));
 
@@ -331,6 +324,21 @@ export function runSocialTrace(spec: TraceSpec): SocialTrace {
     actorName: actor.name, subjectName: subject.name,
     trigger: triggerText, steps, perspectives, checks, secondary,
   };
+}
+
+/** Report only the triggering canonical matter, never later unrelated incidents involving its subject. */
+export function socialTraceMatterKeys(world: World, subjectId: EntityId, triggerEvent: WorldEvent | null, trigger: TriggerKind, traceStart: number): string[] {
+  const triggerSituation = situationForEvent(world, triggerEvent?.id);
+  const opened = situationsInvolving(world, subjectId).filter(s =>
+    s.id === triggerSituation?.id || (trigger === 'theft' && !!triggerEvent?.item && s.kind === 'loss'
+      && s.itemId === triggerEvent?.item && s.openedAt >= traceStart));
+  return [
+    ...new Set([
+      ...opened.flatMap(s => s.eventIds.map(id => `ev:${id}`)),
+      ...opened.filter(s => s.itemId).map(s => `missing:${s.itemId}`),
+      ...(triggerEvent ? [`ev:${triggerEvent.id}`] : []),
+    ]),
+  ];
 }
 
 /** Six structurally distinct standpoints on the same event, if the village supplies them. */
