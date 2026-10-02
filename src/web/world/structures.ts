@@ -4,6 +4,8 @@ import type { MaterialLibrary, MatName } from '../render/materials';
 import { hash2 } from '../render/noise';
 import type { PlaceProjection, RegionProjection } from '../net/messages';
 import { MeshBatch, type V } from './meshBatch';
+import { architectureGrammar, type ArchitectureProfile } from './architecturalGrammar';
+import { buildRoofIdentity } from './roofIdentity';
 
 /**
  * Buildings from the exact projected voxel structure.
@@ -84,6 +86,10 @@ export function* buildStructuresSteps(scene: Scene, mats: MaterialLibrary, r: Re
   const solid = (x: number, y: number, z: number) => !NON_OCCLUDING.has(cells.get(x, y, z));
   const glassBatches = new Map<string, MeshBatch>();
   function paneBatch(id: string): MeshBatch { let g = glassBatches.get(id); if (!g) glassBatches.set(id, g = new MeshBatch()); return g; }
+  const millWheels = new Map<string, MillWheel>();
+  for (const p of buildings) if (p.type === 'mill') { const wheel = findMillWheel(cells, p); if (wheel) { millWheels.set(p.id, wheel); activePlace = p; buildMillWheel(batch, mats, wheel, x0, z0); } }
+
+  const wheelCells = new Set([...millWheels.values()].flatMap(w => [...w.cells]));
 
   // ── roofs: fit each building's analytic gable to its actual roof cells ─────────────────────────
   const fits = new Map<string, RoofFit>();
@@ -91,7 +97,7 @@ export function* buildStructuresSteps(scene: Scene, mats: MaterialLibrary, r: Re
     const fit = fitRoof(cells, p);
     if (!fit) { out.stats.roofsVoxel++; continue; }
     fits.set(p.id, fit); out.stats.roofsAnalytic++;
-    activePlace = p; buildGableRoof(batch, mats, p, fit, x0, z0);
+    activePlace = p; buildGableRoof(batch, mats, p, fit, x0, z0, architectureGrammar(p, cells));
   }
   const insideFittedRoof = (x: number, y: number, z: number, b: number): boolean => {
     const p = placeOf(x, z); if (!p) return false;
@@ -105,11 +111,14 @@ export function* buildStructuresSteps(scene: Scene, mats: MaterialLibrary, r: Re
   for (const [x, y, z, b] of cells.entries()) {
     if ((++visited & 127) === 0 && performance.now() - sliceAt > 3) { yield; sliceAt = performance.now(); }
     if (insideFittedRoof(x, y, z, b)) continue;
+    if (wheelCells.has(`${x},${y},${z}`)) continue;
     const place = placeOf(x, z), variation = 0.95 + hash2(x, z, 11) * 0.05 + hash2(x + y * 7, z, 3) * 0.04;
     activePlace = place;
     const buildingTint = place ? 0.92 + hash2(place.visualSeed | 0, 5, 1) * 0.16 : 1;
     if (b === B.Glass) { windowAt(x, y, z, place); continue; }
     if (b === B.Torch) { out.lights.push({ x: x - x0 + 0.5, y: y + 0.75, z: z - z0 + 0.5, color: [1, 0.66, 0.32], intensity: 1.1, range: 9, kind: 'torch' }); torchAt(x, y, z); continue; }
+    if (b === B.Sign) { signAt(x, y, z, place); continue; }
+    if (b === B.Chimney && cells.get(x, y + 1, z) === 0) chimneyCrownAt(x, y, z);
     if (CLOTH[b] !== undefined) { awning(x, y, z, CLOTH[b]); continue; }
     if (b === B.Gravestone) { const [lx, lz] = L(x, z); batch('stone').box([lx + 0.2, y, lz + 0.42], [lx + 0.8, y + 0.9, lz + 0.58], [0.85, 0.85, 0.85], mats.tilesPerMetre('stone')); continue; }
     let mat = WALL_MATERIAL[b]; if (!mat) { const roof = ROOF_MATERIAL[b]; if (!roof) continue; mat = roof; }
@@ -139,7 +148,7 @@ export function* buildStructuresSteps(scene: Scene, mats: MaterialLibrary, r: Re
     const fit = fits.get(p.id);
     if (!fit) continue;
     activePlace = p;
-    decorateBuilding(batch, mats, cells, p, fit, x0, z0);
+    decorateBuilding(batch, mats, cells, p, fit, x0, z0, architectureGrammar(p, cells));
   }
 
   function trimAt(x: number, y: number, z: number, mat: MatName): void {
@@ -155,6 +164,20 @@ export function* buildStructuresSteps(scene: Scene, mats: MaterialLibrary, r: Re
     const [lx, lz] = L(x, z), bt = batch('darkwood');
     bt.box([lx + 0.45, y, lz + 0.45], [lx + 0.55, y + 0.62, lz + 0.55], [1, 1, 1], mats.tilesPerMetre('darkwood'));
     batch('gold').box([lx + 0.4, y + 0.62, lz + 0.4], [lx + 0.6, y + 0.72, lz + 0.6], [1.6, 1.3, 0.7], mats.tilesPerMetre('gold'));
+  }
+  function signAt(x: number, y: number, z: number, place: PlaceProjection | undefined): void {
+    const [lx, lz] = L(x, z), sign = batch('wood');
+    const front = place?.door ? (Math.abs(place.door.z - z) <= 1 ? (place.door.z <= place.bounds.z0 ? -1 : 1) : 0) : -1;
+    if (front) {
+      sign.box([lx + 0.12, y + 0.2, lz + (front < 0 ? -0.08 : 0.92)], [lx + 0.88, y + 0.68, lz + (front < 0 ? 0.08 : 1.08)], [0.84, 0.58, 0.34], mats.tilesPerMetre('wood'));
+      batch('darkwood').box([lx + 0.45, y - 0.08, lz + 0.43], [lx + 0.55, y + 0.22, lz + 0.57], [0.72, 0.62, 0.48], mats.tilesPerMetre('darkwood'));
+    } else {
+      sign.box([lx + (place?.door && place.door.x <= x ? -0.08 : 0.92), y + 0.2, lz + 0.12], [lx + (place?.door && place.door.x <= x ? 0.08 : 1.08), y + 0.68, lz + 0.88], [0.84, 0.58, 0.34], mats.tilesPerMetre('wood'));
+    }
+  }
+  function chimneyCrownAt(x: number, y: number, z: number): void {
+    const [lx, lz] = L(x, z), crown = batch('stone');
+    crown.box([lx - 0.06, y + 1, lz - 0.06], [lx + 1.06, y + 1.14, lz + 1.06], [0.68, 0.65, 0.58], mats.tilesPerMetre('stone'));
   }
   function awning(x: number, y: number, z: number, mat: MatName): void {
     const [lx, lz] = L(x, z), sag = 0.06 * Math.sin((x * 1.7 + z * 2.3)), bt = batch(mat);
@@ -214,7 +237,7 @@ export function* buildStructuresSteps(scene: Scene, mats: MaterialLibrary, r: Re
 }
 
 /** Add restrained, cell-derived facade construction without changing the canonical shell. */
-function decorateBuilding(batch: (m: MatName) => MeshBatch, mats: MaterialLibrary, cells: Cells, p: PlaceProjection, fit: RoofFit, rx: number, rz: number): void {
+function decorateBuilding(batch: (m: MatName) => MeshBatch, mats: MaterialLibrary, cells: Cells, p: PlaceProjection, fit: RoofFit, rx: number, rz: number, profile: ArchitectureProfile): void {
   const { x0, x1, z0, z1 } = p.bounds;
   const base = fit.roofY - 1;
   const wallTop = base;
@@ -287,8 +310,8 @@ function decorateBuilding(batch: (m: MatName) => MeshBatch, mats: MaterialLibrar
     if (side === 'north' || side === 'south') timber.box([vertical - rx - 0.07, beamY0, (side === 'north' ? z0 : z1) - rz - (side === 'north' ? 0.07 : -0.93)], [vertical - rx + 0.07, beamY1 + 0.14, (side === 'north' ? z0 : z1) - rz - (side === 'north' ? -0.07 : -1.07)], beamTint, tt);
     else timber.box([(side === 'west' ? x0 : x1) - rx - (side === 'west' ? 0.07 : -0.93), beamY0, vertical - rz - 0.07], [(side === 'west' ? x0 : x1) - rx - (side === 'west' ? -0.07 : -1.07), beamY1 + 0.14, vertical - rz + 0.07], beamTint, tt);
   };
-  for (let i = 3; i < x1 - x0; i += 3) { bayPost('north', i); bayPost('south', i); }
-  for (let i = 3; i < z1 - z0; i += 3) { bayPost('west', i); bayPost('east', i); }
+  for (let i = 3; i < x1 - x0; i += profile.bay) { bayPost('north', i); bayPost('south', i); }
+  for (let i = 3; i < z1 - z0; i += profile.bay) { bayPost('west', i); bayPost('east', i); }
   const solidBay = (side: 'north' | 'south' | 'west' | 'east', i0: number, i1: number): boolean => {
     for (let i = i0; i <= i1; i++) for (let y = p.bounds.y0 + 1; y <= wallTop; y++) {
       const x = side === 'north' || side === 'south' ? x0 + i : side === 'west' ? x0 : x1;
@@ -317,6 +340,34 @@ function decorateBuilding(batch: (m: MatName) => MeshBatch, mats: MaterialLibrar
   };
   for (let i = 0; i < x1 - x0; i += 3) { brace('north', i, Math.min(i + 2, x1 - x0)); brace('south', i, Math.min(i + 2, x1 - x0)); }
   for (let i = 0; i < z1 - z0; i += 3) { brace('west', i, Math.min(i + 2, z1 - z0)); brace('east', i, Math.min(i + 2, z1 - z0)); }
+  // Bracket-supported entry roofs stay above head clearance; there are no cosmetic
+  // posts in the canonical approach lane. Public halls have a gabled porch hood,
+  // while working buildings have a broader shed hood.
+  if (profile.entry && p.door) {
+    const side = [{d:Math.abs(p.door.z-z0),nx:0,nz:-1},{d:Math.abs(p.door.z-z1),nx:0,nz:1},{d:Math.abs(p.door.x-x0),nx:-1,nz:0},{d:Math.abs(p.door.x-x1),nx:1,nz:0}].sort((a,b)=>a.d-b.d)[0];
+    const {nx,nz}=side, ex=nx?(nx<0?x0:x1+1):p.door.x+.5, ez=nz?(nz<0?z0:z1+1):p.door.z+.5;
+    const half=profile.kind==='cottage'?.95:profile.kind==='workshop'||profile.kind==='shop'?2:1.65, depth=profile.kind==='cottage'?.8:1.35;
+    const y=p.door.y+2.75, pitched=profile.kind==='tavern'||profile.kind==='civic'||profile.kind==='cottage';
+    const P=(u:number,v:number,h:number):V=>[ex-rx+nz*u+nx*v,h,ez-rz-nx*u+nz*v];
+    const face=(m:MeshBatch,q:V[],n:V,t:V,tpm:number)=>m.polygon(fixWinding(q,n),n,t,tpm);
+    const hood=batch(fit.material),ht=mats.tilesPerMetre(fit.material);
+    if(pitched) {
+      for(const s of [-1,1]) {
+        const surface=[P(s*half,-.08,y),P(s*half,depth,y),P(0,depth,y+.85),P(0,-.08,y+.85)];
+        face(hood,surface,[nz*s,1,-nx*s],[.9,.86,.78],ht);
+        face(timber,surface.map(p=>[p[0],p[1]-.08,p[2]] as V),[-nz*s,-1,nx*s],beamTint,tt);
+        face(timber,[P(s*half,depth+.015,y-.12),P(0,depth+.015,y+.73),P(0,depth+.015,y+.87),P(s*half,depth+.015,y+.02)],[nx,0,nz],beamTint,tt);
+      }
+    } else {
+      face(hood,[P(-half,-.08,y+.5),P(half,-.08,y+.5),P(half,depth,y),P(-half,depth,y)],[nx*.35,1,nz*.35],[.85,.8,.68],ht);
+      face(timber,[P(-half,-.08,y+.42),P(half,-.08,y+.42),P(half,depth,y-.08),P(-half,depth,y-.08)],[-nx*.35,-1,-nz*.35],beamTint,tt);
+      face(timber,[P(-half,depth,y-.13),P(half,depth,y-.13),P(half,depth,y),P(-half,depth,y)],[nx,0,nz],beamTint,tt);
+    }
+    // Side corbels tie the hood back into the wall above the doorway lintel.
+    for(const s of [-1,1]) for(const u of [s*(half-.2)-.05,s*(half-.2)+.05]) {
+      face(timber,[P(u,.03,y-.42),P(u,depth*.78,y-.08),P(u,.03,y-.08)],[nz*s,0,-nx*s],beamTint,tt);
+    }
+  }
 
 }
 
@@ -355,7 +406,7 @@ function fitRoof(cells: Cells, p: PlaceProjection): RoofFit | null {
 }
 
 /** A watertight gable: two slopes, ridge, fascias, gable ends and eave friezes down to the wall tops. */
-function buildGableRoof(batch: (m: MatName) => MeshBatch, mats: MaterialLibrary, p: PlaceProjection, fit: RoofFit, rx: number, rz: number): void {
+function buildGableRoof(batch: (m: MatName) => MeshBatch, mats: MaterialLibrary, p: PlaceProjection, fit: RoofFit, rx: number, rz: number, profile: ArchitectureProfile): void {
   const { x0, x1, z0, z1 } = p.bounds, y0 = fit.roofY, alongX = fit.alongX;
   // Work in (a = across the ridge, b = along the ridge) then map to x/z.
   const a0 = alongX ? z0 - 1 : x0 - 1, a1 = alongX ? z1 + 2 : x1 + 2, b0 = alongX ? x0 - 1 : z0 - 1, b1 = alongX ? x1 + 2 : z1 + 2;
@@ -400,7 +451,7 @@ function buildGableRoof(batch: (m: MatName) => MeshBatch, mats: MaterialLibrary,
   };
   gablePost(b0 + 1); gablePost(b1 - 1);
   // Ridge cap.
-  fas.box(alongX ? [b0 - rx - 0.06, ty - 0.02, rr - rz - 0.16] : [rr - rx - 0.16, ty - 0.02, b0 - rz - 0.06], alongX ? [b1 - rx + 0.06, ty + 0.16, rr - rz + 0.16] : [rr - rx + 0.16, ty + 0.16, b1 - rz + 0.06], dk, ft);
+  fas.box(alongX ? [b0 - rx - 0.06, ty - profile.eave, rr - rz - 0.16] : [rr - rx - 0.16, ty - profile.eave, b0 - rz - 0.06], alongX ? [b1 - rx + 0.06, ty + profile.eave, rr - rz + 0.16] : [rr - rx + 0.16, ty + profile.eave, b1 - rz + 0.06], dk, ft);
   // Wall fill from the wall top to the roof underside: eave friezes and gable ends, outside and in.
   const fill = (aLo: number, aHi: number, bPlane: number, outward: -1 | 1, nrm: V) => {
     // A face on the plane b = bPlane spanning a in [aLo, aHi], from wallTop up to the roof underside.
@@ -420,9 +471,52 @@ function buildGableRoof(batch: (m: MatName) => MeshBatch, mats: MaterialLibrary,
     wallBatch.polygon(fixWinding(q, nrm), nrm, [0.94, 0.94, 0.94], wt);
   };
   frieze(a0 + 1, nA0); frieze(a0 + 2, nA1); frieze(a1 - 1, nA1); frieze(a1 - 2, nA0);
+  buildRoofIdentity(batch, mats, p, profile, {a0,a1,b0,b1,alongX,top,point:P,material:fit.material});
 }
 const sub3 = (a: V, b: V): V => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
 const cross3 = (a: V, b: V): V => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+
+export interface MillWheel { cells: Set<string>; x: number; y: number; z: number; radius: number }
+export function findMillWheel(cells: Cells, p: PlaceProjection): MillWheel | null {
+  if(p.type!=='mill') return null;
+  // Recognize the canonical builder's nearby ring AND its axle. Never collect
+  // unrelated dark roofs or trim elsewhere in the resident region.
+  const {x0,x1,z0,z1,y0}=p.bounds, cz=Math.floor((z0+z1)/2);
+  for(const x of [x0-2,x1+2]) for(const cy of [y0+1,y0+2]) {
+    const towardWall=x<x0?1:-1;
+    if([0,1,2].some(i=>cells.get(x+i*towardWall,cy,cz)!==B.Log)) continue;
+    const ring=new Set<string>(); let missingAboveGround=false;
+    for(let i=0;i<16;i++) {
+      const a=i*Math.PI/8,y=cy+Math.round(Math.sin(a)*3.2),z=cz+Math.round(Math.cos(a)*3.2);
+      if(cells.get(x,y,z)===B.DarkPlanks) ring.add(`${x},${y},${z}`);
+      else if(y>=y0) missingAboveGround=true;
+    }
+    // Older observer recordings omit submerged/buried wheel cells. Never infer
+    // missing above-ground parts, or sweep up unrelated roofs from the region.
+    if(ring.size>=12&&!missingAboveGround) return {cells:ring,x:x+.5,y:cy+.5,z:cz+.5,radius:3.25};
+  }
+  return null;
+}
+export function buildMillWheel(batch: (m: MatName) => MeshBatch, mats: MaterialLibrary, w: MillWheel, rx: number, rz: number): void {
+  const b=batch('wood'),tpm=mats.tilesPerMetre('wood'),tint:V=[.68,.57,.4],cx=w.x-rx,cz=w.z-rz;
+  const point=(r:number,a:number,d:number):V=>[cx+d,w.y+Math.sin(a)*r,cz+Math.cos(a)*r];
+  const face=(q:V[],n:V,color:V=tint)=>{const v=fixWinding(q,n);b.quad(v[0],v[1],v[2],v[3],color,tpm,{normal:n});};
+  const inner=w.radius-.26,outer=w.radius,depth=.37;
+  for(let i=0;i<24;i++) {
+    const a=i*Math.PI/12,a1=(i+1)*Math.PI/12,mid=(a+a1)/2;
+    for(const d of [-depth,depth]) face([point(inner,a,d),point(inner,a1,d),point(outer,a1,d),point(outer,a,d)],[Math.sign(d),0,0]);
+    face([point(outer,a,-depth),point(outer,a1,-depth),point(outer,a1,depth),point(outer,a,depth)],[0,Math.sin(mid),Math.cos(mid)]);
+    face([point(inner,a,-depth),point(inner,a1,-depth),point(inner,a1,depth),point(inner,a,depth)],[0,-Math.sin(mid),-Math.cos(mid)]);
+    // Paddles sit inside the same original one-cell wheel thickness.
+    if(i%2===0) face([point(outer-.08,a,-depth),point(outer+.13,a,-depth),point(outer+.13,a,depth),point(outer-.08,a,depth)],[0,Math.cos(a),-Math.sin(a)],[.54,.43,.28]);
+  }
+  for(let i=0;i<8;i++) {
+    const a=i*Math.PI/4, sin=Math.sin(a),cos=Math.cos(a),near=.2,far=inner;
+    const p=(r:number,s:number,d:number):V=>[cx+d,w.y+sin*r+cos*s,cz+cos*r-sin*s];
+    for(const d of [-.16,.16]) face([p(near,-.09,d),p(far,-.09,d),p(far,.09,d),p(near,.09,d)],[Math.sign(d),0,0]);
+    for(const s of [-.09,.09]) face([p(near,s,-.16),p(far,s,-.16),p(far,s,.16),p(near,s,.16)],[0,Math.sign(s)*cos,-Math.sign(s)*sin]);
+  }
+}
 /** Reverse the point order if it winds clockwise relative to the requested outward normal. */
 function fixWinding(points: V[], normal: V): V[] {
   let nx = 0, ny = 0, nz = 0;

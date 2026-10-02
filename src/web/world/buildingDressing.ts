@@ -5,6 +5,7 @@ import { COLORS, PropBuilder, furnishing } from './propGeometry';
 import { MeshBatch } from './meshBatch';
 import type { V } from './meshBatch';
 import type { Cells } from './structures';
+import { architectureGrammar } from './architecturalGrammar';
 
 /** Inputs kept presentation-only; no dressing state is written back to the projection. */
 export interface BuildingDressingContext {
@@ -30,6 +31,7 @@ function horizontalLog(batch: MeshBatch, cx: number, cy: number, cz: number, len
 export function buildBuildingDressing(scene: Scene, mats: MaterialLibrary, place: PlaceProjection, cells: Cells | null, ctx: BuildingDressingContext): Mesh[] {
   if (!place.indoor) return [];
   const { x0, x1, z0, z1 } = place.bounds, ox = ctx.regionX0, oz = ctx.regionZ0;
+  const profile = architectureGrammar(place, cells);
   const batch = new MeshBatch();
   const local = (x: number, z: number): [number, number] => [x - ox, z - oz];
   const ground = (x: number, z: number): number => ctx.heightAt(x, z);
@@ -72,11 +74,11 @@ export function buildBuildingDressing(scene: Scene, mats: MaterialLibrary, place
   const take = (): (typeof candidates)[number] | undefined => {
     const c = selected.find(s => !slots.includes(s)); if (c) slots.push(c); return c;
   };
-  const planter = take(); if (planter) addPlanter(planter);
-  const firewood = (place.visualSeed & 3) !== 0 ? take() : undefined; if (firewood) addFirewood(firewood);
+  const planter = (profile.kind === 'cottage' || profile.kind === 'shop' || profile.kind === 'civic') ? take() : undefined; if (planter) addPlanter(planter);
+  const firewood = (profile.kind === 'tavern' || profile.kind === 'workshop') && (place.visualSeed & 3) !== 0 ? take() : undefined; if (firewood) addFirewood(firewood);
   // A resting place at public buildings; existing reusable prop geometry keeps the
   // decorative bench in the same visual family as canonical furniture.
-  if (kind.includes('tavern') || kind.includes('chapel')) {
+  if (profile.kind === 'tavern' || profile.kind === 'civic') {
     const seat = take();
     if (seat) {
       const [lx, lz] = local(seat.x, seat.z);

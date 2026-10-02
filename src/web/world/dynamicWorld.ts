@@ -8,6 +8,7 @@ import { stepDoors, type DoorHandle } from './props';
 import type { LightPool } from './lights';
 import type { Species, VegetationLibrary } from './vegetation';
 import type { TerrainBuild } from './terrain';
+import { buildCropGeometry } from './cropGeometry';
 
 /**
  * The region's changing things, built from the projected dynamics: lying items, containers, crops,
@@ -27,23 +28,7 @@ export class PropLibrary {
   item(type: string): Mesh { return this.make(`item:${type}`, b => itemGeometry(type, b)); }
   container(open: boolean): Mesh { return this.make(`container:${open}`, b => containerGeometry(b, open)); }
   crop(state: string, seed: number): Mesh {
-    return this.make(`crop:${state}:${seed % 3}`, b => {
-      if (state === 'fallow') return;
-      const n = state === 'planted' ? 3 : 4;
-      for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
-        const x = (i + 0.5) / n - 0.5 + (hash2(i, j, seed) - 0.5) * 0.1, z = (j + 0.5) / n - 0.5 + (hash2(i, j, seed + 5) - 0.5) * 0.1, k = hash2(i, j, seed + 9);
-        const h = state === 'planted' ? 0.08 : state === 'growing' ? 0.3 + k * 0.1 : state === 'mature' ? 0.7 + k * 0.15 : 0.1;
-        const low: [number, number, number] = state === 'mature' ? [0.5, 0.46, 0.2] : state === 'harvested' ? [0.55, 0.48, 0.28] : [0.28, 0.5, 0.2];
-        const top: [number, number, number] = state === 'mature' ? [0.88, 0.74, 0.34] : state === 'harvested' ? [0.6, 0.52, 0.3] : [0.46, 0.68, 0.3];
-        const w = state === 'planted' ? 0.08 : 0.16, rot = k * 3.1;
-        for (const a of [rot, rot + Math.PI / 2]) {
-          const cx = Math.cos(a) * w, cz = Math.sin(a) * w;
-          const p = (dx: number, y: number, dz: number): [number, number, number] => [x + dx, y, z + dz];
-          b.batch.quad(p(-cx, 0, -cz), p(cx, 0, cz), p(cx * 0.5, h, cz * 0.5), p(-cx * 0.5, h, -cz * 0.5), [low, low, top, top], 1, { normal: [-Math.sin(a), 0, Math.cos(a)] });
-          b.batch.quad(p(cx, 0, cz), p(-cx, 0, -cz), p(-cx * 0.5, h, -cz * 0.5), p(cx * 0.5, h, cz * 0.5), [low, low, top, top], 1, { normal: [Math.sin(a), 0, -Math.cos(a)] });
-        }
-      }
-    });
+    return this.make(`crop:${state}:${seed % 3}`, b => buildCropGeometry(b.batch,state,seed%3));
   }
   scaffold(): Mesh {
     return this.make('scaffold', b => {
@@ -120,10 +105,13 @@ export class RegionDynamics {
       this.sync(seen, `c:${c.id}`, sig, () => ({ sig, node: this.instance(this.props.container(c.open), `container-${c.id}`, c.pos.x + 0.5, c.pos.y, c.pos.z + 0.5, hash2(c.pos.x, c.pos.z, 7) * 0.4) }));
     }
     for (const c of d.crops) {
-      this.sync(seen, `p:${c.id}`, c.state, () => {
-        if (c.state === 'fallow') return { sig: c.state, node: new TransformNode(`empty-${c.id}`, this.scene) };
-        const m = this.instance(this.props.crop(c.state, Math.floor(hash2(c.pos.x, c.pos.z, 1) * 3)), `crop-${c.id}`, c.pos.x + 0.5, c.pos.y + 1, c.pos.z + 0.5, hash2(c.pos.x, c.pos.z, 2) * 6.28, c.state === 'growing' ? 0.6 + 0.4 * Math.min(1, c.growth) : 1);
-        return { sig: c.state, node: m };
+      const growth=Math.round(Math.max(0,Math.min(1,c.growth))*8)/8, sig=`${c.state}|${c.state==='growing'?growth:0}|${c.pos.x},${c.pos.y},${c.pos.z}`;
+      this.sync(seen, `p:${c.id}`, sig, () => {
+        if (c.state === 'fallow') return { sig, node: new TransformNode(`empty-${c.id}`, this.scene) };
+        const m = this.instance(this.props.crop(c.state, Math.floor(hash2(c.pos.x, c.pos.z, 1) * 3)), `crop-${c.id}`, c.pos.x + 0.5, c.pos.y + 1, c.pos.z + 0.5, 0);
+        // Height follows growth; row spacing is fixed across adjacent canonical plot cells.
+        m.scaling.y=c.state==='growing'?.45+.55*growth:1;
+        return { sig, node: m };
       });
     }
     for (const r of d.resources as ResourceProjection[]) this.resource(seen, r);
