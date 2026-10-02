@@ -73,6 +73,17 @@ try {
   await page.waitForTimeout(750);
   const bounds=await page.locator('.tv-talk').boundingBox();
   note('settled conversation fits viewport',!!bounds && bounds.x>=0 && bounds.x+bounds.width<=1601 && bounds.y>=0 && bounds.y+bounds.height<=1001,bounds);
+  const portraitPixels=await page.locator('.tv-portrait canvas').evaluate((canvas:HTMLCanvasElement)=>{
+    const {width:w,height:h}=canvas,data=canvas.getContext('2d')!.getImageData(0,0,w,h).data;
+    let pixels=0,upper=0,minX=w,maxX=0;
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+      const i=(y*w+x)*4;
+      if(Math.abs(data[i]-data[0])+Math.abs(data[i+1]-data[1])+Math.abs(data[i+2]-data[2])<35)continue;
+      pixels++;if(y<h/2)upper++;minX=Math.min(minX,x);maxX=Math.max(maxX,x);
+    }
+    return {pixels,upper,span:maxX-minX,width:w,height:h};
+  });
+  note('portrait renders a visible upper-body image',portraitPixels.pixels>1280&&portraitPixels.upper>200&&portraitPixels.span>64,portraitPixels);
   await page.screenshot({ path: join(out, '03-isometric-conversation.png') });
   const trade = page.getByRole('button', { name: /^Trade$/i });
   if (await trade.count()) await trade.first().click();

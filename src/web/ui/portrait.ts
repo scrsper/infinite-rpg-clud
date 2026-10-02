@@ -1,6 +1,47 @@
 import { Color4, FreeCamera, RenderTargetTexture, Vector3, type AbstractMesh, type Scene } from '@babylonjs/core';
 import type { ActorManager } from '../actors/actorManager';
+import type { CharacterRig } from '../actors/characterRig';
 import type { PortraitSource } from './dialoguePanel';
+
+export interface PortraitCameraPlan {
+  position: { x: number; y: number; z: number };
+  target: { x: number; y: number; z: number };
+  distance: number;
+  fov: number;
+}
+
+export function portraitCameraPlanFromBasis(center: { x: number; y: number; z: number }, forward: { x: number; y: number; z: number }, right: { x: number; y: number; z: number }, bodyHeight: number): PortraitCameraPlan {
+  const h = Math.max(0.8, bodyHeight);
+  const distance = Math.max(1.35, h * 0.92);
+  const targetY = center.y - h * 0.075;
+  const side = h * 0.055;
+  const fl = Math.hypot(forward.x, forward.z) || 1, rl = Math.hypot(right.x, right.z) || 1;
+  return {
+    position: { x: center.x + forward.x / fl * distance + right.x / rl * side, y: targetY + h * 0.025, z: center.z + forward.z / fl * distance + right.z / rl * side },
+    target: { x: center.x, y: targetY, z: center.z },
+    distance,
+    fov: 0.62,
+  };
+}
+
+/**
+ * Stable bust framing for the Babylon character convention.
+ *
+ * CharacterRig turns the authored +Z model around once, so a character's
+ * world-forward direction is the same -sin(yaw), -cos(yaw) vector used by
+ * ActorManager. Keeping this calculation pure makes the framing contract
+ * testable without booting a WebGPU scene.
+ */
+export function portraitCameraPlan(root: { x: number; y: number; z: number }, yaw: number, bodyHeight: number, eyeHeight: number): PortraitCameraPlan {
+  const forwardX = -Math.sin(yaw), forwardZ = -Math.cos(yaw);
+  const rightX = Math.cos(yaw), rightZ = -Math.sin(yaw);
+  const h = Math.max(0.8, bodyHeight);
+  return portraitCameraPlanFromBasis({ x: root.x, y: root.y + eyeHeight, z: root.z }, { x: forwardX, y: 0, z: forwardZ }, { x: rightX, y: 0, z: rightZ }, h);
+}
+
+export function portraitMeshes(root: { getChildMeshes(directDescendantsOnly?: boolean): AbstractMesh[] }): AbstractMesh[] {
+  return root.getChildMeshes(false);
+}
 
 /**
  * A live bust portrait of whoever is speaking, rendered from the scene itself: a small render-target
@@ -15,11 +56,11 @@ export class PortraitRenderer implements PortraitSource {
   private acc = 0;
   private readonly size = { w: 320, h: 400 };
   constructor(private readonly scene: Scene, private readonly actors: ActorManager) {
-    this.rtt = new RenderTargetTexture('portrait', { width: this.size.w, height: this.size.h }, scene, { generateMipMaps: false, generateDepthBuffer: true, type: 0 });
+    this.rtt = new RenderTargetTexture('portrait', { width: this.size.w, height: this.size.h }, scene, { generateMipMaps: false, generateDepthBuffer: true, doNotChangeAspectRatio: false, type: 0 });
     this.rtt.clearColor = new Color4(0.09, 0.11, 0.16, 1);
     this.rtt.noPrePassRenderer = true;
     this.rtt.refreshRate = RenderTargetTexture.REFRESHRATE_RENDER_ONEVERYFRAME; this.rtt.skipInitialClear = false;
-    this.camera = new FreeCamera('portrait-cam', new Vector3(0, 1.6, 2), scene); this.camera.fov = 0.42; this.camera.minZ = 0.05; this.camera.maxZ = 8; this.camera.parent = null;
+    this.camera = new FreeCamera('portrait-cam', new Vector3(0, 1.6, 2), scene); this.camera.fov = 0.62; this.camera.minZ = 0.05; this.camera.maxZ = 8; this.camera.parent = null;
     this.rtt.activeCamera = this.camera;
   }
 
@@ -37,13 +78,20 @@ export class PortraitRenderer implements PortraitSource {
     this.acc += dt; if (this.acc < 0.12 || a.busy) return; this.acc = 0;
     const actor = this.actors.get(a.bodyId); if (!actor) return;
     const root = actor.visual.root, head = this.actors.headPoint(a.bodyId, new Vector3()); if (!head) return;
-    // The face sits a little below the top of the head box; look from the person's front, slightly off-axis.
-    const yaw = root.rotation.y, fx = -Math.sin(yaw), fz = -Math.cos(yaw), rx = Math.cos(yaw), rz = -Math.sin(yaw);
-    const vis = actor.visual as unknown as { eyeHeight?: number; bodyHeight?: number }, bh = vis.bodyHeight ?? actor.visual.headHeight - 0.18, eye = vis.eyeHeight ?? bh * 0.92;
-    const face = new Vector3(root.position.x, root.position.y + eye - 0.05 * bh, root.position.z), d = 0.42 * bh;
-    this.camera.position.copyFromFloats(face.x + fx * d + rx * 0.22 * d, face.y + 0.03, face.z + fz * d + rz * 0.22 * d);
-    this.camera.setTarget(face.add(new Vector3(0, 0.0, 0)));
-    const meshes: AbstractMesh[] = root.getChildMeshes(false);
+    const vis = actor.visual as unknown as { bodyHeight?: number; rig?: CharacterRig }, bh = vis.bodyHeight ?? actor.visual.headHeight - 0.18;
+    // The work, crouch and conversation poses move the head away from its rest
+    // height. Frame the posed rig rather than aiming above a bent character.
+    const headNode = vis.rig?.bones.get('head')?.node;
+    if (headNode) { headNode.computeWorldMatrix(true); head.copyFrom(headNode.getAbsolutePosition()); }
+    else head.y -= bh * .2;
+    const forward = root.getDirection(new Vector3(0, 0, -1)), right = root.getDirection(new Vector3(1, 0, 0));
+    const plan = portraitCameraPlanFromBasis(head, forward, right, bh);
+    this.camera.fov = plan.fov;
+    this.camera.position.copyFromFloats(plan.position.x, plan.position.y, plan.position.z);
+    this.camera.setTarget(new Vector3(plan.target.x, plan.target.y, plan.target.z));
+    // CharacterRig nests the meshes below the model node. `false` means
+    // directDescendantsOnly=false in Babylon and therefore traverses the rig.
+    const meshes: AbstractMesh[] = portraitMeshes(root);
     this.rtt.renderList = meshes;
     a.busy = true;
     const p = this.rtt.readPixels(0, 0, null, false, false) as unknown as Promise<ArrayBufferView> | ArrayBufferView | null;

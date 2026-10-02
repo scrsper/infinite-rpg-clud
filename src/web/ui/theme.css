@@ -132,7 +132,7 @@ body { font-family: var(--sans); color: var(--ivory); -webkit-font-smoothing: an
 /* ── dialogue ─────────────────────────────────────────────────────────────────────────────── */
 .tv-talk { position: absolute; left: 50%; bottom: 1.5rem; transform: translateX(-50%); width: min(68rem, 94vw); display: grid; grid-template-columns: 16rem minmax(0, 1fr); gap: 1.8rem; padding: 1.6rem; animation: tv-rise .25s var(--ease); max-height: 76vh; background: linear-gradient(125deg,rgba(21,30,42,.96),rgba(10,15,22,.97)); backdrop-filter: blur(16px); }
 .tv-portrait { position: relative; align-self: stretch; width: 16rem; min-height: 22rem; border: 1px solid var(--gold-soft); background: radial-gradient(circle at 50% 30%, #2a3446, #0d1016); overflow: hidden; }
-.tv-portrait canvas { width: 100%; height: 100%; display: block; }
+.tv-portrait canvas { width: 100%; height: 100%; display: block; object-fit: contain; }
 .tv-portrait figcaption { position: absolute; left: 0; right: 0; bottom: 0; padding: .3rem .5rem; background: linear-gradient(0deg, rgba(0,0,0,.8), transparent); font-family: var(--serif); letter-spacing: .06em; text-align: center; }
 .tv-transcript { max-height: 11rem; overflow: auto; display: grid; gap: .45rem; padding-right: .5rem; scrollbar-width: thin; scrollbar-color: var(--gold-dim) transparent; }
 .tv-line { padding: .45rem .8rem; border-radius: 4px; background: rgba(255,255,255,.04); border-left: 2px solid var(--gold-dim); }

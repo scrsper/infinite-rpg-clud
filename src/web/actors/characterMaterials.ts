@@ -42,8 +42,10 @@ const mix = (a: [number, number, number], b: [number, number, number], t: number
 
 function weave(g: CanvasRenderingContext2D, S: number, base: [number, number, number], rnd: () => number, strength = 1): void {
   g.fillStyle = rgbs(base); g.fillRect(0, 0, S, S);
-  for (let y = 0; y < S; y += 2) { g.fillStyle = rgbs(shade(base, 0.94 + rnd() * 0.08), 0.5 * strength); g.fillRect(0, y, S, 1); }
-  for (let x = 0; x < S; x += 2) { g.fillStyle = rgbs(shade(base, 0.95 + rnd() * 0.06), 0.4 * strength); g.fillRect(x, 0, 1, S); }
+  // Keep the weave visible at the game's medium camera distance. It remains a
+  // restrained value shift, so canonical palette colours still carry the look.
+  for (let y = 0; y < S; y += 2) { g.fillStyle = rgbs(shade(base, 0.91 + rnd() * 0.12), 0.68 * strength); g.fillRect(0, y, S, 1); }
+  for (let x = 0; x < S; x += 2) { g.fillStyle = rgbs(shade(base, 0.92 + rnd() * 0.10), 0.56 * strength); g.fillRect(x, 0, 1, S); }
 }
 
 function flower(g: CanvasRenderingContext2D, x: number, y: number, r: number, col: [number, number, number], rot: number, centre: [number, number, number]): void {
@@ -140,12 +142,21 @@ export class CharacterMaterials {
     this.skinTint = c3(spec.skin);
     const make = (slot: string, cfg: (m: PBRMaterial) => void) => { const m = new PBRMaterial(`${id}.${slot}`, scene); m.metallic = 0; m.roughness = 0.8; m.environmentIntensity = 0.6; m.maxSimultaneousLights = 8; cfg(m); this.bySlot.set(slot, m); this.owned.push(m); return m; };
 
-    make('TV_SkinBody', m => { m.albedoColor = c3(spec.skin).multiply(new Color3(.88, .75, .69)); m.roughness = 0.58; m.subSurface.isTranslucencyEnabled = false; });
+    make('TV_SkinBody', m => {
+      // Body skin previously became a dark orange flat block beside the painted
+      // head. Keep the canonical tone while restoring a shared, readable value
+      // range and a little light transmission at hands/forearms.
+      m.albedoColor = c3(spec.skin).multiply(new Color3(.96, .88, .84)); m.roughness = 0.68;
+      m.subSurface.isTranslucencyEnabled = true; m.subSurface.translucencyIntensity = .1; m.subSurface.tintColor = c3(spec.skin);
+    });
     make('TV_Lash', m => { m.albedoColor = new Color3(.035, .019, .025); m.roughness = .65; });
     const faceKey = `face:${id}`;
     const faceTex = new DynamicTexture(faceKey, { width: 512, height: 512 }, scene, true, Texture.TRILINEAR_SAMPLINGMODE);
     paintFace(faceTex.getContext() as CanvasRenderingContext2D, 512, spec.face); faceTex.update(false); faceTex.anisotropicFilteringLevel = 8; this.owned.push(faceTex);
-    make('TV_SkinHead', m => { m.albedoTexture = faceTex; m.albedoColor = Color3.White(); m.roughness = 0.5; });
+    make('TV_SkinHead', m => {
+      m.albedoTexture = faceTex; m.albedoColor = Color3.White(); m.roughness = 0.58;
+      m.subSurface.isTranslucencyEnabled = true; m.subSurface.translucencyIntensity = .06; m.subSurface.tintColor = c3(spec.skin);
+    });
     const eyeTex = new DynamicTexture(`eye:${id}`, { width: 128, height: 128 }, scene, true); paintEye(eyeTex.getContext() as CanvasRenderingContext2D, 128, spec.eye); eyeTex.update(false); this.owned.push(eyeTex);
     make('TV_Eye', m => { m.albedoTexture = eyeTex; m.albedoColor = Color3.White(); m.roughness = 0.08; m.environmentIntensity = 1; m.clearCoat.isEnabled = true; m.clearCoat.intensity = 0.6; m.clearCoat.roughness = 0.03; });
     const paired = new DynamicTexture(`iris-pair:${id}`, { width: 1024, height: 512 }, scene, true);
@@ -159,7 +170,7 @@ export class CharacterMaterials {
         g.beginPath(); g.moveTo(x,0); g.bezierCurveTo(x-2,80,x+2,180,x,256); g.stroke();
       }
     }, this.prints);
-    make('TV_Hair', m => { m.albedoColor = c3(spec.hair); m.albedoTexture = hairTex; m.roughness = .42; m.metallic = 0; m.backFaceCulling = false; m.anisotropy.isEnabled = true; m.anisotropy.intensity = .75; m.anisotropy.direction.set(0, 1); m.sheen.isEnabled = true; m.sheen.intensity = spec.hairShine ?? .5; m.sheen.color = c3(mix(spec.hair, [255, 255, 255], .5)); });
+    make('TV_Hair', m => { m.albedoColor = c3(spec.hair); m.albedoTexture = hairTex; m.roughness = .48; m.metallic = 0; m.backFaceCulling = false; m.anisotropy.isEnabled = true; m.anisotropy.intensity = .85; m.anisotropy.direction.set(0, 1); m.sheen.isEnabled = true; m.sheen.intensity = Math.max(.6, spec.hairShine ?? .5); m.sheen.color = c3(mix(spec.hair, [255, 255, 255], .5)); });
 
     const cl = spec.cloth, weaveN = weaveNormal(scene);
     const key = (slot: string) => `${slot}:${cl.motif}:${cl.primary}|${cl.secondary}|${cl.accent}|${Math.round(cl.wear * 4)}:${cl.seed % 4}`;
@@ -170,9 +181,9 @@ export class CharacterMaterials {
         : dyn(scene, key(slot), 256, g => paintCloth(g, 256, cl, kind), this.prints);
       if (couture) this.owned.push(tex);
       make(slot, m => {
-        m.albedoTexture = tex; m.albedoColor = Color3.White(); m.bumpTexture = weaveN; m.bumpTexture.level = 0.22; m.roughness = slot === 'TV_Accent' ? 0.45 : silk ? .58 : .88;
+        m.albedoTexture = tex; m.albedoColor = Color3.White(); m.bumpTexture = weaveN; m.bumpTexture.level = 0.34; m.roughness = slot === 'TV_Accent' ? 0.45 : silk ? .58 : .84;
         if (couture) { m.roughness = .54; m.backFaceCulling = false; tex.anisotropicFilteringLevel = 8; }
-        m.sheen.isEnabled = true; m.sheen.intensity = silk ? .65 : slot === 'TV_Accent' ? 0.5 : 0.25; m.sheen.color = c3(mix(cl.accent, [255, 255, 255], 0.4));
+        m.sheen.isEnabled = true; m.sheen.intensity = silk ? .65 : slot === 'TV_Accent' ? 0.5 : 0.34; m.sheen.color = c3(mix(cl.accent, [255, 255, 255], 0.4));
         if (tex) { tex.uScale = 1; tex.vScale = 1; }
       });
     }
