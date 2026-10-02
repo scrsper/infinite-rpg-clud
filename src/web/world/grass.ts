@@ -38,7 +38,7 @@ export class GrassField {
     this.host = new Mesh('grass', scene);
     const vd = new VertexData(); vd.positions = pos; vd.normals = nrm; vd.colors = col; vd.indices = idx; vd.applyToMesh(this.host);
     const m = new PBRMaterial('grass-mat', scene);
-    m.albedoColor = Color3.White(); m.roughness = 0.85; m.metallic = 0; m.backFaceCulling = false; m.twoSidedLighting = true; m.environmentIntensity = 0.5; m.maxSimultaneousLights = 4;
+    m.albedoColor = Color3.White(); m.roughness = 0.94; m.specularIntensity = .12; m.metallic = 0; m.backFaceCulling = false; m.twoSidedLighting = true; m.environmentIntensity = 0.5; m.maxSimultaneousLights = 4;
     this.mat = m;
     this.wind = new GrassWind(m);
     this.host.material = m; this.host.isPickable = false; this.host.alwaysSelectAsActiveMesh = true; this.host.receiveShadows = true; this.host.setEnabled(false);
@@ -71,7 +71,7 @@ export class GrassField {
       const macro = worldNoise(x, z, 60, 3), warm = patch * 0.7 + macro * 0.3, tone = 0.86 + hash2(ix, iz, 89) * 0.28;
       // Warm moss and sage variations keep the grass legible against the cool,
       // muddy ground without turning it into a saturated green carpet.
-      const r = (0.34 + 0.14 * warm) * tone, gr = (0.49 + 0.12 * (1 - warm)) * tone, b = (0.21 + 0.07 * (1 - warm)) * tone;
+      const r = (0.36 + 0.08 * warm) * tone, gr = (0.43 + 0.09 * (1 - warm)) * tone, b = (0.25 + 0.06 * (1 - warm)) * tone;
       Quaternion.RotationAxisToRef(Vector3.Up(), hash2(ix, iz, 97) * 6.283, q); s.set(sc, sc * (0.8 + hash2(ix, iz, 101) * 0.6), sc); p.set(x - o.x, g.y - o.y - 0.02, z - o.z);
       Matrix.ComposeToRef(s, q, p, m); m.copyToArray(this.matrices, n * 16);
       this.colors[n * 4] = Math.pow(r, 2.2); this.colors[n * 4 + 1] = Math.pow(gr, 2.2); this.colors[n * 4 + 2] = Math.pow(b, 2.2); this.colors[n * 4 + 3] = 1; n++;
