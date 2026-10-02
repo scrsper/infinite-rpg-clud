@@ -11,6 +11,7 @@ import { buildTerrain, type TerrainBuild } from './terrain';
 import { needsCutaway } from './cutaway';
 import { noteSlow } from '../game/probe';
 import { InstanceSet, VegetationLibrary, scatterVegetation } from './vegetation';
+import { WindowLighting } from './windowLighting';
 
 /**
  * Owns every resident region's scene content and the floating origin.
@@ -23,7 +24,7 @@ import { InstanceSet, VegetationLibrary, scatterVegetation } from './vegetation'
  */
 interface RegionEntry {
   id: string; projection: RegionProjection; root: TransformNode; terrain: TerrainBuild; meshes: Mesh[]; instances: InstanceSet; lightIds: string[];
-  doors: DoorHandle[]; dynamics: RegionDynamics; cells: Cells | null; pathCells: Set<number>; boxes: { x0: number; z0: number; x1: number; z1: number }[]; stats: { cells: number; roofs: number; windows: number; trees: number; props: number; buildMs: number; stageMs?: Record<string, number> };
+  doors: DoorHandle[]; dynamics: RegionDynamics; windows: WindowLighting; cells: Cells | null; pathCells: Set<number>; boxes: { x0: number; z0: number; x1: number; z1: number }[]; stats: { cells: number; roofs: number; windows: number; trees: number; props: number; buildMs: number; stageMs?: Record<string, number> };
 }
 
 export class RegionManager {
@@ -165,7 +166,6 @@ export class RegionManager {
     while (!stStep.done) { yield; stStep = stSteps.next(); }
     const st = stStep.value;
     for (const m of st.meshes) { m.parent = root; meshes.push(m); if (m.name.startsWith('walls') || m.name.startsWith('roof') || m.name.includes('struct')) this.atmosphere.addCaster(m); }
-    for (const m of st.panes.values()) { m.parent = root; meshes.push(m); }
     lightList.push(...st.lights);
     stage('structures'); yield;
 
@@ -195,13 +195,14 @@ export class RegionManager {
     });
 
     const dynamics = new RegionDynamics(scene, this.mats, this.props, this.vegetation, proj, terrain, this.lights, sp.doors, root, m => this.atmosphere.addCaster(m));
+    const windows = new WindowLighting(scene, proj, cells, st.panes, this.lights, root);
     const entry: RegionEntry = {
-      id: proj.id, projection: proj, root, terrain, meshes, instances, lightIds, doors: sp.doors, dynamics, cells, pathCells: new Set(proj.paths.map(([x, , z]) => x * 100003 + z)), boxes: proj.places.filter(p => p.indoor).map(p => p.bounds),
+      id: proj.id, projection: proj, root, terrain, meshes, instances, lightIds, doors: sp.doors, dynamics, windows, cells, pathCells: new Set(proj.paths.map(([x, , z]) => x * 100003 + z)), boxes: proj.places.filter(p => p.indoor).map(p => p.bounds),
       stats: { cells: st.stats.cells, roofs: st.stats.roofsAnalytic, windows: st.stats.windows, trees, props: proj.furnishings.length, buildMs: performance.now() - t0, stageMs },
     };
     this.regions.set(proj.id, entry); this.place(entry);
     for (const m of meshes) { m.freezeWorldMatrix?.(); m.unfreezeWorldMatrix(); }
-    if (this.lastDynamics) dynamics.apply(this.subset(this.lastDynamics, proj.id));
+    if (this.lastDynamics) { dynamics.apply(this.subset(this.lastDynamics, proj.id)); windows.apply(this.lastDynamics.fires); }
     this.lastVeg.x = 1e9;
   }
 
@@ -216,7 +217,7 @@ export class RegionManager {
 
   applyDynamics(d: DynamicsProjection): void {
     this.lastDynamics = d; this.worldTime = d.worldTime; this.weather = { kind: d.environment.kind, intensity: d.environment.intensity, wind: d.environment.wind };
-    for (const r of this.regions.values()) r.dynamics.apply(this.subset(d, r.id));
+    for (const r of this.regions.values()) { r.dynamics.apply(this.subset(d, r.id)); r.windows.apply(d.fires); }
   }
 
   /** The server no longer wants this region: drop it now, or as soon as an in-flight build of it finishes. */
@@ -227,7 +228,7 @@ export class RegionManager {
   private disposeRegion(id: string): void {
     const r = this.regions.get(id); if (!r) return;
     for (const lid of r.lightIds) this.lights.remove(lid);
-    r.dynamics.dispose(); r.instances.dispose();
+    r.windows.dispose(); r.dynamics.dispose(); r.instances.dispose();
     for (const m of r.meshes) { this.atmosphere.removeCaster(m); if (m.metadata?.ownsCutawayMaterial) m.material?.dispose(false, false); m.dispose(false, false); }
     r.root.dispose(false, false); this.regions.delete(id);
   }
@@ -243,14 +244,14 @@ export class RegionManager {
   }
   updateCutaway(player: Vec3 | null, camera: Vector3): void {
     const worldCamera = { x: camera.x + this.origin.x, y: camera.y + this.origin.y, z: camera.z + this.origin.z };
-    for (const region of this.regions.values()) for (const mesh of region.meshes) {
+    for (const region of this.regions.values()) for (const mesh of [...region.meshes,...region.windows.meshes]) {
       const bounds = mesh.metadata?.cutawayBounds, plane = mesh.material?.clipPlane;
       if (bounds && plane) plane.d = player && needsCutaway(bounds, player, worldCamera) ? -(player.y - this.origin.y + .8) : -1e8;
     }
   }
   update(dt: number, cameraPos: Vector3, cameraForward: Vector3, night: number): void {
     this.mats.updateWeather(this.weather.kind, this.weather.intensity, dt);
-    for (const r of this.regions.values()) r.dynamics.update(dt);
+    for (const r of this.regions.values()) { r.dynamics.update(dt); r.windows.update(night); }
     this.refreshVegetation(cameraPos, cameraForward, dt);
     this.lights.update(dt, cameraPos, night);
   }

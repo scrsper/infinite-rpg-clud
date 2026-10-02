@@ -59,7 +59,7 @@ describe('isometric presentation preserves control and world boundaries', () => 
         expect(mesh.material).not.toBe(shared); expect(mesh.metadata.cutawayBounds).toBe(bounds);
         expect(mesh.metadata.ownsCutawayMaterial).toBe(true);
       }
-      const context = {origin:{x:0,y:0,z:0},regions:new Map([['test',{meshes:props.meshes}]])};
+      const context = {origin:{x:0,y:0,z:0},regions:new Map([['test',{meshes:props.meshes,windows:{meshes:[]}}]])};
       RegionManager.prototype.updateCutaway.call(context as unknown as RegionManager,{x:15,y:24,z:15},new Vector3(0,45,35));
       for(const mesh of props.meshes) expect(mesh.material!.clipPlane!.d).toBe(-24.8);
       RegionManager.prototype.updateCutaway.call(context as unknown as RegionManager,null,new Vector3(0,45,35));

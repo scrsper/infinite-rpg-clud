@@ -1,4 +1,5 @@
 import { Mesh, Plane, Scene, TransformNode } from '@babylonjs/core';
+import { B } from '../../sim/physical/blocks';
 import type { MaterialLibrary } from '../render/materials';
 import { hash2 } from '../render/noise';
 import type { PlaceProjection, RegionProjection } from '../net/messages';
@@ -25,6 +26,7 @@ export function buildStaticProps(scene: Scene, mats: MaterialLibrary, r: RegionP
   const x0 = r.bounds.x0, z0 = r.bounds.z0, out: StaticProps = { meshes: [], lights: [], doors: [], root: new TransformNode(`props-${r.id}`, scene) };
   out.root.parent = parent;
   const props = new MeshBatch(), fenceBatch = new MeshBatch();
+  const overhead = new Map<string,{batch:MeshBatch;place:PlaceProjection}>();
 
   // ── furniture ──────────────────────────────────────────────────────────────────────────────────
   const wallDir = (x: number, y: number, z: number): [number, number] | null => {
@@ -43,8 +45,19 @@ export function buildStaticProps(scene: Scene, mats: MaterialLibrary, r: RegionP
       case 'sign': case 'bench': case 'table': case 'counter': yaw = yaw; break;
       default: yaw = yaw + (hash2(seed, i, 3) - 0.5) * 0.3;
     }
-    const b = new PropBuilder(props, cx, f.role === 'lantern' ? y + 0.55 : y, cz, yaw, scale);
-    const res = furnishing(f.role, b, seed);
+    const place = r.places.find(p=>p.indoor&&f.pos.x>=p.bounds.x0&&f.pos.x<=p.bounds.x1&&f.pos.z>=p.bounds.z0&&f.pos.z<=p.bounds.z1);
+    let target=props;
+    if(f.role==='lantern'&&place) {
+      let owned=overhead.get(place.id);if(!owned){owned={batch:new MeshBatch(),place};overhead.set(place.id,owned);}target=owned.batch;
+    }
+    const b = new PropBuilder(target, cx, f.role === 'lantern' ? y + 0.55 : y, cz, yaw, scale);
+    const res = furnishing(f.role, b, seed, place?.type);
+    if(f.role==='lantern'&&place) {
+      // Attach to the existing room's roof support; the complete fitting shares
+      // that building's cutaway so hanging lamps do not float above an open room.
+      const top=place.bounds.y0+place.wallHeight;
+      if(top>y+1.2) b.cyl(0,.66,0,.012,top-y-1.21,COLORS.iron,5);
+    }
     if (res.light) out.lights.push({ x: cx, y: (f.role === 'lantern' ? y + 0.55 : y) + res.light.y, z: cz, color: res.light.color, intensity: res.light.intensity, range: res.light.range, kind: 'torch' });
   });
 
@@ -64,6 +77,10 @@ export function buildStaticProps(scene: Scene, mats: MaterialLibrary, r: RegionP
   }
 
   const propsMesh = props.build(`furniture-${r.id}`, scene, mats.get('props'), { receiveShadow: true }); if (propsMesh) { propsMesh.parent = out.root; out.meshes.push(propsMesh); }
+  for(const [id,{batch,place}] of overhead){
+    const mesh=batch.build(`fittings-${r.id}-${id}`,scene,mats.get('props'),{receiveShadow:true});
+    if(mesh){const mat=mats.clone('props',mesh.name+'-cutaway');mat.clipPlane=new Plane(0,1,0,-1e8);mesh.material=mat;mesh.metadata={cutawayBounds:place.bounds,ownsCutawayMaterial:true};mesh.parent=out.root;out.meshes.push(mesh);}
+  }
   const fenceMesh = fenceBatch.build(`fences-${r.id}`, scene, mats.get('props'), { receiveShadow: true }); if (fenceMesh) { fenceMesh.parent = out.root; out.meshes.push(fenceMesh); }
   const paths = buildPaths(scene, mats, r, heightAt);
   if (paths) { paths.parent = out.root; out.meshes.push(paths); }

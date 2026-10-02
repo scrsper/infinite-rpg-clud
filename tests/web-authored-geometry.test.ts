@@ -3,7 +3,7 @@ import { MeshBatch, cross, sub, type V } from '../src/web/world/meshBatch';
 import { buildCropGeometry } from '../src/web/world/cropGeometry';
 import { buildRoofIdentity } from '../src/web/world/roofIdentity';
 import { architectureGrammar } from '../src/web/world/architecturalGrammar';
-import { PropBuilder } from '../src/web/world/propGeometry';
+import { PropBuilder, containerGeometry } from '../src/web/world/propGeometry';
 import type { PlaceProjection } from '../src/web/net/messages';
 
 function soundTriangles(b:MeshBatch):void {
@@ -35,5 +35,9 @@ describe('authored presentation geometry',()=>{
   it('beveled furniture stays inside its original footprint with outward faces',()=>{
     const b=new MeshBatch();new PropBuilder(b).bevelBox(-1,0,-.5,2,.1,1,[1,1,1]);soundTriangles(b);
     for(let i=0;i<b.positions.length;i+=3){expect(Math.abs(b.positions[i])).toBeLessThanOrEqual(1);expect(b.positions[i+1]).toBeGreaterThanOrEqual(0);expect(b.positions[i+1]).toBeLessThanOrEqual(.1);expect(Math.abs(b.positions[i+2])).toBeLessThanOrEqual(.5);}
+  });
+  it.each([false,true])('keeps a finite coopered chest when open=%s',open=>{
+    const b=new MeshBatch();containerGeometry(new PropBuilder(b),open);soundTriangles(b);
+    const height=Math.max(...b.positions.filter((_,i)=>i%3===1));expect(height).toBeGreaterThan(open?.8:.5);
   });
 });

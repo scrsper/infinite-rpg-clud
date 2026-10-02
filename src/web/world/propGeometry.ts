@@ -1,4 +1,4 @@
-import { MeshBatch, type V } from './meshBatch';
+import { MeshBatch, type V, cross, sub, norm } from './meshBatch';
 import { hash2 } from '../render/noise';
 
 /**
@@ -34,6 +34,14 @@ export class PropBuilder {
   }
   /** Box centred on (cx, cz) on the floor. */
   cbox(cx: number, y: number, cz: number, sx: number, sy: number, sz: number, tint: Tint): void { this.box(cx - sx / 2, y, cz - sz / 2, sx, sy, sz, tint); }
+  /** Small chamfers catch light on furniture without changing its support or footprint. */
+  bevelBox(x:number,y:number,z:number,sx:number,sy:number,sz:number,tint:Tint,bevel=.018):void {
+    const e=Math.min(bevel,sx/4,sy/4,sz/4);
+    const ring=(yy:number,inset:number):V[]=>[[x+inset,yy,z+inset],[x+inset,yy,z+sz-inset],[x+sx-inset,yy,z+sz-inset],[x+sx-inset,yy,z+inset]].map(p=>this.p(p[0],p[1],p[2]));
+    const layers=[ring(y,e),ring(y+e,0),ring(y+sy-e,0),ring(y+sy,e)];
+    for(let l=0;l<3;l++)for(let i=0;i<4;i++){const j=(i+1)%4;this.batch.quad(layers[l][i],layers[l][j],layers[l+1][j],layers[l+1][i],tint,1);}
+    this.batch.polygon(layers[0].slice().reverse(),[0,-1,0],tint,1);this.batch.polygon(layers[3],[0,1,0],tint,1);
+  }
   cyl(cx: number, y: number, cz: number, r: number, h: number, tint: Tint, sides = 12, r2 = r): void {
     for (let i = 0; i < sides; i++) {
       const a0 = i / sides * Math.PI * 2, a1 = (i + 1) / sides * Math.PI * 2, m = (a0 + a1) / 2;
@@ -63,32 +71,48 @@ export class PropBuilder {
 const c = (v: Tint, k: number): Tint => [v[0] * k, v[1] * k, v[2] * k];
 export type FurnishingRole = 'bed' | 'chair' | 'table' | 'counter' | 'bench' | 'anvil' | 'forge' | 'altar' | 'shelf' | 'barrel' | 'crate' | 'lantern' | 'sign';
 
-export function furnishing(role: string, b: PropBuilder, seed: number): { light?: { y: number; color: Tint; intensity: number; range: number } } {
+export function furnishing(role: string, b: PropBuilder, seed: number, purpose?:string): { light?: { y: number; color: Tint; intensity: number; range: number } } {
   const k = 0.9 + hash2(seed, 3, 9) * 0.2;
   switch (role) {
     case 'bed': {
       const frame = c(COLORS.darkOak, k), cloth = hash2(seed, 1, 4) > 0.5 ? COLORS.red : COLORS.blue;
       b.box(-0.46, 0.0, -0.95, 0.92, 0.28, 1.9, frame); b.box(-0.42, 0.28, -0.9, 0.84, 0.16, 1.8, COLORS.linen);
-      b.box(-0.42, 0.44, -0.4, 0.84, 0.05, 1.3, cloth); b.box(-0.34, 0.44, -0.86, 0.68, 0.1, 0.34, COLORS.linen);
+      b.bevelBox(-0.42, 0.44, -0.4, 0.84, 0.05, 1.3, cloth); b.blob(0,.48,-.68,.32,.075,.16,COLORS.linen,10,6);
+      for(const x of [-.47,.41])for(const z of [-.96,.89])b.cyl(x+.03,.02,z+.03,.045,.76,frame,8,.035);
+      b.box(-.4,.487,.57,.8,.012,.06,c(cloth,.7));
       b.box(-0.48, 0.28, -1.0, 0.96, 0.5, 0.08, frame); b.box(-0.48, 0.28, 0.92, 0.96, 0.22, 0.08, frame);
       return {};
     }
     case 'chair': {
       const w = c(COLORS.oak, k);
-      b.box(-0.24, 0.42, -0.24, 0.48, 0.06, 0.48, w); for (const [x, z] of [[-0.22, -0.22], [0.16, -0.22], [-0.22, 0.16], [0.16, 0.16]]) b.box(x, 0, z, 0.06, 0.42, 0.06, w);
-      b.box(-0.24, 0.48, 0.18, 0.48, 0.44, 0.05, w); b.box(-0.2, 0.62, 0.18, 0.4, 0.05, 0.06, c(w, 0.8));
+      for(let i=0;i<3;i++)b.bevelBox(-.24+i*.16,.42,-.24,.155,.065,.48,c(w,.92+i*.06),.009);
+      for(const x of [-.2,.2])for(const z of [-.2,.2])b.cyl(x,.02,z,.028,z>0?.84:.4,c(w,.8),7,.034);
+      b.bevelBox(-.24,.84,.17,.48,.09,.065,w,.012);
+      for(const x of [-.125,0,.125])b.bevelBox(x-.025,.48,.19,.05,.36,.04,c(w,1.08),.007);
+      for(const x of [-.2,.2])b.box(x-.02,.19,-.2,.04,.045,.4,c(w,.75));
       return {};
     }
     case 'table': {
       const w = c(COLORS.oak, k);
-      b.box(-0.5, 0.7, -0.5, 1, 0.07, 1, w); b.box(-0.5, 0.65, -0.5, 1, 0.05, 1, c(w, 0.7));
-      for (const [x, z] of [[-0.44, -0.44], [0.36, -0.44], [-0.44, 0.36], [0.36, 0.36]]) b.box(x, 0, z, 0.08, 0.7, 0.08, c(w, 0.85));
-      if (hash2(seed, 5, 2) > 0.55) b.cyl(0.1, 0.77, 0, 0.08, 0.12, COLORS.stone, 8);
+      for(let i=0;i<5;i++)b.bevelBox(-.5+i*.2,.7,-.5,.196,.07,1,c(w,.9+hash2(i,seed,8)*.17),.012);
+      b.box(-.46,.6,-.46,.92,.1,.08,c(w,.72));b.box(-.46,.6,.38,.92,.1,.08,c(w,.72));
+      for(const x of [-.39,.39])for(const z of [-.39,.39]) {b.cyl(x,.03,z,.036,.63,c(w,.85),8,.055);b.cyl(x,.08,z,.047,.06,c(w,.7),8);}
+      b.box(-.4,.25,-.035,.8,.07,.07,c(w,.8));
+      if(purpose==='tavern'||hash2(seed,5,2)>.65){
+        // Unfilled crockery communicates use, not a canonical meal or stock.
+        b.cyl(.18,.77,.12,.12,.024,COLORS.stone,14,.115);
+        b.cyl(-.17,.77,.12,.06,.095,c(COLORS.stone,.76),10,.067);b.cyl(-.17,.862,.12,.049,.009,COLORS.darkOak,10);
+        b.bevelBox(-.32,.772,-.29,.35,.008,.24,COLORS.linen,.003);
+      }
       return {};
     }
     case 'counter': {
       const w = c(COLORS.darkOak, k);
-      b.box(-0.5, 0, -0.5, 1, 0.9, 1, w); b.box(-0.56, 0.9, -0.56, 1.12, 0.07, 1.12, c(COLORS.oak, k)); b.box(-0.46, 0.05, -0.51, 0.92, 0.7, 0.03, c(w, 1.25));
+      b.box(-0.5, 0, -0.5, 1, 0.9, 1, w);b.bevelBox(-.54,.9,-.54,1.08,.075,1.08,c(COLORS.oak,k),.017);
+      for(const z of [-.535,.505]) {
+        for(const x of [-.46,.36])b.bevelBox(x,.06,z,.1,.78,.045,c(w,1.4));
+        for(const y of [.08,.71])b.bevelBox(-.46,y,z,.92,.12,.05,c(w,1.25));
+      }
       return {};
     }
     case 'bench': { const w = c(COLORS.oak, k); b.box(-0.5, 0.4, -0.22, 1, 0.07, 0.44, w); b.box(-0.44, 0, -0.18, 0.08, 0.4, 0.36, w); b.box(0.36, 0, -0.18, 0.08, 0.4, 0.36, w); return {}; }
@@ -104,7 +128,13 @@ export function furnishing(role: string, b: PropBuilder, seed: number): { light?
       for (let s = 0; s < 4; s++) { b.box(-0.46, 0.25 + s * 0.45, -0.2, 0.92, 0.04, 0.4, c(COLORS.oak, 1.1)); for (let i = 0; i < 7; i++) { const h = 0.22 + hash2(seed + i, s, 8) * 0.14; b.box(-0.42 + i * 0.12, 0.29 + s * 0.45, -0.14, 0.09, h, 0.28, [COLORS.red, COLORS.blue, COLORS.green, COLORS.leather, COLORS.paper][(i + s + seed) % 5]); } }
       return {};
     }
-    case 'barrel': { const r = 0.34; b.cyl(0, 0, 0, r * 0.88, 0.85, c(COLORS.oak, k), 12, r * 0.88); b.cyl(0, 0.3, 0, r, 0.3, c(COLORS.oak, k), 12, r); for (const y of [0.1, 0.42, 0.74]) b.cyl(0, y, 0, r * (y > 0.3 && y < 0.6 ? 1.04 : 0.93), 0.05, COLORS.iron, 12); return {}; }
+    case 'barrel': {
+      const w=c(COLORS.oak,k);
+      b.cyl(0,0,0,.28,.23,w,12,.34);b.cyl(0,.23,0,.34,.39,w,12,.34);b.cyl(0,.62,0,.34,.23,w,12,.28);
+      for(const y of [.09,.26,.57,.73]) {const r=y<.23?.28+y/.23*.06:y>.62?.34-(y-.62)/.23*.06:.34;b.cyl(0,y,0,r+.008,.035,COLORS.iron,12);}
+      for(let i=0;i<5;i++){const z=(i-2)*.104,span=2*Math.sqrt(Math.max(0,.27*.27-z*z));b.bevelBox(-span/2,.847,z-.048,span,.016,.096,c(w,.86+i*.055),.003);}
+      return {};
+    }
     case 'crate': { const w = c(COLORS.pine, k); b.box(-0.42, 0, -0.42, 0.84, 0.84, 0.84, w); for (const y of [0.02, 0.4, 0.74]) b.box(-0.44, y, -0.44, 0.88, 0.08, 0.88, c(w, 0.72)); return {}; }
     case 'lantern': { b.cyl(0, 0.05, 0, 0.11, 0.26, COLORS.glass, 8); b.cyl(0, 0.3, 0, 0.13, 0.04, COLORS.iron, 8); b.cyl(0, 0.03, 0, 0.12, 0.03, COLORS.iron, 8); b.cyl(0, 0.34, 0, 0.012, 0.3, COLORS.iron, 4); b.blob(0, 0.18, 0, 0.06, 0.08, 0.06, [1.4, 1.1, 0.6], 6, 4); return { light: { y: 0.2, color: [1, 0.72, 0.38], intensity: 1.0, range: 9 } }; }
     case 'sign': { b.box(-0.05, 0, -0.05, 0.1, 1.6, 0.1, COLORS.darkOak); b.box(-0.45, 1.1, -0.04, 0.9, 0.42, 0.06, COLORS.oak); b.box(-0.4, 1.14, 0.02, 0.8, 0.34, 0.02, c(COLORS.pine, 1.1)); return {}; }
@@ -148,7 +178,23 @@ export function itemGeometry(type: string, b: PropBuilder): void {
 
 /** A lidded chest or sack for canonical containers. */
 export function containerGeometry(b: PropBuilder, open: boolean): void {
-  b.box(-0.42, 0, -0.28, 0.84, 0.4, 0.56, COLORS.oak); b.box(-0.44, 0.02, -0.3, 0.88, 0.05, 0.6, COLORS.iron); b.box(-0.44, 0.3, -0.3, 0.88, 0.05, 0.6, COLORS.iron);
-  if (open) { b.box(-0.42, 0.4, -0.4, 0.84, 0.04, 0.28, COLORS.darkOak); b.box(-0.4, 0.38, -0.26, 0.8, 0.02, 0.5, [0.16, 0.12, 0.1]); }
-  else { b.box(-0.42, 0.4, -0.28, 0.84, 0.1, 0.56, c(COLORS.oak, 1.1)); b.box(-0.04, 0.3, 0.27, 0.08, 0.14, 0.03, COLORS.brass); }
+  // Hollow case and hinged coopered lid retain the canonical open/closed state.
+  b.bevelBox(-.42,0,-.28,.84,.06,.56,COLORS.darkOak);
+  for(const z of [-.28,.23])b.bevelBox(-.42,.04,z,.84,.36,.05,COLORS.oak,.009);
+  for(const x of [-.42,.37])b.bevelBox(x,.04,-.23,.05,.36,.46,COLORS.oak,.009);
+  for(const x of [-.3,.25])for(const z of [-.288,.238])b.box(x,.025,z,.05,.375,.05,COLORS.iron);
+  b.box(-.042,.27,.282,.084,.14,.025,COLORS.brass);
+  const angle=open?1.35:0, cs=Math.cos(angle), sn=Math.sin(angle);
+  const P=(x:number,dy:number,z:number):V=>b.p(x,.4+dy*cs+(z+.28)*sn,-.28-dy*sn+(z+.28)*cs);
+  const ring=(x:number)=>Array.from({length:9},(_,i)=>P(x,Math.sin(i*Math.PI/8)*.16,Math.cos(i*Math.PI/8)*.28));
+  const left=ring(-.425),right=ring(.425);
+  for(let i=0;i<8;i++) {
+    // Looking from above, X cross increasing theta gives the outward crown normal.
+    b.batch.quad(left[i],right[i],right[i+1],left[i+1],c(COLORS.oak,.93+(i%3)*.06),1);
+    for(const x of [-.29,.28])b.batch.quad(P(x-.025,Math.sin(i*Math.PI/8)*.165,Math.cos(i*Math.PI/8)*.286),P(x+.025,Math.sin(i*Math.PI/8)*.165,Math.cos(i*Math.PI/8)*.286),P(x+.025,Math.sin((i+1)*Math.PI/8)*.165,Math.cos((i+1)*Math.PI/8)*.286),P(x-.025,Math.sin((i+1)*Math.PI/8)*.165,Math.cos((i+1)*Math.PI/8)*.286),COLORS.iron,1);
+  }
+  for(const points of [left,right.slice().reverse()]) {
+    const n=norm(cross(sub(points[1],points[0]),sub(points[2],points[0])));b.batch.polygon(points,n,COLORS.oak,1);
+  }
+  b.batch.quad(P(-.425,0,-.28),P(.425,0,-.28),P(.425,0,.28),P(-.425,0,.28),COLORS.darkOak,1);
 }

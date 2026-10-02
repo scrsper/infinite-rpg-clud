@@ -1,5 +1,5 @@
 import {
-  CascadedShadowGenerator, Color3, Color4, DirectionalLight, DynamicTexture, HemisphericLight, Mesh, MeshBuilder, Scene, StandardMaterial, Texture, Vector3,
+  CascadedShadowGenerator, Color3, Color4, DirectionalLight, DynamicTexture, HemisphericLight, Mesh, MeshBuilder, Scene, ShaderMaterial, StandardMaterial, Texture, Vector3,
   type AbstractMesh,
 } from '@babylonjs/core';
 import { lerp, mulberry } from '../render/noise';
@@ -26,7 +26,7 @@ export class Atmosphere {
   private readonly starMat: StandardMaterial;
   private readonly sunDisc: Mesh; private readonly moonDisc: Mesh;
   private readonly sunMat: StandardMaterial; private readonly moonMat: StandardMaterial;
-  private readonly cloudDome: Mesh; private readonly cloudMat: StandardMaterial; private cloudTex: DynamicTexture;
+  private readonly cloudDome: Mesh; private readonly cloudMat: ShaderMaterial; private cloudTex: DynamicTexture;
   private lastGradientAt = -1;
   private lastHour = 12;
   /** Light the scene is currently using, for systems that need to know how dark it is. */
@@ -62,6 +62,7 @@ export class Atmosphere {
     this.starMat = new StandardMaterial('stars', scene);
     this.starMat.disableLighting = true; this.starMat.backFaceCulling = false; this.starMat.fogEnabled = false; this.starMat.alpha = 0; this.starMat.diffuseColor = Color3.Black(); this.starMat.specularColor = Color3.Black();
     this.starMat.emissiveTexture = starTexture(scene); this.starMat.opacityTexture = this.starMat.emissiveTexture;
+    this.starMat.opacityTexture.getAlphaFromRGB = true;
     this.starDome = MeshBuilder.CreateSphere('star-dome', { diameter: 1700, segments: 16, sideOrientation: Mesh.BACKSIDE }, scene);
     this.starDome.material = this.starMat; this.starDome.infiniteDistance = true; this.starDome.isPickable = false; this.starDome.applyFog = false;
 
@@ -71,11 +72,15 @@ export class Atmosphere {
     for (const d of [this.sunDisc, this.moonDisc]) { d.infiniteDistance = true; d.isPickable = false; d.billboardMode = Mesh.BILLBOARDMODE_ALL; d.applyFog = false; }
 
     this.cloudTex = cloudTexture(scene, 0.5);
-    this.cloudMat = new StandardMaterial('clouds', scene);
-    this.cloudMat.disableLighting = true; this.cloudMat.backFaceCulling = false; this.cloudMat.fogEnabled = false; this.cloudMat.diffuseColor = Color3.Black(); this.cloudMat.specularColor = Color3.Black();
-    this.cloudMat.emissiveTexture = this.cloudTex; this.cloudMat.opacityTexture = this.cloudTex; this.cloudMat.alpha = 0.9;
+    // Explicit unlit cloud composition: alpha is coverage, RGB comes exclusively
+    // from the sky state. No white emissive map can keep clouds lit at midnight.
+    this.cloudMat = new ShaderMaterial('clouds', scene, {
+      vertexSource: 'precision highp float; attribute vec3 position; attribute vec2 uv; uniform mat4 worldViewProjection; varying vec2 cloudUV; void main(){cloudUV=uv;gl_Position=worldViewProjection*vec4(position,1.0);}',
+      fragmentSource: 'precision highp float; varying vec2 cloudUV; uniform sampler2D cloudMask; uniform vec3 cloudTint; uniform float cloudOpacity; void main(){gl_FragColor=vec4(cloudTint,texture2D(cloudMask,cloudUV).a*cloudOpacity);}',
+    }, {attributes:['position','uv'],uniforms:['worldViewProjection','cloudTint','cloudOpacity'],samplers:['cloudMask'],needAlphaBlending:true});
+    this.cloudMat.setTexture('cloudMask',this.cloudTex); this.cloudMat.backFaceCulling=false; this.cloudMat.disableDepthWrite=true;
     this.cloudDome = MeshBuilder.CreateSphere('cloud-dome', { diameter: 1600, segments: 16, slice: 0.5, sideOrientation: Mesh.BACKSIDE }, scene);
-    this.cloudDome.material = this.cloudMat; this.cloudDome.infiniteDistance = true; this.cloudDome.isPickable = false; this.cloudDome.applyFog = false; this.cloudDome.rotation.x = Math.PI;
+    this.cloudDome.material = this.cloudMat; this.cloudDome.infiniteDistance = true; this.cloudDome.isPickable = false; this.cloudDome.applyFog = false;
 
     scene.fogMode = Scene.FOGMODE_EXP2; scene.fogDensity = 0.0009; scene.fogColor = this.fogColor;
     this.update(9.5, { kind: 'clear', intensity: 0, wind: 0.2 }, 0);
@@ -132,9 +137,9 @@ export class Atmosphere {
     this.sunDisc.setEnabled(elev > -0.12 && overcast < 0.85); this.moonDisc.setEnabled(elev < 0.1 && overcast < 0.9);
     this.sunMat.alpha = 1 - overcast; this.moonMat.alpha = (1 - overcast) * night;
     this.starMat.alpha = clamp01(night * 1.2) * (1 - overcast);
-    this.cloudMat.alpha = 0.25 + overcast * 0.7;
+    this.cloudMat.setFloat('cloudOpacity',lerp(.16, .55, day) + overcast * lerp(.2,.4,day));
     this.cloudDome.rotation.y += dt * 0.0015 * (0.5 + weather.wind);
-    this.cloudMat.emissiveColor = new Color3(...mix(mix([0.22, 0.26, 0.4], [1, 1, 1], day), [1.0, 0.72, 0.55], dusk * 0.7));
+    this.cloudMat.setColor3('cloudTint',new Color3(...mix(mix([0.12, 0.17, 0.28], [1, 1, 1], day), [1.0, 0.72, 0.55], dusk * 0.7)).toLinearSpace());
     if (Math.abs(h - this.lastGradientAt) > 0.03 || overcast !== this.lastOvercast) {
       this.lastGradientAt = h; this.lastOvercast = overcast;
       const zenith = mix(mix(mix([0.02, 0.03, 0.09], [0.16, 0.36, 0.72], day), [0.14, 0.14, 0.34], dusk * 0.8), [0.42, 0.46, 0.54], overcast * 0.8);
@@ -174,9 +179,15 @@ function cloudTexture(scene: Scene, coverage: number): DynamicTexture {
   const size = 512, t = new DynamicTexture('cloud-tex', { width: size, height: size }, scene, true), ctx = t.getContext() as CanvasRenderingContext2D;
   const img = ctx.createImageData(size, size), rnd = mulberry(99), lat: number[] = []; const n = 32;
   for (let i = 0; i < n * n; i++) lat.push(rnd());
-  const noise = (x: number, y: number, f: number) => { const gx = ((x * f) % n + n) % n, gy = ((y * f) % n + n) % n, x0 = Math.floor(gx), y0 = Math.floor(gy), fx = gx - x0, fy = gy - y0, s = (v: number) => v * v * (3 - 2 * v); const v = (i: number, j: number) => lat[((j % n) * n) + (i % n)]; return lerp(lerp(v(x0, y0), v(x0 + 1, y0), s(fx)), lerp(v(x0, y0 + 1), v(x0 + 1, y0 + 1), s(fx)), s(fy)); };
+  // Integer-period lattice tiles across the dome's longitude seam.
+  const noise = (x: number, y: number, period: number) => {
+    const gx=x*period, gy=y*period, x0=Math.floor(gx), y0=Math.floor(gy), fx=gx-x0, fy=gy-y0;
+    const smooth=(v:number)=>v*v*(3-2*v);
+    const v=(i:number,j:number)=>lat[(((j%period)%n)*n)+((i%period)%n)];
+    return lerp(lerp(v(x0,y0),v(x0+1,y0),smooth(fx)),lerp(v(x0,y0+1),v(x0+1,y0+1),smooth(fx)),smooth(fy));
+  };
   for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
-    let v = 0, a = 0.55, f = 0.06; for (let o = 0; o < 5; o++) { v += noise(x / size * n * 0.5 * f * 16, y / size * n * 0.5 * f * 16, 1) * a; a *= 0.5; f *= 2; }
+    let v = 0, a = 0.55, f = 8; for (let o = 0; o < 5; o++) { v += noise(x / size, y / size, f) * a; a *= 0.5; f *= 2; }
     const c = clamp01((v - (1 - coverage) * 0.75) * 2.6), o = (y * size + x) * 4;
     img.data[o] = img.data[o + 1] = img.data[o + 2] = 255; img.data[o + 3] = c * 255;
   }
