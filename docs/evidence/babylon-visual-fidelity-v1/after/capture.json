@@ -1,0 +1,1141 @@
+{
+  "recordingSha256": "5948b947c1f9461ba730e492176956ed698bd35613667d3c979a831d8693dc20",
+  "fixture": "Frozen recorded observer state; only presentation camera and hour change. Gameplay/isometric views use ordinary camera rig. No human playtest.",
+  "viewport": [
+    1600,
+    900
+  ],
+  "results": [
+    {
+      "view": {
+        "name": "01-gameplay",
+        "hour": 16
+      },
+      "perf": {
+        "frames": 258,
+        "medianMs": 7.5,
+        "p95Ms": 8.200000047683716,
+        "p99Ms": 9.5,
+        "maxMs": 13.800000071525574,
+        "fpsMedian": 133.33333333333334
+      },
+      "meshes": 1349,
+      "activeMeshes": 1041,
+      "materials": 347,
+      "triangles": 4230891,
+      "regionBuildMs": [
+        {
+          "id": "47,78",
+          "ms": 2616.600000023842,
+          "stages": {
+            "terrain": 21.6,
+            "structures": 2300.2,
+            "props": 37.3,
+            "scatter": 5.5,
+            "instances": 251.6
+          }
+        },
+        {
+          "id": "46,78",
+          "ms": 478.3000000715256,
+          "stages": {
+            "terrain": 7.3,
+            "structures": 306.7,
+            "props": 77,
+            "scatter": 58.1,
+            "instances": 29
+          }
+        },
+        {
+          "id": "47,77",
+          "ms": 39.5,
+          "stages": {
+            "terrain": 6,
+            "structures": 0.1,
+            "props": 5,
+            "scatter": 8.3,
+            "instances": 20
+          }
+        },
+        {
+          "id": "47,79",
+          "ms": 31.899999976158142,
+          "stages": {
+            "terrain": 1.2,
+            "structures": 0.1,
+            "props": 0,
+            "scatter": 8.3,
+            "instances": 22.3
+          }
+        },
+        {
+          "id": "48,78",
+          "ms": 51.199999928474426,
+          "stages": {
+            "terrain": 2,
+            "structures": 0.1,
+            "props": 0,
+            "scatter": 2.8,
+            "instances": 46.3
+          }
+        },
+        {
+          "id": "46,77",
+          "ms": 68.10000002384186,
+          "stages": {
+            "terrain": 3.8,
+            "structures": 9.9,
+            "props": 5.8,
+            "scatter": 4.7,
+            "instances": 43.8
+          }
+        },
+        {
+          "id": "46,79",
+          "ms": 18.600000023841858,
+          "stages": {
+            "terrain": 0.4,
+            "structures": 0,
+            "props": 0,
+            "scatter": 2.7,
+            "instances": 15.4
+          }
+        },
+        {
+          "id": "48,77",
+          "ms": 135.89999997615814,
+          "stages": {
+            "terrain": 0.6,
+            "structures": 0,
+            "props": 0,
+            "scatter": 4.7,
+            "instances": 130.6
+          }
+        },
+        {
+          "id": "48,79",
+          "ms": 54.89999997615814,
+          "stages": {
+            "terrain": 0.6,
+            "structures": 0,
+            "props": 0,
+            "scatter": 2.3,
+            "instances": 51.9
+          }
+        }
+      ],
+      "grass": 9534,
+      "regions": 9,
+      "pending": 0,
+      "renderer": "webgl2",
+      "gpu": {
+        "vendor": "Google Inc. (AMD)",
+        "renderer": "ANGLE (AMD, AMD Radeon RX 6650 XT (0x000073EF) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "camera": [
+        7.465130264743009,
+        28.669662816461734,
+        33.62263074736937
+      ]
+    },
+    {
+      "view": {
+        "name": "02-tavern",
+        "hour": 16,
+        "eye": [
+          12032,
+          31,
+          20066
+        ],
+        "target": [
+          12014,
+          29,
+          20041
+        ]
+      },
+      "perf": {
+        "frames": 253,
+        "medianMs": 7.5,
+        "p95Ms": 8.299999952316284,
+        "p99Ms": 9.600000023841858,
+        "maxMs": 15.800000071525576,
+        "fpsMedian": 133.33333333333334
+      },
+      "meshes": 1349,
+      "activeMeshes": 1034,
+      "materials": 347,
+      "triangles": 4229849,
+      "regionBuildMs": [
+        {
+          "id": "47,78",
+          "ms": 2616.600000023842,
+          "stages": {
+            "terrain": 21.6,
+            "structures": 2300.2,
+            "props": 37.3,
+            "scatter": 5.5,
+            "instances": 251.6
+          }
+        },
+        {
+          "id": "46,78",
+          "ms": 478.3000000715256,
+          "stages": {
+            "terrain": 7.3,
+            "structures": 306.7,
+            "props": 77,
+            "scatter": 58.1,
+            "instances": 29
+          }
+        },
+        {
+          "id": "47,77",
+          "ms": 39.5,
+          "stages": {
+            "terrain": 6,
+            "structures": 0.1,
+            "props": 5,
+            "scatter": 8.3,
+            "instances": 20
+          }
+        },
+        {
+          "id": "47,79",
+          "ms": 31.899999976158142,
+          "stages": {
+            "terrain": 1.2,
+            "structures": 0.1,
+            "props": 0,
+            "scatter": 8.3,
+            "instances": 22.3
+          }
+        },
+        {
+          "id": "48,78",
+          "ms": 51.199999928474426,
+          "stages": {
+            "terrain": 2,
+            "structures": 0.1,
+            "props": 0,
+            "scatter": 2.8,
+            "instances": 46.3
+          }
+        },
+        {
+          "id": "46,77",
+          "ms": 68.10000002384186,
+          "stages": {
+            "terrain": 3.8,
+            "structures": 9.9,
+            "props": 5.8,
+            "scatter": 4.7,
+            "instances": 43.8
+          }
+        },
+        {
+          "id": "46,79",
+          "ms": 18.600000023841858,
+          "stages": {
+            "terrain": 0.4,
+            "structures": 0,
+            "props": 0,
+            "scatter": 2.7,
+            "instances": 15.4
+          }
+        },
+        {
+          "id": "48,77",
+          "ms": 135.89999997615814,
+          "stages": {
+            "terrain": 0.6,
+            "structures": 0,
+            "props": 0,
+            "scatter": 4.7,
+            "instances": 130.6
+          }
+        },
+        {
+          "id": "48,79",
+          "ms": 54.89999997615814,
+          "stages": {
+            "terrain": 0.6,
+            "structures": 0,
+            "props": 0,
+            "scatter": 2.3,
+            "instances": 51.9
+          }
+        }
+      ],
+      "grass": 11534,
+      "regions": 9,
+      "pending": 0,
+      "renderer": "webgl2",
+      "gpu": {
+        "vendor": "Google Inc. (AMD)",
+        "renderer": "ANGLE (AMD, AMD Radeon RX 6650 XT (0x000073EF) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "camera": [
+        0,
+        31,
+        98
+      ]
+    },
+    {
+      "view": {
+        "name": "03-street",
+        "hour": 16,
+        "eye": [
+          12039,
+          27.5,
+          20034
+        ],
+        "target": [
+          12009,
+          28,
+          20016
+        ]
+      },
+      "perf": {
+        "frames": 278,
+        "medianMs": 6.900000095367432,
+        "p95Ms": 7.100000023841858,
+        "p99Ms": 7.700000047683716,
+        "maxMs": 8.100000023841858,
+        "fpsMedian": 144.92753422878744
+      },
+      "meshes": 1349,
+      "activeMeshes": 1011,
+      "materials": 347,
+      "triangles": 4131591,
+      "regionBuildMs": [
+        {
+          "id": "47,78",
+          "ms": 2616.600000023842,
+          "stages": {
+            "terrain": 21.6,
+            "structures": 2300.2,
+            "props": 37.3,
+            "scatter": 5.5,
+            "instances": 251.6
+          }
+        },
+        {
+          "id": "46,78",
+          "ms": 478.3000000715256,
+          "stages": {
+            "terrain": 7.3,
+            "structures": 306.7,
+            "props": 77,
+            "scatter": 58.1,
+            "instances": 29
+          }
+        },
+        {
+          "id": "47,77",
+          "ms": 39.5,
+          "stages": {
+            "terrain": 6,
+            "structures": 0.1,
+            "props": 5,
+            "scatter": 8.3,
+            "instances": 20
+          }
+        },
+        {
+          "id": "47,79",
+          "ms": 31.899999976158142,
+          "stages": {
+            "terrain": 1.2,
+            "structures": 0.1,
+            "props": 0,
+            "scatter": 8.3,
+            "instances": 22.3
+          }
+        },
+        {
+          "id": "48,78",
+          "ms": 51.199999928474426,
+          "stages": {
+            "terrain": 2,
+            "structures": 0.1,
+            "props": 0,
+            "scatter": 2.8,
+            "instances": 46.3
+          }
+        },
+        {
+          "id": "46,77",
+          "ms": 68.10000002384186,
+          "stages": {
+            "terrain": 3.8,
+            "structures": 9.9,
+            "props": 5.8,
+            "scatter": 4.7,
+            "instances": 43.8
+          }
+        },
+        {
+          "id": "46,79",
+          "ms": 18.600000023841858,
+          "stages": {
+            "terrain": 0.4,
+            "structures": 0,
+            "props": 0,
+            "scatter": 2.7,
+            "instances": 15.4
+          }
+        },
+        {
+          "id": "48,77",
+          "ms": 135.89999997615814,
+          "stages": {
+            "terrain": 0.6,
+            "structures": 0,
+            "props": 0,
+            "scatter": 4.7,
+            "instances": 130.6
+          }
+        },
+        {
+          "id": "48,79",
+          "ms": 54.89999997615814,
+          "stages": {
+            "terrain": 0.6,
+            "structures": 0,
+            "props": 0,
+            "scatter": 2.3,
+            "instances": 51.9
+          }
+        }
+      ],
+      "grass": 10834,
+      "regions": 9,
+      "pending": 0,
+      "renderer": "webgl2",
+      "gpu": {
+        "vendor": "Google Inc. (AMD)",
+        "renderer": "ANGLE (AMD, AMD Radeon RX 6650 XT (0x000073EF) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "camera": [
+        7,
+        27.5,
+        66
+      ]
+    },
+    {
+      "view": {
+        "name": "04-isometric",
+        "hour": 16,
+        "view": "isometric"
+      },
+      "perf": {
+        "frames": 283,
+        "medianMs": 6.900000095367432,
+        "p95Ms": 7,
+        "p99Ms": 7.5,
+        "maxMs": 8.600000023841858,
+        "fpsMedian": 144.92753422878744
+      },
+      "meshes": 1349,
+      "activeMeshes": 1057,
+      "materials": 347,
+      "triangles": 4221709,
+      "regionBuildMs": [
+        {
+          "id": "47,78",
+          "ms": 2616.600000023842,
+          "stages": {
+            "terrain": 21.6,
+            "structures": 2300.2,
+            "props": 37.3,
+            "scatter": 5.5,
+            "instances": 251.6
+          }
+        },
+        {
+          "id": "46,78",
+          "ms": 478.3000000715256,
+          "stages": {
+            "terrain": 7.3,
+            "structures": 306.7,
+            "props": 77,
+            "scatter": 58.1,
+            "instances": 29
+          }
+        },
+        {
+          "id": "47,77",
+          "ms": 39.5,
+          "stages": {
+            "terrain": 6,
+            "structures": 0.1,
+            "props": 5,
+            "scatter": 8.3,
+            "instances": 20
+          }
+        },
+        {
+          "id": "47,79",
+          "ms": 31.899999976158142,
+          "stages": {
+            "terrain": 1.2,
+            "structures": 0.1,
+            "props": 0,
+            "scatter": 8.3,
+            "instances": 22.3
+          }
+        },
+        {
+          "id": "48,78",
+          "ms": 51.199999928474426,
+          "stages": {
+            "terrain": 2,
+            "structures": 0.1,
+            "props": 0,
+            "scatter": 2.8,
+            "instances": 46.3
+          }
+        },
+        {
+          "id": "46,77",
+          "ms": 68.10000002384186,
+          "stages": {
+            "terrain": 3.8,
+            "structures": 9.9,
+            "props": 5.8,
+            "scatter": 4.7,
+            "instances": 43.8
+          }
+        },
+        {
+          "id": "46,79",
+          "ms": 18.600000023841858,
+          "stages": {
+            "terrain": 0.4,
+            "structures": 0,
+            "props": 0,
+            "scatter": 2.7,
+            "instances": 15.4
+          }
+        },
+        {
+          "id": "48,77",
+          "ms": 135.89999997615814,
+          "stages": {
+            "terrain": 0.6,
+            "structures": 0,
+            "props": 0,
+            "scatter": 4.7,
+            "instances": 130.6
+          }
+        },
+        {
+          "id": "48,79",
+          "ms": 54.89999997615814,
+          "stages": {
+            "terrain": 0.6,
+            "structures": 0,
+            "props": 0,
+            "scatter": 2.3,
+            "instances": 51.9
+          }
+        }
+      ],
+      "grass": 7867,
+      "regions": 9,
+      "pending": 0,
+      "renderer": "webgl2",
+      "gpu": {
+        "vendor": "Google Inc. (AMD)",
+        "renderer": "ANGLE (AMD, AMD Radeon RX 6650 XT (0x000073EF) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "camera": [
+        -14.715660199531257,
+        42.87520861406803,
+        57.59048938183251
+      ]
+    },
+    {
+      "view": {
+        "name": "05-blue-hour",
+        "hour": 18.6,
+        "eye": [
+          12032,
+          31,
+          20066
+        ],
+        "target": [
+          12014,
+          29,
+          20041
+        ]
+      },
+      "perf": {
+        "frames": 245,
+        "medianMs": 7.600000023841858,
+        "p95Ms": 8.5,
+        "p99Ms": 11.700000047683716,
+        "maxMs": 15.5,
+        "fpsMedian": 131.5789469556465
+      },
+      "meshes": 1349,
+      "activeMeshes": 1034,
+      "materials": 347,
+      "triangles": 4229849,
+      "regionBuildMs": [
+        {
+          "id": "47,78",
+          "ms": 2616.600000023842,
+          "stages": {
+            "terrain": 21.6,
+            "structures": 2300.2,
+            "props": 37.3,
+            "scatter": 5.5,
+            "instances": 251.6
+          }
+        },
+        {
+          "id": "46,78",
+          "ms": 478.3000000715256,
+          "stages": {
+            "terrain": 7.3,
+            "structures": 306.7,
+            "props": 77,
+            "scatter": 58.1,
+            "instances": 29
+          }
+        },
+        {
+          "id": "47,77",
+          "ms": 39.5,
+          "stages": {
+            "terrain": 6,
+            "structures": 0.1,
+            "props": 5,
+            "scatter": 8.3,
+            "instances": 20
+          }
+        },
+        {
+          "id": "47,79",
+          "ms": 31.899999976158142,
+          "stages": {
+            "terrain": 1.2,
+            "structures": 0.1,
+            "props": 0,
+            "scatter": 8.3,
+            "instances": 22.3
+          }
+        },
+        {
+          "id": "48,78",
+          "ms": 51.199999928474426,
+          "stages": {
+            "terrain": 2,
+            "structures": 0.1,
+            "props": 0,
+            "scatter": 2.8,
+            "instances": 46.3
+          }
+        },
+        {
+          "id": "46,77",
+          "ms": 68.10000002384186,
+          "stages": {
+            "terrain": 3.8,
+            "structures": 9.9,
+            "props": 5.8,
+            "scatter": 4.7,
+            "instances": 43.8
+          }
+        },
+        {
+          "id": "46,79",
+          "ms": 18.600000023841858,
+          "stages": {
+            "terrain": 0.4,
+            "structures": 0,
+            "props": 0,
+            "scatter": 2.7,
+            "instances": 15.4
+          }
+        },
+        {
+          "id": "48,77",
+          "ms": 135.89999997615814,
+          "stages": {
+            "terrain": 0.6,
+            "structures": 0,
+            "props": 0,
+            "scatter": 4.7,
+            "instances": 130.6
+          }
+        },
+        {
+          "id": "48,79",
+          "ms": 54.89999997615814,
+          "stages": {
+            "terrain": 0.6,
+            "structures": 0,
+            "props": 0,
+            "scatter": 2.3,
+            "instances": 51.9
+          }
+        }
+      ],
+      "grass": 11534,
+      "regions": 9,
+      "pending": 0,
+      "renderer": "webgl2",
+      "gpu": {
+        "vendor": "Google Inc. (AMD)",
+        "renderer": "ANGLE (AMD, AMD Radeon RX 6650 XT (0x000073EF) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "camera": [
+        0,
+        31,
+        98
+      ]
+    },
+    {
+      "view": {
+        "name": "06-forest-edge",
+        "hour": 10,
+        "eye": [
+          12052,
+          29,
+          19977
+        ],
+        "target": [
+          12063,
+          29,
+          19936
+        ]
+      },
+      "perf": {
+        "frames": 187,
+        "medianMs": 10.300000071525574,
+        "p95Ms": 11.100000023841858,
+        "p99Ms": 17.899999976158142,
+        "maxMs": 18.899999976158142,
+        "fpsMedian": 97.08737796657957
+      },
+      "meshes": 1349,
+      "activeMeshes": 1049,
+      "materials": 347,
+      "triangles": 4644013,
+      "regionBuildMs": [
+        {
+          "id": "47,78",
+          "ms": 2616.600000023842,
+          "stages": {
+            "terrain": 21.6,
+            "structures": 2300.2,
+            "props": 37.3,
+            "scatter": 5.5,
+            "instances": 251.6
+          }
+        },
+        {
+          "id": "46,78",
+          "ms": 478.3000000715256,
+          "stages": {
+            "terrain": 7.3,
+            "structures": 306.7,
+            "props": 77,
+            "scatter": 58.1,
+            "instances": 29
+          }
+        },
+        {
+          "id": "47,77",
+          "ms": 39.5,
+          "stages": {
+            "terrain": 6,
+            "structures": 0.1,
+            "props": 5,
+            "scatter": 8.3,
+            "instances": 20
+          }
+        },
+        {
+          "id": "47,79",
+          "ms": 31.899999976158142,
+          "stages": {
+            "terrain": 1.2,
+            "structures": 0.1,
+            "props": 0,
+            "scatter": 8.3,
+            "instances": 22.3
+          }
+        },
+        {
+          "id": "48,78",
+          "ms": 51.199999928474426,
+          "stages": {
+            "terrain": 2,
+            "structures": 0.1,
+            "props": 0,
+            "scatter": 2.8,
+            "instances": 46.3
+          }
+        },
+        {
+          "id": "46,77",
+          "ms": 68.10000002384186,
+          "stages": {
+            "terrain": 3.8,
+            "structures": 9.9,
+            "props": 5.8,
+            "scatter": 4.7,
+            "instances": 43.8
+          }
+        },
+        {
+          "id": "46,79",
+          "ms": 18.600000023841858,
+          "stages": {
+            "terrain": 0.4,
+            "structures": 0,
+            "props": 0,
+            "scatter": 2.7,
+            "instances": 15.4
+          }
+        },
+        {
+          "id": "48,77",
+          "ms": 135.89999997615814,
+          "stages": {
+            "terrain": 0.6,
+            "structures": 0,
+            "props": 0,
+            "scatter": 4.7,
+            "instances": 130.6
+          }
+        },
+        {
+          "id": "48,79",
+          "ms": 54.89999997615814,
+          "stages": {
+            "terrain": 0.6,
+            "structures": 0,
+            "props": 0,
+            "scatter": 2.3,
+            "instances": 51.9
+          }
+        }
+      ],
+      "grass": 11284,
+      "regions": 9,
+      "pending": 0,
+      "renderer": "webgl2",
+      "gpu": {
+        "vendor": "Google Inc. (AMD)",
+        "renderer": "ANGLE (AMD, AMD Radeon RX 6650 XT (0x000073EF) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "camera": [
+        20,
+        29,
+        9
+      ]
+    },
+    {
+      "view": {
+        "name": "07-night",
+        "hour": 22,
+        "eye": [
+          12032,
+          31,
+          20066
+        ],
+        "target": [
+          12014,
+          29,
+          20041
+        ]
+      },
+      "perf": {
+        "frames": 250,
+        "medianMs": 7.399999976158142,
+        "p95Ms": 8.100000023841858,
+        "p99Ms": 9.399999976158142,
+        "maxMs": 13.399999976158142,
+        "fpsMedian": 135.13513557052335
+      },
+      "meshes": 1349,
+      "activeMeshes": 1034,
+      "materials": 347,
+      "triangles": 4229849,
+      "regionBuildMs": [
+        {
+          "id": "47,78",
+          "ms": 2616.600000023842,
+          "stages": {
+            "terrain": 21.6,
+            "structures": 2300.2,
+            "props": 37.3,
+            "scatter": 5.5,
+            "instances": 251.6
+          }
+        },
+        {
+          "id": "46,78",
+          "ms": 478.3000000715256,
+          "stages": {
+            "terrain": 7.3,
+            "structures": 306.7,
+            "props": 77,
+            "scatter": 58.1,
+            "instances": 29
+          }
+        },
+        {
+          "id": "47,77",
+          "ms": 39.5,
+          "stages": {
+            "terrain": 6,
+            "structures": 0.1,
+            "props": 5,
+            "scatter": 8.3,
+            "instances": 20
+          }
+        },
+        {
+          "id": "47,79",
+          "ms": 31.899999976158142,
+          "stages": {
+            "terrain": 1.2,
+            "structures": 0.1,
+            "props": 0,
+            "scatter": 8.3,
+            "instances": 22.3
+          }
+        },
+        {
+          "id": "48,78",
+          "ms": 51.199999928474426,
+          "stages": {
+            "terrain": 2,
+            "structures": 0.1,
+            "props": 0,
+            "scatter": 2.8,
+            "instances": 46.3
+          }
+        },
+        {
+          "id": "46,77",
+          "ms": 68.10000002384186,
+          "stages": {
+            "terrain": 3.8,
+            "structures": 9.9,
+            "props": 5.8,
+            "scatter": 4.7,
+            "instances": 43.8
+          }
+        },
+        {
+          "id": "46,79",
+          "ms": 18.600000023841858,
+          "stages": {
+            "terrain": 0.4,
+            "structures": 0,
+            "props": 0,
+            "scatter": 2.7,
+            "instances": 15.4
+          }
+        },
+        {
+          "id": "48,77",
+          "ms": 135.89999997615814,
+          "stages": {
+            "terrain": 0.6,
+            "structures": 0,
+            "props": 0,
+            "scatter": 4.7,
+            "instances": 130.6
+          }
+        },
+        {
+          "id": "48,79",
+          "ms": 54.89999997615814,
+          "stages": {
+            "terrain": 0.6,
+            "structures": 0,
+            "props": 0,
+            "scatter": 2.3,
+            "instances": 51.9
+          }
+        }
+      ],
+      "grass": 11534,
+      "regions": 9,
+      "pending": 0,
+      "renderer": "webgl2",
+      "gpu": {
+        "vendor": "Google Inc. (AMD)",
+        "renderer": "ANGLE (AMD, AMD Radeon RX 6650 XT (0x000073EF) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "camera": [
+        0,
+        31,
+        98
+      ]
+    },
+    {
+      "view": {
+        "name": "08-rain",
+        "hour": 16,
+        "eye": [
+          12032,
+          31,
+          20066
+        ],
+        "target": [
+          12014,
+          29,
+          20041
+        ],
+        "weather": {
+          "kind": "rain",
+          "intensity": 0.85,
+          "wind": 0.7
+        }
+      },
+      "perf": {
+        "frames": 251,
+        "medianMs": 7.699999928474426,
+        "p95Ms": 8.700000047683716,
+        "p99Ms": 10.799999952316284,
+        "maxMs": 19.699999928474426,
+        "fpsMedian": 129.87013107649813
+      },
+      "meshes": 1349,
+      "activeMeshes": 1034,
+      "materials": 347,
+      "triangles": 4229849,
+      "regionBuildMs": [
+        {
+          "id": "47,78",
+          "ms": 2616.600000023842,
+          "stages": {
+            "terrain": 21.6,
+            "structures": 2300.2,
+            "props": 37.3,
+            "scatter": 5.5,
+            "instances": 251.6
+          }
+        },
+        {
+          "id": "46,78",
+          "ms": 478.3000000715256,
+          "stages": {
+            "terrain": 7.3,
+            "structures": 306.7,
+            "props": 77,
+            "scatter": 58.1,
+            "instances": 29
+          }
+        },
+        {
+          "id": "47,77",
+          "ms": 39.5,
+          "stages": {
+            "terrain": 6,
+            "structures": 0.1,
+            "props": 5,
+            "scatter": 8.3,
+            "instances": 20
+          }
+        },
+        {
+          "id": "47,79",
+          "ms": 31.899999976158142,
+          "stages": {
+            "terrain": 1.2,
+            "structures": 0.1,
+            "props": 0,
+            "scatter": 8.3,
+            "instances": 22.3
+          }
+        },
+        {
+          "id": "48,78",
+          "ms": 51.199999928474426,
+          "stages": {
+            "terrain": 2,
+            "structures": 0.1,
+            "props": 0,
+            "scatter": 2.8,
+            "instances": 46.3
+          }
+        },
+        {
+          "id": "46,77",
+          "ms": 68.10000002384186,
+          "stages": {
+            "terrain": 3.8,
+            "structures": 9.9,
+            "props": 5.8,
+            "scatter": 4.7,
+            "instances": 43.8
+          }
+        },
+        {
+          "id": "46,79",
+          "ms": 18.600000023841858,
+          "stages": {
+            "terrain": 0.4,
+            "structures": 0,
+            "props": 0,
+            "scatter": 2.7,
+            "instances": 15.4
+          }
+        },
+        {
+          "id": "48,77",
+          "ms": 135.89999997615814,
+          "stages": {
+            "terrain": 0.6,
+            "structures": 0,
+            "props": 0,
+            "scatter": 4.7,
+            "instances": 130.6
+          }
+        },
+        {
+          "id": "48,79",
+          "ms": 54.89999997615814,
+          "stages": {
+            "terrain": 0.6,
+            "structures": 0,
+            "props": 0,
+            "scatter": 2.3,
+            "instances": 51.9
+          }
+        }
+      ],
+      "grass": 11534,
+      "regions": 9,
+      "pending": 0,
+      "renderer": "webgl2",
+      "gpu": {
+        "vendor": "Google Inc. (AMD)",
+        "renderer": "ANGLE (AMD, AMD Radeon RX 6650 XT (0x000073EF) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "camera": [
+        0,
+        31,
+        98
+      ]
+    }
+  ],
+  "errors": []
+}

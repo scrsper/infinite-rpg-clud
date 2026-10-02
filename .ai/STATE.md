@@ -1,4 +1,14 @@
-# Current: Interior door visibility implemented and locally verified (2026-10-01)
+# Current: Babylon visual fidelity pass locally verified (2026-10-01)
+
+Branch `codex/babylon-visual-fidelity-v1`, tested source `3440bc4c7dd1eee53aa703194809cef2abd1d65b`. Presentation now derives continuous plaster/timber facades and sparse exterior dressing from projected structures, corrects outward face orientation, blends terrain and feathered paths, clusters vegetation with GPU grass wind, improves exploration framing/materials/lighting, and applies reversible rain wetness. Existing canonical apertures, collision and reversible cutaways remain authoritative. Simulation and Unreal source are unchanged; no merge.
+
+- Twelve web test files / 67 tests, typecheck and private production build pass. Independent final review found no actionable issues.
+- Disposable real Chrome acceptance: 22 orbit and 20 isometric checks pass, including actual input, doors, interior traversal, combat and cutaway restoration; no browser errors. Fixture staging is disclosed in the evidence. This is automated acceptance, not human/controller acceptance.
+- Eight final high-quality 1600x900 WebGL2 captures are error-free. Warmed median frame times range from 6.9 to 10.3 ms on RX 6650 XT (baseline 6.9 to 9.7 ms); these short samples do not establish low-end or streaming performance.
+- Evidence, retained iterations, live video and verification details: `docs/evidence/babylon-visual-fidelity-v1/`; open `comparisons/index.html` for the eight before/after sliders and `session.json` for reproduction and performance records. The ordinary orbit comparison intentionally includes the camera change.
+- Remaining priorities: more distinct building silhouettes/purpose, richer field margins and forest transitions, better character/interior art and warm night focal points. Water and WebGPU were not validated in this pass. The result improves the existing client but remains visibly procedural.
+
+# Previous: Interior door visibility implemented and locally verified (2026-10-01)
 
 The controlled actor was hidden by unregistered upper door-frame geometry after the building roof/wall cutaway. Frame and hinged leaf now participate in the existing reversible per-building cutaway with owned materials. Canonical collision, automatic door operation, perception, simulation and Unreal source are unchanged.
 

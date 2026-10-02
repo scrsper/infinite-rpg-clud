@@ -1,0 +1,325 @@
+{
+  "recordingSha256": "5948b947c1f9461ba730e492176956ed698bd35613667d3c979a831d8693dc20",
+  "fixture": "Frozen recorded observer state; only presentation camera and hour change. Gameplay/isometric views use ordinary camera rig. No human playtest.",
+  "viewport": [
+    1600,
+    900
+  ],
+  "results": [
+    {
+      "view": {
+        "name": "01-gameplay",
+        "hour": 16
+      },
+      "perf": {
+        "frames": 278,
+        "medianMs": 6.900000095367432,
+        "p95Ms": 7.100000023841858,
+        "p99Ms": 7.399999976158142,
+        "maxMs": 8.399999976158142,
+        "fpsMedian": 144.92753422878744
+      },
+      "meshes": 1349,
+      "activeMeshes": 1042,
+      "materials": 347,
+      "grass": 9522,
+      "regions": 9,
+      "pending": 0,
+      "renderer": "webgl2",
+      "gpu": {
+        "vendor": "Google Inc. (AMD)",
+        "renderer": "ANGLE (AMD, AMD Radeon RX 6650 XT (0x000073EF) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "camera": [
+        7.196140443879411,
+        29.436815462056657,
+        34.02134463489834
+      ]
+    },
+    {
+      "view": {
+        "name": "02-tavern",
+        "hour": 16,
+        "eye": [
+          12032,
+          31,
+          20066
+        ],
+        "target": [
+          12014,
+          29,
+          20041
+        ]
+      },
+      "perf": {
+        "frames": 254,
+        "medianMs": 7.5,
+        "p95Ms": 8.100000023841858,
+        "p99Ms": 11.299999952316284,
+        "maxMs": 13.300000071525574,
+        "fpsMedian": 133.33333333333334
+      },
+      "meshes": 1349,
+      "activeMeshes": 1034,
+      "materials": 347,
+      "grass": 11534,
+      "regions": 9,
+      "pending": 0,
+      "renderer": "webgl2",
+      "gpu": {
+        "vendor": "Google Inc. (AMD)",
+        "renderer": "ANGLE (AMD, AMD Radeon RX 6650 XT (0x000073EF) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "camera": [
+        0,
+        31,
+        98
+      ]
+    },
+    {
+      "view": {
+        "name": "03-street",
+        "hour": 16,
+        "eye": [
+          12039,
+          27.5,
+          20034
+        ],
+        "target": [
+          12009,
+          28,
+          20016
+        ]
+      },
+      "perf": {
+        "frames": 272,
+        "medianMs": 6.900000095367432,
+        "p95Ms": 7.100000023841858,
+        "p99Ms": 11,
+        "maxMs": 11.299999952316284,
+        "fpsMedian": 144.92753422878744
+      },
+      "meshes": 1349,
+      "activeMeshes": 1011,
+      "materials": 347,
+      "grass": 10834,
+      "regions": 9,
+      "pending": 0,
+      "renderer": "webgl2",
+      "gpu": {
+        "vendor": "Google Inc. (AMD)",
+        "renderer": "ANGLE (AMD, AMD Radeon RX 6650 XT (0x000073EF) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "camera": [
+        7,
+        27.5,
+        66
+      ]
+    },
+    {
+      "view": {
+        "name": "04-isometric",
+        "hour": 16,
+        "view": "isometric"
+      },
+      "perf": {
+        "frames": 285,
+        "medianMs": 6.900000095367432,
+        "p95Ms": 7.200000047683716,
+        "p99Ms": 8.199999928474426,
+        "maxMs": 8.5,
+        "fpsMedian": 144.92753422878744
+      },
+      "meshes": 1349,
+      "activeMeshes": 1057,
+      "materials": 347,
+      "grass": 7867,
+      "regions": 9,
+      "pending": 0,
+      "renderer": "webgl2",
+      "gpu": {
+        "vendor": "Google Inc. (AMD)",
+        "renderer": "ANGLE (AMD, AMD Radeon RX 6650 XT (0x000073EF) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "camera": [
+        -14.715660199531257,
+        42.87520861406803,
+        57.59048938183251
+      ]
+    },
+    {
+      "view": {
+        "name": "05-blue-hour",
+        "hour": 18.6,
+        "eye": [
+          12032,
+          31,
+          20066
+        ],
+        "target": [
+          12014,
+          29,
+          20041
+        ]
+      },
+      "perf": {
+        "frames": 241,
+        "medianMs": 7.700000047683716,
+        "p95Ms": 10.899999976158142,
+        "p99Ms": 14.399999976158142,
+        "maxMs": 15.600000023841858,
+        "fpsMedian": 129.87012906588438
+      },
+      "meshes": 1349,
+      "activeMeshes": 1034,
+      "materials": 347,
+      "grass": 11534,
+      "regions": 9,
+      "pending": 0,
+      "renderer": "webgl2",
+      "gpu": {
+        "vendor": "Google Inc. (AMD)",
+        "renderer": "ANGLE (AMD, AMD Radeon RX 6650 XT (0x000073EF) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "camera": [
+        0,
+        31,
+        98
+      ]
+    },
+    {
+      "view": {
+        "name": "06-forest-edge",
+        "hour": 10,
+        "eye": [
+          12052,
+          29,
+          19977
+        ],
+        "target": [
+          12063,
+          29,
+          19936
+        ]
+      },
+      "perf": {
+        "frames": 187,
+        "medianMs": 10.299999952316284,
+        "p95Ms": 11.200000047683716,
+        "p99Ms": 16.300000071525574,
+        "maxMs": 17.09999990463257,
+        "fpsMedian": 97.08737909024146
+      },
+      "meshes": 1349,
+      "activeMeshes": 1049,
+      "materials": 347,
+      "grass": 11284,
+      "regions": 9,
+      "pending": 0,
+      "renderer": "webgl2",
+      "gpu": {
+        "vendor": "Google Inc. (AMD)",
+        "renderer": "ANGLE (AMD, AMD Radeon RX 6650 XT (0x000073EF) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "camera": [
+        20,
+        29,
+        9
+      ]
+    },
+    {
+      "view": {
+        "name": "07-night",
+        "hour": 22,
+        "eye": [
+          12032,
+          31,
+          20066
+        ],
+        "target": [
+          12014,
+          29,
+          20041
+        ]
+      },
+      "perf": {
+        "frames": 248,
+        "medianMs": 7.5,
+        "p95Ms": 8.100000023841858,
+        "p99Ms": 11.200000047683716,
+        "maxMs": 14.899999976158142,
+        "fpsMedian": 133.33333333333334
+      },
+      "meshes": 1349,
+      "activeMeshes": 1034,
+      "materials": 347,
+      "grass": 11534,
+      "regions": 9,
+      "pending": 0,
+      "renderer": "webgl2",
+      "gpu": {
+        "vendor": "Google Inc. (AMD)",
+        "renderer": "ANGLE (AMD, AMD Radeon RX 6650 XT (0x000073EF) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "camera": [
+        0,
+        31,
+        98
+      ]
+    },
+    {
+      "view": {
+        "name": "08-rain",
+        "hour": 16,
+        "eye": [
+          12032,
+          31,
+          20066
+        ],
+        "target": [
+          12014,
+          29,
+          20041
+        ],
+        "weather": {
+          "kind": "rain",
+          "intensity": 0.85,
+          "wind": 0.7
+        }
+      },
+      "perf": {
+        "frames": 253,
+        "medianMs": 7.600000023841858,
+        "p95Ms": 8.300000071525574,
+        "p99Ms": 10.900000095367432,
+        "maxMs": 14.5,
+        "fpsMedian": 131.5789469556465
+      },
+      "meshes": 1349,
+      "activeMeshes": 1034,
+      "materials": 347,
+      "grass": 11534,
+      "regions": 9,
+      "pending": 0,
+      "renderer": "webgl2",
+      "gpu": {
+        "vendor": "Google Inc. (AMD)",
+        "renderer": "ANGLE (AMD, AMD Radeon RX 6650 XT (0x000073EF) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "camera": [
+        0,
+        31,
+        98
+      ]
+    }
+  ],
+  "errors": []
+}

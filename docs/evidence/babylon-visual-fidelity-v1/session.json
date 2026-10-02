@@ -1,0 +1,262 @@
+{
+  "branch": "codex/babylon-visual-fidelity-v1",
+  "sourceHead": "3440bc4c7dd1eee53aa703194809cef2abd1d65b",
+  "baseline": "50c8b0db1629be68348a5876deff8f382d1b0db8",
+  "simulationSourceChanged": false,
+  "unrealChanged": false,
+  "merged": false,
+  "changes": [
+    "Correct outward face orientation for MeshBatch geometry and merged vegetation prototypes in the right-handed Babylon scene.",
+    "Derive continuous plaster panels, readable timber bays/braces, plinths and gable kingposts from exact projected cells; keep canonical windows, doors, fitted roofs and reversible cutaways.",
+    "Blend terrain with rotated grass/soil samples and macro variation; replace overlapping square path decals with one feathered surface derived from touching canonical path cells.",
+    "Add deterministic grove density, sparse settlement greenery and shorter clustered grass with GPU blade-tip wind and reduced-motion support.",
+    "Improve roof texel scale, warm material differentiation, leaf highlights, sun arc and moonlight; lower default orbit exploration pitch.",
+    "Add reversible projected-weather wetness for exposed materials, including material clones created while raining; preserve dry wall materials.",
+    "Add sparse cosmetic planters, log stacks and public-building benches with path/door clearance; no inventory, collision or resource state is created."
+  ],
+  "verification": {
+    "webTests": {
+      "files": 12,
+      "tests": 67,
+      "passed": true,
+      "command": "npx vitest run tests/web- --reporter=dot"
+    },
+    "productionBuild": {
+      "passed": true,
+      "command": "npm run web:build -- --outDir C:/Users/green/Desktop/projects/torn-veil-online/.debug/visual-fidelity/final-bundle",
+      "includesTypecheck": true
+    },
+    "live": {
+      "orbit": {
+        "checks": 22,
+        "passed": 22,
+        "errors": [],
+        "fixture": "Movement, interior entry/traversal/exit/reentry and menus use ordinary input. Dialogue co-location, doorway starting position, initial canonical closed-door state and adult combat target staging are disclosed fixtures. No human/controller acceptance."
+      },
+      "isometric": {
+        "checks": 20,
+        "passed": 20,
+        "errors": [],
+        "fixture": "Movement, interior entry/traversal/exit/reentry and menus use ordinary input. Dialogue co-location, doorway starting position, initial canonical closed-door state and adult combat target staging are disclosed fixtures. No human/controller acceptance."
+      }
+    },
+    "finalVisual": {
+      "views": 8,
+      "errors": [],
+      "quality": "high",
+      "renderer": "webgl2",
+      "viewport": [
+        1600,
+        900
+      ],
+      "gpu": {
+        "vendor": "Google Inc. (AMD)",
+        "renderer": "ANGLE (AMD, AMD Radeon RX 6650 XT (0x000073EF) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      }
+    },
+    "independentReview": "One independent reviewer: no actionable findings. Subsequent source change only restrained grass color/specular constants; final production build and capture include it.",
+    "simulationSuite": "Not rerun: simulation source unchanged; browser boundary, admission differential, and disposable canonical gameplay checks passed."
+  },
+  "performance": [
+    {
+      "view": "01-gameplay",
+      "matchedCamera": false,
+      "before": {
+        "medianMs": 6.900000095367432,
+        "p95Ms": 7.100000023841858,
+        "meshes": 1226,
+        "grass": 25821
+      },
+      "after": {
+        "medianMs": 7.5,
+        "p95Ms": 8.200000047683716,
+        "meshes": 1349,
+        "grass": 9534,
+        "triangles": 4230891
+      }
+    },
+    {
+      "view": "02-tavern",
+      "matchedCamera": true,
+      "before": {
+        "medianMs": 7,
+        "p95Ms": 8.099999904632568,
+        "meshes": 1226,
+        "grass": 28111
+      },
+      "after": {
+        "medianMs": 7.5,
+        "p95Ms": 8.299999952316284,
+        "meshes": 1349,
+        "grass": 11534,
+        "triangles": 4229849
+      }
+    },
+    {
+      "view": "03-street",
+      "matchedCamera": true,
+      "before": {
+        "medianMs": 6.900000095367432,
+        "p95Ms": 7,
+        "meshes": 1226,
+        "grass": 27655
+      },
+      "after": {
+        "medianMs": 6.900000095367432,
+        "p95Ms": 7.100000023841858,
+        "meshes": 1349,
+        "grass": 10834,
+        "triangles": 4131591
+      }
+    },
+    {
+      "view": "04-isometric",
+      "matchedCamera": true,
+      "before": {
+        "medianMs": 6.900000095367432,
+        "p95Ms": 7,
+        "meshes": 1226,
+        "grass": 20339
+      },
+      "after": {
+        "medianMs": 6.900000095367432,
+        "p95Ms": 7,
+        "meshes": 1349,
+        "grass": 7867,
+        "triangles": 4221709
+      }
+    },
+    {
+      "view": "05-blue-hour",
+      "matchedCamera": true,
+      "before": {
+        "medianMs": 7,
+        "p95Ms": 7.799999952316284,
+        "meshes": 1226,
+        "grass": 28111
+      },
+      "after": {
+        "medianMs": 7.600000023841858,
+        "p95Ms": 8.5,
+        "meshes": 1349,
+        "grass": 11534,
+        "triangles": 4229849
+      }
+    },
+    {
+      "view": "06-forest-edge",
+      "matchedCamera": true,
+      "before": {
+        "medianMs": 9.699999928474426,
+        "p95Ms": 10.600000023841858,
+        "meshes": 1226,
+        "grass": 29017
+      },
+      "after": {
+        "medianMs": 10.300000071525574,
+        "p95Ms": 11.100000023841858,
+        "meshes": 1349,
+        "grass": 11284,
+        "triangles": 4644013
+      }
+    },
+    {
+      "view": "07-night",
+      "matchedCamera": true,
+      "before": {
+        "medianMs": 6.900000095367432,
+        "p95Ms": 7,
+        "meshes": 1226,
+        "grass": 28111
+      },
+      "after": {
+        "medianMs": 7.399999976158142,
+        "p95Ms": 8.100000023841858,
+        "meshes": 1349,
+        "grass": 11534,
+        "triangles": 4229849
+      }
+    },
+    {
+      "view": "08-rain",
+      "matchedCamera": true,
+      "before": {
+        "medianMs": 6.900000095367432,
+        "p95Ms": 8,
+        "meshes": 1226,
+        "grass": 28111
+      },
+      "after": {
+        "medianMs": 7.699999928474426,
+        "p95Ms": 8.700000047683716,
+        "meshes": 1349,
+        "grass": 11534,
+        "triangles": 4229849
+      }
+    }
+  ],
+  "performanceLimits": "Short warmed Chrome frame-time samples on one Radeon RX 6650 XT, not a cross-device benchmark. Default orbit framing intentionally changed. Other matched views use identical camera positions. Night/rain are presentation overrides, not new canonical history; HUD clock remains the recorded clock.",
+  "iterations": [
+    {
+      "folder": "iterations/01-ground-facades",
+      "views": 6,
+      "errors": 0,
+      "status": "superseded by final capture"
+    },
+    {
+      "folder": "iterations/02-framing-greenery",
+      "views": 6,
+      "errors": 0,
+      "status": "superseded by final capture"
+    },
+    {
+      "folder": "iterations/03-face-orientation",
+      "views": 6,
+      "errors": 0,
+      "status": "superseded by final capture"
+    },
+    {
+      "folder": "iterations/04-materials-dressing",
+      "views": 6,
+      "errors": 142,
+      "status": "rejected; corrected in later iteration"
+    },
+    {
+      "folder": "iterations/05-light-paths",
+      "views": 6,
+      "errors": 0,
+      "status": "superseded by final capture"
+    },
+    {
+      "folder": "iterations/06-grass-camera",
+      "views": 8,
+      "errors": 0,
+      "status": "superseded by final capture"
+    },
+    {
+      "folder": "iterations/07-weather-night",
+      "views": 4,
+      "errors": 0,
+      "status": "superseded by final capture"
+    }
+  ],
+  "remainingWeaknesses": [
+    "Building masses and roof families still repeat; decorative facade shells do not replace the need for stronger architectural archetypes.",
+    "Open clearings remain flat and sparsely dressed; field edges and vegetation silhouettes need further art direction.",
+    "Characters and many interior props retain their existing simpler geometry/materials.",
+    "Night scenes without projected active lights lack warm focal points. Water was not exercised in this scene.",
+    "Only WebGL2 was exercised end to end; no claim of validated WebGPU compilation or weak-device performance."
+  ],
+  "nextImprovements": [
+    "Expand presentation building families by projected purpose/family, with richer roof-edge and doorway modules.",
+    "Improve field margins, canopy silhouettes and low ground cover while preserving canonical clearings and resources.",
+    "Refine character materials and animation blending alongside contextual interior prop art."
+  ],
+  "reproduce": {
+    "recording": ".debug/web/streams/arrival2.json",
+    "recordingSha256": "5948b947c1f9461ba730e492176956ed698bd35613667d3c979a831d8693dc20",
+    "command": "npx tsx scripts/web/visual-fidelity.ts --url http://127.0.0.1:5188 --out docs/evidence/babylon-visual-fidelity-v1/after",
+    "note": "Requires the existing local observer recording and private production preview on port 5188. Tests create disposable worlds and accounts, never a retained save."
+  }
+}

@@ -1,0 +1,170 @@
+{
+  "recordingSha256": "5948b947c1f9461ba730e492176956ed698bd35613667d3c979a831d8693dc20",
+  "fixture": "Frozen recorded observer state; only presentation camera and hour change. Gameplay/isometric views use ordinary camera rig. No human playtest.",
+  "viewport": [
+    1600,
+    900
+  ],
+  "results": [
+    {
+      "view": {
+        "name": "01-gameplay",
+        "hour": 16
+      },
+      "perf": {
+        "frames": 249,
+        "medianMs": 7.700000047683716,
+        "p95Ms": 8.600000023841858,
+        "p99Ms": 9.100000023841858,
+        "maxMs": 20.899999976158142,
+        "fpsMedian": 129.87012906588438
+      },
+      "meshes": 1349,
+      "activeMeshes": 1041,
+      "materials": 347,
+      "grass": 9535,
+      "regions": 9,
+      "pending": 0,
+      "renderer": "webgl2",
+      "gpu": {
+        "vendor": "Google Inc. (AMD)",
+        "renderer": "ANGLE (AMD, AMD Radeon RX 6650 XT (0x000073EF) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "camera": [
+        7.465130264743009,
+        28.669662816461734,
+        33.62263074736937
+      ]
+    },
+    {
+      "view": {
+        "name": "02-tavern",
+        "hour": 16,
+        "eye": [
+          12032,
+          31,
+          20066
+        ],
+        "target": [
+          12014,
+          29,
+          20041
+        ]
+      },
+      "perf": {
+        "frames": 252,
+        "medianMs": 7.600000023841858,
+        "p95Ms": 8.700000047683716,
+        "p99Ms": 10.5,
+        "maxMs": 12.599999904632568,
+        "fpsMedian": 131.5789469556465
+      },
+      "meshes": 1349,
+      "activeMeshes": 1034,
+      "materials": 347,
+      "grass": 11534,
+      "regions": 9,
+      "pending": 0,
+      "renderer": "webgl2",
+      "gpu": {
+        "vendor": "Google Inc. (AMD)",
+        "renderer": "ANGLE (AMD, AMD Radeon RX 6650 XT (0x000073EF) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "camera": [
+        0,
+        31,
+        98
+      ]
+    },
+    {
+      "view": {
+        "name": "07-night",
+        "hour": 22,
+        "eye": [
+          12032,
+          31,
+          20066
+        ],
+        "target": [
+          12014,
+          29,
+          20041
+        ]
+      },
+      "perf": {
+        "frames": 238,
+        "medianMs": 7.800000071525574,
+        "p95Ms": 10.100000023841858,
+        "p99Ms": 12,
+        "maxMs": 12.200000047683716,
+        "fpsMedian": 128.2051270294942
+      },
+      "meshes": 1349,
+      "activeMeshes": 1034,
+      "materials": 347,
+      "grass": 11534,
+      "regions": 9,
+      "pending": 0,
+      "renderer": "webgl2",
+      "gpu": {
+        "vendor": "Google Inc. (AMD)",
+        "renderer": "ANGLE (AMD, AMD Radeon RX 6650 XT (0x000073EF) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "camera": [
+        0,
+        31,
+        98
+      ]
+    },
+    {
+      "view": {
+        "name": "08-rain",
+        "hour": 16,
+        "eye": [
+          12032,
+          31,
+          20066
+        ],
+        "target": [
+          12014,
+          29,
+          20041
+        ],
+        "weather": {
+          "kind": "rain",
+          "intensity": 0.85,
+          "wind": 0.7
+        }
+      },
+      "perf": {
+        "frames": 192,
+        "medianMs": 10.100000023841858,
+        "p95Ms": 13.300000071525574,
+        "p99Ms": 14.800000071525574,
+        "maxMs": 15,
+        "fpsMedian": 99.00990075637822
+      },
+      "meshes": 1349,
+      "activeMeshes": 1034,
+      "materials": 347,
+      "grass": 11534,
+      "regions": 9,
+      "pending": 0,
+      "renderer": "webgl2",
+      "gpu": {
+        "vendor": "Google Inc. (AMD)",
+        "renderer": "ANGLE (AMD, AMD Radeon RX 6650 XT (0x000073EF) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "camera": [
+        0,
+        31,
+        98
+      ]
+    }
+  ],
+  "errors": []
+}

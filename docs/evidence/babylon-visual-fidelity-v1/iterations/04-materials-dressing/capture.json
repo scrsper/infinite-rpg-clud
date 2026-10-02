@@ -1,0 +1,381 @@
+{
+  "recordingSha256": "5948b947c1f9461ba730e492176956ed698bd35613667d3c979a831d8693dc20",
+  "fixture": "Frozen recorded observer state; only presentation camera and hour change. Gameplay/isometric views use ordinary camera rig. No human playtest.",
+  "viewport": [
+    1600,
+    900
+  ],
+  "results": [
+    {
+      "view": {
+        "name": "01-gameplay",
+        "hour": 16
+      },
+      "perf": {
+        "frames": 245,
+        "medianMs": 7.299999952316284,
+        "p95Ms": 10.600000023841858,
+        "p99Ms": 15.399999976158142,
+        "maxMs": 16.100000023841858,
+        "fpsMedian": 136.9863022646597
+      },
+      "meshes": 1353,
+      "activeMeshes": 1046,
+      "materials": 347,
+      "grass": 9522,
+      "regions": 9,
+      "pending": 0,
+      "renderer": "webgl2",
+      "gpu": {
+        "vendor": "Google Inc. (AMD)",
+        "renderer": "ANGLE (AMD, AMD Radeon RX 6650 XT (0x000073EF) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "camera": [
+        7.196140443879411,
+        29.436815462056657,
+        34.02134463489834
+      ]
+    },
+    {
+      "view": {
+        "name": "02-tavern",
+        "hour": 16,
+        "eye": [
+          12032,
+          31,
+          20066
+        ],
+        "target": [
+          12014,
+          29,
+          20041
+        ]
+      },
+      "perf": {
+        "frames": 239,
+        "medianMs": 8.100000023841858,
+        "p95Ms": 9.199999928474426,
+        "p99Ms": 10.600000023841858,
+        "maxMs": 14.600000023841858,
+        "fpsMedian": 123.45678976006923
+      },
+      "meshes": 1353,
+      "activeMeshes": 1038,
+      "materials": 347,
+      "grass": 11534,
+      "regions": 9,
+      "pending": 0,
+      "renderer": "webgl2",
+      "gpu": {
+        "vendor": "Google Inc. (AMD)",
+        "renderer": "ANGLE (AMD, AMD Radeon RX 6650 XT (0x000073EF) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "camera": [
+        0,
+        31,
+        98
+      ]
+    },
+    {
+      "view": {
+        "name": "03-street",
+        "hour": 16,
+        "eye": [
+          12039,
+          27.5,
+          20034
+        ],
+        "target": [
+          12009,
+          28,
+          20016
+        ]
+      },
+      "perf": {
+        "frames": 238,
+        "medianMs": 8,
+        "p95Ms": 9.800000071525574,
+        "p99Ms": 10.800000071525574,
+        "maxMs": 11.800000071525574,
+        "fpsMedian": 125
+      },
+      "meshes": 1353,
+      "activeMeshes": 1015,
+      "materials": 347,
+      "grass": 10834,
+      "regions": 9,
+      "pending": 0,
+      "renderer": "webgl2",
+      "gpu": {
+        "vendor": "Google Inc. (AMD)",
+        "renderer": "ANGLE (AMD, AMD Radeon RX 6650 XT (0x000073EF) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "camera": [
+        7,
+        27.5,
+        66
+      ]
+    },
+    {
+      "view": {
+        "name": "04-isometric",
+        "hour": 16,
+        "view": "isometric"
+      },
+      "perf": {
+        "frames": 243,
+        "medianMs": 8.199999928474426,
+        "p95Ms": 9.600000023841858,
+        "p99Ms": 11.299999952316284,
+        "maxMs": 19.5,
+        "fpsMedian": 121.9512205759306
+      },
+      "meshes": 1353,
+      "activeMeshes": 1061,
+      "materials": 347,
+      "grass": 7867,
+      "regions": 9,
+      "pending": 0,
+      "renderer": "webgl2",
+      "gpu": {
+        "vendor": "Google Inc. (AMD)",
+        "renderer": "ANGLE (AMD, AMD Radeon RX 6650 XT (0x000073EF) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "camera": [
+        -14.715660199531257,
+        42.87520861406803,
+        57.59048938183251
+      ]
+    },
+    {
+      "view": {
+        "name": "05-blue-hour",
+        "hour": 18.6,
+        "eye": [
+          12032,
+          31,
+          20066
+        ],
+        "target": [
+          12014,
+          29,
+          20041
+        ]
+      },
+      "perf": {
+        "frames": 239,
+        "medianMs": 8,
+        "p95Ms": 9.200000047683716,
+        "p99Ms": 11.599999904632568,
+        "maxMs": 13.600000023841858,
+        "fpsMedian": 125
+      },
+      "meshes": 1353,
+      "activeMeshes": 1038,
+      "materials": 347,
+      "grass": 11534,
+      "regions": 9,
+      "pending": 0,
+      "renderer": "webgl2",
+      "gpu": {
+        "vendor": "Google Inc. (AMD)",
+        "renderer": "ANGLE (AMD, AMD Radeon RX 6650 XT (0x000073EF) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "camera": [
+        0,
+        31,
+        98
+      ]
+    },
+    {
+      "view": {
+        "name": "06-forest-edge",
+        "hour": 10,
+        "eye": [
+          12052,
+          29,
+          19977
+        ],
+        "target": [
+          12063,
+          29,
+          19936
+        ]
+      },
+      "perf": {
+        "frames": 184,
+        "medianMs": 10.5,
+        "p95Ms": 12,
+        "p99Ms": 14.899999976158142,
+        "maxMs": 23.5,
+        "fpsMedian": 95.23809523809524
+      },
+      "meshes": 1353,
+      "activeMeshes": 1053,
+      "materials": 347,
+      "grass": 11284,
+      "regions": 9,
+      "pending": 0,
+      "renderer": "webgl2",
+      "gpu": {
+        "vendor": "Google Inc. (AMD)",
+        "renderer": "ANGLE (AMD, AMD Radeon RX 6650 XT (0x000073EF) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "camera": [
+        20,
+        29,
+        9
+      ]
+    }
+  ],
+  "errors": [
+    "BJS - [22:59:01]: Unable to compile effect:",
+    "BJS - [22:59:01]: Uniforms: world view viewProjection vEyePosition vLightsType vAmbientColor vAlbedoColor baseWeight baseDiffuseRoughness vReflectivityColor vMetallicReflectanceFactors vEmissiveColor visibility vFogInfos vFogColor pointSize vAlbedoInfos vBaseWeightInfos vBaseDiffuseRoughnessInfos vAmbientInfos vOpacityInfos vEmissiveInfos vReflectivityInfos vMetallicReflectanceInfos vReflectanceInfos vMicroSurfaceSamplerInfos vBumpInfos vLightmapInfos mBones albedoMatrix baseWeightMatrix baseDif",
+    "BJS - [22:59:01]: Attributes: position normal color world0 world1 world2 world3 instanceColor",
+    "BJS - [22:59:01]: Defines:\n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEARCOAT_BUMPDIRECTUV 0\n#de",
+    "BJS - [22:59:01]: Vertex code:",
+    "BJS - [22:59:01]: #version 300 es\n#define WEBGL2 \n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEAR",
+    "BJS - [22:59:01]: Fragment code:",
+    "BJS - [22:59:01]: #version 300 es\n#define WEBGL2 \n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEAR",
+    "BJS - [22:59:01]: Offending line [487] in vertex code: vec3 tvGrassWorld = (finalWorld * vec4(positionUpdated, 1.0)).xyz;",
+    "BJS - [22:59:01]: Error: Error: VERTEX SHADER ERROR: 0:487: 'finalWorld' : undeclared identifier\n\n    at _finalizePipelineContext (http://127.0.0.1:5186/@fs/C:/Users/green/Desktop/projects/torn-veil-online/node_modules/.vite/deps/chunk-5RGAKDXZ.js?v=e49e9b2d:701:15)\n    at _isRenderingStateCompiled (http://127.0.0.1:5186/@fs/C:/Users/green/Desktop/projects/torn-veil-online/node_modules/.vite/deps/chunk-5RGAKDXZ.js?v=e49e9b2d:684:7)\n    at _Engine._isRenderingStateCompiled (http://127.0.0.1:5186/",
+    "BJS - [22:59:01]: Trying next fallback.",
+    "BJS - [22:59:01]: Unable to compile effect:",
+    "BJS - [22:59:01]: Uniforms: world view viewProjection vEyePosition vLightsType vAmbientColor vAlbedoColor baseWeight baseDiffuseRoughness vReflectivityColor vMetallicReflectanceFactors vEmissiveColor visibility vFogInfos vFogColor pointSize vAlbedoInfos vBaseWeightInfos vBaseDiffuseRoughnessInfos vAmbientInfos vOpacityInfos vEmissiveInfos vReflectivityInfos vMetallicReflectanceInfos vReflectanceInfos vMicroSurfaceSamplerInfos vBumpInfos vLightmapInfos mBones albedoMatrix baseWeightMatrix baseDif",
+    "BJS - [22:59:01]: Attributes: position normal color world0 world1 world2 world3 instanceColor",
+    "BJS - [22:59:01]: Defines:\n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEARCOAT_BUMPDIRECTUV 0\n#de",
+    "BJS - [22:59:01]: Vertex code:",
+    "BJS - [22:59:01]: #version 300 es\n#define WEBGL2 \n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEAR",
+    "BJS - [22:59:01]: Fragment code:",
+    "BJS - [22:59:01]: #version 300 es\n#define WEBGL2 \n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEAR",
+    "BJS - [22:59:01]: Offending line [487] in vertex code: vec3 tvGrassWorld = (finalWorld * vec4(positionUpdated, 1.0)).xyz;",
+    "BJS - [22:59:01]: Error: Error: VERTEX SHADER ERROR: 0:487: 'finalWorld' : undeclared identifier\n\n    at _finalizePipelineContext (http://127.0.0.1:5186/@fs/C:/Users/green/Desktop/projects/torn-veil-online/node_modules/.vite/deps/chunk-5RGAKDXZ.js?v=e49e9b2d:701:15)\n    at _isRenderingStateCompiled (http://127.0.0.1:5186/@fs/C:/Users/green/Desktop/projects/torn-veil-online/node_modules/.vite/deps/chunk-5RGAKDXZ.js?v=e49e9b2d:684:7)\n    at _Engine._isRenderingStateCompiled (http://127.0.0.1:5186/",
+    "BJS - [22:59:01]: Trying next fallback.",
+    "BJS - [22:59:01]: Unable to compile effect:",
+    "BJS - [22:59:01]: Uniforms: world view viewProjection vEyePosition vLightsType vAmbientColor vAlbedoColor baseWeight baseDiffuseRoughness vReflectivityColor vMetallicReflectanceFactors vEmissiveColor visibility vFogInfos vFogColor pointSize vAlbedoInfos vBaseWeightInfos vBaseDiffuseRoughnessInfos vAmbientInfos vOpacityInfos vEmissiveInfos vReflectivityInfos vMetallicReflectanceInfos vReflectanceInfos vMicroSurfaceSamplerInfos vBumpInfos vLightmapInfos mBones albedoMatrix baseWeightMatrix baseDif",
+    "BJS - [22:59:01]: Attributes: position normal color world0 world1 world2 world3 instanceColor",
+    "BJS - [22:59:01]: Defines:\n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEARCOAT_BUMPDIRECTUV 0\n#de",
+    "BJS - [22:59:01]: Vertex code:",
+    "BJS - [22:59:01]: #version 300 es\n#define WEBGL2 \n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEAR",
+    "BJS - [22:59:01]: Fragment code:",
+    "BJS - [22:59:01]: #version 300 es\n#define WEBGL2 \n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEAR",
+    "BJS - [22:59:01]: Offending line [487] in vertex code: vec3 tvGrassWorld = (finalWorld * vec4(positionUpdated, 1.0)).xyz;",
+    "BJS - [22:59:01]: Error: Error: VERTEX SHADER ERROR: 0:487: 'finalWorld' : undeclared identifier\n\n    at _finalizePipelineContext (http://127.0.0.1:5186/@fs/C:/Users/green/Desktop/projects/torn-veil-online/node_modules/.vite/deps/chunk-5RGAKDXZ.js?v=e49e9b2d:701:15)\n    at _isRenderingStateCompiled (http://127.0.0.1:5186/@fs/C:/Users/green/Desktop/projects/torn-veil-online/node_modules/.vite/deps/chunk-5RGAKDXZ.js?v=e49e9b2d:684:7)\n    at _Engine._isRenderingStateCompiled (http://127.0.0.1:5186/",
+    "BJS - [22:59:01]: Trying next fallback.",
+    "BJS - [22:59:01]: Unable to compile effect:",
+    "BJS - [22:59:01]: Uniforms: world view viewProjection vEyePosition vLightsType vAmbientColor vAlbedoColor baseWeight baseDiffuseRoughness vReflectivityColor vMetallicReflectanceFactors vEmissiveColor visibility vFogInfos vFogColor pointSize vAlbedoInfos vBaseWeightInfos vBaseDiffuseRoughnessInfos vAmbientInfos vOpacityInfos vEmissiveInfos vReflectivityInfos vMetallicReflectanceInfos vReflectanceInfos vMicroSurfaceSamplerInfos vBumpInfos vLightmapInfos mBones albedoMatrix baseWeightMatrix baseDif",
+    "BJS - [22:59:01]: Attributes: position normal color world0 world1 world2 world3 instanceColor",
+    "BJS - [22:59:01]: Defines:\n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEARCOAT_BUMPDIRECTUV 0\n#de",
+    "BJS - [22:59:01]: Vertex code:",
+    "BJS - [22:59:01]: #version 300 es\n#define WEBGL2 \n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEAR",
+    "BJS - [22:59:01]: Fragment code:",
+    "BJS - [22:59:01]: #version 300 es\n#define WEBGL2 \n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEAR",
+    "BJS - [22:59:01]: Offending line [487] in vertex code: vec3 tvGrassWorld = (finalWorld * vec4(positionUpdated, 1.0)).xyz;",
+    "BJS - [22:59:01]: Error: Error: VERTEX SHADER ERROR: 0:487: 'finalWorld' : undeclared identifier\n\n    at _finalizePipelineContext (http://127.0.0.1:5186/@fs/C:/Users/green/Desktop/projects/torn-veil-online/node_modules/.vite/deps/chunk-5RGAKDXZ.js?v=e49e9b2d:701:15)\n    at _isRenderingStateCompiled (http://127.0.0.1:5186/@fs/C:/Users/green/Desktop/projects/torn-veil-online/node_modules/.vite/deps/chunk-5RGAKDXZ.js?v=e49e9b2d:684:7)\n    at _Engine._isRenderingStateCompiled (http://127.0.0.1:5186/",
+    "BJS - [22:59:01]: Trying next fallback.",
+    "BJS - [22:59:01]: Unable to compile effect:",
+    "BJS - [22:59:01]: Uniforms: world view viewProjection vEyePosition vLightsType vAmbientColor vAlbedoColor baseWeight baseDiffuseRoughness vReflectivityColor vMetallicReflectanceFactors vEmissiveColor visibility vFogInfos vFogColor pointSize vAlbedoInfos vBaseWeightInfos vBaseDiffuseRoughnessInfos vAmbientInfos vOpacityInfos vEmissiveInfos vReflectivityInfos vMetallicReflectanceInfos vReflectanceInfos vMicroSurfaceSamplerInfos vBumpInfos vLightmapInfos mBones albedoMatrix baseWeightMatrix baseDif",
+    "BJS - [22:59:01]: Attributes: position normal color world0 world1 world2 world3 instanceColor",
+    "BJS - [22:59:01]: Defines:\n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEARCOAT_BUMPDIRECTUV 0\n#de",
+    "BJS - [22:59:01]: Vertex code:",
+    "BJS - [22:59:01]: #version 300 es\n#define WEBGL2 \n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEAR",
+    "BJS - [22:59:01]: Fragment code:",
+    "BJS - [22:59:01]: #version 300 es\n#define WEBGL2 \n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEAR",
+    "BJS - [22:59:01]: Offending line [487] in vertex code: vec3 tvGrassWorld = (finalWorld * vec4(positionUpdated, 1.0)).xyz;",
+    "BJS - [22:59:01]: Error: Error: VERTEX SHADER ERROR: 0:487: 'finalWorld' : undeclared identifier\n\n    at _finalizePipelineContext (http://127.0.0.1:5186/@fs/C:/Users/green/Desktop/projects/torn-veil-online/node_modules/.vite/deps/chunk-5RGAKDXZ.js?v=e49e9b2d:701:15)\n    at _isRenderingStateCompiled (http://127.0.0.1:5186/@fs/C:/Users/green/Desktop/projects/torn-veil-online/node_modules/.vite/deps/chunk-5RGAKDXZ.js?v=e49e9b2d:684:7)\n    at _Engine._isRenderingStateCompiled (http://127.0.0.1:5186/",
+    "BJS - [22:59:01]: Trying next fallback.",
+    "BJS - [22:59:01]: Unable to compile effect:",
+    "BJS - [22:59:01]: Uniforms: world view viewProjection vEyePosition vLightsType vAmbientColor vAlbedoColor baseWeight baseDiffuseRoughness vReflectivityColor vMetallicReflectanceFactors vEmissiveColor visibility vFogInfos vFogColor pointSize vAlbedoInfos vBaseWeightInfos vBaseDiffuseRoughnessInfos vAmbientInfos vOpacityInfos vEmissiveInfos vReflectivityInfos vMetallicReflectanceInfos vReflectanceInfos vMicroSurfaceSamplerInfos vBumpInfos vLightmapInfos mBones albedoMatrix baseWeightMatrix baseDif",
+    "BJS - [22:59:01]: Attributes: position normal color world0 world1 world2 world3 instanceColor",
+    "BJS - [22:59:01]: Defines:\n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEARCOAT_BUMPDIRECTUV 0\n#de",
+    "BJS - [22:59:01]: Vertex code:",
+    "BJS - [22:59:01]: #version 300 es\n#define WEBGL2 \n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEAR",
+    "BJS - [22:59:01]: Fragment code:",
+    "BJS - [22:59:01]: #version 300 es\n#define WEBGL2 \n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEAR",
+    "BJS - [22:59:01]: Offending line [487] in vertex code: vec3 tvGrassWorld = (finalWorld * vec4(positionUpdated, 1.0)).xyz;",
+    "BJS - [22:59:01]: Error: Error: VERTEX SHADER ERROR: 0:487: 'finalWorld' : undeclared identifier\n\n    at _finalizePipelineContext (http://127.0.0.1:5186/@fs/C:/Users/green/Desktop/projects/torn-veil-online/node_modules/.vite/deps/chunk-5RGAKDXZ.js?v=e49e9b2d:701:15)\n    at _isRenderingStateCompiled (http://127.0.0.1:5186/@fs/C:/Users/green/Desktop/projects/torn-veil-online/node_modules/.vite/deps/chunk-5RGAKDXZ.js?v=e49e9b2d:684:7)\n    at _Engine._isRenderingStateCompiled (http://127.0.0.1:5186/",
+    "BJS - [22:59:01]: Trying next fallback.",
+    "BJS - [22:59:01]: Unable to compile effect:",
+    "BJS - [22:59:01]: Uniforms: world view viewProjection vEyePosition vLightsType vAmbientColor vAlbedoColor baseWeight baseDiffuseRoughness vReflectivityColor vMetallicReflectanceFactors vEmissiveColor visibility vFogInfos vFogColor pointSize vAlbedoInfos vBaseWeightInfos vBaseDiffuseRoughnessInfos vAmbientInfos vOpacityInfos vEmissiveInfos vReflectivityInfos vMetallicReflectanceInfos vReflectanceInfos vMicroSurfaceSamplerInfos vBumpInfos vLightmapInfos mBones albedoMatrix baseWeightMatrix baseDif",
+    "BJS - [22:59:01]: Attributes: position normal color world0 world1 world2 world3 instanceColor",
+    "BJS - [22:59:01]: Defines:\n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEARCOAT_BUMPDIRECTUV 0\n#de",
+    "BJS - [22:59:01]: Vertex code:",
+    "BJS - [22:59:01]: #version 300 es\n#define WEBGL2 \n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEAR",
+    "BJS - [22:59:01]: Fragment code:",
+    "BJS - [22:59:01]: #version 300 es\n#define WEBGL2 \n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEAR",
+    "BJS - [22:59:01]: Offending line [487] in vertex code: vec3 tvGrassWorld = (finalWorld * vec4(positionUpdated, 1.0)).xyz;",
+    "BJS - [22:59:01]: Error: Error: VERTEX SHADER ERROR: 0:487: 'finalWorld' : undeclared identifier\n\n    at _finalizePipelineContext (http://127.0.0.1:5186/@fs/C:/Users/green/Desktop/projects/torn-veil-online/node_modules/.vite/deps/chunk-5RGAKDXZ.js?v=e49e9b2d:701:15)\n    at _isRenderingStateCompiled (http://127.0.0.1:5186/@fs/C:/Users/green/Desktop/projects/torn-veil-online/node_modules/.vite/deps/chunk-5RGAKDXZ.js?v=e49e9b2d:684:7)\n    at _Engine._isRenderingStateCompiled (http://127.0.0.1:5186/",
+    "BJS - [22:59:01]: Trying next fallback.",
+    "BJS - [22:59:01]: Unable to compile effect:",
+    "BJS - [22:59:01]: Uniforms: world view viewProjection vEyePosition vLightsType vAmbientColor vAlbedoColor baseWeight baseDiffuseRoughness vReflectivityColor vMetallicReflectanceFactors vEmissiveColor visibility vFogInfos vFogColor pointSize vAlbedoInfos vBaseWeightInfos vBaseDiffuseRoughnessInfos vAmbientInfos vOpacityInfos vEmissiveInfos vReflectivityInfos vMetallicReflectanceInfos vReflectanceInfos vMicroSurfaceSamplerInfos vBumpInfos vLightmapInfos mBones albedoMatrix baseWeightMatrix baseDif",
+    "BJS - [22:59:01]: Attributes: position normal color world0 world1 world2 world3 instanceColor",
+    "BJS - [22:59:01]: Defines:\n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEARCOAT_BUMPDIRECTUV 0\n#de",
+    "BJS - [22:59:01]: Vertex code:",
+    "BJS - [22:59:01]: #version 300 es\n#define WEBGL2 \n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEAR",
+    "BJS - [22:59:01]: Fragment code:",
+    "BJS - [22:59:01]: #version 300 es\n#define WEBGL2 \n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEAR",
+    "BJS - [22:59:01]: Offending line [487] in vertex code: vec3 tvGrassWorld = (finalWorld * vec4(positionUpdated, 1.0)).xyz;",
+    "BJS - [22:59:01]: Error: Error: VERTEX SHADER ERROR: 0:487: 'finalWorld' : undeclared identifier\n\n    at _finalizePipelineContext (http://127.0.0.1:5186/@fs/C:/Users/green/Desktop/projects/torn-veil-online/node_modules/.vite/deps/chunk-5RGAKDXZ.js?v=e49e9b2d:701:15)\n    at _isRenderingStateCompiled (http://127.0.0.1:5186/@fs/C:/Users/green/Desktop/projects/torn-veil-online/node_modules/.vite/deps/chunk-5RGAKDXZ.js?v=e49e9b2d:684:7)\n    at _Engine._isRenderingStateCompiled (http://127.0.0.1:5186/",
+    "BJS - [22:59:01]: Trying next fallback.",
+    "BJS - [22:59:01]: Unable to compile effect:",
+    "BJS - [22:59:01]: Uniforms: world view viewProjection vEyePosition vLightsType vAmbientColor vAlbedoColor baseWeight baseDiffuseRoughness vReflectivityColor vMetallicReflectanceFactors vEmissiveColor visibility vFogInfos vFogColor pointSize vAlbedoInfos vBaseWeightInfos vBaseDiffuseRoughnessInfos vAmbientInfos vOpacityInfos vEmissiveInfos vReflectivityInfos vMetallicReflectanceInfos vReflectanceInfos vMicroSurfaceSamplerInfos vBumpInfos vLightmapInfos mBones albedoMatrix baseWeightMatrix baseDif",
+    "BJS - [22:59:01]: Attributes: position normal color world0 world1 world2 world3 instanceColor",
+    "BJS - [22:59:01]: Defines:\n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEARCOAT_BUMPDIRECTUV 0\n#de",
+    "BJS - [22:59:01]: Vertex code:",
+    "BJS - [22:59:01]: #version 300 es\n#define WEBGL2 \n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEAR",
+    "BJS - [22:59:01]: Fragment code:",
+    "BJS - [22:59:01]: #version 300 es\n#define WEBGL2 \n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEAR",
+    "BJS - [22:59:01]: Offending line [487] in vertex code: vec3 tvGrassWorld = (finalWorld * vec4(positionUpdated, 1.0)).xyz;",
+    "BJS - [22:59:01]: Error: Error: VERTEX SHADER ERROR: 0:487: 'finalWorld' : undeclared identifier\n\n    at _finalizePipelineContext (http://127.0.0.1:5186/@fs/C:/Users/green/Desktop/projects/torn-veil-online/node_modules/.vite/deps/chunk-5RGAKDXZ.js?v=e49e9b2d:701:15)\n    at _isRenderingStateCompiled (http://127.0.0.1:5186/@fs/C:/Users/green/Desktop/projects/torn-veil-online/node_modules/.vite/deps/chunk-5RGAKDXZ.js?v=e49e9b2d:684:7)\n    at _Engine._isRenderingStateCompiled (http://127.0.0.1:5186/",
+    "BJS - [22:59:01]: Trying next fallback.",
+    "BJS - [22:59:01]: Unable to compile effect:",
+    "BJS - [22:59:01]: Uniforms: world view viewProjection vEyePosition vLightsType vAmbientColor vAlbedoColor baseWeight baseDiffuseRoughness vReflectivityColor vMetallicReflectanceFactors vEmissiveColor visibility vFogInfos vFogColor pointSize vAlbedoInfos vBaseWeightInfos vBaseDiffuseRoughnessInfos vAmbientInfos vOpacityInfos vEmissiveInfos vReflectivityInfos vMetallicReflectanceInfos vReflectanceInfos vMicroSurfaceSamplerInfos vBumpInfos vLightmapInfos mBones albedoMatrix baseWeightMatrix baseDif",
+    "BJS - [22:59:01]: Attributes: position normal color world0 world1 world2 world3 instanceColor",
+    "BJS - [22:59:01]: Defines:\n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEARCOAT_BUMPDIRECTUV 0\n#de",
+    "BJS - [22:59:01]: Vertex code:",
+    "BJS - [22:59:01]: #version 300 es\n#define WEBGL2 \n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEAR",
+    "BJS - [22:59:01]: Fragment code:",
+    "BJS - [22:59:01]: #version 300 es\n#define WEBGL2 \n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEAR",
+    "BJS - [22:59:01]: Offending line [487] in vertex code: vec3 tvGrassWorld = (finalWorld * vec4(positionUpdated, 1.0)).xyz;",
+    "BJS - [22:59:01]: Error: Error: VERTEX SHADER ERROR: 0:487: 'finalWorld' : undeclared identifier\n\n    at _finalizePipelineContext (http://127.0.0.1:5186/@fs/C:/Users/green/Desktop/projects/torn-veil-online/node_modules/.vite/deps/chunk-5RGAKDXZ.js?v=e49e9b2d:701:15)\n    at _isRenderingStateCompiled (http://127.0.0.1:5186/@fs/C:/Users/green/Desktop/projects/torn-veil-online/node_modules/.vite/deps/chunk-5RGAKDXZ.js?v=e49e9b2d:684:7)\n    at _Engine._isRenderingStateCompiled (http://127.0.0.1:5186/",
+    "BJS - [22:59:01]: Trying next fallback.",
+    "BJS - [22:59:01]: Unable to compile effect:",
+    "BJS - [22:59:01]: Uniforms: world view viewProjection vEyePosition vLightsType vAmbientColor vAlbedoColor baseWeight baseDiffuseRoughness vReflectivityColor vMetallicReflectanceFactors vEmissiveColor visibility vFogInfos vFogColor pointSize vAlbedoInfos vBaseWeightInfos vBaseDiffuseRoughnessInfos vAmbientInfos vOpacityInfos vEmissiveInfos vReflectivityInfos vMetallicReflectanceInfos vReflectanceInfos vMicroSurfaceSamplerInfos vBumpInfos vLightmapInfos mBones albedoMatrix baseWeightMatrix baseDif",
+    "BJS - [22:59:01]: Attributes: position normal color world0 world1 world2 world3 instanceColor",
+    "BJS - [22:59:01]: Defines:\n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEARCOAT_BUMPDIRECTUV 0\n#de",
+    "BJS - [22:59:01]: Vertex code:",
+    "BJS - [22:59:01]: #version 300 es\n#define WEBGL2 \n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEAR",
+    "BJS - [22:59:01]: Fragment code:",
+    "BJS - [22:59:01]: #version 300 es\n#define WEBGL2 \n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEAR",
+    "BJS - [22:59:01]: Offending line [487] in vertex code: vec3 tvGrassWorld = (finalWorld * vec4(positionUpdated, 1.0)).xyz;",
+    "BJS - [22:59:01]: Error: Error: VERTEX SHADER ERROR: 0:487: 'finalWorld' : undeclared identifier\n\n    at _finalizePipelineContext (http://127.0.0.1:5186/@fs/C:/Users/green/Desktop/projects/torn-veil-online/node_modules/.vite/deps/chunk-5RGAKDXZ.js?v=e49e9b2d:701:15)\n    at _isRenderingStateCompiled (http://127.0.0.1:5186/@fs/C:/Users/green/Desktop/projects/torn-veil-online/node_modules/.vite/deps/chunk-5RGAKDXZ.js?v=e49e9b2d:684:7)\n    at _Engine._isRenderingStateCompiled (http://127.0.0.1:5186/",
+    "BJS - [22:59:01]: Trying next fallback.",
+    "BJS - [22:59:02]: Unable to compile effect:",
+    "BJS - [22:59:02]: Uniforms: world view viewProjection vEyePosition vLightsType vAmbientColor vAlbedoColor baseWeight baseDiffuseRoughness vReflectivityColor vMetallicReflectanceFactors vEmissiveColor visibility vFogInfos vFogColor pointSize vAlbedoInfos vBaseWeightInfos vBaseDiffuseRoughnessInfos vAmbientInfos vOpacityInfos vEmissiveInfos vReflectivityInfos vMetallicReflectanceInfos vReflectanceInfos vMicroSurfaceSamplerInfos vBumpInfos vLightmapInfos mBones albedoMatrix baseWeightMatrix baseDif",
+    "BJS - [22:59:02]: Attributes: position normal color world0 world1 world2 world3 instanceColor",
+    "BJS - [22:59:02]: Defines:\n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEARCOAT_BUMPDIRECTUV 0\n#de",
+    "BJS - [22:59:02]: Vertex code:",
+    "BJS - [22:59:02]: #version 300 es\n#define WEBGL2 \n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEAR",
+    "BJS - [22:59:02]: Fragment code:",
+    "BJS - [22:59:02]: #version 300 es\n#define WEBGL2 \n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEAR",
+    "BJS - [22:59:02]: Offending line [487] in vertex code: vec3 tvGrassWorld = (finalWorld * vec4(positionUpdated, 1.0)).xyz;",
+    "BJS - [22:59:02]: Error: Error: VERTEX SHADER ERROR: 0:487: 'finalWorld' : undeclared identifier\n\n    at _finalizePipelineContext (http://127.0.0.1:5186/@fs/C:/Users/green/Desktop/projects/torn-veil-online/node_modules/.vite/deps/chunk-5RGAKDXZ.js?v=e49e9b2d:701:15)\n    at _isRenderingStateCompiled (http://127.0.0.1:5186/@fs/C:/Users/green/Desktop/projects/torn-veil-online/node_modules/.vite/deps/chunk-5RGAKDXZ.js?v=e49e9b2d:684:7)\n    at _Engine._isRenderingStateCompiled (http://127.0.0.1:5186/",
+    "BJS - [22:59:02]: Trying next fallback.",
+    "BJS - [22:59:02]: Unable to compile effect:",
+    "BJS - [22:59:02]: Uniforms: world view viewProjection vEyePosition vLightsType vAmbientColor vAlbedoColor baseWeight baseDiffuseRoughness vReflectivityColor vMetallicReflectanceFactors vEmissiveColor visibility vFogInfos vFogColor pointSize vAlbedoInfos vBaseWeightInfos vBaseDiffuseRoughnessInfos vAmbientInfos vOpacityInfos vEmissiveInfos vReflectivityInfos vMetallicReflectanceInfos vReflectanceInfos vMicroSurfaceSamplerInfos vBumpInfos vLightmapInfos mBones albedoMatrix baseWeightMatrix baseDif",
+    "BJS - [22:59:02]: Attributes: position normal color world0 world1 world2 world3 instanceColor",
+    "BJS - [22:59:02]: Defines:\n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEARCOAT_BUMPDIRECTUV 0\n#de",
+    "BJS - [22:59:02]: Vertex code:",
+    "BJS - [22:59:02]: #version 300 es\n#define WEBGL2 \n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEAR",
+    "BJS - [22:59:02]: Fragment code:",
+    "BJS - [22:59:02]: #version 300 es\n#define WEBGL2 \n#define MATERIALPLUGIN_8\n#define BRDF_V_HEIGHT_CORRELATED\n#define MS_BRDF_ENERGY_CONSERVATION\n#define SPHERICAL_HARMONICS\n#define SPECULAR_GLOSSINESS_ENERGY_CONSERVATION\n#define MIX_IBL_RADIANCE_WITH_IRRADIANCE\n#define LEGACY_SPECULAR_ENERGY_CONSERVATION\n#define BASE_DIFFUSE_MODEL 0\n#define DIELECTRIC_SPECULAR_MODEL 0\n#define CONDUCTOR_SPECULAR_MODEL 0\n#define CLEARCOAT_TEXTUREDIRECTUV 0\n#define CLEARCOAT_TEXTURE_ROUGHNESSDIRECTUV 0\n#define CLEAR",
+    "BJS - [22:59:02]: Offending line [487] in vertex code: vec3 tvGrassWorld = (finalWorld * vec4(positionUpdated, 1.0)).xyz;",
+    "BJS - [22:59:02]: Error: Error: VERTEX SHADER ERROR: 0:487: 'finalWorld' : undeclared identifier\n\n    at _finalizePipelineContext (http://127.0.0.1:5186/@fs/C:/Users/green/Desktop/projects/torn-veil-online/node_modules/.vite/deps/chunk-5RGAKDXZ.js?v=e49e9b2d:701:15)\n    at _isRenderingStateCompiled (http://127.0.0.1:5186/@fs/C:/Users/green/Desktop/projects/torn-veil-online/node_modules/.vite/deps/chunk-5RGAKDXZ.js?v=e49e9b2d:684:7)\n    at _Engine._isRenderingStateCompiled (http://127.0.0.1:5186/"
+  ]
+}

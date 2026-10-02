@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Torn Veil — visual comparisons</title>
+<style>
+  :root{color-scheme:dark;font:16px/1.5 system-ui,sans-serif;background:#151918;color:#ece7db}
+  body{margin:0 auto;max-width:1600px;padding:28px}
+  header{display:flex;gap:24px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+  h1{font:32px/1.15 Georgia,serif;margin:0;color:#dfc494}
+  p{max-width:100ch;color:#b6bcb5;margin:14px 0 22px}
+  select{font:inherit;background:#252d29;color:inherit;border:1px solid #667369;padding:10px;border-radius:6px}
+  .frame{position:relative;aspect-ratio:16/9;background:#080b0a;overflow:hidden;border:1px solid #495448}
+  img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+  #after{clip-path:inset(0 50% 0 0)}
+  #divider{position:absolute;left:50%;top:0;bottom:0;width:2px;background:#ead3a9;pointer-events:none}
+  .tag{position:absolute;bottom:16px;background:#111b;padding:6px 14px;border-radius:4px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;font-size:12px}
+  .left{left:16px}.right{right:16px}
+  .controls{display:flex;align-items:center;gap:16px;margin-top:18px}
+  input{flex:1;accent-color:#d9bd84;min-width:80px}
+  a{color:#d9bd84;text-underline-offset:4px}
+  .links{display:flex;gap:24px;flex-wrap:wrap;margin-top:18px}
+  small{display:block;color:#a4afa5;margin-top:22px;max-width:110ch}
+  @media(max-width:600px){body{padding:16px}h1{font-size:26px}.controls{gap:8px;font-size:13px}}
+</style>
+<header>
+  <h1>Torn Veil · visual comparisons</h1>
+  <label>View <select id="view" aria-label="Comparison viewpoint"></select></label>
+</header>
+<p>Recorded observer state, identical seed and fixed viewpoints. Drag the slider to compare the original client with the revised Babylon presentation. The ordinary orbit view intentionally includes the new camera framing.</p>
+<div class="frame">
+  <img id="before" alt="Original Babylon game rendering">
+  <img id="after" alt="Revised Babylon game rendering">
+  <div id="divider"></div>
+  <span class="tag left">After</span><span class="tag right">Before</span>
+</div>
+<div class="controls"><span>Before</span><input id="slider" aria-label="Reveal revised rendering" type="range" min="0" max="100" value="50"><span>After</span></div>
+<div class="links"><a id="beforeLink">Open original image</a><a id="afterLink">Open revised image</a><a href="../live-orbit/orbit-playthrough.webm">Live orbit playthrough</a><a href="../session.json">Verification and performance record</a></div>
+<small id="note"></small>
+<small>1600 × 900 · high quality · WebGL2 · Radeon RX 6650 XT. Hours and rain are presentation overrides of the recorded state; the HUD clock retains its original recorded time. These images are browser captures, not generated artwork. Separate live-world acceptance covers actual input, doors, interiors and combat.</small>
+<script>
+  const views=[
+    ['02-tavern','Tavern · afternoon',16],
+    ['01-gameplay','Ordinary orbit gameplay',16],
+    ['03-street','Street · afternoon',16],
+    ['04-isometric','Ordinary isometric gameplay',16],
+    ['05-blue-hour','Sunset',18.6],
+    ['06-forest-edge','Forest edge',10],
+    ['07-night','Moonlight',22],
+    ['08-rain','Rain',16]
+  ];
+  const select=document.querySelector('#view'), slider=document.querySelector('#slider');
+  for(const [id,label] of views){const option=new Option(label,id);select.add(option)}
+  function change(){
+    const [id,label,hour]=views.find(v=>v[0]===select.value);
+    const folder=id==='07-night'||id==='08-rain'?'before-weather':'before';
+    const before=`../${folder}/${id}.png`, after=`../after/${id}.png`;
+    document.querySelector('#before').src=before;document.querySelector('#after').src=after;
+    document.querySelector('#beforeLink').href=before;document.querySelector('#afterLink').href=after;
+    document.querySelector('#note').textContent=`${label} · presentation hour ${hour}. ${id==='01-gameplay'?'The player/world state matches; the camera pitch changed.':'Camera position, framing and observer state match.'}`;
+  }
+  slider.addEventListener('input',()=>{document.querySelector('#after').style.clipPath=`inset(0 ${100-slider.value}% 0 0)`;document.querySelector('#divider').style.left=slider.value+'%'});
+  select.addEventListener('change',change);change();
+</script>
+</html>
