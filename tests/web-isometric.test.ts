@@ -83,7 +83,7 @@ describe('elevated perspective exploration', () => {
       for(let i=0;i<80;i++)rig.update(.1,{x:0,y:1.55,z:0},0);
       expect(camera.position.length()).toBeGreaterThan(4);expect(camera.position.length()).toBeLessThan(6);
       rig.setMode('talk');rig.setTalk({x:1,y:1.55,z:1});for(let i=0;i<20;i++)rig.update(.1,{x:0,y:1.55,z:0},0);
-      rig.setMode('explore');expect(rig.pitch).toBe(.62);
+      rig.setMode('explore');expect(rig.pitch).toBe(.5);
       settings.viewMode='isometric';rig.update(.1,{x:0,y:1.55,z:0},0);expect(camera.mode).toBe(Camera.ORTHOGRAPHIC_CAMERA);
       settings.viewMode='orbit';rig.update(.1,{x:0,y:1.55,z:0},0);expect(camera.mode).toBe(Camera.PERSPECTIVE_CAMERA);expect(rig.cutaway).toBe(true);
       settings.viewMode='third-person';rig.update(.1,{x:0,y:1.55,z:0},0);expect(rig.cutaway).toBe(false);

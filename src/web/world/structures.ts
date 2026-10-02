@@ -193,7 +193,7 @@ export function* buildStructuresSteps(scene: Scene, mats: MaterialLibrary, r: Re
     const mesh = entry.batch.build(`structure-${r.id}-${key}`, scene, mats.get(entry.material), { receiveShadow: true });
     if (mesh) {
       if (entry.place) {
-        const material = mesh.material!.clone(mesh.name + '-cutaway')!;
+        const material = mats.clone(entry.material, mesh.name + '-cutaway');
         material.clipPlane = new Plane(0, 1, 0, -1e8); mesh.material = material;
         mesh.metadata = { cutawayBounds: entry.place.bounds, ownsCutawayMaterial: true };
       }

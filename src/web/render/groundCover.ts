@@ -44,18 +44,18 @@ export class GroundCover extends MaterialPluginBase {
         let tvPatch = tvGroundNoise(tvUV*.19);
         let tvUV2 = vec2f(tvUV.x*.73-tvUV.y*.51,tvUV.x*.51+tvUV.y*.73)+vec2f(.37,.61);
         let tvGrass = mix(textureSample(tvGroundGrass,tvGroundGrassSampler,tvUV).rgb,textureSample(tvGroundGrass,tvGroundGrassSampler,tvUV2).rgb,.45);
-        let tvSoil = mix(surfaceAlbedo,toLinearSpaceVec3(textureSample(albedoSampler,albedoSamplerSampler,tvUV2).rgb)*fragmentInputs.vColor.rgb,.45);
+        let tvSoil = mix(surfaceAlbedo,toLinearSpaceVec3(textureSample(albedoSampler,albedoSamplerSampler,tvUV2).rgb)*fragmentInputs.vColor.rgb*uniforms.vAlbedoColor.rgb,.45);
         let tvCoverage = smoothstep(.08,.92,clamp(fragmentInputs.tvGrassWeight+(tvGroundNoise(tvUV*1.7)-.5)*.2,0.0,1.0));
-        surfaceAlbedo = mix(tvSoil,toLinearSpaceVec3(tvGrass*vec3f(.91,1.12,.78))*fragmentInputs.vColor.rgb,tvCoverage)*(.83+.32*tvPatch);
+        surfaceAlbedo = mix(tvSoil,toLinearSpaceVec3(tvGrass*vec3f(.91,1.12,.78))*fragmentInputs.vColor.rgb*uniforms.vAlbedoColor.rgb,tvCoverage)*(.83+.32*tvPatch);
         normalW = normalize(mix(normalW,normalize(fragmentInputs.vNormalW),tvCoverage*.82));
       ` : `
         vec2 tvUV = vAlbedoUV;
         float tvPatch = tvGroundNoise(tvUV*.19);
         vec2 tvUV2 = vec2(tvUV.x*.73-tvUV.y*.51,tvUV.x*.51+tvUV.y*.73)+vec2(.37,.61);
         vec3 tvGrass = mix(texture2D(tvGroundGrass,tvUV).rgb,texture2D(tvGroundGrass,tvUV2).rgb,.45);
-        vec3 tvSoil = mix(surfaceAlbedo,toLinearSpace(texture2D(albedoSampler,tvUV2).rgb)*vColor.rgb,.45);
+        vec3 tvSoil = mix(surfaceAlbedo,toLinearSpace(texture2D(albedoSampler,tvUV2).rgb)*vColor.rgb*vAlbedoColor.rgb,.45);
         float tvCoverage = smoothstep(.08,.92,clamp(tvGrassWeight+(tvGroundNoise(tvUV*1.7)-.5)*.2,0.0,1.0));
-        surfaceAlbedo = mix(tvSoil,toLinearSpace(tvGrass*vec3(.91,1.12,.78))*vColor.rgb,tvCoverage)*(.83+.32*tvPatch);
+        surfaceAlbedo = mix(tvSoil,toLinearSpace(tvGrass*vec3(.91,1.12,.78))*vColor.rgb*vAlbedoColor.rgb,tvCoverage)*(.83+.32*tvPatch);
         normalW = normalize(mix(normalW,normalize(vNormalW),tvCoverage*.82));
       `,
     };

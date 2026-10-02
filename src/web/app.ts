@@ -11,7 +11,7 @@ import { GameConnection, type CharacterChoice, type ClosedInfo, type GameLink } 
 import { ReplayConnection } from './net/replay';
 import type { BodyState, DialogueProjection, InteractionTarget, SnapshotMessage, Vec3 } from './net/messages';
 import { LocalPredictor } from './game/predictor';
-import { CameraRig } from './game/cameraRig';
+import { CameraRig, ORBIT_EXPLORATION_PITCH } from './game/cameraRig';
 import { InputManager } from './game/input';
 import { PlayerController, candidatesFrom, type CombatIntent } from './game/controller';
 import { DEFAULT_SETTINGS, codeLabel, loadSettings, saveSettings, type Settings } from './game/bindings';
@@ -299,7 +299,7 @@ export class App {
   }
   private enterGame(): void {
     this.phase = 'playing'; this.clearScreen(); this.loading = null; this.hud.show(true);
-    const p = this.predictor.predicted; if (p) this.rig.yaw = p.yaw; this.rig.pitch = this.rig.orbit ? .62 : .3;
+    const p = this.predictor.predicted; if (p) this.rig.yaw = p.yaw; this.rig.pitch = this.rig.orbit ? ORBIT_EXPLORATION_PITCH : .3;
     this.hud.toast(`Welcome, ${this.link.hello?.character.name ?? 'traveller'}.`, 'info', 5000);
     if (this.input.device === 'keyboard') this.input.requestLock();
     this.updateHints();

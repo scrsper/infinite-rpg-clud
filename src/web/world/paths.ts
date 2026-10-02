@@ -48,7 +48,7 @@ export function buildPaths(scene: Scene, mats: MaterialLibrary, region: RegionPr
     }
   }
   if (batch.empty) return null;
-  const material = mats.get('path').clone(`path-blend-${region.id}`)!;
+  const material = mats.clone('path', `path-blend-${region.id}`);
   material.transparencyMode = PBRMaterial.PBRMATERIAL_ALPHABLEND;
   material.disableDepthWrite = true;
   const mesh = batch.build(`paths-${region.id}`, scene, material, { receiveShadow: true })!;

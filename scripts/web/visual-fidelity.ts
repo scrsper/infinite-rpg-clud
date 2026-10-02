@@ -43,7 +43,8 @@ try {
   ];
   const results: unknown[] = [];
   await page.evaluate(() => { const t = (window as any).__tv; (window as any).__visualRigUpdate = t.rig.update; });
-  for (const view of views) {
+  const selected = value('views', '').split(',').filter(Boolean);
+  for (const view of views.filter(v => !selected.length || selected.includes(v.name))) {
     await page.evaluate(v => {
       const t = (window as any).__tv;
       if (v.weather) t.regions.weather = v.weather;
@@ -67,7 +68,7 @@ try {
     await page.screenshot({ path: join(out, `${view.name}.png`) });
     results.push(await page.evaluate(v => {
       const t = (window as any).__tv;
-      return { view: v, perf: t.perfReport(), meshes: t.ctx.scene.meshes.length, activeMeshes: t.ctx.scene.getActiveMeshes().length, materials: t.ctx.scene.materials.length, grass: t.grass.count, regions: t.regions.regions.size, pending: t.regions.pendingBuilds, renderer: t.ctx.kind, gpu: t.ctx.engine.getGlInfo?.(), camera: t.camera.position.asArray() };
+      return { view: v, perf: t.perfReport(), meshes: t.ctx.scene.meshes.length, activeMeshes: t.ctx.scene.getActiveMeshes().length, materials: t.ctx.scene.materials.length, triangles: t.ctx.scene.getActiveIndices()/3, regionBuildMs: Array.from(t.regions.regions.values(), (r:any) => ({id:r.id,ms:r.stats.buildMs,stages:r.stats.stageMs})), grass: t.grass.count, regions: t.regions.regions.size, pending: t.regions.pendingBuilds, renderer: t.ctx.kind, gpu: t.ctx.engine.getGlInfo?.(), camera: t.camera.position.asArray() };
     }, view));
   }
   writeFileSync(join(out, 'capture.json'), JSON.stringify({ recordingSha256: createHash('sha256').update(source).digest('hex'), fixture: 'Frozen recorded observer state; only presentation camera and hour change. Gameplay/isometric views use ordinary camera rig. No human playtest.', viewport: [1600, 900], results, errors }, null, 2));

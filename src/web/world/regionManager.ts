@@ -249,6 +249,7 @@ export class RegionManager {
     }
   }
   update(dt: number, cameraPos: Vector3, cameraForward: Vector3, night: number): void {
+    this.mats.updateWeather(this.weather.kind, this.weather.intensity, dt);
     for (const r of this.regions.values()) r.dynamics.update(dt);
     this.refreshVegetation(cameraPos, cameraForward, dt);
     this.lights.update(dt, cameraPos, night);

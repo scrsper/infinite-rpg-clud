@@ -1,7 +1,7 @@
 import { Mesh, Plane, Scene } from '@babylonjs/core';
 import type { MaterialLibrary } from '../render/materials';
 import type { PlaceProjection } from '../net/messages';
-import { COLORS, PropBuilder } from './propGeometry';
+import { COLORS, PropBuilder, furnishing } from './propGeometry';
 import { MeshBatch } from './meshBatch';
 import type { V } from './meshBatch';
 import type { Cells } from './structures';
@@ -18,7 +18,7 @@ function horizontalLog(batch: MeshBatch, cx: number, cy: number, cz: number, len
   const ax: V = [Math.cos(yaw), 0, Math.sin(yaw)], side: V = [-ax[2], 0, ax[0]], sides = 8;
   const p = (end: number, i: number): V => [cx + ax[0] * end * length * 0.5 + side[0] * Math.cos(i / sides * Math.PI * 2) * radius, cy + Math.sin(i / sides * Math.PI * 2) * radius, cz + ax[2] * end * length * 0.5 + side[2] * Math.cos(i / sides * Math.PI * 2) * radius];
   for (let i = 0; i < sides; i++) batch.quad(p(-1, i + 1), p(-1, i), p(1, i), p(1, i + 1), tint, 1, { normal: [side[0] * Math.cos((i + 0.5) / sides * Math.PI * 2), Math.sin((i + 0.5) / sides * Math.PI * 2), side[2] * Math.cos((i + 0.5) / sides * Math.PI * 2)] });
-  const cap = (end: number, flip: boolean): void => { const pts: V[] = []; for (let i = 0; i < sides; i++) pts.push(p(end, i)); batch.polygon(flip ? pts : pts.slice().reverse(), flip ? ax : [-ax[0], 0, -ax[2]], tint, 1); };
+  const cap = (end: number, flip: boolean): void => { const pts: V[] = []; for (let i = 0; i < sides; i++) pts.push(p(end, i)); batch.polygon(flip ? pts.slice().reverse() : pts, flip ? ax : [-ax[0], 0, -ax[2]], tint, 1); };
   cap(-1, false); cap(1, true);
 }
 
@@ -64,33 +64,24 @@ export function buildBuildingDressing(scene: Scene, mats: MaterialLibrary, place
     const [lx, lz] = local(c.x, c.z), y = ground(c.x, c.z), yaw = (place.visualSeed % 2) * Math.PI * 0.5;
     for (let row = 0; row < 2; row++) for (let i = 0; i < 3 - row; i++) {
       const offset=(i-(2-row)*.5)*.13;
-      horizontalLog(batch,lx+Math.cos(yaw)*offset,y+.062+row*.11,lz-Math.sin(yaw)*offset,.68,.065,yaw,COLORS.darkOak);
+      horizontalLog(batch,lx-Math.sin(yaw)*offset,y+.062+row*.11,lz+Math.cos(yaw)*offset,.68,.065,yaw,COLORS.darkOak);
     }
   };
-  const addEmblem = (c: { x: number; z: number }): void => {
-    const [lx, lz] = local(c.x, c.z), y = ground(c.x, c.z), b = new PropBuilder(batch, lx, y, lz, 0, 0.78);
-    b.box(-0.04, 0, -0.04, 0.08, 1.3, 0.08, COLORS.darkOak);
-    const tint = place.type.toLowerCase().includes('chapel') ? COLORS.gold : place.type.toLowerCase().includes('bakery') ? COLORS.bread : COLORS.red;
-    b.box(-0.42, 0.88, -0.035, 0.84, 0.42, 0.07, COLORS.oak);
-    b.box(-0.08, 1.3, -0.04, 0.16, 0.06, 0.08, COLORS.darkOak);
-    if (kind.includes('tavern')) { b.cyl(0, 1.04, -0.08, 0.11, 0.08, tint, 8); b.box(0.07, 1.07, -0.09, 0.05, 0.03, 0.16, tint); }
-    else if (kind.includes('bakery')) b.blob(0, 1.1, -0.08, 0.2, 0.11, 0.04, tint, 8, 4);
-    else { b.cyl(0, 1.1, -0.08, 0.12, 0.025, tint, 10); for (let i = 0; i < 4; i++) b.box(Math.cos(i * Math.PI * 0.5) * 0.16 - 0.02, 1.08, Math.sin(i * Math.PI * 0.5) * 0.16 - 0.02, 0.04, 0.04, 0.04, tint); }
-  };
   const kind = place.type.toLowerCase();
-  const emblem = kind.includes('tavern') || kind.includes('chapel') || kind.includes('bakery');
   const selected = candidates.filter(usable), slots: typeof candidates = [];
   const take = (): (typeof candidates)[number] | undefined => {
     const c = selected.find(s => !slots.includes(s)); if (c) slots.push(c); return c;
   };
   const planter = take(); if (planter) addPlanter(planter);
   const firewood = (place.visualSeed & 3) !== 0 ? take() : undefined; if (firewood) addFirewood(firewood);
-  if (emblem) {
-    const frontSide = place.door
-      ? place.door.x <= x0 ? 'west' : place.door.x >= x1 ? 'east' : place.door.z <= z0 ? 'north' : 'south'
-      : 'north';
-    const front = selected.find(s => s.side === frontSide && !slots.includes(s)) ?? take();
-    if (front) { if (!slots.includes(front)) slots.push(front); addEmblem(front); }
+  // A resting place at public buildings; existing reusable prop geometry keeps the
+  // decorative bench in the same visual family as canonical furniture.
+  if (kind.includes('tavern') || kind.includes('chapel')) {
+    const seat = take();
+    if (seat) {
+      const [lx, lz] = local(seat.x, seat.z);
+      furnishing('bench', new PropBuilder(batch, lx, ground(seat.x, seat.z), lz, seat.side === 'west' || seat.side === 'east' ? Math.PI*.5 : 0, 1), place.visualSeed);
+    }
   }
   const mesh = batch.build(`building-dressing-${place.id}`, scene, mats.get('props'), { receiveShadow: true });
   if (!mesh) return [];

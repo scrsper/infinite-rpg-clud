@@ -11,6 +11,13 @@ export type MatName =
   | 'plaster' | 'planks' | 'darkwood' | 'log' | 'stone' | 'cobble' | 'moss' | 'roofTile' | 'roofSlate' | 'thatch' | 'cloth' | 'clothRed' | 'clothBlue'
   | 'terrain' | 'path' | 'glass' | 'iron' | 'gold' | 'hay' | 'water' | 'bark' | 'leaf' | 'leafDark' | 'rock' | 'farmland' | 'wood' | 'props';
 interface Spec { texture: TextureKind; tint: [number, number, number]; metres: number; roughness?: number; metallic?: number; bump?: number; alpha?: number; emissive?: [number, number, number] }
+interface WeatherProfile { dryColor: Color3; dryRoughness: number; wetRoughness: number; darken: number }
+const WEATHER_TARGETS: Partial<Record<MatName, { roughness: number; darken: number }>> = {
+  terrain: { roughness: .65, darken: .15 }, path: { roughness: .45, darken: .2 },
+  roofTile: { roughness: .4, darken: .2 }, roofSlate: { roughness: .4, darken: .18 },
+  thatch: { roughness: .88, darken: .15 }, cobble: { roughness: .62, darken: .18 },
+  rock: { roughness: .68, darken: .18 }, bark: { roughness: .58, darken: .2 },
+};
 
 // A restrained family of scanned stone, timber, plaster and ground. Colour remains a material
 // property; region vertex colours supply local dampness and wear without duplicating textures.
@@ -55,10 +62,15 @@ const SPECS: Record<MatName, Spec> = {
 
 export class MaterialLibrary {
   private readonly cache = new Map<MatName, PBRMaterial>();
+  private readonly weatherMaterials = new Map<PBRMaterial, WeatherProfile>();
+  private readonly clones = new Set<PBRMaterial>();
+  private weatherWetness = 0;
   private readonly textures = new Map<TextureKind, { albedo: RawTexture; normal: RawTexture; roughness: number }>();
   private readonly scanned = new Map<string, { albedo: Texture; normal: Texture; arm: Texture }>();
   private readonly foliage = new Map<string, Texture>();
   constructor(private readonly scene: Scene) {}
+
+  get wetness(): number { return this.weatherWetness; }
 
   private tex(kind: TextureKind) {
     let t = this.textures.get(kind);
@@ -134,10 +146,60 @@ export class MaterialLibrary {
     // The sky irradiance, pooled lights and weather change throughout gameplay.
     // Frozen PBR uniform buffers retain first-bind environment values across those changes.
     this.cache.set(name, m);
+    this.registerWeatherMaterial(name, m);
     return m;
   }
+
+  /** Clone a material while retaining its original dry profile for weather updates. */
+  clone(name: MatName, label: string): PBRMaterial {
+    const source = this.get(name), clone = source.clone(label)!;
+    const profile = this.weatherMaterials.get(source);
+    if (profile) {
+      clone.albedoColor.copyFrom(profile.dryColor); clone.roughness = profile.dryRoughness;
+      this.registerWeatherProfile(clone, profile); this.clones.add(clone);
+      this.applyWeather(clone, profile);
+    }
+    return clone;
+  }
+
+  /** Smooth projected rain/storm wetness and apply it reversibly to exposed surfaces. */
+  updateWeather(kind: string, intensity: number, dt: number): void {
+    const i = Math.max(0, Math.min(1, intensity));
+    const target = kind === 'storm' ? Math.min(1, i * 1.1) : kind === 'rain' ? i : 0;
+    const delta = target - this.weatherWetness;
+    if (Math.abs(delta) < 1e-5) return;
+    const rate = delta > 0 ? 1.5 : .2;
+    this.weatherWetness += delta * (1 - Math.exp(-Math.max(0, dt) * rate));
+    if (target === 0 && Math.abs(this.weatherWetness) < 1e-3) this.weatherWetness = 0;
+    for (const [material, profile] of this.weatherMaterials) this.applyWeather(material, profile);
+  }
+
+  private registerWeatherMaterial(name: MatName, material: PBRMaterial): void {
+    const target = WEATHER_TARGETS[name]; if (!target) return;
+    const profile: WeatherProfile = { dryColor: material.albedoColor.clone(), dryRoughness: material.roughness ?? .5, wetRoughness: target.roughness, darken: target.darken };
+    this.registerWeatherProfile(material, profile); this.applyWeather(material, profile);
+  }
+
+  private registerWeatherProfile(material: PBRMaterial, profile: WeatherProfile): void {
+    this.weatherMaterials.set(material, profile);
+    material.onDisposeObservable.add(() => { this.weatherMaterials.delete(material); this.clones.delete(material); });
+  }
+
+  private applyWeather(material: PBRMaterial, profile: WeatherProfile): void {
+    material.albedoColor.copyFrom(profile.dryColor).scaleInPlace(1 - profile.darken * this.weatherWetness);
+    material.roughness = profile.dryRoughness + (profile.wetRoughness - profile.dryRoughness) * this.weatherWetness;
+  }
+
   /** A per-mesh tinted variant is done through vertex colours; this returns the shared material. */
-  dispose(): void { for (const m of this.cache.values()) m.dispose(); for (const t of this.textures.values()) { t.albedo.dispose(); t.normal.dispose(); } for (const t of this.scanned.values()) { t.albedo.dispose(); t.normal.dispose(); t.arm.dispose(); } for (const t of this.foliage.values()) t.dispose(); this.foliage.clear(); this.scanned.clear(); this.cache.clear(); this.textures.clear(); }
+  dispose(): void {
+    const cached = new Set(this.cache.values());
+    for (const m of this.cache.values()) m.dispose();
+    for (const m of this.clones) if (!cached.has(m)) m.dispose();
+    for (const t of this.textures.values()) { t.albedo.dispose(); t.normal.dispose(); }
+    for (const t of this.scanned.values()) { t.albedo.dispose(); t.normal.dispose(); t.arm.dispose(); }
+    for (const t of this.foliage.values()) t.dispose();
+    this.weatherMaterials.clear(); this.clones.clear(); this.foliage.clear(); this.scanned.clear(); this.cache.clear(); this.textures.clear();
+  }
   tintOf(name: MatName): [number, number, number] { return SPECS[name].tint; }
   water(): Nullable<PBRMaterial> { return this.cache.get('water') ?? null; }
 }

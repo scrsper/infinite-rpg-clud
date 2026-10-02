@@ -8,7 +8,7 @@ import type { PlaceProjection, RegionProjection } from '../src/web/net/messages'
 
 function materialStub(scene: Scene): any {
   const cache = new Map<string, StandardMaterial>();
-  return { get: (name: string) => { let m = cache.get(name); if (!m) { m = new StandardMaterial(`m-${name}`, scene); cache.set(name, m); } return m; }, tilesPerMetre: () => 1 };
+  return { get: (name: string) => { let m = cache.get(name); if (!m) { m = new StandardMaterial(`m-${name}`, scene); cache.set(name, m); } return m; }, clone: (name: string, label: string) => cache.get(name)!.clone(label), tilesPerMetre: () => 1 };
 }
 
 function place(): PlaceProjection {

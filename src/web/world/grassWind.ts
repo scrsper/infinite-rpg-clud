@@ -13,6 +13,8 @@ export class GrassWind extends MaterialPluginBase {
     super(material, 'TornVeilGrassWind', 210, {}, true, true);
   }
 
+  override isCompatible(): boolean { return true; }
+
   setWind(dt: number, projectedWind: number, reducedMotion: boolean): void {
     this.time += Math.max(0, dt);
     this.strength = reducedMotion ? 0 : Math.max(0, Math.min(1, projectedWind)) * 0.055;

@@ -20,6 +20,7 @@ export interface CameraObstruction {
 export type CameraMode = 'explore' | 'combat' | 'talk';
 export interface CameraFocus { x: number; y: number; z: number }
 
+export const ORBIT_EXPLORATION_PITCH = .5;
 const TAU = Math.PI * 2;
 const wrap = (a: number) => Math.atan2(Math.sin(a), Math.cos(a));
 const lerpAngle = (a: number, b: number, t: number) => a + wrap(b - a) * t;
@@ -60,7 +61,7 @@ export class CameraRig {
   zoom(delta: number): void { if (this.isometric) { this.isoSpan = Math.max(6, Math.min(18, this.isoSpan * (1 + delta * 0.08))); return; } this.desiredDistance = Math.max(this.orbit ? 4 : 1.8, Math.min(this.orbit ? 14 : 9, this.desiredDistance * (1 + delta * 0.08))); }
   /** A short impulse (metres of shove, seconds of shake), scaled by the reduced-motion/shake settings. */
   impact(strength: number): void { const s = this.settings(); if (s.reducedMotion) return; this.shake = Math.min(1, this.shake + strength * s.cameraShake); this.kick = Math.min(0.5, this.kick + strength * 0.25 * s.cameraShake); }
-  setMode(mode: CameraMode): void { if (this.orbit && this.mode === 'talk' && mode !== 'talk') this.pitch = .5; this.mode = mode; }
+  setMode(mode: CameraMode): void { if (this.orbit && this.mode === 'talk' && mode !== 'talk') this.pitch = ORBIT_EXPLORATION_PITCH; this.mode = mode; }
   setLock(target: CameraFocus | null): void { this.lockPivot = target; }
   setTalk(npc: CameraFocus | null): void { this.talkAnchor = npc ? { npc } : null; }
   /** Horizontal camera yaw for camera-relative movement. */
@@ -83,11 +84,11 @@ export class CameraRig {
     }
     this.camera.mode = Camera.PERSPECTIVE_CAMERA;
     if (this.orbit !== this.previousOrbit) {
-      this.pitch = this.orbit ? .5 : .3;
+      this.pitch = this.orbit ? ORBIT_EXPLORATION_PITCH : .3;
       this.desiredDistance = this.orbit ? 8 : 4.6;
       this.previousOrbit = this.orbit;
     }
-    if (this.previousIso) { this.yaw = playerYaw; this.pitch = this.orbit ? .5 : .3; this.previousIso = false; this.aimYaw = null; }
+    if (this.previousIso) { this.yaw = playerYaw; this.pitch = this.orbit ? ORBIT_EXPLORATION_PITCH : .3; this.previousIso = false; this.aimYaw = null; }
 
     // Mode targets.
     let targetShoulder = this.orbit ? 0 : 0.35, targetDist = this.desiredDistance, targetFov = (s.fov * Math.PI) / 180 * 1.0;
