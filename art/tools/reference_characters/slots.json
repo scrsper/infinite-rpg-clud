@@ -3,8 +3,44 @@
   "foundation": "MPFB 2.0.17 game_engine rig; Blender 5.2.1 LTS",
   "units": "metres; Blender Z-up/-Y-forward; glTF Y-up/+Z-forward",
   "slots": {
-    "hero": {"reference_library_id": "libfile_4873e0dbb9fc8191ad598cb51c35f605", "reference_local_path": null, "pixel_reviewed": false, "macro": null},
-    "npc_male": {"reference_library_id": "libfile_21a1483647a4819185268376db7667df", "reference_local_path": null, "pixel_reviewed": false, "macro": null},
-    "npc_female": {"reference_library_id": "libfile_d3b30d24b534819195cdbef0d78c55be", "reference_local_path": null, "pixel_reviewed": false, "macro": null}
+    "hero": {
+      "reference_library_id": "libfile_4873e0dbb9fc8191ad598cb51c35f605",
+      "reference_local_path": "C:\\Users\\green\\Downloads\\mc-female-1",
+      "pixel_reviewed": true,
+      "macro": {
+        "height": 0.5,
+        "gender": 0.0,
+        "muscle": 0.42,
+        "age": 0.4,
+        "proportions": 0.5,
+        "weight": 0.43
+      }
+    },
+    "npc_male": {
+      "reference_library_id": "libfile_21a1483647a4819185268376db7667df",
+      "reference_local_path": "C:\\Users\\green\\Downloads\\npc-male-1",
+      "pixel_reviewed": true,
+      "macro": {
+        "height": 0.5,
+        "gender": 1.0,
+        "muscle": 0.42,
+        "age": 0.4,
+        "proportions": 0.5,
+        "weight": 0.43
+      }
+    },
+    "npc_female": {
+      "reference_library_id": "libfile_d3b30d24b534819195cdbef0d78c55be",
+      "reference_local_path": "C:\\Users\\green\\Downloads\\npc-female-1",
+      "pixel_reviewed": true,
+      "macro": {
+        "height": 0.5,
+        "gender": 0.0,
+        "muscle": 0.42,
+        "age": 0.4,
+        "proportions": 0.5,
+        "weight": 0.43
+      }
+    }
   }
 }

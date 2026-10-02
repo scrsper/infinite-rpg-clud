@@ -1,0 +1,35 @@
+{
+    "clothes": [],
+    "color_adjustments": {},
+    "expressions": [],
+    "eyebrows": "",
+    "eyelashes": "",
+    "eyes": "",
+    "eyes_material_settings": {},
+    "eyes_material_type": "MAKESKIN",
+    "hair": "",
+    "makeup": [],
+    "phenotype": {
+        "age": 0.4000000059604645,
+        "cupsize": 0.5,
+        "firmness": 0.5,
+        "gender": 0.0,
+        "height": 0.5,
+        "muscle": 0.41999998688697815,
+        "proportions": 0.5,
+        "race": {
+            "african": 0.33000001311302185,
+            "asian": 0.33000001311302185,
+            "caucasian": 0.33000001311302185
+        },
+        "weight": 0.4300000071525574
+    },
+    "proxy": "",
+    "rig": "game_engine",
+    "skin_material_settings": {},
+    "skin_material_type": "NONE",
+    "skin_mhmat": "",
+    "targets": [],
+    "teeth": "",
+    "tongue": ""
+}

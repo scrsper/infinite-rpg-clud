@@ -1,0 +1,27 @@
+{
+  "blender": "5.2.1 LTS",
+  "mpfb": "2.0.17",
+  "bones": 53,
+  "visible_vertices": 13380,
+  "deformation_tests": [
+    {
+      "bone": "lowerarm_l",
+      "angle_degrees": 35,
+      "moved_vertices": 1942,
+      "maximum_displacement_m": 0.21323665660988445
+    },
+    {
+      "bone": "calf_l",
+      "angle_degrees": 25,
+      "moved_vertices": 1427,
+      "maximum_displacement_m": 0.18678409750592653
+    },
+    {
+      "bone": "upperarm_r",
+      "angle_degrees": 20,
+      "moved_vertices": 2438,
+      "maximum_displacement_m": 0.09137210680535923
+    }
+  ],
+  "glb_bytes": 976116
+}
