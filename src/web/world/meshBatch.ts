@@ -1,4 +1,4 @@
-import { Mesh, Scene, VertexData, type Material } from '@babylonjs/core';
+import { Material, Mesh, Scene, VertexData } from '@babylonjs/core';
 
 export type V = [number, number, number];
 export const sub = (a: V, b: V): V => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
@@ -76,6 +76,10 @@ export class MeshBatch {
     const mesh = new Mesh(name, scene), vd = new VertexData();
     vd.positions = this.positions; vd.normals = this.normals; vd.uvs = this.uvs; vd.colors = this.colors; vd.indices = this.indices; vd.applyToMesh(mesh);
     mesh.material = material; mesh.receiveShadows = options.receiveShadow !== false; mesh.isPickable = false;
+    // This builder emits outward counter-clockwise faces (cross(edge1, edge2) = normal).
+    // Babylon defaults a new mesh to clockwise in a right-handed scene; leaving that
+    // default shows the far/back faces of closed shapes and culls exterior infill.
+    mesh.sideOrientation = Material.CounterClockWiseSideOrientation;
     return mesh;
   }
 }

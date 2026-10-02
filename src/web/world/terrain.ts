@@ -55,7 +55,7 @@ export function buildTerrain(scene: Scene, mats: MaterialLibrary, r: RegionProje
     // Scanned ground already carries its albedo. Vertex colour supplies subtle biome variation,
     // rather than multiplying two fully shaded colours into near-black terrain.
     colors[k * 4] = .55 + clamp01(col[0] + grain)*.65; colors[k * 4 + 1] = .55 + clamp01(col[1] + grain)*.65; colors[k * 4 + 2] = .55 + clamp01(col[2] + grain)*.65;
-    colors[k * 4 + 3] = block[k] === B.Grass ? (1 - clamp01((forest[k] - .4)*1.2)) * (.7 + .3*worldNoise(wx,wz,9,8)) : 0;
+    colors[k * 4 + 3] = block[k] === B.Grass ? (.94 - clamp01((forest[k] - .5)*1.4)*.28) * (.86 + .14*worldNoise(wx,wz,9,8)) : 0;
   }
   const idx: number[] = [];
   for (let i = 0; i < n - 1; i++) for (let j = 0; j < n - 1; j++) {

@@ -97,7 +97,7 @@ export function configurePipeline(p: DefaultRenderingPipeline, q: QualityProfile
   p.bloomEnabled = q.bloom;
   p.bloomThreshold = 1.1; p.bloomWeight = 0.10; p.bloomKernel = 40; p.bloomScale = 0.5;
   p.grainEnabled = q.grain; if (q.grain) { p.grain.intensity = .6; p.grain.animated = true; }
-  p.sharpenEnabled = true; p.sharpen.edgeAmount = 0.22; p.sharpen.colorAmount = 0.9;
+  p.sharpenEnabled = true; p.sharpen.edgeAmount = 0.1; p.sharpen.colorAmount = 0.9;
   p.imageProcessingEnabled = true;
   const ip = p.imageProcessing;
   ip.toneMappingEnabled = true; ip.toneMappingType = ImageProcessingConfiguration.TONEMAPPING_ACES;
@@ -114,7 +114,7 @@ export function attachPipeline(ctx: RenderContext, camera: import('@babylonjs/co
   const grade = new ColorCurves();
   grade.shadowsHue = 218; grade.shadowsDensity = 28; grade.shadowsSaturation = 18;
   grade.highlightsHue = 42; grade.highlightsDensity = 26; grade.highlightsSaturation = 24;
-  grade.midtonesHue = 200; grade.midtonesDensity = 6; grade.globalSaturation = -6;
+  grade.midtonesHue = 200; grade.midtonesDensity = 6; grade.globalSaturation = 2;
   p.imageProcessing.colorCurves = grade;
   ctx.pipeline = p;
   // The portrait target opts out of prepass; contact shadows stay on the gameplay camera.

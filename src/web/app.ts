@@ -510,6 +510,7 @@ export class App {
     const hour = this.params.get('hour') ? Number(this.params.get('hour')) : ((this.regions.worldTime / 3600) % 24 + 24) % 24;
     this.atmosphere.update(hour, this.regions.weather, dt); this.atmosphere.follow(this.camera.position);
     this.grass.tint(this.atmosphere.daylight);
+    this.grass.animate(dt, this.regions.weather.wind, this.settings.reducedMotion);
     this.grass.update(this.camera.position.x + this.regions.origin.x, this.camera.position.z + this.regions.origin.z);
     this.regions.update(dt, this.camera.position, this.rig.forward, 1 - this.atmosphere.daylight);
     if (this.controller.lockedBodyId === null && now > this.combatUntil && this.rig.mode === 'combat') this.rig.setMode('explore');

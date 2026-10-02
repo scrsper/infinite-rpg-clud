@@ -34,7 +34,7 @@ export class Atmosphere {
   sunDirection = new Vector3(0, -1, 0);
   hour = 12;
   /** Art-direction multipliers (tuned live with ?look=key:1.2,fill:1.3,exposure:1.4). */
-  readonly look = { key: 1.05, fill: 1.15, exposure: 1.12, fog: 1 };
+  readonly look = { key: 1.24, fill: .98, exposure: 1.16, fog: 1 };
   fogColor = new Color3(0.6, 0.66, 0.74);
 
   constructor(private readonly ctx: RenderContext) {
@@ -89,14 +89,14 @@ export class Atmosphere {
     const h = ((hourOfDay % 24) + 24) % 24; this.hour = h;
     const theta = Math.PI * (h - 6) / 12;                       // 0 at 06:00, pi/2 at noon, pi at 18:00
     const elev = Math.sin(theta);                               // >0 daytime
-    const sunPos = new Vector3(Math.cos(theta), elev, -0.35).normalize();
+    const sunPos = new Vector3(Math.cos(theta) * .85, elev, -.65 * Math.cos(theta) - .2).normalize();
     const moonPos = sunPos.scale(-1);
     const wet = weather.kind === 'rain' || weather.kind === 'storm' ? weather.intensity : 0, fog = weather.kind === 'fog' ? Math.max(0.4, weather.intensity) : 0;
     const overcast = clamp01(wet * 0.9 + fog * 0.7 + (weather.kind === 'cloudy' ? 0.5 : 0));
 
     const day = S(-0.05, 0.28, elev), dusk = S(0.28, -0.02, elev) * S(-0.28, -0.02, elev), night = 1 - S(-0.3, 0.02, elev);
     this.daylight = clamp01(day * (1 - overcast * 0.45) + night * 0.06);
-    this.ctx.scene.environmentIntensity = lerp(.18, .8, day) * (1 - overcast*.18);
+    this.ctx.scene.environmentIntensity = lerp(.18, .62, day) * (1 - overcast*.18);
 
     // Key light: sun by day, moon at night (both from the sky towards the ground).
     const keyFromSun = elev > -0.06;

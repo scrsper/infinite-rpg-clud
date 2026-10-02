@@ -131,6 +131,17 @@ export function* buildStructuresSteps(scene: Scene, mats: MaterialLibrary, r: Re
     }
   }
 
+  // Presentation shell: the projected cells remain the wall/roof authority, while this
+  // deterministic pass gives the broad faces a readable timber-and-infill construction.
+  // Every piece is kept on the outside skin and is owned by the same place batch, so the
+  // existing cutaway material still removes it with the building.
+  for (const p of buildings) {
+    const fit = fits.get(p.id);
+    if (!fit) continue;
+    activePlace = p;
+    decorateBuilding(batch, mats, cells, p, fit, x0, z0);
+  }
+
   function trimAt(x: number, y: number, z: number, mat: MatName): void {
     // Timber posts and beams stand 4 cm proud of the plaster; faces shared with other trim are dropped.
     const bt = batch(mat), tpm = mats.tilesPerMetre(mat), [lx, lz] = L(x, z), e = 0.04;
@@ -202,6 +213,113 @@ export function* buildStructuresSteps(scene: Scene, mats: MaterialLibrary, r: Re
   return out;
 }
 
+/** Add restrained, cell-derived facade construction without changing the canonical shell. */
+function decorateBuilding(batch: (m: MatName) => MeshBatch, mats: MaterialLibrary, cells: Cells, p: PlaceProjection, fit: RoofFit, rx: number, rz: number): void {
+  const { x0, x1, z0, z1 } = p.bounds;
+  const base = fit.roofY - 1;
+  const wallTop = base;
+  const plaster = batch('plaster'), timber = batch('darkwood'), stone = batch('stone');
+  const pt = mats.tilesPerMetre('plaster'), tt = mats.tilesPerMetre('darkwood'), st = mats.tilesPerMetre('stone');
+  const age = hash2(p.visualSeed, 29, 71), panelTint: V = [.84-age*.09, .79-age*.10, .66-age*.07], beamTint: V = [0.86, 0.78, 0.67], foundationTint: V = [0.76, 0.76, 0.72];
+  const wallCell = (x: number, y: number, z: number): number => cells.get(x, y, z);
+  const isWall = (b: number): boolean => b === B.Planks || b === B.Log || b === B.DarkPlanks;
+  // Greedily merge adjacent wood cells into broad infill faces. Openings remain holes in
+  // the occupancy grid, so windows and doors never get painted over by the shell.
+  const panels = (side: 'north' | 'south' | 'west' | 'east'): void => {
+    const along = side === 'north' || side === 'south' ? x1 - x0 + 1 : z1 - z0 + 1;
+    const rows = wallTop - (p.bounds.y0 + 1) + 1, used = new Uint8Array(along * rows);
+    const filled = (i: number, j: number): boolean => {
+      const x = side === 'north' || side === 'south' ? x0 + i : side === 'west' ? x0 : x1;
+      const z = side === 'north' || side === 'south' ? (side === 'north' ? z0 : z1) : z0 + i;
+      return isWall(wallCell(x, p.bounds.y0 + 1 + j, z));
+    };
+    const emit = (i0: number, j0: number, i1: number, j1: number): void => {
+      const lx0 = x0 - rx + i0, lx1 = x0 - rx + i1 + 1, lz0 = z0 - rz + i0, lz1 = z0 - rz + i1 + 1;
+      const y0 = p.bounds.y0 + 1 + j0, y1 = p.bounds.y0 + 2 + j1, d = 0.055;
+      if (side === 'north') plaster.quad([lx0 + 0.04, y0, z0 - rz - d], [lx1 - 0.04, y0, z0 - rz - d], [lx1 - 0.04, y1, z0 - rz - d], [lx0 + 0.04, y1, z0 - rz - d], panelTint, pt, { normal: [0, 0, -1], flip: true });
+      else if (side === 'south') plaster.quad([lx1 - 0.04, y0, z1 - rz + 1 + d], [lx0 + 0.04, y0, z1 - rz + 1 + d], [lx0 + 0.04, y1, z1 - rz + 1 + d], [lx1 - 0.04, y1, z1 - rz + 1 + d], panelTint, pt, { normal: [0, 0, 1], flip: true });
+      else if (side === 'west') plaster.quad([x0 - rx - d, y0, lz1 - 0.04], [x0 - rx - d, y0, lz0 + 0.04], [x0 - rx - d, y1, lz0 + 0.04], [x0 - rx - d, y1, lz1 - 0.04], panelTint, pt, { normal: [-1, 0, 0], flip: true });
+      else plaster.quad([x1 - rx + 1 + d, y0, lz0 + 0.04], [x1 - rx + 1 + d, y0, lz1 - 0.04], [x1 - rx + 1 + d, y1, lz1 - 0.04], [x1 - rx + 1 + d, y1, lz0 + 0.04], panelTint, pt, { normal: [1, 0, 0], flip: true });
+    };
+    for (let j = 0; j < rows; j++) for (let i = 0; i < along; i++) {
+      const k = j * along + i; if (used[k] || !filled(i, j)) continue;
+      let i1 = i; while (i1 + 1 < along && filled(i1 + 1, j) && !used[j * along + i1 + 1]) i1++;
+      let j1 = j; outer: while (j1 + 1 < rows) { for (let q = i; q <= i1; q++) if (!filled(q, j1 + 1) || used[(j1 + 1) * along + q]) break outer; j1++; }
+      for (let yy = j; yy <= j1; yy++) for (let xx = i; xx <= i1; xx++) used[yy * along + xx] = 1;
+      emit(i, j, i1, j1);
+    }
+  };
+  panels('north'); panels('south'); panels('west'); panels('east');
+  // Low plinth and regular corner posts establish scale at distance; they deliberately sit
+  // within the existing one-cell foundation margin and never cover an opening cell.
+  stone.box([x0 - rx - 0.04, p.bounds.y0 - 0.18, z0 - rz - 0.04], [x1 + 1 - rx + 0.04, p.bounds.y0 + 0.04, z0 - rz + 0.1], foundationTint, st);
+  stone.box([x0 - rx - 0.04, p.bounds.y0 - 0.18, z1 + 1 - rz - 0.1], [x1 + 1 - rx + 0.04, p.bounds.y0 + 0.04, z1 + 1 - rz + 0.04], foundationTint, st);
+  stone.box([x0 - rx - 0.04, p.bounds.y0 - 0.18, z0 - rz + 0.1], [x0 - rx + 0.1, p.bounds.y0 + 0.04, z1 + 1 - rz - 0.1], foundationTint, st);
+  stone.box([x1 - rx - 0.1, p.bounds.y0 - 0.18, z0 - rz + 0.1], [x1 + 1 - rx + 0.04, p.bounds.y0 + 0.04, z1 + 1 - rz - 0.1], foundationTint, st);
+  const post = (x: number, z: number): void => timber.box([x - rx - 0.075, p.bounds.y0 + 0.02, z - rz - 0.075], [x - rx + 0.075, wallTop + 0.08, z - rz + 0.075], beamTint, tt);
+  post(x0, z0); post(x0, z1+1); post(x1+1, z0); post(x1+1, z1+1);
+  // Sill segments follow solid cells, including the door gap: a continuous sill would
+  // visually block the doorway even though it has no canonical collision.
+  const beamY0 = p.bounds.y0 + 1.02, beamY1 = wallTop + 0.02;
+  for (const z of [z0,z1]) for (let x=x0;x<=x1;x++) if (isWall(cells.get(x,p.bounds.y0+1,z))) {
+    const plane=z===z0?z0:z1+1;
+    timber.box([x-rx,beamY0,plane-rz-.08],[x+1-rx,beamY0+.14,plane-rz+.08],beamTint,tt);
+    stone.box([x-rx,p.bounds.y0-.08,plane-rz-.07],[x+1-rx,p.bounds.y0+.32,plane-rz+.07],foundationTint,st);
+  }
+  for (const x of [x0,x1]) for (let z=z0;z<=z1;z++) if (isWall(cells.get(x,p.bounds.y0+1,z))) {
+    const plane=x===x0?x0:x1+1;
+    timber.box([plane-rx-.08,beamY0,z-rz],[plane-rx+.08,beamY0+.14,z+1-rz],beamTint,tt);
+    stone.box([plane-rx-.07,p.bounds.y0-.08,z-rz],[plane-rx+.07,p.bounds.y0+.32,z+1-rz],foundationTint,st);
+  }
+  timber.box([x0 - rx - 0.08, beamY1, z0 - rz - 0.08], [x1 + 1 - rx + 0.08, beamY1 + 0.14, z0 - rz + 0.06], beamTint, tt);
+  timber.box([x0 - rx - 0.08, beamY1, z1 - rz + 0.94], [x1 + 1 - rx + 0.08, beamY1 + 0.14, z1 - rz + 1.08], beamTint, tt);
+  timber.box([x0 - rx - 0.08, beamY1, z0 - rz - 0.08], [x0 - rx + 0.06, beamY1 + 0.14, z1 + 1 - rz + 0.08], beamTint, tt);
+  timber.box([x1 - rx + 0.94, beamY1, z0 - rz - 0.08], [x1 - rx + 1.08, beamY1 + 0.14, z1 + 1 - rz + 0.08], beamTint, tt);
+  // Three-metre bays keep the framing legible without recreating the voxel grid. A post is
+  // emitted only where the canonical wall is wood for the entire story segment.
+  const bayPost = (side: 'north' | 'south' | 'west' | 'east', i: number): void => {
+    const vertical = (side === 'north' || side === 'south') ? x0 + i : z0 + i;
+    for (let y = p.bounds.y0 + 1; y <= wallTop; y++) {
+      const x = side === 'north' || side === 'south' ? vertical : side === 'west' ? x0 : x1;
+      const z = side === 'north' || side === 'south' ? (side === 'north' ? z0 : z1) : vertical;
+      if (!isWall(wallCell(x, y, z))) return;
+    }
+    if (side === 'north' || side === 'south') timber.box([vertical - rx - 0.07, beamY0, (side === 'north' ? z0 : z1) - rz - (side === 'north' ? 0.07 : -0.93)], [vertical - rx + 0.07, beamY1 + 0.14, (side === 'north' ? z0 : z1) - rz - (side === 'north' ? -0.07 : -1.07)], beamTint, tt);
+    else timber.box([(side === 'west' ? x0 : x1) - rx - (side === 'west' ? 0.07 : -0.93), beamY0, vertical - rz - 0.07], [(side === 'west' ? x0 : x1) - rx - (side === 'west' ? -0.07 : -1.07), beamY1 + 0.14, vertical - rz + 0.07], beamTint, tt);
+  };
+  for (let i = 3; i < x1 - x0; i += 3) { bayPost('north', i); bayPost('south', i); }
+  for (let i = 3; i < z1 - z0; i += 3) { bayPost('west', i); bayPost('east', i); }
+  const solidBay = (side: 'north' | 'south' | 'west' | 'east', i0: number, i1: number): boolean => {
+    for (let i = i0; i <= i1; i++) for (let y = p.bounds.y0 + 1; y <= wallTop; y++) {
+      const x = side === 'north' || side === 'south' ? x0 + i : side === 'west' ? x0 : x1;
+      const z = side === 'north' || side === 'south' ? (side === 'north' ? z0 : z1) : z0 + i;
+      if (!isWall(wallCell(x, y, z))) return false;
+    }
+    return true;
+  };
+  const by0 = beamY0 + 0.14, by1 = beamY1;
+  const brace = (side: 'north' | 'south' | 'west' | 'east', i0: number, i1: number): void => {
+    if (!solidBay(side, i0, i1)) return;
+    const lo = side === 'north' || side === 'south' ? x0 - rx + i0 : z0 - rz + i0;
+    const hi = side === 'north' || side === 'south' ? x0 - rx + i1 + 1 : z0 - rz + i1 + 1;
+    const d = 0.16;
+    if (side === 'north' || side === 'south') {
+      const z = (side === 'north' ? z0 - rz : z1 - rz) + (side === 'north' ? -0.085 : 1.085);
+      const n: V = side === 'north' ? [0, 0, -1] : [0, 0, 1];
+      const q=fixWinding([[lo,by0,z],[lo+d,by0,z],[hi,by1,z],[hi-d,by1,z]],n);
+      timber.quad(q[0],q[1],q[2],q[3],beamTint,tt,{normal:n});
+    } else {
+      const x = (side === 'west' ? x0 - rx : x1 - rx) + (side === 'west' ? -0.085 : 1.085);
+      const n: V = side === 'west' ? [-1, 0, 0] : [1, 0, 0];
+      const q=fixWinding([[x,by0,lo],[x,by0,lo+d],[x,by1,hi],[x,by1,hi-d]],n);
+      timber.quad(q[0],q[1],q[2],q[3],beamTint,tt,{normal:n});
+    }
+  };
+  for (let i = 0; i < x1 - x0; i += 3) { brace('north', i, Math.min(i + 2, x1 - x0)); brace('south', i, Math.min(i + 2, x1 - x0)); }
+  for (let i = 0; i < z1 - z0; i += 3) { brace('west', i, Math.min(i + 2, z1 - z0)); brace('east', i, Math.min(i + 2, z1 - z0)); }
+
+}
+
 /** Find the building's roof from its real cells, or null if it is not the standard gable. */
 function fitRoof(cells: Cells, p: PlaceProjection): RoofFit | null {
   const { x0, x1, z0, z1 } = p.bounds;
@@ -224,11 +342,15 @@ function fitRoof(cells: Cells, p: PlaceProjection): RoofFit | null {
   }
   // A chimney or torch may stand where one roof cell would be; a few missing cells are fine, foreign cells are not.
   if (extra > 0 || expect.size - matches > Math.max(3, expect.size * 0.04)) return null;
-  // The wall material is whatever stands in the footprint ring just under the roof.
-  let wall: MatName = 'plaster';
-  scan: for (let y = roofY - 2; y >= roofY - 4; y--) for (const [x, z] of [[x0, z0 + 2], [x0 + 2, z0], [x1, z1 - 2], [x1 - 2, z1]]) {
-    const b = cells.get(x, y, z); if (b && b !== B.DarkPlanks && b !== B.Glass && WALL_MATERIAL[b]) { wall = WALL_MATERIAL[b]; break scan; }
+  // Select gable infill from the dominant wall cells, rather than one corner sample
+  // (which can accidentally hit a chimney, roof edge, or foundation block).
+  const votes = new Map<MatName, number>();
+  for (let y = roofY - 1; y >= roofY - 5; y--) for (let x = x0; x <= x1; x++) for (let z = z0; z <= z1; z++) {
+    const b = cells.get(x, y, z), m = WALL_MATERIAL[b];
+    if (m && !ROOF_MATERIAL[b] && b !== B.Glass && b !== B.DarkPlanks) votes.set(m, (votes.get(m) ?? 0) + 1);
   }
+  let wall: MatName = 'plaster', best = -1;
+  for (const [m, n] of votes) if (n > best) { wall = m; best = n; }
   return { roofY, alongX, material: mat, wall };
 }
 
@@ -239,7 +361,11 @@ function buildGableRoof(batch: (m: MatName) => MeshBatch, mats: MaterialLibrary,
   const a0 = alongX ? z0 - 1 : x0 - 1, a1 = alongX ? z1 + 2 : x1 + 2, b0 = alongX ? x0 - 1 : z0 - 1, b1 = alongX ? x1 + 2 : z1 + 2;
   const ac = (a0 + a1) / 2, top = (a: number) => y0 + 0.5 + Math.min(a - a0, a1 - a), under = (a: number) => top(a) - T;
   const P = (a: number, b: number, y: number): V => alongX ? [b - rx, y, a - rz] : [a - rx, y, b - rz];
-  const roof = batch(fit.material), rt = mats.tilesPerMetre(fit.material), wallBatch = batch(fit.wall), wt = mats.tilesPerMetre(fit.wall);
+  const roof = batch(fit.material), rt = mats.tilesPerMetre(fit.material);
+  // Timber houses get a warm plaster gable so the roof reads as a roof over a lived-in
+  // wall, while stone/plaster buildings retain their canonical material identity.
+  const gableWall: MatName = fit.wall === 'planks' || fit.wall === 'log' ? 'plaster' : fit.wall;
+  const wallBatch = batch(gableWall), wt = mats.tilesPerMetre(gableWall);
   const tint: V = [1, 1, 1];
   const slope = (aa: number, ab: number, up: boolean) => {
     // top surface and underside for one slope between aa and ab
@@ -256,7 +382,7 @@ function buildGableRoof(batch: (m: MatName) => MeshBatch, mats: MaterialLibrary,
   slope(a0, ac, true); slope(ac, a1, false);
   // Eave and barge fascia (the roof's edge thickness), in dark timber.
   const fas = batch('darkwood'), ft = mats.tilesPerMetre('darkwood'), dk: V = [0.9, 0.9, 0.9];
-  const edge = (pts: V[], normal: V) => fas.polygon(pts, normal, dk, ft);
+  const edge = (pts: V[], normal: V) => fas.polygon(fixWinding(pts, normal), normal, dk, ft);
   const nA0: V = alongX ? [0, 0, -1] : [-1, 0, 0], nA1: V = alongX ? [0, 0, 1] : [1, 0, 0], nB0: V = alongX ? [-1, 0, 0] : [0, 0, -1], nB1: V = alongX ? [1, 0, 0] : [0, 0, 1];
   edge([P(a0, b1, top(a0)), P(a0, b0, top(a0)), P(a0, b0, under(a0)), P(a0, b1, under(a0))], nA0);
   edge([P(a1, b0, top(a1)), P(a1, b1, top(a1)), P(a1, b1, under(a1)), P(a1, b0, under(a1))], nA1);
@@ -264,11 +390,18 @@ function buildGableRoof(batch: (m: MatName) => MeshBatch, mats: MaterialLibrary,
     const prof = (aa: number, ab: number) => [P(aa, b, top(aa)), P(ab, b, top(ab)), P(ab, b, under(ab)), P(aa, b, under(aa))];
     for (const [aa, ab] of [[a0, ac], [ac, a1]]) { const q = prof(aa, ab); edge(flip ? q : q.slice().reverse(), nrm); }
   }
+  const rr = ac, ty = top(rr), wallTop = y0;
+  // A simple kingpost on each gable end gives the broad infill a structural reading at
+  // distance without altering the fitted roof or any projected opening.
+  const king = batch('darkwood'), kt = mats.tilesPerMetre('darkwood'), kTint: V = [0.72, 0.62, 0.48];
+  const gablePost = (b: number): void => {
+    const c = P(ac, b, wallTop + 0.03);
+    king.box([c[0] - 0.08, c[1], c[2] - 0.08], [c[0] + 0.08, ty - 0.06, c[2] + 0.08], kTint, kt);
+  };
+  gablePost(b0 + 1); gablePost(b1 - 1);
   // Ridge cap.
-  const rr = ac, ty = top(rr);
   fas.box(alongX ? [b0 - rx - 0.06, ty - 0.02, rr - rz - 0.16] : [rr - rx - 0.16, ty - 0.02, b0 - rz - 0.06], alongX ? [b1 - rx + 0.06, ty + 0.16, rr - rz + 0.16] : [rr - rx + 0.16, ty + 0.16, b1 - rz + 0.06], dk, ft);
   // Wall fill from the wall top to the roof underside: eave friezes and gable ends, outside and in.
-  const wallTop = y0;
   const fill = (aLo: number, aHi: number, bPlane: number, outward: -1 | 1, nrm: V) => {
     // A face on the plane b = bPlane spanning a in [aLo, aHi], from wallTop up to the roof underside.
     const pts: V[] = [P(aLo, bPlane, wallTop), P(aHi, bPlane, wallTop)];

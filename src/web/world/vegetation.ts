@@ -1,4 +1,4 @@
-import { Matrix, Mesh, Quaternion, Scene, Vector3, type Material } from '@babylonjs/core';
+import { Material, Matrix, Mesh, Quaternion, Scene, Vector3 } from '@babylonjs/core';
 import type { MaterialLibrary } from '../render/materials';
 import { hash2, mulberry, worldNoise } from '../render/noise';
 import type { RegionProjection, ResourceProjection } from '../net/messages';
@@ -180,6 +180,7 @@ export class VegetationLibrary {
     const bm = bark.linearize().build(`veg-${key}-bark`, this.scene, barkMat, { receiveShadow: true }); if (bm) meshes.push(bm);
     const lm = leaf.linearize().build(`veg-${key}-leaf`, this.scene, leafMat, { receiveShadow: true }); if (lm) meshes.push(lm);
     m = meshes.length > 1 ? Mesh.MergeMeshes(meshes, true, true, undefined, false, true)! : meshes[0];
+    m.sideOrientation = Material.CounterClockWiseSideOrientation;
     m.name = `proto-${key}`; m.setEnabled(false); m.isPickable = false; this.protos.set(key, m);
     return m;
   }
@@ -288,15 +289,25 @@ export function scatterVegetation(lib: VegetationLibrary, inst: InstanceSet, inp
     const x = x0 + cx + rnd() * cell, z = z0 + cz + rnd() * cell, roll = rnd(), roll2 = rnd(), roll3 = rnd();
     const gi = Math.max(0, Math.min(g.n - 1, Math.round((x - g.x0) / g.stride))), gj = Math.max(0, Math.min(g.n - 1, Math.round((z - g.z0) / g.stride))), k = gi * g.n + gj;
     if (g.water[k] >= 0 || g.block[k] !== 1 /* grass */) continue;
-    const f = g.forest[k], p = Math.max(0, Math.min(1, (f - 0.32) / 0.5)) * density;
+    const settlement = region.settlements.some(s => x >= s.bounds.x0 && x <= s.bounds.x1 && z >= s.bounds.z0 && z <= s.bounds.z1);
+    const grove = worldNoise(x,z,38,137), f = g.forest[k];
+    // Clearings and groves have different canopy density. A few small garden trees
+    // occupy unused settlement grass; exact buildings, work areas and routes stay clear.
+    const p = Math.max(0, Math.min(1, (f - 0.32) / 0.5)) * density * (settlement ? .045 : .32 + grove*.94);
     if (roll > p) { // open ground: the occasional bush or rock
-      if (f > 0.2 && roll2 < 0.05 * density && !excluded(x, z) && !nearRoad(x, z, 3) && !nearPath(x, z, 2)) { inst.add(lib, roll3 < 0.7 ? 'bush' : 'rock', Math.floor(roll * 97), new Vector3(x - x0, terrain.heightAt(x, z) - 0.05, z - z0), roll3 * 6.28, 0.7 + roll2 * 0.7); placed++; }
+      if (f > 0.2 && roll2 < (settlement ? .10 : .075) * density && !excluded(x, z) && !nearRoad(x, z, 3) && !nearPath(x, z, 2) && !nearCanonical(x,z)) { inst.add(lib, roll3 < 0.85 ? 'bush' : 'rock', Math.floor(roll * 97), new Vector3(x - x0, terrain.heightAt(x, z) - 0.05, z - z0), roll3 * 6.28, .45 + roll3*.55); placed++; }
       continue;
     }
     if (excluded(x, z) || nearRoad(x, z, 5) || nearPath(x, z, 2) || nearCanonical(x, z)) continue;
-    const n = worldNoise(x, z, 150, 21), species: Species = n < 0.38 ? 'oak' : n < 0.62 ? (roll3 < 0.55 ? 'birch' : 'oak') : n < 0.8 ? (roll3 < 0.5 ? 'pine' : 'birch') : 'pine';
-    inst.add(lib, species, Math.floor(roll2 * 97), new Vector3(x - x0, terrain.heightAt(x, z) - 0.1, z - z0), roll3 * 6.28, 0.8 + roll2 * 0.55); placed++;
-    if (roll3 < 0.3) { const a = roll * 6.28; inst.add(lib, 'bush', Math.floor(roll3 * 97), new Vector3(x - x0 + Math.cos(a) * 2.4, terrain.heightAt(x + Math.cos(a) * 2.4, z + Math.sin(a) * 2.4) - 0.05, z - z0 + Math.sin(a) * 2.4), a, 0.8 + roll2 * 0.5); placed++; }
+    const n = worldNoise(x, z, 150, 21), species: Species = settlement ? (roll3 < .65 ? 'birch' : 'oak') : n < 0.38 ? 'oak' : n < 0.62 ? (roll3 < 0.55 ? 'birch' : 'oak') : n < 0.8 ? (roll3 < 0.5 ? 'pine' : 'birch') : 'pine';
+    inst.add(lib, species, Math.floor(roll2 * 97), new Vector3(x - x0, terrain.heightAt(x, z) - 0.1, z - z0), roll3 * 6.28, settlement ? .6+roll2*.32 : .64 + roll2 * .95); placed++;
+    if (roll3 < 0.55) {
+      const a = roll * 6.28, sx=x+Math.cos(a)*2.4, sz=z+Math.sin(a)*2.4;
+      const si=Math.max(0,Math.min(g.n-1,Math.round((sx-g.x0)/g.stride))), sj=Math.max(0,Math.min(g.n-1,Math.round((sz-g.z0)/g.stride))), sk=si*g.n+sj;
+      if (sx>=x0 && sx<x0+size && sz>=z0 && sz<z0+size && g.water[sk]<0 && g.block[sk]===1 && !excluded(sx,sz) && !nearRoad(sx,sz,3) && !nearPath(sx,sz,2) && !nearCanonical(sx,sz)) {
+        inst.add(lib, roll2<.25?'sapling':'bush', Math.floor(roll3*97), new Vector3(sx-x0,terrain.heightAt(sx,sz)-.05,sz-z0),a,.55+roll2*.65); placed++;
+      }
+    }
   }
   return placed;
 }

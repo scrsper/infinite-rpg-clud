@@ -170,8 +170,8 @@ export class RegionManager {
     stage('structures'); yield;
 
     const cells = proj.structures?.runs.length ? decodeStructure(proj.structures.runs, proj.bounds.x0, proj.bounds.z0) : null;
-    const sp = buildStaticProps(scene, this.mats, proj, cells, root);
-    for (const m of sp.meshes) { meshes.push(m); this.atmosphere.addCaster(m); }
+    const sp = buildStaticProps(scene, this.mats, proj, cells, root, terrain.heightAt);
+    for (const m of sp.meshes) { meshes.push(m); if (!m.name.startsWith('path')) this.atmosphere.addCaster(m); }
     lightList.push(...sp.lights);
     stage('props'); yield;
 
@@ -180,7 +180,7 @@ export class RegionManager {
     const density = this.ctx.quality.treeDensity;
     const trees = scatterVegetation(this.vegetation, instances, {
       region: proj, terrain, density, canonical: this.lastDynamics?.resources.filter(r => this.regionOf(r.pos.x, r.pos.z) === proj.id) ?? [],
-      exclusions: [...proj.dressingExclusions.map(e => e.bounds), ...proj.places.map(p => p.bounds), ...proj.settlements.map(s => s.bounds)],
+      exclusions: [...proj.dressingExclusions.map(e => e.bounds), ...proj.places.map(p => p.bounds)],
     }, proj.decoration.seed);
     stage('scatter'); yield;
     for (const _ of instances.finishSteps(this.vegetation, root, `veg-${proj.id}`, m => this.atmosphere.addCaster(m))) yield;

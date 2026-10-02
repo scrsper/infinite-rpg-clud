@@ -6,6 +6,8 @@ import { MeshBatch } from './meshBatch';
 import { COLORS, PropBuilder, furnishing } from './propGeometry';
 import type { Cells } from './structures';
 import type { WorldLight } from './structures';
+import { buildBuildingDressing } from './buildingDressing';
+import { buildPaths } from './paths';
 
 /**
  * Static, region-owned props from the projection: furniture (turned against the real walls),
@@ -19,10 +21,10 @@ export interface StaticProps { meshes: Mesh[]; lights: WorldLight[]; doors: Door
 
 const NEIGHBOURS: [number, number][] = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 
-export function buildStaticProps(scene: Scene, mats: MaterialLibrary, r: RegionProjection, cells: Cells | null, parent: TransformNode): StaticProps {
+export function buildStaticProps(scene: Scene, mats: MaterialLibrary, r: RegionProjection, cells: Cells | null, parent: TransformNode, heightAt?: (x: number, z: number) => number): StaticProps {
   const x0 = r.bounds.x0, z0 = r.bounds.z0, out: StaticProps = { meshes: [], lights: [], doors: [], root: new TransformNode(`props-${r.id}`, scene) };
   out.root.parent = parent;
-  const props = new MeshBatch(), fenceBatch = new MeshBatch(), pathBatch = new MeshBatch();
+  const props = new MeshBatch(), fenceBatch = new MeshBatch();
 
   // ── furniture ──────────────────────────────────────────────────────────────────────────────────
   const wallDir = (x: number, y: number, z: number): [number, number] | null => {
@@ -61,24 +63,16 @@ export function buildStaticProps(scene: Scene, mats: MaterialLibrary, r: RegionP
     }
   }
 
-  // ── worn paths: slightly irregular decals over the terrain ────────────────────────────────────
-  const jx = (vx: number, vz: number) => (hash2(vx, vz, 41) - 0.5) * 0.34, jz = (vx: number, vz: number) => (hash2(vx, vz, 43) - 0.5) * 0.34;
-  const pathSet = new Set(r.paths.map(([x, , z]) => `${x},${z}`));
-  const tpm = mats.tilesPerMetre('path');
-  for (const [x, y, z] of r.paths) {
-    const vert = (vx: number, vz: number): [number, number, number] => {
-      // A vertex on the boundary of the path drifts; interior and shared vertices stay put so cells meet.
-      const edge = !(pathSet.has(`${vx - 1},${vz - 1}`) && pathSet.has(`${vx},${vz - 1}`) && pathSet.has(`${vx - 1},${vz}`) && pathSet.has(`${vx},${vz}`));
-      return [vx - x0 + (edge ? jx(vx, vz) : 0), y + 0.02, vz - z0 + (edge ? jz(vx, vz) : 0)];
-    };
-    const t = 0.82 + hash2(x, z, 5) * 0.22;
-    pathBatch.quad(vert(x, z + 1), vert(x + 1, z + 1), vert(x + 1, z), vert(x, z), [t * 0.62, t * 0.52, t * 0.36], tpm, { normal: [0, 1, 0] });
-  }
-
   const propsMesh = props.build(`furniture-${r.id}`, scene, mats.get('props'), { receiveShadow: true }); if (propsMesh) { propsMesh.parent = out.root; out.meshes.push(propsMesh); }
   const fenceMesh = fenceBatch.build(`fences-${r.id}`, scene, mats.get('props'), { receiveShadow: true }); if (fenceMesh) { fenceMesh.parent = out.root; out.meshes.push(fenceMesh); }
-  const pathMat = mats.get('path'), pathMesh = pathBatch.build(`paths-${r.id}`, scene, pathMat, { receiveShadow: true });
-  if (pathMesh) { pathMesh.parent = out.root; pathMesh.material = pathMat; out.meshes.push(pathMesh); }
+  const paths = buildPaths(scene, mats, r, heightAt);
+  if (paths) { paths.parent = out.root; out.meshes.push(paths); }
+  if (heightAt) {
+    const pathCells = new Set(r.paths.map(([x,,z]) => x*100003+z));
+    for (const place of r.places) for (const mesh of buildBuildingDressing(scene,mats,place,cells,{regionX0:x0,regionZ0:z0,heightAt,pathCells})) {
+      mesh.parent = out.root; out.meshes.push(mesh);
+    }
+  }
 
   // ── doors ──────────────────────────────────────────────────────────────────────────────────────
   for (const [x, y, z, open] of r.openings) {
