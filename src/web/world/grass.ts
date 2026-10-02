@@ -4,7 +4,7 @@ import type { RegionManager } from './regionManager';
 import { GrassWind } from './grassWind';
 
 /**
- * Grass tufts around the camera: thin instances of a small nine-blade tuft, re-scattered as the camera
+ * Grass tufts around the camera: thin instances of a small ribbon bundle, re-scattered as the camera
  * moves. Placement is deterministic per world cell (the same field of grass every time you stand
  * in the same spot) and only over open grass: never on paths, roads, water, farmland, structures or
  * through canonical props. Purely presentational: nothing here is saved or sent.
@@ -23,16 +23,18 @@ export class GrassField {
     this.radius = opts.radius; this.cap = opts.capacity;
     this.matrices = new Float32Array(this.cap * 16); this.colors = new Float32Array(this.cap * 4);
     const pos: number[] = [], nrm: number[] = [], col: number[] = [], idx: number[] = [];
-    // A small radial bouquet reads as a tuft at a distance and still has enough
-    // silhouette variation up close. The profile is curved in four short sections
-    // rather than being a single rigid triangle.
-    for (let b = 0; b < 9; b++) {
-      const a = b / 9 * Math.PI * 2 + 0.16 * (b % 3), lean = 0.2 + 0.09 * (b % 3), h = 0.17 + 0.035 * ((b * 3) % 5), w = 0.022 + 0.005 * (b % 3);
+    // A tuft is a small bundle of narrow ribbons, with a low under-layer and a
+    // handful of taller tips. This fills the bank at ground level while keeping
+    // the silhouette soft instead of producing repeated dark V-shaped spikes.
+    for (let b = 0; b < 15; b++) {
+      const a = b / 15 * Math.PI * 2 + 0.16 * (b % 3);
+      const short = b % 3 === 0, lean = (short ? 0.5 : 0.32) + 0.1 * (b % 4);
+      const h = (short ? 0.17 : 0.32) + 0.022 * ((b * 3) % 5), w = .009 + .003 * (b % 3);
       const cx = Math.cos(a), cz = Math.sin(a), px = -cz, pz = cx, base = pos.length / 3;
-      for (let row=0; row<=4; row++) {
-        const t=row/4, r=.012+lean*h*Math.sin(t * Math.PI * 0.5), width=w*(1-t)+.00025, shade=.62+.36*t;
+      for (let row=0; row<=3; row++) {
+        const t=row/3, r=.025+.018*(b%5)+lean*h*t*t, width=w*(1-t)+.0002, shade=.83+.17*t;
         for (const side of [-1,1]) { pos.push(cx*r+px*width*side, h*t,cz*r+pz*width*side); nrm.push(cx*.8,.6,cz*.8); col.push(shade,shade,shade,1); }
-        if(row<4) { const j=base+row*2; idx.push(j,j+1,j+2,j+1,j+3,j+2); }
+        if(row<3) { const j=base+row*2; idx.push(j,j+1,j+2,j+1,j+3,j+2); }
       }
     }
     this.host = new Mesh('grass', scene);
@@ -64,14 +66,17 @@ export class GrassField {
       const g = this.regions.grassAt(x, z); if (!g) continue;
       // Low-frequency noise creates coherent meadow patches, while the local
       // term keeps their edges soft instead of producing a checkerboard.
-      const patch = worldNoise(x, z, 7.5, 211), local = worldNoise(x, z, 2.1, 223);
-      const density = 0.24 + patch * 0.62 + local * 0.18;
+      const patch = worldNoise(x, z, 12, 211), local = worldNoise(x, z, 2.1, 223);
+      // A broad patch mask forms connected banks; local noise only roughens the
+      // boundary, rather than deciding every tuft independently.
+      const bank = Math.max(0, Math.min(1, (patch - 0.28) / 0.46));
+      const density = 0.10 + bank * 0.76 + local * 0.12;
       if (hash2(ix, iz, 227) > density) continue;
-      const sc = (0.78 + hash2(ix, iz, 83) * 0.62) * (0.4 + 0.6 * fade) * (0.84 + patch * 0.28) * g.height;
+      const sc = (0.85 + hash2(ix, iz, 83) * 0.5) * (0.65 + 0.35 * fade) * (0.8 + bank * 0.4) * g.height;
       const macro = worldNoise(x, z, 60, 3), warm = patch * 0.7 + macro * 0.3, tone = 0.86 + hash2(ix, iz, 89) * 0.28;
       // Warm moss and sage variations keep the grass legible against the cool,
       // muddy ground without turning it into a saturated green carpet.
-      const r = (0.36 + 0.08 * warm) * tone, gr = (0.43 + 0.09 * (1 - warm)) * tone, b = (0.25 + 0.06 * (1 - warm)) * tone;
+      const r = (0.43 + 0.07 * warm) * tone, gr = (0.5 + 0.08 * (1 - warm)) * tone, b = (0.3 + 0.05 * (1 - warm)) * tone;
       Quaternion.RotationAxisToRef(Vector3.Up(), hash2(ix, iz, 97) * 6.283, q); s.set(sc, sc * (0.8 + hash2(ix, iz, 101) * 0.6), sc); p.set(x - o.x, g.y - o.y - 0.02, z - o.z);
       Matrix.ComposeToRef(s, q, p, m); m.copyToArray(this.matrices, n * 16);
       this.colors[n * 4] = Math.pow(r, 2.2); this.colors[n * 4 + 1] = Math.pow(gr, 2.2); this.colors[n * 4 + 2] = Math.pow(b, 2.2); this.colors[n * 4 + 3] = 1; n++;

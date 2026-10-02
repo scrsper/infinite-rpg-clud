@@ -4,6 +4,7 @@ import { hash2, mulberry, worldNoise } from '../render/noise';
 import type { RegionProjection, ResourceProjection } from '../net/messages';
 import { MeshBatch, type V } from './meshBatch';
 import type { TerrainBuild } from './terrain';
+import { B } from '../../sim/physical/blocks';
 
 /**
  * Trees, bushes, rocks and stumps built as code. Every species is a two-material asset (bark
@@ -95,17 +96,23 @@ function buildSpecies(species: Species, seed: number, lod = 0): { bark: MeshBatc
         tube(bark, [lean * 0.6, by, 0], elbow, .16,.085,10,tk);
         tube(bark, elbow, tip, .085,.012,8,tk);
         for (let fork=0;fork<3;fork++) { const fa=a+(fork-1)*.65; tube(bark,elbow,[tx+Math.cos(fa)*.65,ty+.3+fork*.15,tz+Math.sin(fa)*.65],.038,.006,7,tk); }
-        foliage(leaf, tx, ty + 0.7, tz, lerp(1.5, 2.1), lerp(1.2, 1.7), lerp(1.5, 2.1), greens.oak[0], greens.oak[1], seed * 17 + i);
       }
-      foliage(leaf, lean, h + 1.2, 0, lerp(2.2, 2.9), lerp(1.7, 2.2), lerp(2.2, 2.9), greens.oak[0], greens.oak[1], seed * 13);
+      const crownY = h * .86;
+      for (let i = 0; i < 5; i++) {
+        const a = i / 5 * Math.PI * 2 + r() * .35, rr = lerp(.65, 1.05);
+        foliage(leaf, lean + Math.cos(a) * rr, crownY + (r() - .5) * .38, Math.sin(a) * rr,
+          lerp(1.5, 2.05), lerp(1.15, 1.55), lerp(1.5, 2.05), greens.oak[0], greens.oak[1], seed * 17 + i);
+      }
+      foliage(leaf, lean, crownY + .35, 0, lerp(1.9, 2.35), lerp(1.5, 1.95), lerp(1.9, 2.35), greens.oak[0], greens.oak[1], seed * 13);
       break;
     }
     case 'birch': {
       const h = lerp(6.5, 8.5), lean = lerp(-0.3, 0.3), tk: Tint = [0.86, 0.84, 0.78];
       tube(bark, [0, -0.2, 0], [lean, h, 0], 0.16, 0.06, 6, tk);
       for (let i = 0; i < 5; i++) { const y = lerp(0.25, 0.9) * h; tube(bark, [lean * y / h, y, 0], [lean * y / h + Math.cos(i * 2.4) * 0.05, y + 0.02, Math.sin(i * 2.4) * 0.05], 0.17, 0.17, 6, [0.14, 0.13, 0.12]); }
-      for (let i = 0; i < 5; i++) { const a = i * 2.4 + r(), y = h * lerp(0.55, 0.95), len = lerp(0.9, 1.6); foliage(leaf, lean + Math.cos(a) * len, y, Math.sin(a) * len, lerp(0.9, 1.3), lerp(1.1, 1.6), lerp(0.9, 1.3), greens.birch[0], greens.birch[1], seed * 11 + i, 8, 5); }
-      foliage(leaf, lean, h + 0.6, 0, 1.2, 1.4, 1.2, greens.birch[0], greens.birch[1], seed * 3, 8, 5);
+      const crownY = h * .82;
+      for (let i = 0; i < 4; i++) { const a = i * Math.PI * .5 + r(), len = lerp(.55, 1.05); foliage(leaf, lean + Math.cos(a) * len, crownY + (r() - .5) * .3, Math.sin(a) * len, lerp(1.0, 1.35), lerp(1.05, 1.45), lerp(1.0, 1.35), greens.birch[0], greens.birch[1], seed * 11 + i); }
+      foliage(leaf, lean, crownY + .45, 0, 1.35, 1.35, 1.35, greens.birch[0], greens.birch[1], seed * 3);
       break;
     }
     case 'pine': {
@@ -116,16 +123,17 @@ function buildSpecies(species: Species, seed: number, lod = 0): { bark: MeshBatc
       // let the sky through and stay readable against the darker inner crown.
       const tiers = DETAIL ? 6 : 9;
       for (let i=0;i<tiers;i++) {
-        const t=i/(tiers-1), y=h*(.27+.7*t), radius=(1-t)*2.3+.18;
-        const count=DETAIL?5:7;
+        const t=i/(tiers-1), y=h*(.24+.72*t), radius=(1-t)*2.15+.22;
+        const count=DETAIL?5:6;
         for(let k=0;k<count;k++) {
           const a=k/count*Math.PI*2+i*1.91+r()*.35, len=radius*lerp(.8,1.1);
-          const tip: V=[Math.cos(a)*len,y-.25+ t*.5,Math.sin(a)*len];
-          tube(bark,[.05,y,0],tip,.07*(1-t)+.009,.005,7,tk);
+          const branchY = y + (r() - .5) * (.75 + (1 - t) * .35);
+          const tip: V=[Math.cos(a)*len,branchY-.65+ t*.62,Math.sin(a)*len];
+          tube(bark,[.05,branchY,0],tip,.07*(1-t)+.009,.005,7,tk);
           for(let spray=0;spray<(DETAIL?2:4);spray++) {
-            const u=.28+spray/(DETAIL?2:4)*.75, c: V=[tip[0]*u,y+(tip[1]-y)*u,tip[2]*u];
-            const radial: V=[Math.cos(a),.2,Math.sin(a)], across: V=[-Math.sin(a),.5,Math.cos(a)];
-            const w=(.44+.6*(1-t))*(.7+r()*.3), l=(.38+.48*(1-t));
+            const u=.24+spray/(DETAIL?2:4)*.78, c: V=[tip[0]*u,branchY+(tip[1]-branchY)*u,tip[2]*u];
+            const radial: V=[Math.cos(a),-.6*(1-t),Math.sin(a)], across: V=[-Math.sin(a),.36,Math.cos(a)];
+            const w=(.5+.66*(1-t))*(.72+r()*.28), l=(.4+.52*(1-t));
             const p=(x:number,z:number):V=>[c[0]+radial[0]*x*l+across[0]*z*w,c[1]+radial[1]*x*l+across[1]*z*w,c[2]+radial[2]*x*l+across[2]*z*w];
             const uv=leaf.uvs.length; leaf.quad(p(-1,-1),p(1,-1),p(1,1),p(-1,1),[.9,.96,.92],1,{normal:norm([tip[0]*.15,1,tip[2]*.15])});
             leaf.uvs.splice(uv,8,0,1,1,1,1,0,0,0);
@@ -284,28 +292,51 @@ export function scatterVegetation(lib: VegetationLibrary, inst: InstanceSet, inp
   const nearPath = (x: number, z: number, d: number) => { for (let dx = -d; dx <= d; dx++) for (let dz = -d; dz <= d; dz++) if (pathCells.has(Math.floor(x + dx) * 100003 + Math.floor(z + dz))) return true; return false; };
   const excluded = (x: number, z: number) => exclusions.some(b => x >= b.x0 - 4 && x <= b.x1 + 5 && z >= b.z0 - 4 && z <= b.z1 + 5);
   const nearCanonical = (x: number, z: number) => canonical.some(c => Math.hypot(c.pos.x - x, c.pos.z - z) < 2.6);
+  // Farmland/crop cells are canonical ground projection. This only identifies a
+  // margin on neighbouring grass; crop state and crop geometry remain owned by
+  // RegionDynamics and are never inferred here.
+  const nearCultivated = (x: number, z: number) => {
+    const reach = Math.max(1, Math.ceil(2.4 / g.stride));
+    const gi = Math.round((x - g.x0) / g.stride), gj = Math.round((z - g.z0) / g.stride);
+    for (let di = -reach; di <= reach; di++) for (let dj = -reach; dj <= reach; dj++) {
+      const i = gi + di, j = gj + dj; if (i < 0 || j < 0 || i >= g.n || j >= g.n) continue;
+      const b = g.block[i * g.n + j];
+      if (b === B.Farmland || b === B.Wheat || b === B.Sprout || b === B.Seedling || b === B.Stubble) return true;
+    }
+    return false;
+  };
   let placed = 0; const cell = 5.5;
   for (let cx = 0; cx < size; cx += cell) for (let cz = 0; cz < size; cz += cell) {
     const x = x0 + cx + rnd() * cell, z = z0 + cz + rnd() * cell, roll = rnd(), roll2 = rnd(), roll3 = rnd();
     const gi = Math.max(0, Math.min(g.n - 1, Math.round((x - g.x0) / g.stride))), gj = Math.max(0, Math.min(g.n - 1, Math.round((z - g.z0) / g.stride))), k = gi * g.n + gj;
     if (g.water[k] >= 0 || g.block[k] !== 1 /* grass */) continue;
     const settlement = region.settlements.some(s => x >= s.bounds.x0 && x <= s.bounds.x1 && z >= s.bounds.z0 && z <= s.bounds.z1);
-    const grove = worldNoise(x,z,38,137), f = g.forest[k];
+    const grove = worldNoise(x,z,38,137), f = g.forest[k], forestEdge = Math.max(0, 1 - Math.abs(f - .48) / .3);
+    const cropMargin = nearCultivated(x, z);
     // Clearings and groves have different canopy density. A few small garden trees
     // occupy unused settlement grass; exact buildings, work areas and routes stay clear.
     const p = Math.max(0, Math.min(1, (f - 0.32) / 0.5)) * density * (settlement ? .045 : .32 + grove*.94);
     if (roll > p) { // open ground: the occasional bush or rock
-      if (f > 0.2 && roll2 < (settlement ? .10 : .075) * density && !excluded(x, z) && !nearRoad(x, z, 3) && !nearPath(x, z, 2) && !nearCanonical(x,z)) { inst.add(lib, roll3 < 0.85 ? 'bush' : 'rock', Math.floor(roll * 97), new Vector3(x - x0, terrain.heightAt(x, z) - 0.05, z - z0), roll3 * 6.28, .45 + roll3*.55); placed++; }
+      // Field margins are sparse, stable understory beside canonical plots. They
+      // give the cultivated footprint a grounded edge without placing anything
+      // inside the crop cells or inventing fences/produce.
+      const marginChance = cropMargin ? .16 : (forestEdge > .2 ? .10 : .075);
+      if ((f > 0.2 || cropMargin) && roll2 < (settlement ? .10 : marginChance) * density && !excluded(x, z) && !nearRoad(x, z, 3) && !nearPath(x, z, 2) && !nearCanonical(x,z)) {
+        const species: Species = cropMargin ? (roll3 < .72 ? 'sapling' : 'bush') : (roll3 < 0.85 ? 'bush' : 'rock');
+        inst.add(lib, species, Math.floor(roll * 97), new Vector3(x - x0, terrain.heightAt(x, z) - 0.05, z - z0), roll3 * 6.28, cropMargin ? .42 + roll3*.4 : .45 + roll3*.55); placed++;
+      }
       continue;
     }
     if (excluded(x, z) || nearRoad(x, z, 5) || nearPath(x, z, 2) || nearCanonical(x, z)) continue;
     const n = worldNoise(x, z, 150, 21), species: Species = settlement ? (roll3 < .65 ? 'birch' : 'oak') : n < 0.38 ? 'oak' : n < 0.62 ? (roll3 < 0.55 ? 'birch' : 'oak') : n < 0.8 ? (roll3 < 0.5 ? 'pine' : 'birch') : 'pine';
     inst.add(lib, species, Math.floor(roll2 * 97), new Vector3(x - x0, terrain.heightAt(x, z) - 0.1, z - z0), roll3 * 6.28, settlement ? .6+roll2*.32 : .64 + roll2 * .95); placed++;
-    if (roll3 < 0.55) {
+    // Edge cells seed a small understory cluster. The low-frequency edge mask
+    // keeps this as a readable margin instead of evenly scattering shrubs.
+    if (roll3 < 0.55 + forestEdge * .2) {
       const a = roll * 6.28, sx=x+Math.cos(a)*2.4, sz=z+Math.sin(a)*2.4;
       const si=Math.max(0,Math.min(g.n-1,Math.round((sx-g.x0)/g.stride))), sj=Math.max(0,Math.min(g.n-1,Math.round((sz-g.z0)/g.stride))), sk=si*g.n+sj;
       if (sx>=x0 && sx<x0+size && sz>=z0 && sz<z0+size && g.water[sk]<0 && g.block[sk]===1 && !excluded(sx,sz) && !nearRoad(sx,sz,3) && !nearPath(sx,sz,2) && !nearCanonical(sx,sz)) {
-        inst.add(lib, roll2<.25?'sapling':'bush', Math.floor(roll3*97), new Vector3(sx-x0,terrain.heightAt(sx,sz)-.05,sz-z0),a,.55+roll2*.65); placed++;
+        inst.add(lib, forestEdge > .35 && roll2 < .42 ? 'sapling' : 'bush', Math.floor(roll3*97), new Vector3(sx-x0,terrain.heightAt(sx,sz)-.05,sz-z0),a,.55+roll2*.65); placed++;
       }
     }
   }

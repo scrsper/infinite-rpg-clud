@@ -9,6 +9,8 @@ import type { LightPool } from './lights';
 import type { Species, VegetationLibrary } from './vegetation';
 import type { TerrainBuild } from './terrain';
 import { buildCropGeometry } from './cropGeometry';
+import { buildFieldSurface } from './fieldSurface';
+import { B } from '../../sim/physical/blocks';
 
 /**
  * The region's changing things, built from the projected dynamics: lying items, containers, crops,
@@ -95,6 +97,17 @@ export class RegionDynamics {
 
   apply(d: DynamicsProjection): void {
     const seen = new Set<string>();
+    // Soil is omitted from structures.runs. Canonical crop plots (including fallow
+    // and harvested plots) provide the exact cultivated-cell mask instead of
+    // expanding coarse terrain samples into invented field area.
+    if(d.crops.length) {
+      const sig=d.crops.map(c=>`${c.pos.x},${c.pos.y},${c.pos.z}`).sort().join('|');
+      this.sync(seen,'field-surface',sig,()=>{
+        const mesh=buildFieldSurface(this.scene,this.mats,this.region,d.crops.map(c=>({x:c.pos.x,z:c.pos.z,block:B.Farmland})),this.terrain.heightAt);
+        const node=mesh??new TransformNode(`empty-field-${this.region.id}`,this.scene);node.parent=this.root;
+        return {sig,node};
+      });
+    }
     for (const dr of d.doors) { const h = this.doors.find(x => x.cell.x === dr.pos.x && x.cell.y === dr.pos.y && x.cell.z === dr.pos.z); if (h) h.target = dr.open ? 1 : 0; }
     for (const it of d.items as ItemProjection[]) {
       const sig = `${it.type}|${it.pos.x},${it.pos.y},${it.pos.z}`;

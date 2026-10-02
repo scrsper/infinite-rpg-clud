@@ -94,7 +94,7 @@ export class App {
     this.atmosphere = new Atmosphere(this.ctx);
     for (const kv of (this.params.get('look') ?? '').split(',')) { const [k, v] = kv.split(':'); if (k in this.atmosphere.look && Number.isFinite(Number(v))) (this.atmosphere.look as Record<string, number>)[k] = Number(v); }
     this.regions = new RegionManager(this.ctx, this.atmosphere);
-    const gq = { high: { radius: 30, capacity: 90000 }, balanced: { radius: 24, capacity: 60000 }, low: { radius: 14, capacity: 16000 } }[this.ctx.quality.tier];
+    const gq = { high: { radius: 42, capacity: 90000 }, balanced: { radius: 30, capacity: 60000 }, low: { radius: 14, capacity: 16000 } }[this.ctx.quality.tier];
     this.grass = new GrassField(this.ctx.scene, this.regions, gq); this.regions.onOriginChange = () => this.grass.invalidate();
     this.impactFx = new ImpactFx(this.ctx.scene);
     this.weatherFx = new WeatherFx(this.ctx.scene, this.ctx.quality.tier === 'low' ? 900 : 2600);
