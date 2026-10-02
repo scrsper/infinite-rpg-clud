@@ -75,8 +75,8 @@ export class Atmosphere {
     // Explicit unlit cloud composition: alpha is coverage, RGB comes exclusively
     // from the sky state. No white emissive map can keep clouds lit at midnight.
     this.cloudMat = new ShaderMaterial('clouds', scene, {
-      vertexSource: 'precision highp float; attribute vec3 position; attribute vec2 uv; uniform mat4 worldViewProjection; varying vec2 cloudUV; void main(){cloudUV=uv;gl_Position=worldViewProjection*vec4(position,1.0);}',
-      fragmentSource: 'precision highp float; varying vec2 cloudUV; uniform sampler2D cloudMask; uniform vec3 cloudTint; uniform float cloudOpacity; void main(){gl_FragColor=vec4(cloudTint,texture2D(cloudMask,cloudUV).a*cloudOpacity);}',
+      vertexSource: 'precision highp float; attribute vec3 position; attribute vec2 uv; uniform mat4 worldViewProjection; varying vec2 cloudUV; varying float cloudHeight; void main(){cloudUV=uv;cloudHeight=position.y/800.0;gl_Position=worldViewProjection*vec4(position,1.0);}',
+      fragmentSource: 'precision highp float; varying vec2 cloudUV; varying float cloudHeight; uniform sampler2D cloudMask; uniform vec3 cloudTint; uniform float cloudOpacity; void main(){gl_FragColor=vec4(cloudTint,texture2D(cloudMask,cloudUV).a*cloudOpacity*smoothstep(0.0,0.12,cloudHeight));}',
     }, {attributes:['position','uv'],uniforms:['worldViewProjection','cloudTint','cloudOpacity'],samplers:['cloudMask'],needAlphaBlending:true});
     this.cloudMat.setTexture('cloudMask',this.cloudTex); this.cloudMat.backFaceCulling=false; this.cloudMat.disableDepthWrite=true;
     this.cloudDome = MeshBuilder.CreateSphere('cloud-dome', { diameter: 1600, segments: 16, slice: 0.5, sideOrientation: Mesh.BACKSIDE }, scene);
@@ -159,8 +159,9 @@ export class Atmosphere {
     for (const m of [this.skyDome, this.starDome, this.cloudDome, this.sunDisc, this.moonDisc]) m.setEnabled(!on);
     const s = this.ctx.scene; if (color) { s.clearColor = new Color4(color.r, color.g, color.b, 1); s.fogDensity = 0; s.fogMode = Scene.FOGMODE_NONE; }
   }
-  /** Follow the camera so the sky is always centred on the viewer. */
-  follow(cameraPos: Vector3): void { for (const m of [this.skyDome, this.starDome, this.cloudDome]) m.position.copyFrom(cameraPos); this.key.position.copyFrom(cameraPos); }
+  /** Infinite-distance meshes already receive camera translation from Babylon.
+   * Adding it a second time offsets the dome and lifts its horizon into view. */
+  follow(cameraPos: Vector3): void { this.key.position.copyFrom(cameraPos); }
   get hourValue(): number { return this.lastHour; }
 }
 
