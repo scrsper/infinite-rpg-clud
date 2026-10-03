@@ -1,5 +1,7 @@
 # Torn Veil Online — Repository Map
 
+> Current client: Babylon.js in `src/web/`. Unreal paths below are historical archive references; see `docs/UNREAL_ARCHIVE.md`. Shared TypeScript simulation/bridge/foundry code remains active.
+
 Use this document to locate the relevant system before exploring the repository.
 
 This is a map, not a requirement to read every referenced file.
