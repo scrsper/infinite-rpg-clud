@@ -1,17 +1,13 @@
 import '@babylonjs/loaders/glTF';
-import { AssetContainer, Matrix, Mesh, Quaternion, SceneLoader, TransformNode, Vector3, type AbstractMesh, type AnimationGroup, type Scene } from '@babylonjs/core';
-import { CharacterFactory } from '../actors/characterFactory';
-import { realize } from '../actors/appearanceMap';
-import type { Atmosphere } from '../world/atmosphere';
+import { AssetContainer, Matrix, Mesh, PBRMaterial, Quaternion, SceneLoader, TransformNode, Vector3, type AbstractMesh, type AnimationGroup, type Scene } from '@babylonjs/core';
 import { Retargeter, instantiateClips, type ClipTemplate, type Grip } from './retarget';
-import { LOOKS, type LookId } from './looks';
+import type { LookId } from './looks';
 
-/** Humans are ~1.75 m; the arena was laid out around 2.2-unit fighters, so people are scaled to match. */
+/** MPFB people are ~1.75 m; the arena was laid out around 2.2-unit fighters, so people are scaled to match. */
 export const HUMAN_SCALE = 1.22;
-/** Finger curl axis in the kit's finger-bone frame (tuned by eye). */
-const GRIP_AXIS = new Vector3(0, 0, 1);
-/** The arena uses blob shadows; the factory's caster hooks are no-ops here. */
-const NO_SHADOWS = { addCaster() {}, removeCaster() {} } as unknown as Atmosphere;
+/** Finger curl axis in the MPFB finger-bone frame (tuned by eye on pose sheets). */
+const GRIP_AXIS = new Vector3(1, 0, 0);
+const curl = (n: TransformNode | undefined, a: number) => { if (n?.rotationQuaternion) n.rotationQuaternion = n.rotationQuaternion.multiply(Quaternion.RotationAxis(GRIP_AXIS, a)); };
 
 /**
  * Combat Arena assets: CC0 KayKit characters, weapons and dungeon props (Kay Lousberg), built by
@@ -78,25 +74,42 @@ export class ArenaAssets {
     }
   }
 
-  // ---- Torn Veil humans driven by retargeted KayKit combat clips -----------------------------
-  readonly factory = new CharacterFactory();
+  // ---- Realistic MPFB people driven by retargeted KayKit combat clips -----------------------
+  private people = new Map<LookId, AssetContainer>();
   readonly clips = new Map<string, ClipTemplate>();
   private gripR!: Grip; private gripL!: Grip;
 
-  /** Load the human kits and bake every combat clip from the KayKit rig onto the human skeleton. */
-  async loadHumans(progress: (t: string) => void): Promise<void> {
-    progress('Loading people');
-    await this.factory.load(this.scene, undefined, ['m', 'f']);
+  /** Load the people (art/tools/arena/build_arena_people.py) and bake every combat clip onto their skeleton. */
+  async loadHumans(looks: LookId[], progress: (t: string) => void): Promise<void> {
+    let n = 0;
+    await Promise.all(looks.map(async l => {
+      const c = await SceneLoader.LoadAssetContainerAsync(BASE + 'people/', `${l}.glb`, this.scene);
+      // Hair, brows and lashes export as BLEND; alpha-test them so they sort with the head.
+      for (const m of c.materials) if (m instanceof PBRMaterial && m.transparencyMode === PBRMaterial.PBRMATERIAL_ALPHABLEND) {
+        m.transparencyMode = PBRMaterial.PBRMATERIAL_ALPHATEST; m.alphaCutOff = .45; m.backFaceCulling = false;
+      }
+      this.people.set(l, c); progress(`Loading people ${++n}/${looks.length}`);
+    }));
     progress('Teaching the fighters to fight');
     const src = this.character('skeleton_warrior');
-    const ref = this.factory.create(this.scene, NO_SHADOWS, 'retarget-ref', realize('retarget-ref', LOOKS.hero, undefined))!;
-    ref.rig.model.rotationQuaternion = Quaternion.Identity();
-    const srcNodes = new Map(src.root.getChildTransformNodes(false).map(n => [n.name.slice(n.name.indexOf('.') + 1), n] as const));
-    const rt = new Retargeter({ space: src.root, nodes: srcNodes }, { space: ref.rig.model, nodes: new Map([...ref.rig.bones].map(([k, b]) => [k, b.node])) });
+    const ref = this.person('hero');
+    const srcNodes = new Map(src.root.getChildTransformNodes(false).map(x => [x.name.slice(x.name.indexOf('.') + 1), x] as const));
+    const rt = new Retargeter({ space: src.root, nodes: srcNodes }, { space: ref.holder, nodes: ref.nodes });
     for (const [name, g] of src.anims) this.clips.set(name, rt.bake(name, g));
-    this.gripR = rt.grip('wrist.r', 'handslot.r', 'hand_r', 'fingers_01_r');
-    this.gripL = rt.grip('wrist.l', 'handslot.l', 'hand_l', 'fingers_01_l');
+    this.gripR = rt.grip('wrist.r', 'handslot.r', 'hand_r', 'middle_01_r');
+    this.gripL = rt.grip('wrist.l', 'handslot.l', 'hand_l', 'middle_01_l');
     src.dispose(); ref.dispose();
+  }
+
+  private person(look: LookId) {
+    const tag = `h${this.serial++}`;
+    const e = this.people.get(look)!.instantiateModelsToScene(n => `${tag}.${n}`, false, { doNotInstantiate: true });
+    const holder = new TransformNode(tag, this.scene);
+    for (const r of e.rootNodes) r.parent = holder;
+    const nodes = new Map(holder.getChildTransformNodes(false).map(x => [x.name.slice(tag.length + 1), x] as const));
+    const meshes = holder.getChildMeshes(false);
+    for (const m of meshes) { m.isPickable = false; m.alwaysSelectAsActiveMesh = true; }
+    return { tag, holder, nodes, meshes, dispose: () => { for (const g of e.animationGroups) g.dispose(); for (const k of e.skeletons) k.dispose(); holder.dispose(false, false); } };
   }
 
   /** Your arsenal (web/public/arena/arsenal): each multi-part weapon merged into one source mesh W_<key>. */
@@ -122,29 +135,24 @@ export class ArenaAssets {
     }));
   }
 
-  human(look: LookId, id: string): CharacterInstance {
-    const r = realize(id, LOOKS[look], undefined);
-    const v = this.factory.create(this.scene, NO_SHADOWS, id, r)!;
-    v.rig.model.rotationQuaternion = Quaternion.Identity();
-    const tag = `h${this.serial++}`;
-    const holder = new TransformNode(tag, this.scene);
-    v.rig.root.parent = holder; holder.scaling.setAll(HUMAN_SCALE);
-    const nodes = new Map([...v.rig.bones].map(([k, b]) => [k, b.node]));
-    const anims = instantiateClips(tag, this.clips, nodes, this.scene);
+  human(look: LookId, _id: string): CharacterInstance {
+    const p = this.person(look);
+    p.holder.scaling.setAll(HUMAN_SCALE);
+    const anims = instantiateClips(p.tag, this.clips, p.nodes, this.scene);
     const slot = (hand: string, g: Grip) => {
-      const s = new TransformNode(`${tag}.slot.${hand}`, this.scene); s.parent = nodes.get(hand)!;
+      const s = new TransformNode(`${p.tag}.slot.${hand}`, this.scene); s.parent = p.nodes.get(hand)!;
       s.rotationQuaternion = g.rot.clone(); s.position.copyFrom(g.pos); s.scaling.setAll(1 / g.scale);
       return s;
     };
-    // A loose grip so hands read as holding the haft rather than splayed flat.
-    for (const side of ['l', 'r']) for (const [b, a] of [['fingers_01', .9], ['fingers_02', 1.1], ['thumb_01', .35], ['thumb_02', .5]] as const) {
-      const n = nodes.get(`${b}_${side}`); if (n?.rotationQuaternion) n.rotationQuaternion = n.rotationQuaternion.multiply(Quaternion.RotationAxis(GRIP_AXIS, a));
+    // A closed grip so hands wrap the haft instead of splaying flat.
+    for (const side of ['l', 'r']) {
+      for (const f of ['index', 'middle', 'ring', 'pinky']) for (const [j, ang] of [[1, .85], [2, 1.0], [3, .7]] as const) curl(p.nodes.get(`${f}_0${j}_${side}`), ang);
+      curl(p.nodes.get(`thumb_02_${side}`), .4); curl(p.nodes.get(`thumb_03_${side}`), .4);
     }
-    const meshes = v.rig.parts.map(p => p.mesh);
     return {
-      root: holder, anims, meshes, gear: new Map(), bones: nodes, chest: nodes.get('spine_03') ?? null,
+      root: p.holder, anims, meshes: p.meshes, gear: new Map(), bones: p.nodes, chest: p.nodes.get('spine_03') ?? null,
       slotR: slot('hand_r', this.gripR), slotL: slot('hand_l', this.gripL),
-      dispose: () => { for (const g of anims.values()) g.dispose(); v.dispose(); holder.dispose(false, false); },
+      dispose: () => { for (const g of anims.values()) g.dispose(); p.dispose(); },
     };
   }
 

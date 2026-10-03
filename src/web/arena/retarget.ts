@@ -18,8 +18,8 @@ const MAP: [string, string, string | null, string | null][] = [
   ['spine', 'spine_01', 'chest', 'spine_03'],
   ['chest', 'spine_03', 'head', 'neck_01'],
   ['head', 'head', null, null],
-  ['upperarm.l', 'upperarm_l', 'lowerarm.l', 'lowerarm_l'], ['lowerarm.l', 'lowerarm_l', 'wrist.l', 'hand_l'], ['wrist.l', 'hand_l', 'hand.l', 'fingers_01_l'],
-  ['upperarm.r', 'upperarm_r', 'lowerarm.r', 'lowerarm_r'], ['lowerarm.r', 'lowerarm_r', 'wrist.r', 'hand_r'], ['wrist.r', 'hand_r', 'hand.r', 'fingers_01_r'],
+  ['upperarm.l', 'upperarm_l', 'lowerarm.l', 'lowerarm_l'], ['lowerarm.l', 'lowerarm_l', 'wrist.l', 'hand_l'], ['wrist.l', 'hand_l', 'hand.l', 'middle_01_l'],
+  ['upperarm.r', 'upperarm_r', 'lowerarm.r', 'lowerarm_r'], ['lowerarm.r', 'lowerarm_r', 'wrist.r', 'hand_r'], ['wrist.r', 'hand_r', 'hand.r', 'middle_01_r'],
   ['upperleg.l', 'thigh_l', 'lowerleg.l', 'calf_l'], ['lowerleg.l', 'calf_l', 'foot.l', 'foot_l'], ['foot.l', 'foot_l', 'toes.l', 'ball_l'],
   ['upperleg.r', 'thigh_r', 'lowerleg.r', 'calf_r'], ['lowerleg.r', 'calf_r', 'foot.r', 'foot_r'], ['foot.r', 'foot_r', 'toes.r', 'ball_r'],
 ];

@@ -5,6 +5,7 @@ import { attachPipeline, createRenderer } from '../render/engine';
 import { ArenaAssets } from './assets';
 import { ArenaHud } from './hud';
 import { BlobShadows } from './fx';
+import { LOOK_IDS } from './looks';
 import { ArenaAudio } from './sfx';
 import { ARENA, ArenaWorld, type HeroInput } from './world';
 import type { WeaponId } from './combat';
@@ -36,7 +37,7 @@ export async function startArena(): Promise<void> {
   // The KayKit rig is only the animation source; every fighter is a Torn Veil human.
   const progress = (t: string) => { boot.textContent = t + '…'; };
   await assets.load(['skeleton_warrior'], progress);
-  await assets.loadHumans(progress);
+  await assets.loadHumans([...LOOK_IDS], progress);
   progress('Unpacking the arsenal');
   await assets.loadArsenal(['oathbreaker', 'widow-cleaver', 'raven-mechanism', 'serpent-tooth', 'bell-of-ruin', 'elderroot', 'execution-standard']);
 

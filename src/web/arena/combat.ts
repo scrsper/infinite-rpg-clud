@@ -90,7 +90,7 @@ export const FOES: Record<FoeKind, FoeDef> = {
       { clip: '1H_Melee_Attack_Chop', speed: 1.2, active: [0.34, 0.52], cancel: 1, end: 1.0, range: 2.7, arc: 45 * D, damage: 55, knock: 4, lunge: .9, hitstop: .04, shake: .3 }],
   },
   warrior: {
-    looks: ['soldier'], hp: 130, speed: 3.4, xp: 25, reach: 2.6, weapon: 'W_bell-of-ruin', shield: 'parry', tell: .65, cooldown: [1.8, 3], armor: .35,
+    looks: ['soldier', 'knight'], hp: 130, speed: 3.4, xp: 25, reach: 2.6, weapon: 'W_bell-of-ruin', shield: 'parry', tell: .65, cooldown: [1.8, 3], armor: .35,
     attacks: [{ clip: '1H_Melee_Attack_Chop', speed: 1.05, active: [0.34, 0.54], cancel: 1, end: 1.05, range: 3, arc: 55 * D, damage: 85, knock: 6, lunge: 1.1, heavy: true, hitstop: .05, shake: .4 },
       { clip: '1H_Melee_Attack_Slice_Horizontal', speed: 1.1, active: [0.26, 0.46], cancel: 1, end: 1.05, range: 3, arc: 85 * D, damage: 70, knock: 5, lunge: 1, hitstop: .05, shake: .35 }],
   },

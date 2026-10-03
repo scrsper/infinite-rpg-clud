@@ -26,13 +26,15 @@ last hit.
 
 ## Characters and animation
 
-Every fighter is a **Torn Veil human** from the existing kits (`web/public/models/kit_m.glb`/`kit_f.glb`, UE-mannequin
-skeleton), dressed by the normal appearance pipeline (`realize()`, Ashford garments, faces). Looks are listed in
-`src/web/arena/looks.ts`. The kits are gitignored, locally generated outputs of `npm run web:assets`, so they must be
-present.
+Every fighter is a **realistic MPFB human** (MakeHuman base mesh, `game_engine` rig with UE-mannequin bone names)
+dressed in MakeHuman community clothing, hair and skins. The cast is hero, Brann, Wren, raider, raider_f, soldier,
+knight, archer and mystic; see `web/public/arena/people/CREDITS.md` for the CC0/CC-BY credits.
+`art/tools/arena/build_arena_people.py` builds them headlessly in Blender with MPFB 2 and the asset packs listed in
+its header installed into MPFB's user data folder. It makes skin, clothes and eyes opaque (hair, brows and lashes are
+alpha-tested at runtime) and downsizes textures to 1024. `render_people.py` renders turnarounds from the exported GLBs.
 
-The kits have no baked clips, so the combat moveset comes from the CC0 KayKit Skeleton Warrior rig (51 clips: 2H/1H
-melee, block, dodge, hit, death, ranged, taunt). It is **retargeted at load** (`src/web/arena/retarget.ts`):
+The bodies have no clips of their own, so the combat moveset comes from the CC0 KayKit Skeleton Warrior rig (51 clips:
+2H/1H melee, block, dodge, hit, death, ranged, taunt). It is **retargeted at load** (`src/web/arena/retarget.ts`):
 
 - Each frame, each mapped bone's model-space rotation change from rest is applied to the matching human bone.
 - Each target bone is first swung to the source rest direction, which handles T-pose versus A-pose rests.
@@ -40,7 +42,7 @@ melee, block, dodge, hit, death, ranged, taunt). It is **retargeted at load** (`
 - Hip travel is scaled by hip height.
 
 Weapon grips are derived from the KayKit hand slots. After animation, two-bone arm IK (`ik.ts`) seats the off hand on
-two-handed hafts. Fingers get a fixed loose grip curl. Use `npx tsx scripts/web/arena-poses.ts` to capture close-up
+two-handed hafts, and the fingers get a closed grip. Use `npx tsx scripts/web/arena-poses.ts` to capture close-up
 pose sheets of any clip.
 
 ## Weapons and props
@@ -67,8 +69,10 @@ This is automation evidence, not a human playtest.
 
 ## Known limits
 
-- Retargeted motion comes from a stylised rig: poses read as human but are broader than mocap. Finger curl is
-  constant. The off-hand IK covers two-handed melee only, not the crossbow.
+- Retargeted motion comes from a stylised rig: poses read as human but are broader than mocap; real sword mocap
+  (Mixamo, downloaded by the user) would be the next quality step. Finger curl is constant, and the off-hand IK covers
+  two-handed melee only, not the crossbow. The CC0 wardrobe is small, so several roles share the viking chainmail set.
+- People GLBs are 6-12 MB each (79 MB total) at 1024 textures.
 - Props are KayKit's stylised furniture, so they read chunkier than the realistic people.
 - Shadows are soft blob decals. Babylon directional shadow maps rendered casters, but no floor received them in this
   scene, with Standard or PBR materials, plain or cascaded generators, or with depth clamp on or off.
