@@ -2,7 +2,7 @@ import {
   Color3, Color4, DirectionalLight, Matrix, DynamicTexture, FreeCamera, HemisphericLight, MeshBuilder, StandardMaterial, Vector3, type Scene,
 } from '@babylonjs/core';
 import { attachPipeline, createRenderer } from '../render/engine';
-import { ArenaAssets, type CharacterKind } from './assets';
+import { ArenaAssets } from './assets';
 import { ArenaHud } from './hud';
 import { BlobShadows } from './fx';
 import { ArenaAudio } from './sfx';
@@ -33,8 +33,12 @@ export async function startArena(): Promise<void> {
 
   const { shadow, key } = buildStage(scene);
   const assets = new ArenaAssets(scene);
-  const kinds: CharacterKind[] = ['knight', 'barbarian', 'rogue_hooded', 'skeleton_minion', 'skeleton_warrior', 'skeleton_rogue', 'skeleton_mage'];
-  await assets.load(kinds, t => { boot.textContent = t + '…'; });
+  // The KayKit rig is only the animation source; every fighter is a Torn Veil human.
+  const progress = (t: string) => { boot.textContent = t + '…'; };
+  await assets.load(['skeleton_warrior'], progress);
+  await assets.loadHumans(progress);
+  progress('Unpacking the arsenal');
+  await assets.loadArsenal(['oathbreaker', 'widow-cleaver', 'raven-mechanism', 'serpent-tooth', 'bell-of-ruin', 'elderroot', 'execution-standard']);
 
   const hud = new ArenaHud();
   const audio = new ArenaAudio();
@@ -44,12 +48,13 @@ export async function startArena(): Promise<void> {
     damage: (p, n, kind) => hud.number(p, n, kind),
     kill: () => {},
     levelUp: l => { levels.push(l); audio.play('level'); },
-    wave: (n, count) => hud.announce(`WAVE ${n}`, `${count} skeletons rise`),
+    wave: (n, count) => hud.announce(`WAVE ${n}`, `${count} raiders attack`),
     heroDown: () => { heroDown = true; },
     sound: (k, g) => audio.play(k, g),
   });
   let seed = Number(params.get('seed') ?? 918271) || 918271;
   world.reset(seed);
+  let zoom = 17, paused = false, camYaw = Math.PI * .25, camPitch = .9;
   // Automation hooks (scripts/web/arena-play.ts): read-only views plus a projector for aiming real mouse input.
   (window as unknown as { __arena: unknown }).__arena = {
     world, hud, scene, camera,
@@ -57,6 +62,14 @@ export async function startArena(): Promise<void> {
       const e = scene.getEngine(), v = Vector3.Project(new Vector3(x, y, z), Matrix.IdentityReadOnly, scene.getTransformMatrix(), camera.viewport.toGlobal(e.getRenderWidth(), e.getRenderHeight()));
       return { x: v.x * canvas.clientWidth / e.getRenderWidth(), y: v.y * canvas.clientHeight / e.getRenderHeight() };
     },
+    /** Pose review: freeze the game and hold the hero at a fraction of a clip. */
+    pose: (clip: string, frac: number, yaw = 0) => {
+      paused = true; const h = world.hero; h.anim.stopAll(); h.yaw = yaw; h.inst.root.rotation.y = yaw;
+      const g = h.inst.anims.get(clip); if (!g) return false;
+      g.start(false, 1, g.from, g.to); g.setWeightForAllAnimatables(1); g.goToFrame(g.from + frac * (g.to - g.from)); g.pause(); return true;
+    },
+    zoom: (z: number) => { zoom = z; },
+    view: (pitch: number, yaw: number) => { camPitch = pitch; camYaw = yaw; },
     summary: () => ({ time: world.time, wave: world.wave, kills: world.kills, smashed: world.smashed, level: world.level, combo: world.combo.hits, hp: world.hero.hp, heroState: world.hero.state,
       foes: world.fighters.filter(f => f.role === 'foe' && f.alive).map(f => ({ x: f.pos.x, z: f.pos.z, state: f.state, kind: f.foeKind })), hero: { x: world.hero.pos.x, z: world.hero.pos.z },
       debris: world.debris.count, props: world.props.filter(p => !p.broken && !p.loose).map(p => ({ x: p.pos.x, z: p.pos.z, key: p.key })) }),
@@ -72,12 +85,9 @@ export async function startArena(): Promise<void> {
   canvas.addEventListener('pointerdown', e => { audio.unlock(); canvas.focus(); if (e.button === 0) { lmb = true; lmbPressed = true; } if (e.button === 2) rmb = true; });
   window.addEventListener('pointerup', e => { if (e.button === 0) lmb = false; if (e.button === 2) rmb = false; });
   window.addEventListener('keydown', () => audio.unlock(), { once: true });
-  let zoom = 17;
   canvas.addEventListener('wheel', e => { zoom = Math.max(12, Math.min(34, zoom + Math.sign(e.deltaY) * 1.5)); e.preventDefault(); }, { passive: false });
 
-  const camYaw = Math.PI * .25, camPitch = .9;
   const camFocus = new Vector3();
-  let paused = false;
   let padWeapon = 0, padPrev: boolean[] = [];
 
   const readInput = (): HeroInput => {
@@ -148,6 +158,7 @@ export async function startArena(): Promise<void> {
     camera.setTarget(camFocus);
     hud.update(dt, world, scene, camera);
   });
+  scene.onAfterAnimationsObservable.add(() => world.solveGrips(Math.min(scene.getEngine().getDeltaTime() / 1000, .05)));
   ctx.engine.runRenderLoop(() => scene.render());
 }
 
@@ -189,7 +200,7 @@ function buildStage(scene: Scene): { shadow: BlobShadows; key: DirectionalLight 
 
   // White perimeter walls with a few blockout ramps.
   const wallMat = new StandardMaterial('gym-wall', scene); wallMat.diffuseColor = new Color3(.93, .94, .95); wallMat.specularColor = Color3.Black();
-  const wall = (x: number, z: number, w: number, d: number, h = 2.4) => {
+  const wall = (x: number, z: number, w: number, d: number, h = .8) => {
     const b = MeshBuilder.CreateBox('wall', { width: w, depth: d, height: h }, scene);
     b.position.set(x, h / 2, z); b.material = wallMat; b.isPickable = false;
   };

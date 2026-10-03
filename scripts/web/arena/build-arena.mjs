@@ -23,8 +23,8 @@ export const CLIPS = [
   'Spawn_Ground_Skeletons', 'Skeletons_Awaken_Floor', 'Taunt', 'Cheer', 'Jump_Full_Short', 'Throw',
 ];
 const CHARACTERS = [
-  ['KayKit-Character-Pack-Skeletons-1.0/Characters/gltf', ['Skeleton_Warrior', 'Skeleton_Minion', 'Skeleton_Rogue', 'Skeleton_Mage']],
-  ['KayKit-Character-Pack-Adventures-1.0/Characters/gltf', ['Knight', 'Barbarian', 'Rogue_Hooded']],
+  // Animation source only: its clips are retargeted at runtime onto the Torn Veil human kits (src/web/arena/retarget.ts).
+  ['KayKit-Character-Pack-Skeletons-1.0/Characters/gltf', ['Skeleton_Warrior']],
 ];
 
 function readGlb(file) {

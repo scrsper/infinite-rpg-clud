@@ -13,41 +13,64 @@ deliberate step.
 
 ## Play
 
-WASD move, mouse aim. LMB attack (hold to chain). RMB hold: whirlwind (greatsword) / shield guard + LMB bash (axe) /
+WASD move, mouse aim. LMB attack (hold to chain). RMB hold: whirlwind (greatsword) / guard + LMB bash (battleaxe) /
 aimed shot (crossbow). Space dodge (i-frames, costs energy). 1/2/3 weapons. E (hold) revives a downed companion.
 C toggles companions, N spawns more enemies, R rebuilds the gym with a new seed, L shows state labels, P pauses, H help.
 Gamepad: left stick move, right stick aim, X/RT attack, LT/Y secondary, A/B dodge, LB/RB weapons, Start pause.
 
-Waves of KayKit skeletons rise from the floor: minions (blades), shield warriors (block frontal light hits; heavy
-attacks break guard), crossbow rogues (red aim line, then a bolt), mages (slow orb with splash). Melee attacks are
-telegraphed by a red crescent. Kills burst skeletons into their baked body parts. Strong knockback into furniture
-breaks it. The combo multiplier (x1.0 + 0.1 per 10 hits, max x2) boosts damage and resets 3.5 s after the last hit.
+Waves of raiders run in: knife raiders, lamellar soldiers who parry frontal light hits (heavy attacks break the guard),
+crossbowmen (red aim line, then a bolt) and robed mystics (slow orb with splash). Melee attacks are telegraphed by a red
+crescent. Violent kills throw bodies, the dead lie where they fall and later sink away, and strong knockback into
+furniture breaks it. The combo multiplier (x1.0 + 0.1 per 10 hits, max x2) boosts damage and resets 3.5 s after the
+last hit.
 
-## Assets
+## Characters and animation
 
-CC0 KayKit packs by Kay Lousberg (www.kaylousberg.com): Character Pack Adventurers, Character Pack Skeletons and Dungeon Remastered.
-They are rigged with about 100 baked clips each (2H/1H melee, block, dodge, hit, death, ranged, spawn). Rebuild:
+Every fighter is a **Torn Veil human** from the existing kits (`web/public/models/kit_m.glb`/`kit_f.glb`, UE-mannequin
+skeleton), dressed by the normal appearance pipeline (`realize()`, Ashford garments, faces). Looks are listed in
+`src/web/arena/looks.ts`. The kits are gitignored, locally generated outputs of `npm run web:assets`, so they must be
+present.
 
-    node scripts/web/arena/fetch-kaykit.mjs          # sources -> art/source/kaykit (ignored)
-    node scripts/web/arena/build-arena.mjs --props   # characters pruned to used clips; Blender props + weapons
+The kits have no baked clips, so the combat moveset comes from the CC0 KayKit Skeleton Warrior rig (51 clips: 2H/1H
+melee, block, dodge, hit, death, ranged, taunt). It is **retargeted at load** (`src/web/arena/retarget.ts`):
 
-`art/tools/arena/build_arena_props.py` (Blender 5.2, headless) Voronoi-fractures every breakable prop into chunks,
-using bisect cells with an inner-wood/clay material on cut faces. It lathe-turns the terracotta pots the dungeon pack
-lacks and exports `props.glb` / `weapons.glb`. Outputs in `web/public/arena` are committed.
+- Each frame, each mapped bone's model-space rotation change from rest is applied to the matching human bone.
+- Each target bone is first swung to the source rest direction, which handles T-pose versus A-pose rests.
+- spine_02 and the neck blend from their neighbours; the clavicles follow the chest.
+- Hip travel is scaled by hip height.
+
+Weapon grips are derived from the KayKit hand slots. After animation, two-bone arm IK (`ik.ts`) seats the off hand on
+two-handed hafts. Fingers get a fixed loose grip curl. Use `npx tsx scripts/web/arena-poses.ts` to capture close-up
+pose sheets of any clip.
+
+## Weapons and props
+
+- Weapons are the user's **Torn Veil Arsenal** (23 static GLBs, meters, grip at origin) in `web/public/arena/arsenal`:
+  - Hero: Oathbreaker greatsword, Widow Cleaver battleaxe, Raven Mechanism crossbow.
+  - Foes: Serpent Tooth, Bell of Ruin, Raven Mechanism, Elderroot.
+  - Companion Brann: Execution Standard halberd.
+- Props are CC0 KayKit Dungeon Remastered, Voronoi-fractured in Blender by `art/tools/arena/build_arena_props.py`, plus
+  lathe-turned pots.
+- Rebuild the KayKit-derived files with `node scripts/web/arena/fetch-kaykit.mjs`, then
+  `node scripts/web/arena/build-arena.mjs --props`.
 
 ## Verification
 
 `npx tsx scripts/web/arena-play.ts --name run --seconds 60` (dev server running) drives real mouse and keyboard input
 in visible Chrome, aiming with the page projector. It writes video, stills and `report.json` to `.debug/arena/<name>`.
-Last run (2026-10-03, RX 6650 XT, 1280x720 WebGL2): 4 waves, 48 kills, 10 props smashed, level 3, max combo 37,
-576 debris pieces live, median 135 fps (p10 96), zero page errors. This is automation evidence, not a human playtest.
+Last runs (2026-10-03, RX 6650 XT, 1280x720 WebGL2, human fighters), each with zero page errors:
+
+- 60 s: wave 4, 33 kills, level 3, max combo 31, median 87 fps.
+- 45 s: wave 2, 18 kills, 13 smashed, median 98 fps.
+
+This is automation evidence, not a human playtest.
 
 ## Known limits
 
+- Retargeted motion comes from a stylised rig: poses read as human but are broader than mocap. Finger curl is
+  constant. The off-hand IK covers two-handed melee only, not the crossbow.
+- Props are KayKit's stylised furniture, so they read chunkier than the realistic people.
 - Shadows are soft blob decals. Babylon directional shadow maps rendered casters, but no floor received them in this
-  scene, with Standard or PBR materials, plain or cascaded generators, or with depth clamp on or off. Investigate
-  before re-enabling.
-- The Knight hero and skeletons are KayKit's stylised chibi characters, not the Torn Veil human kits. Retargeting
-  these clips onto the 49-bone kit rig, which has no clips of its own, is the path to the game's own people.
+  scene, with Standard or PBR materials, plain or cascaded generators, or with depth clamp on or off.
 - Active windows per clip are hand-tuned, not measured from the weapon path.
 - Debris has floor contact only (no piece-to-piece collisions). Old resting pieces sink away past 1,400.

@@ -1,10 +1,12 @@
 import { Color3, Color4, Matrix, Mesh, MeshBuilder, Quaternion, StandardMaterial, TransformNode, Vector3, type AbstractMesh, type InstancedMesh, type Scene } from '@babylonjs/core';
-import type { ArenaAssets, CharacterInstance, CharacterKind } from './assets';
+import type { ArenaAssets, CharacterInstance } from './assets';
+import type { LookId } from './looks';
 import { Animator } from './anim';
 import { ALLIES, FOES, WEAPONS, waveRoster, type AttackDef, type FoeDef, type FoeKind, type WeaponId } from './combat';
 import { Debris } from './debris';
 import { BlobShadows, Fx, SlashTrail } from './fx';
 import { mulberry } from '../render/noise';
+import { reach } from './ik';
 import type { Sfx } from './sfx';
 
 /**
@@ -34,13 +36,15 @@ export interface HeroInput {
 }
 
 export class Fighter {
-  pos = new Vector3(); yaw = 0; vel = new Vector3();
+  pos = new Vector3(); yaw = 0; vel = new Vector3(); y = 0; vy = 0;
   state: FState = 'idle'; st = 0;
   atk: AttackDef | null = null; atkT = 0; atkHits = new Map<object, number>(); combo = 0; queued = false; atkDir = 0;
   iframe = 0; flash = 0; lastHurt = -99; hpShown: number;
   radius = .65; alive = true; deadT = 0; reviveT = 0;
   cd = 1; target: Fighter | null = null; strafe = 1; think = 0; cancelTell: (() => void) | null = null; aimLine: Mesh | null = null;
   energy = 100; energyDelay = 0;
+  /** Off hand pulled onto the grip of a two-handed weapon. */
+  twoHand = false; ikW = 0;
   trail: SlashTrail | null = null; extra: InstancedMesh[] = [];
   label = 'Idle';
   constructor(readonly id: number, readonly role: Role, readonly name: string, readonly inst: CharacterInstance, readonly anim: Animator,
@@ -157,8 +161,8 @@ export class ArenaWorld {
     }
   }
 
-  private makeFighter(kind: CharacterKind, role: Role, name: string, hp: number, speed: number, foe?: FoeDef, foeKind?: FoeKind): Fighter {
-    const inst = this.assets.character(kind);
+  private makeFighter(look: LookId, role: Role, name: string, hp: number, speed: number, foe?: FoeDef, foeKind?: FoeKind): Fighter {
+    const inst = this.assets.human(look, `${role}-${this.serial + 1}`);
     this.shadow.add(2.3, inst.root);
     const f = new Fighter(++this.serial, role, name, inst, new Animator(inst.anims), hp, hp, speed, foe, foeKind);
     this.fighters.push(f);
@@ -177,7 +181,7 @@ export class ArenaWorld {
   }
 
   private spawnHero(): Fighter {
-    const h = this.makeFighter('knight', 'hero', 'You', 1000, 7.2);
+    const h = this.makeFighter('hero', 'hero', 'You', 1000, 7.2);
     h.pos.set(0, 0, 0); h.yaw = Math.PI * .75;
     this.bladeBase = new TransformNode('blade-base', this.scene); this.bladeTip = new TransformNode('blade-tip', this.scene);
     this.bladeBase.parent = h.inst.slotR; this.bladeTip.parent = h.inst.slotR;
@@ -188,17 +192,17 @@ export class ArenaWorld {
   }
 
   setWeapon(h: Fighter, id: WeaponId): void {
-    this.weapon = id; const w = WEAPONS[id];
+    this.weapon = id; const w = WEAPONS[id]; h.twoHand = id === 'greatsword';
     this.equip(h, w.show, w.attach);
     this.bladeBase.position.set(0, w.trail * .3, 0); this.bladeTip.position.set(0, Math.max(.3, w.trail), 0);
     if (!h.busy) { h.state = 'idle'; h.anim.play(w.idle, { loop: true }); }
   }
 
   private spawnCompanions(): void {
-    const b = this.makeFighter(ALLIES.barbarian.kind, 'ally', ALLIES.barbarian.name, ALLIES.barbarian.hp, ALLIES.barbarian.speed);
-    this.equip(b, ALLIES.barbarian.show); b.pos.set(-3, 0, 2);
-    const w = this.makeFighter(ALLIES.rogue.kind, 'ally', ALLIES.rogue.name, ALLIES.rogue.hp, ALLIES.rogue.speed);
-    this.equip(w, ALLIES.rogue.show); w.pos.set(3, 0, 2);
+    const b = this.makeFighter(ALLIES.barbarian.look, 'ally', ALLIES.barbarian.name, ALLIES.barbarian.hp, ALLIES.barbarian.speed);
+    this.equip(b, [], { r: ALLIES.barbarian.weapon }); b.twoHand = true; b.pos.set(-3, 0, 2);
+    const w = this.makeFighter(ALLIES.rogue.look, 'ally', ALLIES.rogue.name, ALLIES.rogue.hp, ALLIES.rogue.speed);
+    this.equip(w, [], { r: ALLIES.rogue.weapon }); w.pos.set(3, 0, 2);
     for (const f of [b, w]) f.anim.play(this.idleOf(f), { loop: true, fade: 0 });
   }
 
@@ -212,11 +216,11 @@ export class ArenaWorld {
   private spawnFoe(k: FoeKind, x: number, z: number): Fighter {
     const d = FOES[k];
     const hp = Math.round(d.hp * (1 + Math.max(0, this.wave - 1) * .08));
-    const f = this.makeFighter(d.kind, 'foe', k, hp, d.speed * (.9 + this.rnd() * .2), d, k);
-    this.equip(f, [...f.inst.gear.keys()], { r: d.weapon, l: d.shield });
+    const f = this.makeFighter(d.looks[Math.floor(this.rnd() * d.looks.length)], 'foe', k, hp, d.speed * (.9 + this.rnd() * .2), d, k);
+    this.equip(f, [], { r: d.weapon });
     f.pos.set(x, 0, z); f.yaw = Math.atan2(this.hero.pos.x - x, this.hero.pos.z - z);
     f.state = 'spawn'; f.st = 0; f.cd = .6 + this.rnd() * 1.4; f.strafe = this.rnd() < .5 ? 1 : -1;
-    f.anim.play('Spawn_Ground_Skeletons', { speed: 2.2, fade: 0 });
+    f.anim.play('Taunt', { speed: 1.3, fade: 0 });
     this.fx.dustAt(new Vector3(x, .2, z), 16); this.ev.sound('spawn', .4); this.fx.ring(new Vector3(x, 0, z), 3, .6, new Color3(.85, .9, 1));
     return f;
   }
@@ -254,7 +258,8 @@ export class ArenaWorld {
     this.fx.update(dt);
     for (const f of this.fighters) {
       f.anim.update(dt); f.trail?.update(dt);
-      f.inst.root.position.copyFrom(f.pos); f.inst.root.rotation.y = f.yaw;
+      if (!f.alive) { if (f.y > 0 || f.vy > 0) { f.vy -= 22 * dt; f.y = Math.max(0, f.y + f.vy * dt); if (f.y === 0) f.vy = 0; } if (f.deadT > 4.5) f.y -= dt * .7; }
+      f.inst.root.position.set(f.pos.x, f.y, f.pos.z); f.inst.root.rotation.y = f.yaw;
       if (f.flash > 0) f.flash -= dt;
       const on = f.flash > 0;
       for (const m of f.inst.meshes) { m.renderOverlay = on; if (on) { m.overlayColor = f.role === 'hero' ? new Color3(1, .2, .15) : Color3.White(); m.overlayAlpha = .65; } }
@@ -263,6 +268,19 @@ export class ArenaWorld {
     // Remove spent foes.
     for (const f of this.fighters) if (!f.alive && f.role === 'foe' && (f.deadT += dt) > 6) { this.removeFighter(f); f.radius = -1; }
     this.fighters = this.fighters.filter(f => f.radius >= 0);
+  }
+
+  /** Run after animations: seat the off hand on two-handed hafts, below the leading hand. */
+  solveGrips(dt: number): void {
+    for (const f of this.fighters) {
+      const b = f.inst.bones; if (!b || !f.twoHand) continue;
+      const free = f.standing && f.state !== 'dodge' && f.state !== 'hit' && f.state !== 'spawn' && f.state !== 'revive';
+      f.ikW += ((free ? 1 : 0) - f.ikW) * Math.min(1, dt * 12);
+      if (f.ikW < .02) continue;
+      const slot = f.inst.slotR; slot.computeWorldMatrix(true);
+      const target = Vector3.TransformCoordinates(new Vector3(0, -.26, 0), slot.getWorldMatrix());
+      reach(b.get('upperarm_l')!, b.get('lowerarm_l')!, b.get('hand_l')!, target, f.ikW);
+    }
   }
 
   // ------------------------------------------------------------------ hero
@@ -451,6 +469,7 @@ export class ArenaWorld {
     dmg = Math.max(1, Math.round(dmg * (.9 + this.rnd() * .2)));
     t.hp -= dmg; t.lastHurt = this.time; t.flash = .09;
     this.fx.sparksAt(chest.add(push.scale(-.3)), crit ? 40 : 24);
+    this.fx.sparksAt(chest.add(push.scale(-.2)), crit ? 30 : 16, new Color4(.7, .04, .03, 1));
     this.fx.flash(chest.add(push.scale(-.3)), crit ? 2 : 1.3);
     this.fx.ring(t.pos, heavy ? 3.2 : 2.2, .35);
     this.ev.damage(chest, dmg, t.role === 'hero' ? 'hurt' : crit ? 'crit' : 'hit');
@@ -477,48 +496,10 @@ export class ArenaWorld {
     t.alive = false; t.state = 'dead'; t.hp = 0; t.label = 'Dead'; this.kills++;
     this.ev.kill(t);
     this.gainXp(t.foe!.xp);
-    // Violent kills burst the skeleton apart at once; the rest collapse and then crumble into bones.
-    if (violent || this.rnd() < .35) this.shatter(t, push, knock * 1.4 + 4);
-    else { t.anim.play(this.rnd() < .5 ? 'Death_A' : 'Death_B', { speed: 1.3, fade: .05 }); t.vel.addInPlace(push.scale(knock * .6)); t.deadT = -1.1; }
-  }
-
-  /** Bake each skinned part in its current pose into a rigid piece and throw it. */
-  private shatter(t: Fighter, push: Vector3, power: number): void {
-    if (t.radius < 0 || (t as Fighter & { shattered?: boolean }).shattered) return;
-    (t as Fighter & { shattered?: boolean }).shattered = true;
-    const centre = t.pos.add(new Vector3(0, 1.1, 0));
-    t.inst.root.computeWorldMatrix(true);
-    const parts = [...t.inst.meshes.filter(m => m.isEnabled() && m.getTotalVertices() > 0), ...t.extra];
-    for (const m of parts) {
-      let piece: AbstractMesh;
-      if (m instanceof Mesh) {
-        m.computeWorldMatrix(true);
-        const wm = m.getWorldMatrix().clone();
-        m.makeGeometryUnique();
-        if (m.skeleton) { m.applySkeleton(m.skeleton); m.skeleton = null; }
-        m.setParent(null); m.position.setAll(0); m.rotationQuaternion = Quaternion.Identity(); m.rotation.setAll(0); m.scaling.setAll(1);
-        m.bakeTransformIntoVertices(wm); m.refreshBoundingInfo();
-        piece = m;
-      } else {
-        const src = (m as InstancedMesh).sourceMesh;
-        const wm = m.computeWorldMatrix(true);
-        const c = src.clone(src.name + '-drop', null, true)!; c.setEnabled(true);
-        c.makeGeometryUnique(); c.position.setAll(0); c.rotationQuaternion = Quaternion.Identity(); c.scaling.setAll(1);
-        c.bakeTransformIntoVertices(wm); c.refreshBoundingInfo();
-        m.dispose(); piece = c;
-      }
-      const bb = piece.getBoundingInfo().boundingBox; const c = bb.centerWorld.clone();
-      (piece as Mesh).bakeTransformIntoVertices(Matrix.Translation(-c.x, -c.y, -c.z)); (piece as Mesh).refreshBoundingInfo();
-      piece.position.copyFrom(c); piece.rotationQuaternion = Quaternion.Identity();
-      const out = c.subtract(centre); out.y = Math.max(out.y, .1); out.normalize();
-      const v = out.scale(1.5 + this.rnd() * 3).addInPlace(push.scale(power * (.5 + this.rnd() * .6))); v.y += 3 + this.rnd() * 4;
-      const e = piece.getBoundingInfo().boundingBox.extendSize;
-      this.debris.add(piece, c, v, new Vector3((this.rnd() - .5) * 16, (this.rnd() - .5) * 10, (this.rnd() - .5) * 16), Math.min(e.x, e.y, e.z) + .02, .3);
-    }
-    t.extra = [];
-    this.fx.dustAt(centre, 14, new Color4(.92, .9, .84, .6)); this.ev.sound('bones', .8);
-    t.inst.meshes.length = 0;
-    t.inst.root.setEnabled(false);
+    // Violent kills throw the body; the rest fall where they stand. Bodies stay a while, then sink away.
+    t.anim.play(this.rnd() < .5 ? 'Death_A' : 'Death_B', { speed: 1.25, fade: .05 });
+    t.vel.addInPlace(push.scale(violent ? knock * 1.5 + 6 : knock * .6));
+    if (violent) { t.vy = 5 + this.rnd() * 3; this.fx.dustAt(t.pos.add(new Vector3(0, .3, 0)), 8); }
   }
 
   private hitProp(p: Prop, dir: Vector3, knock: number, dmg: number, byHero: boolean): void {
@@ -652,13 +633,11 @@ export class ArenaWorld {
 
   private stepFoe(f: Fighter, dt: number): void {
     if (!f.alive) {
-      // Collapsed foes crumble into bones after their death animation.
-      if (f.deadT >= 0 && !(f as Fighter & { shattered?: boolean }).shattered) this.shatter(f, new Vector3(0, 0, 0), .5);
       return;
     }
     const d = f.foe!;
     f.st += dt; f.cd -= dt; f.think -= dt;
-    if (f.state === 'spawn') { if (f.st > 1.55) this.toIdle(f); return; }
+    if (f.state === 'spawn') { if (f.st > .85) this.toIdle(f); return; }
     if (f.state === 'hit') { if (f.st > .42) this.toIdle(f); return; }
     if (f.think <= 0 || !f.target?.standing) { f.target = this.nearest(f, 'hero', t => t.role === 'hero' ? .8 : 1); f.think = .4 + this.rnd() * .3; }
     const t = f.target;
@@ -707,7 +686,7 @@ export class ArenaWorld {
       f.yaw = turnTo(f.yaw, dist < 7 ? toT : Math.atan2(mx, mz), dt * 8);
       f.state = 'move'; f.label = 'Moving';
       const fast = sp > 3.5;
-      f.anim.play(fast ? 'Running_A' : (f.anim.has('Walking_D_Skeletons') && f.foeKind === 'minion' ? 'Walking_D_Skeletons' : 'Walking_A'), { loop: true, speed: fast ? sp / 6 : Math.max(.6, sp / 2.2), fade: .15 });
+      f.anim.play(fast ? 'Running_A' : 'Walking_A', { loop: true, speed: fast ? sp / 6 : Math.max(.6, sp / 2.2), fade: .15 });
       this.debris.stir(f.pos.x, f.pos.z, .9, 1);
     } else if (f.state !== 'idle') this.toIdle(f);
     else f.yaw = turnTo(f.yaw, toT, dt * 6);
@@ -764,7 +743,6 @@ export class ArenaWorld {
   // ------------------------------------------------------------------ physics & waves
   private integrate(f: Fighter, dt: number): void {
     if (f.radius < 0) return;
-    if (f.state === 'dead' && (f as Fighter & { shattered?: boolean }).shattered) return;
     f.pos.addInPlace(f.vel.scale(dt));
     const sp = f.vel.length();
     // Bodies thrown hard into furniture smash it.
