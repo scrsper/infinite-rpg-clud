@@ -1,0 +1,31 @@
+import { chromium } from 'playwright';
+import { writeFileSync } from 'node:fs';
+const browser=await chromium.launch({channel:'chrome',headless:false,args:['--ignore-gpu-blocklist','--window-size=1456,940']});
+const page=await browser.newPage({viewport:{width:1440,height:810}});
+await fetch('http://127.0.0.1:7505/api/gym/control',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'reset',seed:918271})});
+await page.goto('http://127.0.0.1:7505/?gym=1&autoplay=1&view=orbit&renderer=webgl2');
+await page.waitForFunction(()=>window.__tv?.ready&&window.__tv.link.playable,null,{timeout:90000});
+await page.waitForTimeout(1200);
+await page.screenshot({path:'.debug/combat-gym/Combat-Gym.png'});
+await page.evaluate(()=>{
+ const stream=document.querySelector('#game').captureStream(30),chunks=[];
+ const rec=new MediaRecorder(stream,{mimeType:'video/webm;codecs=vp9',videoBitsPerSecond:4000000});
+ window.__gymRecording={rec,chunks,stream};rec.ondataavailable=e=>chunks.push(e.data);rec.start();
+});
+await page.keyboard.press('KeyF');await page.waitForTimeout(500);
+await page.keyboard.press('KeyH');await page.waitForTimeout(1000);
+await page.keyboard.press('KeyH');await page.waitForTimeout(1000);
+await page.keyboard.down('KeyB');await page.waitForTimeout(800);await page.keyboard.up('KeyB');
+await page.keyboard.press('KeyF');await page.keyboard.down('KeyS');await page.waitForTimeout(1200);await page.keyboard.up('KeyS');
+await page.keyboard.down('KeyA');await page.keyboard.press('Space');await page.waitForTimeout(600);await page.keyboard.up('KeyA');
+await page.keyboard.down('KeyD');await page.waitForTimeout(800);await page.keyboard.up('KeyD');
+await page.mouse.move(750,410);await page.mouse.down({button:'right'});await page.mouse.move(850,450,{steps:20});await page.mouse.up({button:'right'});
+await page.waitForTimeout(1200);
+const bytes=await page.evaluate(async()=>{
+ const {rec,chunks,stream}=window.__gymRecording;
+ await new Promise(r=>{rec.onstop=r;rec.stop()});stream.getTracks().forEach(t=>t.stop());
+ return [...new Uint8Array(await new Blob(chunks,{type:'video/webm'}).arrayBuffer())];
+});
+writeFileSync('.debug/combat-gym/Combat-Gym-gameplay.webm',Buffer.from(bytes));
+console.log(JSON.stringify({bytes:bytes.length,canonical:await fetch('http://127.0.0.1:7505/api/gym/state').then(r=>r.json()).then(r=>r.bodies.slice(0,2))}));
+await browser.close();

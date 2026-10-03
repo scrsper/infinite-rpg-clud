@@ -1,3 +1,4 @@
+import { combatGymStage } from './world/combatGymStage';
 import { Color3, FreeCamera, Matrix, Plane, Vector3 } from '@babylonjs/core';
 import { INTERACTION_SPEC } from '../sim/physical/prediction';
 import { createRenderer, attachPipeline, QUALITY, type QualityTier, type RenderContext } from './render/engine';
@@ -126,7 +127,7 @@ export class App {
       portrait: this.portrait,
       keyLabel: n => String(n), toast: (t, tone) => this.hud.toast(t, tone), describe: r => describeResult(r).text, silver: () => Math.round(this.own()?.wealth ?? 0),
     });
-    this.link = this.params.has('observatory') ? new ObservatoryConnection() : this.params.get('replay') ? new ReplayConnection(this.params.get('replay')!) : new GameConnection();
+    this.link = (this.params.has('observatory') || this.params.has('gym')) ? new ObservatoryConnection() : this.params.get('replay') ? new ReplayConnection(this.params.get('replay')!) : new GameConnection();
     this.controller = new PlayerController(this.link, this.predictor, this.input, this.rig, () => this.settings, {
       canAct: () => (!(this.link instanceof ObservatoryConnection) || this.link.playable) && this.phase === 'playing' && !this.modal.isOpen && !this.dialogue.isOpen && !this.own()?.dead && this.predictor.hasState,
       conversationPartner: () => (this.dialogue.isOpen ? this.speakerPos() : null),
@@ -145,6 +146,7 @@ export class App {
     if (!this.params.has('showroom') && !this.params.has('replay') && !this.params.has('observatory')) { boot.set('Warming the renderer…'); await this.warmUp(); }
     this.clearScreen();
     if (this.params.has('showroom')) { this.phase = 'showroom'; this.showroom = new Showroom(this); await this.showroom.init(this.params.get('showroom') || 'kit_f'); this.ready = true; return; }
+    if (this.params.has('gym')) this.setupGym();
     this.showTitle();
     if (this.params.get('autoplay') || this.params.get('replay')) this.play(this.params.get('name') ? { kind: 'new', name: this.params.get('name')!, sex: 'f' } : { kind: 'auto' });
   }
@@ -154,6 +156,34 @@ export class App {
    * a WebGPU pipeline built on first use can stall a frame for hundreds of milliseconds. One of each kind of person
    * and animal is drawn for a few frames behind the loading screen, then discarded. Cosmetic only.
    */
+  private setupGym(): void {
+    const gym = this.params.get('scenario') !== 'town';
+    if (gym) combatGymStage(this.ctx, this.atmosphere);
+    const panel = h('div', { style: 'position:fixed;top:12px;left:12px;z-index:30;background:#f5f7f9ee;color:#26313c;padding:12px;border:1px solid #b9c2cc;border-radius:6px;font:14px sans-serif;pointer-events:auto;max-width:330px' });
+    const control = async (action: string, extras: Record<string, unknown> = {}) => {
+      this.controller.release(); this.input.exitLock();
+      if (action !== 'pause' && action !== 'ai') this.link.disconnect();
+      const r = await fetch('/api/gym/control', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, ...extras }) });
+      const result = await r.json();
+      if (!r.ok) { this.hud.toast(result.error, 'bad'); return; }
+      if (action === 'pause' || action === 'ai') { this.hud.toast(action === 'pause' ? (extras.paused ? 'Simulation paused.' : 'Simulation resumed.') : (extras.enabled ? 'Partner AI enabled.' : 'Partner AI paused.'), 'info'); return; }
+      const q = new URLSearchParams(location.search); q.set('scenario', result.scenario); q.set('seed', String(result.seed)); q.set('autoplay', '1'); location.search = q.toString();
+    };
+    panel.append(h('strong', { style: 'display:block;margin-bottom:6px', text: gym ? 'Combat Gym · seed ' + (this.params.get('seed') ?? '918271') : 'Town · disposable reference world' }));
+    panel.append(h('small', { style: 'display:block;margin-bottom:6px', text: 'Separate in-memory worlds. Existing town saves are never opened. Town state stays here until this launcher closes.' }));
+    const button = (text: string, fn: () => void) => h('button', { type: 'button', style: 'margin:3px;padding:6px;color:#26313c;background:white;border:1px solid #a8b3be;border-radius:3px', on: { click: fn } }, text);
+    panel.append(button(gym ? 'Switch to Town' : 'Switch to Combat Gym', () => void control('switch', { scenario: gym ? 'town' : 'gym' })));
+    if (gym) {
+      const seed = h('input', { type: 'number', value: this.params.get('seed') ?? '918271', min: 0, max: 2147483647, style: 'width:90px;color:#26313c;background:white', aria: { label: 'Gym seed' } });
+      panel.append(seed, button('Reset seed', () => void control('reset', { seed: Number(seed.value) })));
+      let paused = false; const pause = button('Pause simulation', () => { paused = !paused; pause.textContent = paused ? 'Resume simulation' : 'Pause simulation'; void control('pause', { paused }); }); panel.append(pause);
+      panel.append(button('Enable partner AI', () => void control('ai', { enabled: true })));
+      panel.append(button('Pause partner AI', () => void control('ai', { enabled: false })));
+    }
+    panel.append(h('p', { text: 'WASD move · Shift sprint · Space dodge · LMB strike · RMB guard · E interact · F target · Esc menu. Click arena to play.' }));
+    panel.append(h('small', { text: 'Dummy is a passive human body: real health and contact. Chest and loose items use canonical interactions. Furniture is static; breakable pottery/debris is unavailable.' }));
+    document.body.append(panel);
+  }
   private async warmUp(): Promise<void> {
     const scene = this.ctx.scene, made: { root: { position: Vector3 }; dispose(): void }[] = [];
     try {
@@ -238,7 +268,7 @@ export class App {
   }
   private wireLink(): void {
     const l = this.link;
-    l.on('hello', m => { this.ownBodyId = m.interaction?.bodyId ?? ''; this.remember(m.character.name); this.loading?.set('Loading the land…'); });
+    l.on('hello', m => { this.ownBodyId = m.interaction?.bodyId ?? ''; if (!this.params.has('gym')) this.remember(m.character.name); this.loading?.set('Loading the land…'); });
     l.on('scene', s => { this.regions.regionSize = s.geography?.regionSize ?? 256; this.regions.setOrigin(s.origin); });
     l.on('regions_state', s => { this.wantedRegions = s.resident; this.regions.setOrigin(s.origin); for (const id of s.unload) this.regions.unload(id); });
     l.on('presentation', p => this.regions.applyPresentation(p.payload, () => requestAnimationFrame(() => requestAnimationFrame(() => p.applied()))));
@@ -300,7 +330,7 @@ export class App {
   }
   private enterGame(): void {
     this.phase = 'playing'; this.clearScreen(); this.loading = null; this.hud.show(true);
-    const p = this.predictor.predicted; if (p) this.rig.yaw = p.yaw; this.rig.pitch = this.rig.orbit ? ORBIT_EXPLORATION_PITCH : .3;
+    const p = this.predictor.predicted; if (p) this.rig.yaw = this.params.has('gym') && this.params.get('scenario') !== 'town' ? -Math.PI / 4 : p.yaw; this.rig.pitch = this.rig.orbit ? ORBIT_EXPLORATION_PITCH : .3;
     this.hud.toast(`Welcome, ${this.link.hello?.character.name ?? 'traveller'}.`, 'info', 5000);
     if (this.input.device === 'keyboard') this.input.requestLock();
     this.updateHints();
@@ -445,8 +475,8 @@ export class App {
     if (this.phase === 'playing') { this.gameFrame(dt, now, wasOpen); this.portrait.update(dt); }
     else this.backdropFrame(dt);
     timed('render', () => this.ctx.scene.render(), 12);
-    if (!this.ready && this.phase === 'playing' && this.regions.regions.size >= 5 && this.regions.pendingBuilds === 0 && ++this.readyFrames > 30) this.ready = true;
-    if (this.params.get('replay') && !this.ready && this.regions.regions.size >= 5 && this.snapshot && ++this.readyFrames > 30) this.ready = true;
+    if (!this.ready && this.phase === 'playing' && this.regions.regions.size >= (this.params.has('gym') ? 1 : 5) && this.regions.pendingBuilds === 0 && ++this.readyFrames > 30) this.ready = true;
+    if (this.params.get('replay') && !this.ready && this.regions.regions.size >= (this.params.has('gym') ? 1 : 5) && this.snapshot && ++this.readyFrames > 30) this.ready = true;
   }
   private backdropFrame(dt: number): void {
     // Title/loading backdrop: a slow orbit over whatever is loaded, at golden hour.
@@ -510,6 +540,7 @@ export class App {
     // World.
     const hour = this.params.get('hour') ? Number(this.params.get('hour')) : ((this.regions.worldTime / 3600) % 24 + 24) % 24;
     this.atmosphere.update(hour, this.regions.weather, dt); this.atmosphere.follow(this.camera.position);
+    if (this.params.has('gym') && this.params.get('scenario') !== 'town') { this.atmosphere.setStage(new Color3(.84, .86, .88)); this.atmosphere.key.diffuse = Color3.White(); this.atmosphere.fill.diffuse = Color3.White(); this.atmosphere.fill.groundColor = new Color3(.45, .45, .45); }
     this.grass.tint(this.atmosphere.daylight);
     this.grass.animate(dt, this.regions.weather.wind, this.settings.reducedMotion);
     this.grass.update(this.camera.position.x + this.regions.origin.x, this.camera.position.z + this.regions.origin.z);

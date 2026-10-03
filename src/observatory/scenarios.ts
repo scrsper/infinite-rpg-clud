@@ -1,3 +1,4 @@
+import { createCombatGym } from '../sim/world/combatGym';
 import { World } from '../sim/core/world';
 import { Simulation } from '../sim/mind/agent';
 import { generateVillage } from '../sim/world/village';
@@ -10,6 +11,7 @@ import { registerEcologyResources } from '../sim/world/ecologyResources';
 
 export const SCENARIO_VERSION = 2; // v1 left terrain-edit recording disabled after generation.
 export const SCENARIOS = [
+  ['combat-gym', 'Combat Gym', 'Isolated sterile canonical interaction fixtures.'],
   ['ordinary', 'Ordinary settlement', 'Authored Ashford reference settlement, generated from seed; all inhabitants autonomous.'],
   ['food-shortage', 'Food shortage', 'Initial edible stocks reduced to 5%; needs and production rates unchanged.'],
   ['resource-shortage', 'Resource shortage', 'Initial flour, grain, logs and planks depleted; resource nodes at 10%.'],
@@ -31,6 +33,7 @@ export const SCENARIOS = [
  * path or environment parameter exists, and no runtime UI command edits its entities. */
 export function createScenario(id = 'ordinary', seed = 918271) {
   if (!SCENARIOS.some(s => s.id === id) || !Number.isInteger(seed) || seed < 0 || seed > 2147483647) throw new Error('Invalid scenario or seed');
+  if (id === 'combat-gym') return createCombatGym(seed);
   const world = new World(seed), gen = generateVillage(world), sim = new Simulation(world);
   world.grid.recording = true;
   for (const p of world.persons()) setExternalControl(p, false);
