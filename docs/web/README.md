@@ -1,8 +1,8 @@
 # Torn Veil Web
 
 A browser client (Babylon.js + TypeScript, WebGPU with a WebGL 2 fallback) for the same living world the
-Unreal client plays. It is **another window onto the same simulation**: it sends intentions, draws what the
-server projects, and never steps a world. The Unreal client and its launcher are untouched.
+archived Unreal client played. It sends intentions, draws what the
+server projects, and never steps a world. Babylon is now the active client; see `../UNREAL_ARCHIVE.md`.
 
 **Read first:** `KNOWN_DEFECTS.md` (what is missing or rough) and `PROGRESS.md` (verified / unverified /
 partial / blocked, and where to resume). Nothing here has been played by a human.
@@ -15,9 +15,9 @@ Play Torn Veil Web.cmd -CheckOnly      # run only the preflight; start nothing
 Play Torn Veil Web.cmd -Profile <name> [-Port <gatewayPort>] [-Build]
 ```
 
-The launcher never starts or changes a world: the world service must already be running and its config must
-opt in with `"webGateway": true`. Default profile `web-preview` → the isolated preview world (port 7460).
-Details, world selection and switching back to Unreal: `ROLLBACK.md`.
+The default `web-quality` profile prepares/starts an isolated preview world on port 7490 and
+uses gateway 7491, preserving its existing save. Explicit other profiles require an already-running
+world with `"webGateway": true`. `-CheckOnly` starts nothing. Older rollback notes are historical.
 
 ## Build it
 
