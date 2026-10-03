@@ -173,6 +173,8 @@ export class App {
     panel.append(h('small', { style: 'display:block;margin-bottom:6px', text: 'Separate in-memory worlds. Existing town saves are never opened. Town state stays here until this launcher closes.' }));
     const button = (text: string, fn: () => void) => h('button', { type: 'button', style: 'margin:3px;padding:6px;color:#26313c;background:white;border:1px solid #a8b3be;border-radius:3px', on: { click: fn } }, text);
     panel.append(button(gym ? 'Switch to Town' : 'Switch to Combat Gym', () => void control('switch', { scenario: gym ? 'town' : 'gym' })));
+    // The local action-combat feel lab (src/web/arena): smashable props, crowds, combos. Not canonical simulation.
+    panel.append(button('Open Action Arena', () => { location.search = '?arena=1'; }));
     if (gym) {
       const seed = h('input', { type: 'number', value: this.params.get('seed') ?? '918271', min: 0, max: 2147483647, style: 'width:90px;color:#26313c;background:white', aria: { label: 'Gym seed' } });
       panel.append(seed, button('Reset seed', () => void control('reset', { seed: Number(seed.value) })));
