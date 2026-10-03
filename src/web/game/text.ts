@@ -25,7 +25,7 @@ export function describeResult(code: string): { text: string; tone: 'good' | 'ba
 }
 export const TALK_REASON: Record<string, string> = { asleep: 'asleep', fleeing: 'frightened', refuses: 'will not talk', too_far: 'too far' };
 export function clockText(worldSeconds: number): { day: number; hour: number; text: string } {
-  const day = Math.floor(worldSeconds / 86400) + 1, s = ((worldSeconds % 86400) + 86400) % 86400, hour = s / 3600, hh = Math.floor(hour), mm = Math.floor((hour - hh) * 60);
+  const day = Math.floor(worldSeconds / 86400), s = ((worldSeconds % 86400) + 86400) % 86400, hour = s / 3600, hh = Math.floor(hour), mm = Math.floor(s / 60) % 60;
   return { day, hour, text: `Day ${day}, ${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}` };
 }
 export function daypart(hour: number): string { return hour < 4.5 ? 'Deep night' : hour < 6.5 ? 'Dawn' : hour < 11 ? 'Morning' : hour < 14 ? 'Midday' : hour < 17.5 ? 'Afternoon' : hour < 20 ? 'Dusk' : 'Night'; }

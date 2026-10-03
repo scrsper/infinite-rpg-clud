@@ -9,6 +9,7 @@ import { ImpactFx } from './world/impactFx';
 import { QualityGovernor } from './render/governor';
 import { GameConnection, type CharacterChoice, type ClosedInfo, type GameLink } from './net/connection';
 import { ReplayConnection } from './net/replay';
+import { ObservatoryConnection } from './net/observatory';
 import type { BodyState, DialogueProjection, InteractionTarget, SnapshotMessage, Vec3 } from './net/messages';
 import { LocalPredictor } from './game/predictor';
 import { CameraRig, ORBIT_EXPLORATION_PITCH } from './game/cameraRig';
@@ -125,9 +126,9 @@ export class App {
       portrait: this.portrait,
       keyLabel: n => String(n), toast: (t, tone) => this.hud.toast(t, tone), describe: r => describeResult(r).text, silver: () => Math.round(this.own()?.wealth ?? 0),
     });
-    this.link = this.params.get('replay') ? new ReplayConnection(this.params.get('replay')!) : new GameConnection();
+    this.link = this.params.has('observatory') ? new ObservatoryConnection() : this.params.get('replay') ? new ReplayConnection(this.params.get('replay')!) : new GameConnection();
     this.controller = new PlayerController(this.link, this.predictor, this.input, this.rig, () => this.settings, {
-      canAct: () => this.phase === 'playing' && !this.modal.isOpen && !this.dialogue.isOpen && !this.own()?.dead && this.predictor.hasState,
+      canAct: () => (!(this.link instanceof ObservatoryConnection) || this.link.playable) && this.phase === 'playing' && !this.modal.isOpen && !this.dialogue.isOpen && !this.own()?.dead && this.predictor.hasState,
       conversationPartner: () => (this.dialogue.isOpen ? this.speakerPos() : null),
       onCombatCommand: c => this.onCombatCommand(c), onLockChange: id => this.onLock(id),
     }, () => this.candidates(), () => this.predictor.predicted?.pos ?? null);
@@ -141,7 +142,7 @@ export class App {
     const boot = loadingScreen(this.overlay, 'Preparing the people…'); this.screen = boot as { remove(): void };
     await this.characters.load(this.ctx.scene, (d, t) => boot.set(`Preparing the people… ${d}/${t}`));
     boot.set('Preparing the wildlife…'); await this.creatures.load(this.ctx.scene);
-    if (!this.params.has('showroom') && !this.params.has('replay')) { boot.set('Warming the renderer…'); await this.warmUp(); }
+    if (!this.params.has('showroom') && !this.params.has('replay') && !this.params.has('observatory')) { boot.set('Warming the renderer…'); await this.warmUp(); }
     this.clearScreen();
     if (this.params.has('showroom')) { this.phase = 'showroom'; this.showroom = new Showroom(this); await this.showroom.init(this.params.get('showroom') || 'kit_f'); this.ready = true; return; }
     this.showTitle();

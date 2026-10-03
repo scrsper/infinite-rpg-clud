@@ -70,8 +70,9 @@ describe('player-facing wording', () => {
     expect(describeResult('').text).toBe('Done.');
   });
   it('time and formatting helpers', () => {
-    expect(clockText(0).text).toBe('Day 1, 00:00');
-    expect(clockText(86400 + 13.5 * 3600).text).toBe('Day 2, 13:30');
+    expect(clockText(0).text).toBe('Day 0, 00:00');
+    expect(clockText(100 * 86400 + 7 * 3600 + 20 * 60).text).toBe('Day 100, 07:20');
+    expect(clockText(86400 + 13.5 * 3600).text).toBe('Day 1, 13:30');
     expect(daypart(12)).toBe('Midday'); expect(daypart(2)).toBe('Deep night');
     expect(pct(0.456)).toBe('46%'); expect(pct(3)).toBe('100%'); expect(pct(-1)).toBe('0%');
     expect(titleCase('iron_breakthrough')).toBe('Iron Breakthrough');

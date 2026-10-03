@@ -1,3 +1,16 @@
+# Current: Same-world Observatory workbench (2026-10-03)
+
+Local branch `codex/observatory-workbench`, based on cleanup `968897f` (PR #57).
+Movable/resizable/collapsible panels retain local layout; embedded Babylon uses the
+same World/Simulation and shared command/prediction/projection paths. Playing an
+existing selected person explicitly opts into gameplay scheduling. Old headless
+validation remains separate. Runtime version 3; launcher preserves older servers.
+Preview: loopback 7482, fresh world paused; original user session on 7480 preserved.
+61 focused checks covered, build/typecheck passed; rendered/browser lifecycle and
+layout checks recorded in `docs/evidence/observatory-workbench/README.md`.
+Scope, workflow, memory-only checkpoint behavior and limits: `docs/OBSERVATORY_WORKBENCH.md`.
+Workbench is local; archive and cleanup are pushed and reviewed separately in PR #57.
+
 # Current direction: Babylon retained; Unreal archived (2026-10-03)
 
 User chose to retain Babylon and simplify the project rather than restart the simulation.

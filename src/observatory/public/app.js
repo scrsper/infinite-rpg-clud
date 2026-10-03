@@ -61,6 +61,7 @@ $('map').addEventListener('click', ev => { const r = $('map').getBoundingClientR
 window.addEventListener('resize', () => { if (state) drawMap(); });
 function eventButton(e) { const el = button('', () => selectEvent(e.id), 'event'); el.append(node('small', `${e.time} · ${e.type} · ${e.id}`), node('span', e.summary)); return el; }
 async function selectPerson(id, preserve = false) {
+  window.dispatchEvent(new CustomEvent('observatory-selection', { detail: { id } }));
   const request = ++inspectionRequest, scroll = preserve ? $('person-inspector').scrollTop : 0;
   const next = await api(`/api/person?id=${encodeURIComponent(id)}`); if (request !== inspectionRequest) return; if (!next) throw new Error('Person is not present');
   inspectedTick = state.tick;
@@ -180,7 +181,7 @@ async function refresh() {
     $('world-time').textContent = state.time; $('pause').textContent = state.paused ? 'Resume' : 'Pause'; $('speed').value = String(state.speed); $('health-light').textContent = state.health.status; $('health-light').className = 'pill ' + state.health.status.toLowerCase(); $('clock-info').textContent = state.clock;
     $('restore').disabled = !state.checkpoint;
     $('job-label').textContent = state.job?.error ? `${state.job.mode}: ${state.job.error}` : state.job?.active ? `${state.job.mode} · ${Math.min(100, (state.tick - state.job.from) / (state.job.to - state.job.from) * 100).toFixed(1)}% · ${(state.job.elapsedMs / 1000).toFixed(1)} s` : state.paused ? 'Paused · no wall-time catch-up' : `${state.speed}× · backlog ${state.debtSeconds.toFixed(1)} s`;
-    if (beforeRevision !== undefined && beforeRevision !== state.revision) { selected = null; person = null; inspectionRequest++; clear($('person-inspector'), []); clear($('cause-detail'), []); clear($('metric-detail'), []); clear($('report'), []); clear($('language-debug'), []); clear($('speaker'), [node('option', 'Select an NPC first')]); $('ask').disabled = true; $('ask-target').textContent = '— select a person'; $('speech').textContent = ''; $('selected-name').textContent = 'Select a person'; $('selection-hint').hidden = false; lastReport = null; lastHealth = null; }
+    if (beforeRevision !== undefined && beforeRevision !== state.revision) { selected = null; window.dispatchEvent(new CustomEvent('observatory-selection', { detail: { id: null } })); person = null; inspectionRequest++; clear($('person-inspector'), []); clear($('cause-detail'), []); clear($('metric-detail'), []); clear($('report'), []); clear($('language-debug'), []); clear($('speaker'), [node('option', 'Select an NPC first')]); $('ask').disabled = true; $('ask-target').textContent = '— select a person'; $('speech').textContent = ''; $('selected-name').textContent = 'Select a person'; $('selection-hint').hidden = false; lastReport = null; lastHealth = null; }
     if (!selected) $('selected-occupation').textContent = '';
     renderPeople(); drawMap(); renderMetrics(); renderHealth(); renderReport(); await renderEvents();
     if (selected && inspectedTick !== state.tick) await selectPerson(selected, true);
