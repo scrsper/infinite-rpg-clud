@@ -1,4 +1,16 @@
-# Current: Babylon visual fidelity pass locally verified (2026-10-01)
+# Current direction: Babylon retained; Unreal archived (2026-10-03)
+
+User chose to retain Babylon and simplify the project rather than restart the simulation.
+Local working branch: `codex/babylon-project-reset`; preserved pre-cleanup branch:
+`codex/archive-unreal-2026-10-03`. Full ignored/tracked Unreal files moved to the local
+recovery directory documented in `docs/UNREAL_ARCHIVE.md`. The archive branch is pushed
+to origin; ignored local assets remain local. No merge or disk-space reclamation is claimed. Canonical simulation and shared bridge code are unchanged.
+Root Play launcher now selects Babylon; README describes the actual preview and a
+short Observatory walkthrough. Observatory remains a separate test world, not live
+inspection of the Babylon world. Historical status below remains evidence, not current
+renderer direction. Validation results for this cleanup are in the archive document.
+
+# Previous: Babylon visual fidelity pass locally verified (2026-10-01)
 
 Branch `codex/babylon-visual-fidelity-v1`, tested source `3440bc4c7dd1eee53aa703194809cef2abd1d65b`. Presentation now derives continuous plaster/timber facades and sparse exterior dressing from projected structures, corrects outward face orientation, blends terrain and feathered paths, clusters vegetation with GPU grass wind, improves exploration framing/materials/lighting, and applies reversible rain wetness. Existing canonical apertures, collision and reversible cutaways remain authoritative. Simulation and Unreal source are unchanged; no merge.
 

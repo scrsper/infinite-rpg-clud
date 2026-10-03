@@ -12,10 +12,9 @@ The user-designated working repository on this machine is:
 
 `C:\Users\green\Desktop\projects\torn-veil-online`
 
-Use this checkout for every Torn Veil source, documentation, configuration, asset,
-and Unreal Editor change. The Unreal project is:
-
-`C:\Users\green\Desktop\projects\torn-veil-online\unreal\TornVeilOnline\TornVeilOnline.uproject`
+Use this checkout for every Torn Veil source, documentation, configuration and asset change.
+Babylon.js (`src/web/`) is the active presentation client. Unreal is archived;
+see `docs/UNREAL_ARCHIVE.md` for recovery. Do not resume Unreal work unless requested.
 
 Before editing, verify the Git root is this directory and the remote is
 `https://github.com/scrsper/torn-veil-online.git`. GitHub `main` remains the integrated
