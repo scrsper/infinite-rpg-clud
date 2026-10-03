@@ -31,6 +31,7 @@
 #include "GameFramework/PlayerController.h"
 #include "UObject/ConstructorHelpers.h"
 #include "TVHumanoidVisualState.h"
+#include "TVSoundscape.h"
 
 ATVCharacter::ATVCharacter() {
     PrimaryActorTick.bCanEverTick = true;
@@ -105,7 +106,14 @@ FVector ATVCharacter::IntentDirection() const {
     const auto* Bridge = GetWorld() ? GetWorld()->GetSubsystem<UTVBridgeSubsystem>() : nullptr;
     if (!Controller || bIncapacitated || (Bridge && Bridge->HasModalScreen())) return FVector::ZeroVector;
     const FRotationMatrix Basis(FRotator(0, Controller->GetControlRotation().Yaw, 0));
-    return (Basis.GetUnitAxis(EAxis::X) * ForwardAxis + Basis.GetUnitAxis(EAxis::Y) * RightAxis).GetClampedToMaxSize(1);
+    const FVector Raw=(Basis.GetUnitAxis(EAxis::X) * ForwardAxis + Basis.GetUnitAxis(EAxis::Y) * RightAxis).GetClampedToMaxSize(1);
+    // Two gaits, each at the pace its captured cycle was recorded at, never the half-walk half-run
+    // in between. A stick pushed part way walks (slow to brisk); pushed past that it runs; the walk
+    // toggle caps any input at a walk. The body's canonical speed is the run; a walk is this share of it.
+    const float Tilt=Raw.Size();if(Tilt<.01f)return FVector::ZeroVector;
+    constexpr float WalkShare=.44f,WalkBand=.6f,RunFloor=.82f;
+    const float Pace=bWalk?FMath::Min(Tilt,1.f)*WalkShare:Tilt<WalkBand?Tilt/WalkBand*WalkShare:FMath::Lerp(RunFloor,1.f,(Tilt-WalkBand)/(1.f-WalkBand));
+    return Raw/Tilt*Pace;
 }
 void ATVCharacter::Tick(float Dt) {
     Super::Tick(Dt); SnapshotAge += Dt;
@@ -119,7 +127,8 @@ void ATVCharacter::Tick(float Dt) {
             const FVector Travel=IntentDirection();
             FVector Target;const bool Locked=bTargetLocked&&Bridge->SelectedTargetPosition(Target);
             if(bTargetLocked&&!Locked)bTargetLocked=false;
-            const FVector Facing=Locked?(Target-GetActorLocation()).GetSafeNormal2D():(!bGuardHeld&&!bFocusHeld&&!Travel.IsNearlyZero()?Travel:Controller->GetControlRotation().Vector());
+            FVector Partner;const bool bFacePartner=Travel.IsNearlyZero()&&Bridge->DialoguePartnerPosition(Partner); // in conversation the player turns to the person spoken to
+            const FVector Facing=Locked?(Target-GetActorLocation()).GetSafeNormal2D():bFacePartner?(Partner-GetActorLocation()).GetSafeNormal2D():(!bGuardHeld&&!bFocusHeld&&!Travel.IsNearlyZero()?Travel:Controller->GetControlRotation().Vector());
             Bridge->PredictMovement(Dt,Travel,bSprint&&!bGuardHeld&&!bFocusHeld,FMath::Atan2(-Facing.X,-Facing.Y));
             if(bGuardHeld&&(GuardRefresh-=Dt)<=0){Bridge->SetGuard(true);GuardRefresh=TVInteractionSpec::guardRefreshSeconds;}
             CanonicalCrouch=Bridge->PredictedCrouch();
@@ -135,8 +144,18 @@ void ATVCharacter::Tick(float Dt) {
             else SetActorLocation(GetActorLocation() + Error * FMath::Min(Dt * 6, 1.f), false);
         }
     } else if (bProjected) {
-        const float Alpha = FMath::Clamp(SnapshotAge / (GetWorld()->GetTimeSeconds()<CombatMotionUntil?1.f/30:.1f), 0.f, 1.f);
-        SetActorLocation(FMath::Lerp(PreviousPosition, TargetPosition, Alpha));
+        if (GetWorld()->GetTimeSeconds() < CombatMotionUntil) {
+            const float Alpha = FMath::Clamp(SnapshotAge / (1.f/30), 0.f, 1.f);
+            SetActorLocation(FMath::Lerp(PreviousPosition, TargetPosition, Alpha));
+        } else {
+            // Continuous: where the canonical body is heading at its reported velocity, eased
+            // toward. Easing from the old to the new position over a fixed 0.1 s stopped walkers
+            // between updates, so every NPC moved in stop-start steps.
+            const FVector Expected = TargetPosition + CanonicalVelocity * FMath::Min(SnapshotAge, 0.35f);
+            const FVector Error = Expected - GetActorLocation();
+            if (Error.Size() > 300.f) SetActorLocation(Expected);
+            else SetActorLocation(GetActorLocation() + Error * FMath::Min(Dt * 7.f, 1.f));
+        }
         SetActorRotation(FMath::RInterpTo(GetActorRotation(), FRotator(0, TargetYaw, 0), Dt, 10));
         if (auto* PC = GetWorld()->GetFirstPlayerController()) { const auto R = (PC->PlayerCameraManager->GetCameraLocation() - Nameplate->GetComponentLocation()).Rotation(); Nameplate->SetWorldRotation(R); }
         Nameplate->SetVisibility(Bridge && Bridge->Selected()==this && !Bridge->bArena);
@@ -148,7 +167,18 @@ void ATVCharacter::Tick(float Dt) {
     if(bCanonicalPlayer&&Controller){
         FRotator View=Controller->GetControlRotation();View.Pitch=FMath::ClampAngle(View.Pitch,-65.f,45.f);
         FVector Target;
-        if(bTargetLocked&&Bridge&&Bridge->SelectedTargetPosition(Target)&&FPlatformTime::Seconds()-LastManualLook>.6){
+        bConversationFraming=Bridge&&Bridge->DialoguePartnerPosition(Target);
+        if(bConversationFraming&&FPlatformTime::Seconds()-LastManualLook>.6){
+            // Over the shoulder, turned a little past the partner so they stand left of centre,
+            // clear of the conversation panel docked on the right; eye level, slightly down.
+            // A partner standing close sits near the camera's line, so turn further past them.
+            const FRotator Aim=(Target-GetActorLocation()).Rotation();
+            ConversationDistance=FVector::Dist2D(Target,GetActorLocation());
+            // Close partners (a child, someone at arm's length) sat behind the player's own back at 26 degrees.
+            View.Yaw=FMath::FixedTurn(View.Yaw,Aim.Yaw+(ConversationDistance<200.f?42.f:20.f),Dt*140.f);
+            View.Pitch=FMath::FInterpTo(View.Pitch,-6.f,Dt,4.f);
+        }
+        else if(bTargetLocked&&Bridge&&Bridge->SelectedTargetPosition(Target)&&FPlatformTime::Seconds()-LastManualLook>.6){
             const FRotator Aim=(Target-GetActorLocation()).Rotation();
             View.Yaw=FMath::FixedTurn(View.Yaw,Aim.Yaw,Dt*100.f);
         }
@@ -179,9 +209,10 @@ void ATVCharacter::Tick(float Dt) {
     if(bCanonicalPlayer) {
         if(LocomotionCameraSignal.Transition==ETVPresentationTransition::Pivot)CameraShoulderSign=LocomotionCameraSignal.CameraShoulderSign;
         const float ArmTarget=LocomotionCameraSignal.CameraMode==ETVPresentationCameraMode::Combat?FMath::Min(ZoomTarget,300.f)
-            :LocomotionCameraSignal.CameraMode==ETVPresentationCameraMode::Incapacitated?FMath::Max(ZoomTarget,390.f):ZoomTarget;
+            :(LocomotionCameraSignal.CameraMode==ETVPresentationCameraMode::Incapacitated||CanonicalPose==TEXT("sleep"))?FMath::Max(ZoomTarget,390.f) // lying down: stand back from the body
+            :bConversationFraming?(ConversationDistance<200.f?FMath::Max(ZoomTarget,330.f):FMath::Clamp(ZoomTarget,240.f,300.f)):ZoomTarget;
         CameraBoom->TargetArmLength=FMath::FInterpTo(CameraBoom->TargetArmLength,ArmTarget,Dt,8);
-        const float Shoulder=FMath::GetMappedRangeValueClamped(FVector2D(160,700),FVector2D(55,0),ArmTarget)*CameraShoulderSign;
+        const float Shoulder=bConversationFraming?-70.f:FMath::GetMappedRangeValueClamped(FVector2D(160,700),FVector2D(55,0),ArmTarget)*CameraShoulderSign; // conversation: left shoulder, the player's own back falls behind the panel
         CameraBoom->SocketOffset.Y=FMath::FInterpTo(CameraBoom->SocketOffset.Y,Shoulder,Dt,7);
         HideCameraIntruders();
     }
@@ -190,8 +221,33 @@ void ATVCharacter::Tick(float Dt) {
         if (bWasChoreography) CurrentAnimation=nullptr;
         if(CanonicalCrouch>.001&&!bIncapacitated)AnimateCrouch(CanonicalCrouch,Dt);
         else Animate(Live ? CanonicalVelocity.Size2D() : 0);
+        // A footfall per stride actually covered on the ground, heard only near the camera.
+        const float Moved=FVector::Dist2D(GetActorLocation(),LastStepAt);
+        if(bIncapacitated||bDead||CanonicalPose==TEXT("sleep")||Moved>400.f)LastStepAt=GetActorLocation(); // lying, or projected across a gap: no steps
+        else {
+            const bool bRunning=CanonicalVelocity.Size2D()>320.f;
+            if(Moved>=(bRunning?140.f:75.f)){
+                LastStepAt=GetActorLocation();
+                if(auto* PC=GetWorld()->GetFirstPlayerController();PC&&PC->PlayerCameraManager&&FVector::Dist(PC->PlayerCameraManager->GetCameraLocation(),GetActorLocation())<3000.f)
+                    if(auto* Sound=GetWorld()->GetSubsystem<UTVSoundscape>())Sound->Footstep(GetActorLocation()-FVector(0,0,GetCapsuleComponent()->GetScaledCapsuleHalfHeight()),bRunning);
+            }
+        }
     }
     bWasChoreography=bChoreography;
+}
+FVector ATVCharacter::PresentedHeadLocation() const {
+    if (VisibleCharacter && VisibleCharacter->HasVisibleCharacter() && VisibleCharacter->GetBoneIndex(TEXT("head")) != INDEX_NONE) return VisibleCharacter->GetBoneLocation(TEXT("head"));
+    return GetMesh()->GetBoneLocation(TEXT("head"));
+}
+void ATVCharacter::CopyPresentationFrom(const ATVCharacter& Source) {
+    Embodiment = Source.Embodiment; bHasEmbodiment = Source.bHasEmbodiment; DisplayName = Source.DisplayName;
+    Activity.Empty(); CanonicalPose = TEXT("stand"); CanonicalVelocity = FVector::ZeroVector;
+    if (VisibleCharacter && Embodiment.bHasAppearance) VisibleCharacter->ApplyProfile(Embodiment.Appearance);
+    if (VisibleCharacter && VisibleCharacter->HasVisibleCharacter()) {
+        HairProxy->SetHiddenInGame(true); GarmentProxy->SetHiddenInGame(true); OccupationProp->SetHiddenInGame(true);
+        GetMesh()->SetRelativeScale3D(FVector::OneVector);
+    } else GetMesh()->SetRelativeScale3D(Source.GetMesh()->GetRelativeScale3D());
+    Nameplate->SetVisibility(false);
 }
 void ATVCharacter::ProjectCombatMotion(const TSharedPtr<FJsonObject>& D) {
     if(bCanonicalPlayer)return;
@@ -218,7 +274,12 @@ void ATVCharacter::Project(const TSharedPtr<FJsonObject>& D, bool First) {
     if (D->TryGetObjectField(TEXT("embodiment"), EmbodimentJson) && EmbodimentJson) {
         FTVEmbodimentState Parsed; FString EmbodimentError;
         if (FTVEmbodimentState::Parse(*EmbodimentJson, Parsed, EmbodimentError)) {
+            // Snapshots after the first carry only the profile's signature; keep the full profile
+            // that was applied, so what this character is wearing stays readable.
+            const bool bKeepAppearance = !Parsed.bHasAppearance && Embodiment.bHasAppearance;
+            FTVAppearanceProfile Kept; if (bKeepAppearance) Kept = Embodiment.Appearance;
             Embodiment = MoveTemp(Parsed); bHasEmbodiment = true;
+            if (bKeepAppearance) { Embodiment.Appearance = MoveTemp(Kept); Embodiment.bHasAppearance = true; }
             if (VisibleCharacter && Embodiment.bHasAppearance) {
                 VisibleCharacter->ApplyProfile(Embodiment.Appearance);
             }
@@ -512,7 +573,14 @@ void ATVCharacter::Animate(float Speed) {
         // Prefer the evidence-backed activity family/detail projected by Slice 3. The local
         // palette maps only animation execution assets; it has no say in appearance or activity.
         if (bHasEmbodiment) {
-            if (UAnimationAsset* Presented = UTVCharacterPalette::Get()->ActivityAnimation(Embodiment.Activity.Family, Embodiment.Activity.Detail)) Wanted = Presented;
+            // Clips that only make sense in their own posture. Travel is drawn by locomotion (a
+            // stationary traveller stands; the old travel clip was a frozen sprint stride); rest is
+            // a lying/seated clip and bent standing people double.
+            const FTVActivityPresentation& Act = Embodiment.Activity;
+            const bool bLowPosture = Act.Posture == TEXT("sit") || Act.Posture == TEXT("lie") || CanonicalPose == TEXT("sit") || CanonicalPose == TEXT("sleep");
+            FString Family = Act.Family, Detail = Act.Detail;
+            if (Family == TEXT("travel") || (Family == TEXT("rest") && !bLowPosture)) Family.Empty();
+            if (UAnimationAsset* Presented = UTVCharacterPalette::Get()->ActivityAnimation(Family, Detail)) Wanted = Presented;
         } else {
             FString Key=Activity;
             if(Key==TEXT("sit") || Key==TEXT("sleep") || Key==TEXT("pray")) Key=TEXT("rest");
@@ -567,12 +635,16 @@ FString ATVCharacter::PresentationAnimation() const { if (!CombatPresentation->A
 void ATVCharacter::HideCameraIntruders() {
     const FVector Eye = Camera->GetComponentLocation();
     for (TActorIterator<ATVCharacter> It(GetWorld()); It; ++It) {
-        ATVCharacter* Other = *It; if (Other == this) continue;
+        // Our own body too: indoors the boom collides with the walls and pulls the camera into us.
+        ATVCharacter* Other = *It;
         const UCapsuleComponent* Capsule = Other->GetCapsuleComponent();
         const FVector Center = Capsule->GetComponentLocation(), Up = Capsule->GetUpVector();
         const float Half = Capsule->GetScaledCapsuleHalfHeight(), Radius = Capsule->GetScaledCapsuleRadius();
         const float Along = FMath::Clamp(FVector::DotProduct(Eye - Center, Up), -Half, Half);
-        const bool bIntrudes = FVector::Dist(Eye, Center + Up * Along) < Radius + 30.f;
+        // A body lying down (asleep, downed) spreads far beyond its upright capsule: test the mesh.
+        const bool bLying = Other->bIncapacitated || Other->CanonicalPose == TEXT("sleep");
+        const bool bIntrudes = FVector::Dist(Eye, Center + Up * Along) < Radius + 30.f
+            || (bLying && Other->GetMesh() && Other->GetMesh()->Bounds.GetBox().ExpandBy(30.f).IsInside(Eye));
         if (Other->bCameraIntrusionHidden != bIntrudes) { Other->bCameraIntrusionHidden = bIntrudes; Other->SetActorHiddenInGame(bIntrudes); }
     }
 }
@@ -580,6 +652,8 @@ FString ATVCharacter::PresentationDiagnostics() const {
     auto J = MakeShared<FJsonObject>();
     J->SetStringField(TEXT("bodyId"), BodyId); J->SetStringField(TEXT("entityId"), EntityId);
     J->SetStringField(TEXT("pose"), CanonicalPose); J->SetStringField(TEXT("animation"), PresentationAnimation());
+    if (bHasEmbodiment) { J->SetStringField(TEXT("activity"), Embodiment.Activity.Family + TEXT("/") + Embodiment.Activity.Detail); J->SetStringField(TEXT("posture"), Embodiment.Activity.Posture); }
+    J->SetStringField(TEXT("name"), DisplayName);
     J->SetBoolField(TEXT("possessed"), IsPlayerControlled()); J->SetBoolField(TEXT("incapacitated"), bIncapacitated); J->SetBoolField(TEXT("dead"), bDead);
     J->SetNumberField(TEXT("attackSeq"), AttackSeq); J->SetNumberField(TEXT("hitSeq"), HitSeq);
     J->SetNumberField(TEXT("playedAttacks"), PlayedAttackEvents+CombatPresentation->PlayedAttacks); J->SetNumberField(TEXT("playedHits"), PlayedHitEvents+CombatPresentation->PlayedHits);
@@ -639,6 +713,7 @@ void ATVCharacter::SetupPlayerInputComponent(UInputComponent* I) {
 void ATVCharacter::Forward(float V) { if(V!=ForwardAxis)if(auto* B=GetWorld()->GetSubsystem<UTVBridgeSubsystem>())B->NoteInput();ForwardAxis = V; } void ATVCharacter::Right(float V) { if(V!=RightAxis)if(auto* B=GetWorld()->GetSubsystem<UTVBridgeSubsystem>())B->NoteInput();RightAxis = V; }
 void ATVCharacter::Turn(float V) { if(!FMath::IsNearlyZero(V))LastManualLook=FPlatformTime::Seconds();AddControllerYawInput(V); } void ATVCharacter::Look(float V) { if(!FMath::IsNearlyZero(V))LastManualLook=FPlatformTime::Seconds();AddControllerPitchInput(V); }
 void ATVCharacter::Zoom(float V) { ZoomTarget = FMath::Clamp(ZoomTarget - V * 100, 160.f, 1500.f); }
+void ATVCharacter::WalkToggle() { bWalk=!bWalk; if(auto* B=GetWorld()->GetSubsystem<UTVBridgeSubsystem>())B->NoteInput(); }
 void ATVCharacter::SprintOn() { bSprint = GetDefault<UTVControlSettings>()->bSprintToggle?!bSprint:true;if(auto* B=GetWorld()->GetSubsystem<UTVBridgeSubsystem>())B->NoteInput(); } void ATVCharacter::SprintOff() { if(!GetDefault<UTVControlSettings>()->bSprintToggle)bSprint = false;if(auto* B=GetWorld()->GetSubsystem<UTVBridgeSubsystem>())B->NoteInput(); }
 void ATVCharacter::SelectTarget() { if(bTargetLocked){bTargetLocked=false;return;}if(auto* B=GetWorld()->GetSubsystem<UTVBridgeSubsystem>()){B->CycleTarget();FVector Target;bTargetLocked=B->SelectedTargetPosition(Target);} }
 void ATVCharacter::SwitchTarget(){if(auto* B=GetWorld()->GetSubsystem<UTVBridgeSubsystem>()){B->CycleTarget();FVector Target;bTargetLocked=B->SelectedTargetPosition(Target);}}

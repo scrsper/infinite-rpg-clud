@@ -1,0 +1,68 @@
+[
+  {
+    "Original": "C:\\Users\\green\\Desktop\\projects\\torn-veil-online\\.debug\\observatory-hardening\\baseline\\replay-918271\\receipts.ndjson.gz",
+    "Current": "D:\\TornVeilValidation\\observatory-hardening-20260930\\baseline-bulk\\replay-918271\\receipts.ndjson.gz",
+    "Bytes": 178710519,
+    "SHA256": "B4B11F2285633707219316C776BAE20F52534E24BDAF395832A98B2B909198F1"
+  },
+  {
+    "Original": "C:\\Users\\green\\Desktop\\projects\\torn-veil-online\\.debug\\observatory-hardening\\baseline\\replay-918271\\day-1.save.json.gz",
+    "Current": "D:\\TornVeilValidation\\observatory-hardening-20260930\\baseline-bulk\\replay-918271\\day-1.save.json.gz",
+    "Bytes": 1834477,
+    "SHA256": "8FB27335BD7CB8F6BCBCF2E6D419591CD1D10D8ABF274EDD01A5284AACC1DED3"
+  },
+  {
+    "Original": "C:\\Users\\green\\Desktop\\projects\\torn-veil-online\\.debug\\observatory-hardening\\baseline\\replay-918271\\day-7.save.json.gz",
+    "Current": "D:\\TornVeilValidation\\observatory-hardening-20260930\\baseline-bulk\\replay-918271\\day-7.save.json.gz",
+    "Bytes": 3594791,
+    "SHA256": "4CEADD44D0C4D4F3A0E63FEFFDA127B4B898988CE0FC02B5D6CFA0F70203DCE0"
+  },
+  {
+    "Original": "C:\\Users\\green\\Desktop\\projects\\torn-veil-online\\.debug\\observatory-hardening\\baseline\\replay-918271\\day-15.save.json.gz",
+    "Current": "D:\\TornVeilValidation\\observatory-hardening-20260930\\baseline-bulk\\replay-918271\\day-15.save.json.gz",
+    "Bytes": 5044976,
+    "SHA256": "CF9E5E73F56B0798B35E5748A2319F65791AFB6CDFDFDD791010125F25D5B87F"
+  },
+  {
+    "Original": "C:\\Users\\green\\Desktop\\projects\\torn-veil-online\\.debug\\observatory-hardening\\baseline\\replay-918271\\day-29.875.save.json.gz",
+    "Current": "D:\\TornVeilValidation\\observatory-hardening-20260930\\baseline-bulk\\replay-918271\\day-29.875.save.json.gz",
+    "Bytes": 6332549,
+    "SHA256": "DEE0ECA5B3CB25DA7CF6589AEBA389284A3E7DEFB6A5567CB1BEBDBAA4C0EE6E"
+  },
+  {
+    "Original": "C:\\Users\\green\\Desktop\\projects\\torn-veil-online\\.debug\\observatory-hardening\\baseline\\replay-918271\\day-30.save.json.gz",
+    "Current": "D:\\TornVeilValidation\\observatory-hardening-20260930\\baseline-bulk\\replay-918271\\day-30.save.json.gz",
+    "Bytes": 6272651,
+    "SHA256": "F9C5E9C245B8DDA5C810DB04B0A69BE673DC07BC5CF3A24992C3CA14A2330388"
+  },
+  {
+    "Original": "C:\\Users\\green\\Desktop\\projects\\torn-veil-online\\.debug\\observatory-hardening\\baseline\\replay-918271\\day-29.875.save.json.gz.continued-1200.json.gz",
+    "Current": "D:\\TornVeilValidation\\observatory-hardening-20260930\\baseline-bulk\\replay-918271\\day-29.875.save.json.gz.continued-1200.json.gz",
+    "Bytes": 6272647,
+    "SHA256": "D0C283192CB262F9C9AADF530149F147D919B70E7BCDA4718C7F53E08FEA414B"
+  },
+  {
+    "Original": "C:\\Users\\green\\Desktop\\projects\\torn-veil-online\\.debug\\observatory-hardening\\baseline\\replay-918271\\day-15.evidence.json",
+    "Current": "D:\\TornVeilValidation\\observatory-hardening-20260930\\baseline-bulk\\replay-918271\\day-15.evidence.json",
+    "Bytes": 14885808,
+    "SHA256": "B3CBE0384564563602E81670146C88EDEFA03A924C2DCB60A5AA6B46FCD5B896"
+  },
+  {
+    "Original": "C:\\Users\\green\\Desktop\\projects\\torn-veil-online\\.debug\\observatory-hardening\\baseline\\replay-918271\\day-7.evidence.json",
+    "Current": "D:\\TornVeilValidation\\observatory-hardening-20260930\\baseline-bulk\\replay-918271\\day-7.evidence.json",
+    "Bytes": 4456201,
+    "SHA256": "C0713504B82BFB6A0B40F94AFD3BCC64803ED750F26BF76188A13031F63C2E1A"
+  },
+  {
+    "Original": "C:\\Users\\green\\Desktop\\projects\\torn-veil-online\\.debug\\observatory-hardening\\baseline\\replay-918271\\day-1.evidence.json",
+    "Current": "D:\\TornVeilValidation\\observatory-hardening-20260930\\baseline-bulk\\replay-918271\\day-1.evidence.json",
+    "Bytes": 1998965,
+    "SHA256": "BBF76959F2E71DEE7F430C1710AFA07D974CC560D58ACAE1F9D73A10968C4DF2"
+  },
+  {
+    "Original": "C:\\Users\\green\\Desktop\\projects\\torn-veil-online\\.debug\\observatory-hardening\\baseline\\replay.cpuprofile",
+    "Current": "D:\\TornVeilValidation\\observatory-hardening-20260930\\baseline-bulk\\replay.cpuprofile",
+    "Bytes": 7745121,
+    "SHA256": "264D58D99055138E592C1A29774E3F5C5E48DCE997B68D59E655E9AC2AB9E1A2"
+  }
+]

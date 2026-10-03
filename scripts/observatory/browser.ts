@@ -1,0 +1,100 @@
+import { chromium } from 'playwright';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { createObservatoryServer } from '../../src/observatory/server';
+
+const output = process.argv.includes('--hardening') ? '.debug/observatory-hardening/browser' : '.debug/observatory'; await mkdir(output, { recursive: true });
+const { server, runtime } = createObservatoryServer();
+await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve)); runtime.startLoop();
+const port = (server.address() as { port: number }).port;
+const browser = await chromium.launch({ channel: 'chrome', headless: !process.argv.includes('--visible') });
+const page = await browser.newPage({ viewport: { width: 1600, height: 1000 }, deviceScaleFactor: 1 });
+const errors: string[] = []; page.on('pageerror', e => errors.push(e.message)); page.on('console', m => { if (m.type() === 'error' && !m.text().includes('favicon')) errors.push(m.text()); });
+const check = (condition: unknown, message: string) => { if (!condition) throw new Error(message); };
+try {
+  await page.goto(`http://127.0.0.1:${port}`); await page.locator('.person').first().waitFor();
+  await page.locator('#scenario').selectOption('testimony'); await page.locator('#reset').click(); await page.waitForTimeout(800);
+  await page.locator('.person', { hasText: 'Edda Ironhand' }).click();
+  await page.locator('.belief', { hasText: 'old road' }).waitFor();
+  check(await page.locator('.truth-label').textContent() === 'CANONICAL TRUTH', 'Truth panel missing');
+  check(await page.locator('.belief-label').textContent() === 'WHAT THIS PERSON BELIEVES', 'Belief panel missing');
+  await page.evaluate(() => scrollTo(0, 0)); await page.screenshot({ path: `${output}/observatory-overview.png` });
+  await page.locator('.metric', { hasText: 'Knowledge propagation' }).click();
+  await page.locator('#metric-detail .event').first().click();
+  await page.locator('#cause-detail .cause-node').first().waitFor();
+  check((await page.locator('#cause-detail').textContent())?.includes('CANONICAL TRUTH'), 'Aggregate did not open its source event');
+  await page.locator('#event-search').fill('Tam Reed drowned');
+  await page.locator('#event-list .event', { hasText: 'Tam Reed drowned' }).click();
+  await page.locator('#cause-detail .cause-edge').first().waitFor();
+  check((await page.locator('#cause-detail').textContent())?.includes('stored event.causes'), 'Stored flood/death causality missing');
+  await page.locator('.person', { hasText: 'Edda Ironhand' }).click();
+  await page.locator('#player-text').fill('What did you hear about the old road?'); await page.locator('#ask').click();
+  await page.waitForFunction(() => document.getElementById('speech')?.textContent?.includes('cannot be certain'));
+  check((await page.locator('#language-debug').textContent())?.includes('DETERMINISTIC DIALOGUE'), 'Deterministic parser debug missing');
+  await page.locator('.language-panel').scrollIntoViewIfNeeded(); await page.screenshot({ path: `${output}/observatory-language.png` });
+  await page.locator('#thought').click();
+  await page.waitForFunction(() => document.getElementById('language-debug')?.textContent?.includes('Read-only deterministic self expression'));
+  await page.locator('#checkpoint').click(); await page.locator('[data-advance="3600"]').click();
+  await page.waitForFunction(() => document.getElementById('report')?.textContent?.includes('Completed'), undefined, { timeout: 120000 });
+  const acting = runtime.world.livingPersons().find(p => p.mind.goal);
+  check(acting, 'No active goal to inspect after advancing');
+  await page.locator('.person', { hasText: acting!.name }).click();
+  await page.getByRole('button', { name: 'Explore the recorded goal adoption' }).click();
+  await page.locator('#cause-detail .cause-node').first().waitFor();
+  check((await page.locator('#person-inspector').textContent())?.includes('Current goal:'), 'Current goal reasons missing');
+  await page.evaluate(() => scrollTo(0, 0)); await page.screenshot({ path: `${output}/observatory-goal.png` });
+  await page.locator('#restore').click();
+  await page.locator('#verify').click(); await page.waitForTimeout(2000);
+  check((await page.locator('#health-checks').textContent())?.includes('two independent initializations'), 'Replay evidence not displayed');
+  await page.setViewportSize({ width: 1100, height: 800 }); await page.evaluate(() => scrollTo(0, 0)); await page.screenshot({ path: `${output}/observatory-1100.png` });
+  check(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'Horizontal page overflow');
+  if (process.argv.includes('--hardening')) {
+    await page.locator('#baseline-evidence').click();
+    await page.getByRole('heading', { name: 'baseline · ordinary · seed 918271' }).waitFor();
+    await page.getByRole('button', { name: /stuck_agent · Father Aldous/ }).click();
+    check((await page.locator('#validation-evidence').textContent())?.includes('Failed Actions'), 'Named finding did not expose its blocked-action receipts');
+    await page.locator('#validation-evidence').getByText('Final Window', { exact: true }).click();
+    // Native details toggles populate the lazy tree on the queued toggle event.
+    // Wait for that content, then prove an actual receipt can be expanded.
+    const switches = page.locator('#validation-evidence').getByText('Switches', { exact: true });
+    await switches.waitFor(); await switches.click();
+    const firstSwitch = switches.locator('..').getByText('Record 1', { exact: true });
+    await firstSwitch.waitFor(); await firstSwitch.click();
+    await firstSwitch.locator('..').getByText('Actor At Emission', { exact: true }).waitFor();
+    const downloaded = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'Download complete evidence JSON' }).click();
+    check((await downloaded).suggestedFilename().includes('baseline-918271'), 'Evidence download missing');
+    await page.locator('#archived-finding').selectOption('stuck_agent:p_11:');
+    await page.getByRole('button', { name: 'Inspect sampled finding' }).click();
+    await page.getByRole('button', { name: 'Download finding receipts' }).waitFor();
+    check((await page.locator('#validation-evidence').textContent())?.includes('Rows'), 'Hourly finding receipts missing');
+    const repairedResponse = page.waitForResponse(r => r.url().includes('/api/validation?run=repaired'));
+    await page.locator('#repaired-evidence').click();
+    await page.getByRole('heading', { name: 'repaired · ordinary · seed 918271' }).waitFor();
+    const repairedEvidence = await (await repairedResponse).json();
+    check(repairedEvidence.originalDiagnoses.findings?.length === 9, 'Reviewed original diagnoses missing');
+    check(repairedEvidence.longRunVerification.rows?.length === 9, 'Saved nine-horizon validation missing');
+    const continuation = repairedEvidence.longRunVerification.continuation;
+    const continuationReview = repairedEvidence.longRunVerification.continuationReview;
+    check(continuation?.valueDifferences === 0, 'Long continuation has canonical value differences');
+    check(continuation.differences === 0 || continuationReview?.comparisonMatches && continuationReview.classification === 'C'
+      && continuationReview.unreviewedDifferences === 0 && continuationReview.reviewedOrderDifferences.length === continuation.differences,
+    'Long continuation has unreviewed ordering differences');
+    check(repairedEvidence.longRunVerification.replays?.every((r: { differences: number }) => r.differences === 0), 'Exact repeated-seed evidence missing');
+    await page.locator('#load-repaired').click();
+    await page.waitForFunction(() => document.getElementById('job-label')?.textContent?.includes('Paused'));
+    await page.waitForTimeout(500);
+    check(runtime.world.now === 11258400 && runtime.paused, 'Archived repaired world was not loaded paused');
+    await page.locator('#run-diagnostics').click();
+    await page.locator('#validation-evidence').getByText('Food', { exact: true }).click();
+    await page.locator('#validation-evidence').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: `${output}/integrity-evidence.png` });
+    await page.locator('#reproduce').click();
+    await page.waitForTimeout(700);
+    check(runtime.world.seed === 918271 && runtime.job?.active && runtime.job.to === 11258400, 'Reproduce action did not start the exact scenario');
+    await page.locator('#cancel').click(); await page.waitForTimeout(500);
+    check(!runtime.job?.active && runtime.paused, 'Isolated reproduction did not stop cleanly');
+  }
+  check(errors.length === 0, 'Browser errors: ' + errors.join('; '));
+  await writeFile(`${output}/browser-evidence.json`, JSON.stringify({ passed: true, hardening: process.argv.includes('--hardening'), dialogue: 'deterministic', viewport: [1600, 1000], secondViewport: [1100, 800], errors, checks: ['select person', 'truth/belief separation', 'causal event source', 'click aggregate', 'offline free text', 'uncertain testimony', 'advance 1 hour', 'current goal reasons and adoption cause', 'checkpoint restore', 'replay check', 'no horizontal overflow', ...(process.argv.includes('--hardening') ? ['original evidence drilldown and download', 'repaired evidence', 'load repaired world paused', 'ledger', 'start and stop exact 30-day reproduction'] : []), 'read-only thought UI'] }, null, 2));
+  console.log('Observatory browser acceptance passed; screenshots saved in ' + output);
+} finally { await browser.close(); runtime.close(); await new Promise<void>(resolve => server.close(() => resolve())); }

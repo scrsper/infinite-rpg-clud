@@ -258,6 +258,8 @@ describe('v0.10 §I — persistent purposes outlive the plans that serve them', 
     const hurt = addPerson(tw, 'Hurt', 'farmer', v(30.5, 1, 30.5));
     const spouse = addPerson(tw, 'Spouse', 'cook', v(5.5, 1, 5.5), { homeId: tw.places.tavern });
     setRelTags(spouse, hurt.id, 'spouse'); setRelTags(hurt, spouse.id, 'spouse');
+    // As in village generation, knowing a spouse's home is explicit prior knowledge.
+    learn(tw.world, spouse, { key: `home:${hurt.id}`, kind: 'fact', claim: { entityId: hurt.id, placeId: hurt.homeId }, confidence: .9, source: { type: 'prior' } }, true);
     const k = learn(tw.world, spouse, attackBelief(tw, attacker.id, hurt.id))!;
     formConcerns(tw.world, spouse, k);
     return { tw, spouse, hurt, attacker };

@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { B } from '../src/sim/physical/blocks';
+import { Navigator } from '../src/sim/physical/nav';
+import { VoxelGrid } from '../src/sim/physical/grid';
+import { B, BLOCKS } from '../src/sim/physical/blocks';
 import { addPerson, createTestWorld, step, v } from './helpers/world';
 import { learnPlace } from '../src/sim/mind/knowledge';
 import { syncNeeds } from '../src/sim/core/physiology';
@@ -7,6 +9,27 @@ import { makePlace } from '../src/sim/world/factory';
 import { createFields } from '../src/sim/world/metabolism';
 
 describe('Navigator.findPath', () => {
+  it('rejects a diagonal ridge edge that is impassable in reverse', () => {
+    const { world } = createTestWorld(68, 14);
+    // The source is one above both side cells; the destination is two above them.
+    // Checking the sides only against the source admitted an irreversible route.
+    world.grid.set(5, 1, 5, B.Stone);
+    world.grid.set(6, 1, 6, B.Stone); world.grid.set(6, 2, 6, B.Stone);
+    world.nav.rebuildArea(4, 4, 7, 7);
+    const a = v(5.5, 2, 5.5), b = v(6.5, 3, 6.5);
+    expect(world.nav.findPath(a, b)).toBeNull();
+    expect(world.nav.findPath(b, a)).toBeNull();
+    expect(world.nav.canStepTo(a, b.x, b.z)).toBe(false);
+    expect(world.nav.canStepTo(b, a.x, a.z)).toBe(false);
+    // An ordinary one-step diagonal, supported on both sides, remains reversible.
+    world.grid.set(5, 1, 6, B.Stone); world.grid.set(6, 1, 5, B.Stone);
+    world.nav.rebuildArea(4, 4, 7, 7);
+    expect(world.nav.findPath(a, b)).not.toBeNull();
+    expect(world.nav.findPath(b, a)).not.toBeNull();
+    expect(world.nav.canStepTo(a, b.x, b.z)).toBe(true);
+    expect(world.nav.canStepTo(b, a.x, a.z)).toBe(true);
+  });
+
   it.each([3, 12])('walks %i overlapping resting bodies to clear positions without changing their shared destination', count => {
     const tw = createTestWorld(67, 18), { world } = tw, anchor = v(8.5, 1, 8.5);
     const people = Array.from({ length: count }, (_, i) => i % 3 === 2 ? 'wait' : 'sit').map((type, i) => {
@@ -149,4 +172,24 @@ describe('Navigator.findPath', () => {
     expect(path).not.toBeNull();
     expect(path?.at(-1)).toMatchObject({ x: 10.5, z: 3.5 });
   });
+});
+
+
+describe('navigation lowest floor scan',()=>{
+ it.each([false,true])('preserves interior, door, water and blocked column floors with custom reader %s',custom=>{
+  const g=new VoxelGrid(5,12,1);
+  for(let x=0;x<5;x++)g.set(x,0,0,B.Stone);
+  g.set(0,5,0,B.Stone); // Walkable roof above a walkable interior: choose interior.
+  g.set(1,1,0,B.Door);g.set(1,2,0,B.Door);
+  g.set(2,1,0,B.Water);
+  for(let y=1;y<12;y++)g.set(3,y,0,B.Stone);
+  g.set(4,1,0,B.Stone);g.set(4,2,0,B.Stone);g.set(4,8,0,B.Stone);
+  if(custom){const native=g.get.bind(g);g.get=(x,y,z)=>native(x,y,z);}
+  const nav=new Navigator(g);
+  expect([0,1,2,3,4].map(x=>nav.floorY(x,0))).toEqual([1,1,1,-1,3]);
+  expect(nav.walkCost(1,0)).toBe(Math.fround(BLOCKS[B.Door].walkCost));
+  expect(nav.walkCost(2,0)).toBe(BLOCKS[B.Water].walkCost);
+  g.set(0,1,0,B.Stone);g.set(0,2,0,B.Stone);nav.rebuildArea(0,0,0,0);
+  expect(nav.floorY(0,0)).toBe(3);
+ });
 });

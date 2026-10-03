@@ -4,10 +4,12 @@ import type { ResourceNode } from '../core/types';
 import { settlementSeed, SETTLEMENT_SIZE, type SettlementSite } from './settlementSpec';
 
 /** Versioned generator inputs. A save must never reinterpret an older baseline. Metres. */
-export interface PlayableWorldSpec { version: 1; size: number; regionSize: number; settlements: number; timeScale: number; householdLocalityVersion?: 1; }
+export interface PlayableWorldSpec { version: 1; size: number; regionSize: number; settlements: number; timeScale: number; householdLocalityVersion?: 1; namingVersion?: 1; }
 // Saved specifications without the household revision retain their exact original layout.
 export const LEGACY_PLAYABLE_WORLD: PlayableWorldSpec = { version: 1, size: 24576, regionSize: 256, settlements: 7, timeScale: 6 };
-export const PLAYABLE_WORLD: PlayableWorldSpec = { ...LEGACY_PLAYABLE_WORLD, householdLocalityVersion: 1 };
+export const HOUSEHOLD_PLAYABLE_WORLD: PlayableWorldSpec = { ...LEGACY_PLAYABLE_WORLD, householdLocalityVersion: 1 };
+// Naming revision 1: a clash takes another given name instead of a numeral ("Rhea Ives 2").
+export const PLAYABLE_WORLD: PlayableWorldSpec = { ...HOUSEHOLD_PLAYABLE_WORLD, namingVersion: 1 };
 export interface Surface { height: number; water: number | null; moisture: number; fertility: number; stone: number; forest: number; block: number; }
 export interface WorldRoad { id: string; from: string; to: string; points: { x: number; z: number }[]; length: number; }
 export interface GeographySite extends SettlementSite { suitability: number; conditions: Surface; }
@@ -16,6 +18,31 @@ const segmentDistance = (x: number, z: number, a: { x: number; z: number }, b: {
   const dx = b.x - a.x, dz = b.z - a.z, t = Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / (dx * dx + dz * dz || 1)));
   return Math.hypot(x - a.x - t * dx, z - a.z - t * dz);
 };
+
+interface RouteEntry { x: number; z: number; cost: number; score: number; order: number; }
+/** Exact old stable-sort/pop priority: lowest score, newest insertion on equal score. */
+class RouteQueue {
+  private entries: RouteEntry[] = [];
+  private sequence = 0;
+  get length(): number { return this.entries.length; }
+  private before(a: RouteEntry, b: RouteEntry): boolean { return a.score < b.score || (a.score === b.score && a.order > b.order); }
+  push(value: Omit<RouteEntry, 'order'>): void {
+    const a = this.entries; a.push({ ...value, order: this.sequence++ });
+    let i = a.length - 1;
+    while (i > 0) { const parent = (i - 1) >> 1; if (!this.before(a[i], a[parent])) break; [a[i], a[parent]] = [a[parent], a[i]]; i = parent; }
+  }
+  pop(): RouteEntry {
+    const a = this.entries, result = a[0], last = a.pop()!;
+    if (a.length) { a[0] = last; let i = 0;
+      for (;;) { const l = i * 2 + 1, r = l + 1; let best = i;
+        if (l < a.length && this.before(a[l], a[best])) best = l;
+        if (r < a.length && this.before(a[r], a[best])) best = r;
+        if (best === i) break; [a[i], a[best]] = [a[best], a[i]]; i = best;
+      }
+    }
+    return result;
+  }
+}
 
 /** Pure geographic baseline plus bounded, disposable query caches. No runtime RNG, entities,
  * visitation order, renderer state, or history is consulted by this generator. */
@@ -26,6 +53,7 @@ export class WorldGeography {
   private nodes = new Map<string, ResourceNode[]>();
   constructor(readonly seed: number, readonly spec: PlayableWorldSpec = { ...PLAYABLE_WORLD }) {
     if (spec.householdLocalityVersion !== undefined && spec.householdLocalityVersion !== 1) throw new Error('Unsupported household locality version');
+    if (spec.namingVersion !== undefined && spec.namingVersion !== 1) throw new Error('Unsupported naming version');
     if (spec.version !== 1 || !Number.isInteger(spec.size) || spec.size < 4096 || spec.size > 49152 || spec.regionSize !== 256 || !Number.isInteger(spec.settlements) || spec.settlements < 2 || spec.settlements > 15 || !Number.isFinite(spec.timeScale) || spec.timeScale <= 0) throw new Error('Unsupported playable geography specification');
     this.spec = { ...spec };
     const candidates: GeographySite[] = [];
@@ -81,20 +109,31 @@ export class WorldGeography {
   onRoad(x: number, z: number): boolean { return (this.roadCells.get(`${Math.floor(x / 64)},${Math.floor(z / 64)}`) ?? []).some(s => segmentDistance(x, z, s.a, s.b) <= 2); }
   surface(x: number, z: number): Surface { const c = this.natural(x, z); if (c.water === null && this.onRoad(x, z)) c.block = B.Path; return c; }
   private route(start: { x: number; z: number }, end: { x: number; z: number }): WorldRoad['points'] | null {
+    // A route repeatedly asks for the same pure terrain samples across adjacent edges.
+    // Bound this disposable query cache; it never changes costs, ordering or the baseline.
+    const samples = new Map<number, Surface>();
+    const natural = (x: number, z: number): Surface => {
+      const k = x * this.spec.size + z;
+      const old = samples.get(k); if (old) return old;
+      const value = this.natural(x, z);
+      if (samples.size >= 32768) samples.clear();
+      samples.set(k, value); return value;
+    };
     // Bounded 64m geographic search. Detailed movement still adjudicates each metre.
     const step = 64, n = Math.ceil(this.spec.size / step), key = (x: number, z: number) => x * n + z;
     const sx = Math.floor(start.x / step), sz = Math.round(start.z / step), tx = Math.floor(end.x / step), tz = Math.round(end.z / step), target = key(tx, tz);
-    const open = [{ x: sx, z: sz, cost: 0, score: distance(start, end) / step }], costs = new Map([[key(sx, sz), 0]]), previous = new Map<number, number>();
+    const open = new RouteQueue(), costs = new Map([[key(sx, sz), 0]]), previous = new Map<number, number>();
+    open.push({ x: sx, z: sz, cost: 0, score: distance(start, end) / step });
     let found = false;
     for (let iterations = 0; open.length && iterations < 12000; iterations++) {
-      open.sort((a, b) => b.score - a.score); const c = open.pop()!, id = key(c.x, c.z);
+      const c = open.pop(), id = key(c.x, c.z);
       if (c.cost > costs.get(id)!) continue;
       if (id === target) { found = true; break; }
       for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]]) {
         const x = c.x + dx, z = c.z + dz; if (x < 1 || z < 1 || x >= n - 1 || z >= n - 1) continue;
-        const a = this.natural(c.x * step, c.z * step), b = this.natural(x * step, z * step);
+        const a = natural(c.x * step, c.z * step), b = natural(x * step, z * step);
         // Rivers have shallow banks but no invented bridge. Crossings are excluded here.
-        let blocked = false; for (let t = 0; t <= 8; t++) { const px = (c.x + dx * t / 8) * step, pz = (c.z + dz * t / 8) * step; if (this.natural(px, pz).water !== null || this.sites.some(s => px >= s.x && px < s.x + SETTLEMENT_SIZE && pz >= s.z && pz < s.z + SETTLEMENT_SIZE)) { blocked = true; break; } }
+        let blocked = false; for (let t = 0; t <= 8; t++) { const px = (c.x + dx * t / 8) * step, pz = (c.z + dz * t / 8) * step; if (natural(px, pz).water !== null || this.sites.some(s => px >= s.x && px < s.x + SETTLEMENT_SIZE && pz >= s.z && pz < s.z + SETTLEMENT_SIZE)) { blocked = true; break; } }
         if (blocked) continue;
         const cost = c.cost + Math.hypot(dx, dz) * (1 + b.forest * .3) + Math.abs(a.height - b.height) * .25, next = key(x, z);
         if (cost >= (costs.get(next) ?? Infinity)) continue;

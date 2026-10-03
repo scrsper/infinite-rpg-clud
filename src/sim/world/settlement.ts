@@ -217,7 +217,7 @@ export function generateProceduralWorld(world: World, sites: readonly Settlement
   world.settlementSites = sorted.map(s => ({ ...s }));
   const grid = new RegionalGrid(geography?.spec.size ?? Math.max(...sites.map(s => s.x)) + SETTLEMENT_SIZE + 128, geography?.spec.size ?? Math.max(...sites.map(s => s.z)) + SETTLEMENT_SIZE + 128, world.seed, geography);
   world.grid = grid;
-  const settlements = sorted.map(site => materialize(world, generateSettlementSpec(world.seed, site, geography?.natural(site.x + 120, site.z + 120)), grid));
+  const settlements = sorted.map(site => materialize(world, generateSettlementSpec(world.seed, site, geography?.natural(site.x + 120, site.z + 120), geography?.spec.namingVersion), grid));
   installRuleset(world.kernel, settlementPrimitives());
   for (const settlement of settlements) initializeSettlementMechanics(world, settlement);
   createFields(world, settlements.flatMap(s => Object.values(s.places).filter(p => p.type === 'farm').map(p => ({ placeId: p.id, ownerId: p.ownerId, startMoisture: s.spec.moisture }))));

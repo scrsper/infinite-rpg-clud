@@ -17,12 +17,15 @@
 #include "TVControlSettings.h"
 #include "CommonInputSubsystem.h"
 #include "Engine/LocalPlayer.h"
+#include "GameFramework/PlayerController.h"
 
 namespace
 {
 UTextBlock* MakeText(UWidgetTree* T,const FString& V,int32 S=18){auto* W=T->ConstructWidget<UTextBlock>();W->SetText(FText::FromString(V));FSlateFontInfo Font=FCoreStyle::Get().GetFontStyle(TEXT("NormalFont"));Font.Size=S;W->SetFont(Font);return W;}
 UTVUICommandButton* MakeButton(UWidgetTree* T,FTVUICommandRequested* Sink,ETVUICommand C,const FString& P,const FString& S,int32 I,const FString& L){auto* W=T->ConstructWidget<UTVUICommandButton>();W->Configure(Sink,C,P,S,I);W->SetLabel(L);return W;}
-UWidget* WrapModal(UWidgetTree* T,UWidget* Content){auto* Overlay=T->ConstructWidget<UOverlay>();auto* Border=T->ConstructWidget<UBorder>();Border->SetPadding(FMargin(24.f));Border->SetBrushColor(FLinearColor(0.025f,0.035f,0.05f,0.96f));auto* Size=T->ConstructWidget<USizeBox>();Size->SetWidthOverride(760.f);Size->SetHeightOverride(620.f);auto* Layout=T->ConstructWidget<UVerticalBox>();auto* Scroll=T->ConstructWidget<UScrollBox>(UScrollBox::StaticClass(),TEXT("ContentScroll"));Scroll->SetScrollWhenFocusChanges(EScrollWhenFocusChanges::InstantScroll);Scroll->AddChild(Content);Layout->AddChildToVerticalBox(Scroll)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));auto* Legend=T->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(),TEXT("ControlLegend"));Layout->AddChildToVerticalBox(Legend);Border->AddChild(Layout);Size->AddChild(Border);auto* Slot=Overlay->AddChildToOverlay(Size);Slot->SetHorizontalAlignment(HAlign_Center);Slot->SetVerticalAlignment(VAlign_Center);return Overlay;}
+// A conversation docks to the right so the person being spoken to stays in view (the camera frames
+// them left of centre); every other modal is centred.
+UWidget* WrapModal(UWidgetTree* T,UWidget* Content,EHorizontalAlignment Align=HAlign_Center){auto* Overlay=T->ConstructWidget<UOverlay>();auto* Border=T->ConstructWidget<UBorder>();Border->SetPadding(FMargin(24.f));Border->SetBrushColor(FLinearColor(0.025f,0.035f,0.05f,0.96f));auto* Size=T->ConstructWidget<USizeBox>();Size->SetWidthOverride(Align==HAlign_Center?760.f:640.f);Size->SetHeightOverride(620.f);auto* Layout=T->ConstructWidget<UVerticalBox>();auto* Scroll=T->ConstructWidget<UScrollBox>(UScrollBox::StaticClass(),TEXT("ContentScroll"));Scroll->SetScrollWhenFocusChanges(EScrollWhenFocusChanges::InstantScroll);Scroll->AddChild(Content);Layout->AddChildToVerticalBox(Scroll)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));auto* Legend=T->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(),TEXT("ControlLegend"));Legend->SetAutoWrapText(true);Layout->AddChildToVerticalBox(Legend);Border->AddChild(Layout);Size->AddChild(Border);auto* Slot=Overlay->AddChildToOverlay(Size);Slot->SetHorizontalAlignment(Align);Slot->SetVerticalAlignment(VAlign_Center);if(Align==HAlign_Right)Slot->SetPadding(FMargin(0.f,0.f,48.f,0.f));return Overlay;}
 }
 
 void UTVUICommandButton::Configure(FTVUICommandRequested* InSink,ETVUICommand InCommand,const FString& InPrimary,const FString& InSecondary,int32 InIndex){Sink=InSink;Command=InCommand;Primary=InPrimary;Secondary=InSecondary;Index=InIndex;InitIsFocusable(true);OnClicked.RemoveAll(this);OnClicked.AddDynamic(this,&UTVUICommandButton::HandleClicked);}
@@ -65,10 +68,29 @@ TSharedRef<SWidget> UTVInteractionPromptWidget::RebuildWidget(){
     return Super::RebuildWidget();
 }
 void UTVInteractionPromptWidget::NativeConstruct(){Super::NativeConstruct();}
+// The UI ticks after the camera has moved this frame; projecting the plate here keeps it on the
+// head while the camera turns, where the snapshot's projection lags a frame (many in a hitch).
+void UTVInteractionPromptWidget::NativeTick(const FGeometry& G,float Dt){
+    Super::NativeTick(G,Dt);
+    if(!bPlateAnchored||!PromptButton)return;
+    APlayerController* PC=GetOwningPlayer();FVector2D P;
+    if(!PC||!PC->ProjectWorldLocationToScreen(PlateWorld,P,true))return;
+    const float Scale=FMath::Max(0.01f,UWidgetLayoutLibrary::GetViewportScale(this));
+    if(auto* PS=Cast<UCanvasPanelSlot>(PromptButton->Slot))PS->SetPosition(FVector2D(P.X/Scale,FMath::Max(64.f,P.Y/Scale)));
+}
 void UTVInteractionPromptWidget::SetInteractAction(UInputAction* InAction){InteractAction=InAction;if(ActionGlyph)ActionGlyph->SetEnhancedInputAction(InAction);}
-void UTVInteractionPromptWidget::SetSnapshot(const FTVUISnapshot& S){if(!PromptText)return;const FString L=S.FocusedLabel.IsEmpty()?FString():FString::Printf(TEXT("[%s] %s"),*UTVControlSettings::Glyph(GetOwningLocalPlayer(),TEXT("Interact")),*S.FocusedLabel);PromptText->SetText(FText::FromString(L));SetVisibility(L.IsEmpty()?ESlateVisibility::Collapsed:ESlateVisibility::Visible);if(auto* B=Cast<UTVUICommandButton>(PromptButton))B->Configure(CommandDelegate,ETVUICommand::Interact,S.FocusedTargetId,S.FocusedActionId,INDEX_NONE);if(ActionGlyph)ActionGlyph->SetVisibility(InteractAction&&ActionGlyph->GetIcon().GetResourceObject()?ESlateVisibility::Visible:ESlateVisibility::Collapsed);const float Scale=FMath::Max(0.01f,UWidgetLayoutLibrary::GetViewportScale(this));for(UBorder* Edge:FocusEdges)if(Edge){Edge->SetVisibility(S.FocusedBounds.bHasFocusBounds?ESlateVisibility::Visible:ESlateVisibility::Collapsed);}if(S.FocusedBounds.bHasFocusBounds){const FVector2D Min=S.FocusedBounds.BoundsPixels.Min/Scale;const FVector2D Max=S.FocusedBounds.BoundsPixels.Max/Scale;const FVector2D Size=Max-Min;const float T=2.f;const FVector2D Positions[4]={Min,FVector2D(Min.X,Max.Y-T),FVector2D(Min.X,Min.Y),FVector2D(Max.X-T,Min.Y)};const FVector2D Sizes[4]={FVector2D(Size.X,T),FVector2D(Size.X,T),FVector2D(T,Size.Y),FVector2D(T,Size.Y)};for(int32 I=0;I<4&&I<FocusEdges.Num();++I)if(auto* EdgeSlot=Cast<UCanvasPanelSlot>(FocusEdges[I]->Slot)){EdgeSlot->SetPosition(Positions[I]);EdgeSlot->SetSize(Sizes[I]);}}}
+void UTVInteractionPromptWidget::SetSnapshot(const FTVUISnapshot& S){if(!PromptText)return;const FString Glyph=UTVControlSettings::Glyph(GetOwningLocalPlayer(),TEXT("Interact"));
+    // A person gets a name plate over their head: the name, then "[E] Talk" or why they cannot talk now.
+    const bool bPlate=S.bFocusedPerson&&!S.FocusedTitle.IsEmpty()&&S.FocusedBounds.bHasFocusBounds;
+    bPlateAnchored=bPlate&&S.FocusedBounds.bHasAnchor;PlateWorld=S.FocusedBounds.AnchorWorld;
+    if(bPlate){const FString Line2=S.FocusedReason.IsEmpty()?FString::Printf(TEXT("[%s] %s"),*Glyph,*(S.FocusedVerb.IsEmpty()?FString(TEXT("Talk")):S.FocusedVerb)):S.FocusedReason;PromptText->SetText(FText::FromString(S.FocusedTitle+LINE_TERMINATOR+Line2));PromptText->SetJustification(ETextJustify::Center);SetVisibility(ESlateVisibility::Visible);
+        if(auto* B=Cast<UTVUICommandButton>(PromptButton))B->Configure(CommandDelegate,ETVUICommand::Interact,S.FocusedTargetId,S.FocusedActionId,INDEX_NONE);if(ActionGlyph)ActionGlyph->SetVisibility(ESlateVisibility::Collapsed);for(UBorder* Edge:FocusEdges)if(Edge)Edge->SetVisibility(ESlateVisibility::Collapsed);
+        const float Scale=FMath::Max(0.01f,UWidgetLayoutLibrary::GetViewportScale(this));const FVector2D Min=S.FocusedBounds.BoundsPixels.Min/Scale,Max=S.FocusedBounds.BoundsPixels.Max/Scale;
+        if(auto* PS=Cast<UCanvasPanelSlot>(PromptButton->Slot)){PS->SetAnchors(FAnchors(0.f,0.f));PS->SetAlignment(FVector2D(.5f,1.f));PS->SetPosition(S.FocusedBounds.bHasAnchor?FVector2D(S.FocusedBounds.AnchorPixels.X/Scale,FMath::Max(64.f,S.FocusedBounds.AnchorPixels.Y/Scale)):FVector2D((Min.X+Max.X)*.5f,FMath::Max(64.f,Min.Y-10.f)));}return;}
+    if(auto* PS=Cast<UCanvasPanelSlot>(PromptButton->Slot)){PS->SetAnchors(FAnchors(.5f,1.f));PS->SetAlignment(FVector2D(.5f,1.f));PS->SetPosition(FVector2D(0.f,-72.f));}PromptText->SetJustification(ETextJustify::Left);
+    const FString L=S.FocusedLabel.IsEmpty()?FString():FString::Printf(TEXT("[%s] %s"),*Glyph,*S.FocusedLabel);PromptText->SetText(FText::FromString(L));SetVisibility(L.IsEmpty()?ESlateVisibility::Collapsed:ESlateVisibility::Visible);if(auto* B=Cast<UTVUICommandButton>(PromptButton))B->Configure(CommandDelegate,ETVUICommand::Interact,S.FocusedTargetId,S.FocusedActionId,INDEX_NONE);if(ActionGlyph)ActionGlyph->SetVisibility(InteractAction&&ActionGlyph->GetIcon().GetResourceObject()?ESlateVisibility::Visible:ESlateVisibility::Collapsed);const float Scale=FMath::Max(0.01f,UWidgetLayoutLibrary::GetViewportScale(this));for(UBorder* Edge:FocusEdges)if(Edge){Edge->SetVisibility(S.FocusedBounds.bHasFocusBounds?ESlateVisibility::Visible:ESlateVisibility::Collapsed);}if(S.FocusedBounds.bHasFocusBounds){const FVector2D Min=S.FocusedBounds.BoundsPixels.Min/Scale;const FVector2D Max=S.FocusedBounds.BoundsPixels.Max/Scale;const FVector2D Size=Max-Min;const float T=2.f;const FVector2D Positions[4]={Min,FVector2D(Min.X,Max.Y-T),FVector2D(Min.X,Min.Y),FVector2D(Max.X-T,Min.Y)};const FVector2D Sizes[4]={FVector2D(Size.X,T),FVector2D(Size.X,T),FVector2D(T,Size.Y),FVector2D(T,Size.Y)};for(int32 I=0;I<4&&I<FocusEdges.Num();++I)if(auto* EdgeSlot=Cast<UCanvasPanelSlot>(FocusEdges[I]->Slot)){EdgeSlot->SetPosition(Positions[I]);EdgeSlot->SetSize(Sizes[I]);}}}
 
-TSharedRef<SWidget> UTVDialogueWidget::RebuildWidget(){Body=WidgetTree->ConstructWidget<UVerticalBox>();WidgetTree->RootWidget=WrapModal(WidgetTree,Body);Rebuild();return Super::RebuildWidget();}
+TSharedRef<SWidget> UTVDialogueWidget::RebuildWidget(){Body=WidgetTree->ConstructWidget<UVerticalBox>();WidgetTree->RootWidget=WrapModal(WidgetTree,Body,HAlign_Right);Rebuild();return Super::RebuildWidget();}
 FReply UTVDialogueWidget::NativeOnKeyDown(const FGeometry& G,const FKeyEvent& E){
     const TArray<FKey> Keys={EKeys::One,EKeys::Two,EKeys::Three,EKeys::Four,EKeys::Five,EKeys::Six,EKeys::Seven,EKeys::Eight,EKeys::Nine};
     const TArray<FKey> PadKeys={EKeys::NumPadOne,EKeys::NumPadTwo,EKeys::NumPadThree,EKeys::NumPadFour,EKeys::NumPadFive,EKeys::NumPadSix,EKeys::NumPadSeven,EKeys::NumPadEight,EKeys::NumPadNine};
@@ -88,8 +110,36 @@ UWidget* UTVDialogueWidget::NativeGetDesiredFocusTarget() const{return ChoiceBut
 TSharedRef<SWidget> UTVInventoryWidget::RebuildWidget(){Body=WidgetTree->ConstructWidget<UVerticalBox>();WidgetTree->RootWidget=WrapModal(WidgetTree,Body);Rebuild();return Super::RebuildWidget();}
 void UTVInventoryWidget::NativeConstruct(){Super::NativeConstruct();}
 void UTVInventoryWidget::SetSnapshot(const FTVUISnapshot& S){Snapshot=S;Rebuild();}
-void UTVInventoryWidget::Rebuild(){if(!Body)return;if(!bBuilt||ItemButtons.Num()!=Snapshot.Inventory.Num()){Body->ClearChildren();ItemButtons.Reset();EatButtons.Reset();Body->AddChildToVerticalBox(MakeText(WidgetTree,TEXT("Inventory"),26));Body->AddChildToVerticalBox(MakeText(WidgetTree,Snapshot.Vitals));if(Snapshot.Inventory.IsEmpty())Body->AddChildToVerticalBox(MakeText(WidgetTree,TEXT("Empty")));for(int32 I=0;I<Snapshot.Inventory.Num();++I)AddItem(I,Snapshot.Inventory[I]);BackButton=MakeButton(WidgetTree,CommandDelegate,ETVUICommand::Back,FString(),FString(),INDEX_NONE,TEXT("Back"));Body->AddChildToVerticalBox(BackButton);bBuilt=true;if(UWidget* Focus=NativeGetDesiredFocusTarget())Focus->SetFocus();}for(int32 I=0;I<ItemButtons.Num();++I){const auto& Item=Snapshot.Inventory[I];ItemButtons[I]->Configure(CommandDelegate,ETVUICommand::DropItem,Item.Id,FString(),I);ItemButtons[I]->SetLabel(FString::Printf(TEXT("%s  [Drop]"),*Item.Label));EatButtons[I]->Configure(CommandDelegate,ETVUICommand::EatItem,Item.Id,FString(),I);EatButtons[I]->SetLabel(TEXT("Eat"));}}
-void UTVInventoryWidget::AddItem(int32 I,const FTVUIItemRow& Item){auto* W=MakeButton(WidgetTree,CommandDelegate,ETVUICommand::DropItem,Item.Id,FString(),I,FString::Printf(TEXT("%s  [Drop]"),*Item.Label));auto* E=MakeButton(WidgetTree,CommandDelegate,ETVUICommand::EatItem,Item.Id,FString(),I,TEXT("Eat"));ItemButtons.Add(W);EatButtons.Add(E);Body->AddChildToVerticalBox(W);Body->AddChildToVerticalBox(E);}
+namespace
+{
+/** A projected row the player cannot use right now: said plainly, not offered as a button. */
+UTextBlock* MakeRefusal(UWidgetTree* T,const FTVUIActionRow& A){auto* W=MakeText(T,TEXT("      ")+A.Label+(A.Reason.IsEmpty()?FString():TEXT(" — ")+A.Reason),15);W->SetColorAndOpacity(FSlateColor(FLinearColor(.58f,.58f,.6f)));W->SetAutoWrapText(true);return W;}
+FString ActionText(const FTVUIActionRow& A){return A.Label+(A.Detail.IsEmpty()?FString():TEXT("  (")+A.Detail+TEXT(")"));}
+FString RowsSignature(const TArray<FTVUIActionRow>& Rows){FString S;for(const auto& A:Rows)S+=FString::Printf(TEXT("%s:%s:%d:%s:%s|"),*A.Id,*A.Label,A.bAvailable?1:0,*A.Reason,*A.Detail);return S;}
+}
+
+void UTVInventoryWidget::Rebuild(){
+    if(!Body)return;
+    // Every row, description and action comes from the server's projection of canonical rules;
+    // nothing here decides what an item can be used for.
+    FString Signature;for(const auto& Item:Snapshot.Inventory)Signature+=Item.Id+TEXT("#")+Item.Label+TEXT("#")+FString::Join(Item.Description,TEXT("~"))+TEXT("#")+RowsSignature(Item.Actions)+TEXT(";");
+    if(VitalsLine)VitalsLine->SetText(FText::FromString(Snapshot.Vitals));
+    if(BackButton&&Signature==BuiltSignature)return;
+    BuiltSignature=Signature;Body->ClearChildren();ItemButtons.Reset();
+    Body->AddChildToVerticalBox(MakeText(WidgetTree,TEXT("Inventory"),26));
+    VitalsLine=MakeText(WidgetTree,Snapshot.Vitals);VitalsLine->SetAutoWrapText(true);Body->AddChildToVerticalBox(VitalsLine);
+    if(Snapshot.Inventory.IsEmpty())Body->AddChildToVerticalBox(MakeText(WidgetTree,TEXT("You are carrying nothing.")));
+    for(const auto& Item:Snapshot.Inventory){
+        Body->AddChildToVerticalBox(MakeText(WidgetTree,Item.Label,21));
+        if(Item.Description.Num()){auto* D=MakeText(WidgetTree,TEXT("   ")+FString::Join(Item.Description,TEXT("  ·  ")),15);D->SetAutoWrapText(true);Body->AddChildToVerticalBox(D);}
+        for(const auto& A:Item.Actions){
+            if(!A.bAvailable){Body->AddChildToVerticalBox(MakeRefusal(WidgetTree,A));continue;}
+            auto* B=MakeButton(WidgetTree,CommandDelegate,ETVUICommand::ItemAction,A.Id,Item.Id,ItemButtons.Num(),TEXT("   ")+ActionText(A));ItemButtons.Add(B);Body->AddChildToVerticalBox(B);
+        }
+    }
+    BackButton=MakeButton(WidgetTree,CommandDelegate,ETVUICommand::Back,FString(),FString(),INDEX_NONE,TEXT("Back"));Body->AddChildToVerticalBox(BackButton);
+    if(UWidget* Focus=NativeGetDesiredFocusTarget())Focus->SetFocus();
+}
 UWidget* UTVInventoryWidget::NativeGetDesiredFocusTarget() const{return ItemButtons.Num()?ItemButtons[0]:BackButton;}
 
 TSharedRef<SWidget> UTVContainerWidget::RebuildWidget(){Body=WidgetTree->ConstructWidget<UVerticalBox>();WidgetTree->RootWidget=WrapModal(WidgetTree,Body);Rebuild();return Super::RebuildWidget();}
@@ -112,13 +162,13 @@ void UTVPlayerShellWidget::SetCommandDelegate(FTVUICommandRequested* In){Command
 void UTVPlayerShellWidget::SetInputActions(UInputAction* I,UInputAction* B){InteractAction=I;BackAction=B;if(Prompt)Prompt->SetInteractAction(I);}
 void UTVPlayerShellWidget::HandleDisplayedWidgetChanged(UCommonActivatableWidget* Widget){ModalChanged.Broadcast(Widget!=nullptr);}
 void UTVPlayerShellWidget::SetSnapshot(const FTVUISnapshot& S){Snapshot=S;LastSnapshotRevision=S.Revision;if(VitalsText)VitalsText->SetText(FText::FromString(Snapshot.Vitals));if(RestrictionText)RestrictionText->SetText(FText::FromString(Snapshot.Restriction));if(Prompt)Prompt->SetSnapshot(Snapshot);if(!Snapshot.bDialogueOpen&&ModalStack&&Cast<UTVDialogueWidget>(ModalStack->GetActiveWidget()))CloseTop();RefreshActiveWidget();}
-void UTVPlayerShellWidget::RefreshActiveWidget(){if(!ModalStack)return;auto* A=ModalStack->GetActiveWidget();if(auto* Dialogue=Cast<UTVDialogueWidget>(A))Dialogue->SetSnapshot(Snapshot);else if(auto* Inventory=Cast<UTVInventoryWidget>(A))Inventory->SetSnapshot(Snapshot);else if(auto* Container=Cast<UTVContainerWidget>(A))Container->SetSnapshot(Snapshot);else if(auto* Panel=Cast<UTVActionPanelWidget>(A))Panel->UpdateJournal(Snapshot.Journal);}
+void UTVPlayerShellWidget::RefreshActiveWidget(){if(!ModalStack)return;auto* A=ModalStack->GetActiveWidget();if(auto* Dialogue=Cast<UTVDialogueWidget>(A))Dialogue->SetSnapshot(Snapshot);else if(auto* Inventory=Cast<UTVInventoryWidget>(A))Inventory->SetSnapshot(Snapshot);else if(auto* Container=Cast<UTVContainerWidget>(A))Container->SetSnapshot(Snapshot);else if(auto* Panel=Cast<UTVActionPanelWidget>(A)){Panel->UpdateJournal(Snapshot.Journal);Panel->UpdateAbilities(Snapshot.Abilities);}}
 void UTVPlayerShellWidget::OpenInventory(){if(ModalStack)if(auto* W=ModalStack->AddWidget<UTVInventoryWidget>(UTVInventoryWidget::StaticClass(),[this](UTVInventoryWidget& V){V.SetSnapshot(Snapshot);V.SetCommandDelegate(CommandSink?CommandSink:&CommandRequested);}))W->ActivateWidget();}
 void UTVPlayerShellWidget::OpenDialogue(){if(ModalStack)if(auto* W=ModalStack->AddWidget<UTVDialogueWidget>(UTVDialogueWidget::StaticClass(),[this](UTVDialogueWidget& V){V.SetSnapshot(Snapshot);V.SetCommandDelegate(CommandSink?CommandSink:&CommandRequested);}))W->ActivateWidget();}
 void UTVPlayerShellWidget::OpenContainer(){if(ModalStack&&!Snapshot.ContainerId.IsEmpty())if(auto* W=ModalStack->AddWidget<UTVContainerWidget>(UTVContainerWidget::StaticClass(),[this](UTVContainerWidget& V){V.SetSnapshot(Snapshot);V.SetCommandDelegate(CommandSink?CommandSink:&CommandRequested);}))W->ActivateWidget();}
 void UTVPlayerShellWidget::OpenMenu(){if(ModalStack)if(auto* W=ModalStack->AddWidget<UTVMenuWidget>(UTVMenuWidget::StaticClass(),[this](UTVMenuWidget& V){V.SetCommandDelegate(CommandSink?CommandSink:&CommandRequested);}))W->ActivateWidget();}
 void UTVPlayerShellWidget::OpenActionPanel(const FString& Kind){
-    if(ModalStack)if(auto* W=ModalStack->AddWidget<UTVActionPanelWidget>(UTVActionPanelWidget::StaticClass(),[this,&Kind](UTVActionPanelWidget& V){V.SetCommandDelegate(CommandSink?CommandSink:&CommandRequested);V.Configure(Kind,Snapshot.Journal);}))W->ActivateWidget();
+    if(ModalStack)if(auto* W=ModalStack->AddWidget<UTVActionPanelWidget>(UTVActionPanelWidget::StaticClass(),[this,&Kind](UTVActionPanelWidget& V){V.SetCommandDelegate(CommandSink?CommandSink:&CommandRequested);V.UpdateAbilities(Snapshot.Abilities);V.Configure(Kind,Snapshot.Journal);}))W->ActivateWidget();
 }
 void UTVPlayerShellWidget::BeginRebind(const FString& Action){if(ModalStack)if(auto* W=Cast<UTVActionPanelWidget>(ModalStack->GetActiveWidget()))W->BeginRebind(Action);}
 void UTVPlayerShellWidget::CloseTop(){if(ModalStack&&ModalStack->GetActiveWidget())ModalStack->GetActiveWidget()->DeactivateWidget();}
@@ -131,18 +181,15 @@ TSharedRef<SWidget> UTVActionPanelWidget::RebuildWidget(){
 UWidget* UTVActionPanelWidget::NativeGetDesiredFocusTarget() const{return FirstButton;}
 void UTVActionPanelWidget::BuildPanel(){
     if(!Body)return;Body->ClearChildren();FirstButton=nullptr;
-    Body->AddChildToVerticalBox(MakeText(WidgetTree,Kind,26));Description=MakeText(WidgetTree,Kind==TEXT("Settings")?GetDefault<UTVControlSettings>()->Describe():Kind==TEXT("Journal")?Text:TEXT("Selected ability: Hush\nPractice, recover and review your foundations here."));Description->SetAutoWrapText(true);Body->AddChildToVerticalBox(Description);
+    Body->AddChildToVerticalBox(MakeText(WidgetTree,Kind,26));Description=MakeText(WidgetTree,Kind==TEXT("Settings")?GetDefault<UTVControlSettings>()->Describe():Kind==TEXT("Journal")?Text:TEXT("What your body and what you have learned let you do now. A greyed line says what stands in the way."));Description->SetAutoWrapText(true);Body->AddChildToVerticalBox(Description);
     const auto Add=[&](ETVUICommand C,const FString& Id,const FString& Label){auto* B=MakeButton(WidgetTree,CommandDelegate,C,Id,FString(),INDEX_NONE,Label);Body->AddChildToVerticalBox(B);if(!FirstButton)FirstButton=B;};
     if(Kind==TEXT("Settings")){
         for(const FString& K:TArray<FString>{TEXT("Mouse"),TEXT("ControllerX"),TEXT("ControllerY"),TEXT("MoveDeadZone"),TEXT("LookDeadZone"),TEXT("InvertY"),TEXT("Vibration"),TEXT("SprintToggle"),TEXT("FocusToggle")})Add(ETVUICommand::Setting,K,TEXT("Adjust ")+FName::NameToDisplayString(K,false));
         Body->AddChildToVerticalBox(MakeText(WidgetTree,TEXT("Select an action, then press its new key or controller button. Conflicts swap. Escape cancels.")));
-        for(const FString& K:TArray<FString>{TEXT("MoveForward"),TEXT("MoveBack"),TEXT("MoveLeft"),TEXT("MoveRight"),TEXT("Interact"),TEXT("Sprint"),TEXT("Crouch"),TEXT("LightAttack"),TEXT("HeavyAttack"),TEXT("Guard"),TEXT("Focus"),TEXT("Dodge"),TEXT("LockTarget"),TEXT("SwitchTarget"),TEXT("PrimaryAbility"),TEXT("QuickItem"),TEXT("AbilityWheel"),TEXT("Inventory"),TEXT("Journal")})Add(ETVUICommand::Rebind,K,TEXT("Rebind ")+FName::NameToDisplayString(K,false));
+        for(const FString& K:TArray<FString>{TEXT("MoveForward"),TEXT("MoveBack"),TEXT("MoveLeft"),TEXT("MoveRight"),TEXT("Interact"),TEXT("Sprint"),TEXT("WalkToggle"),TEXT("Crouch"),TEXT("LightAttack"),TEXT("HeavyAttack"),TEXT("Guard"),TEXT("Focus"),TEXT("Dodge"),TEXT("LockTarget"),TEXT("SwitchTarget"),TEXT("PrimaryAbility"),TEXT("QuickItem"),TEXT("AbilityWheel"),TEXT("Inventory"),TEXT("Journal")})Add(ETVUICommand::Rebind,K,TEXT("Rebind ")+FName::NameToDisplayString(K,false));
     }else{
-        if(Kind==TEXT("Abilities"))Add(ETVUICommand::PersonAction,TEXT("hush"),TEXT("Use Hush"));
-        Add(ETVUICommand::PersonAction,TEXT("train"),TEXT("Train bodily technique"));
-        Add(ETVUICommand::PersonAction,TEXT("meditate"),TEXT("Meditate on the veil"));
-        Add(ETVUICommand::PersonAction,TEXT("advance"),TEXT("Attempt Iron breakthrough"));
-        Add(ETVUICommand::PersonAction,TEXT("rest"),TEXT("Rest / wake"));
+        // Only what this person has actually learned and can attempt, as the server projects it.
+        for(const auto& A:Abilities){if(A.bAvailable)Add(ETVUICommand::PersonAction,A.Kind,ActionText(A));else Body->AddChildToVerticalBox(MakeRefusal(WidgetTree,A));}
         Add(ETVUICommand::PersonAction,TEXT("crouch"),TEXT("Crouch / stand"));
     }
     Add(ETVUICommand::Back,TEXT(""),TEXT("Back"));
@@ -166,4 +213,9 @@ FReply UTVActionPanelWidget::NativeOnPreviewMouseButtonDown(const FGeometry& G,c
     return Super::NativeOnPreviewMouseButtonDown(G,E);
 }
 
+void UTVActionPanelWidget::UpdateAbilities(const TArray<FTVUIActionRow>& Rows){
+    const FString Signature=RowsSignature(Rows);if(Signature==AbilitySignature)return;
+    AbilitySignature=Signature;Abilities=Rows;
+    if(Body&&Kind!=TEXT("Settings")&&AwaitingBinding.IsEmpty()){BuildPanel();if(FirstButton)FirstButton->SetFocus();}
+}
 void UTVActionPanelWidget::UpdateJournal(const FString& Value){if(Kind==TEXT("Journal")){Text=Value;if(Description)Description->SetText(FText::FromString(Value));}}

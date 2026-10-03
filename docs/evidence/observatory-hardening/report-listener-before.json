@@ -1,0 +1,2549 @@
+[
+  {
+    "event": {
+      "id": "e_67588",
+      "tick": 9029910,
+      "type": "goal_changed",
+      "category": "cognition",
+      "actor": "p_17",
+      "target": "p_15",
+      "data": {
+        "from": "report",
+        "fromUtility": 0.6185,
+        "to": "report",
+        "utility": 0.6185,
+        "reasons": [
+          "I know an unfamiliar person attacked an unfamiliar person (told)",
+          "the watch should hear of it",
+          "my sense of honesty",
+          "I have tried 17 times already",
+          "concern: set on seeing them answer for it (0.98)",
+          "I know Dunstan Mole",
+          "Pip Hollis is my child"
+        ],
+        "key": "report:p_15:ev:e_58047"
+      },
+      "causes": [
+        "e_67388"
+      ],
+      "effects": [],
+      "perceivedBy": [],
+      "significance": 0.45,
+      "summary": "Alwin Hollis: goal report → report → Dunstan Mole (u=0.62)"
+    },
+    "goal": {
+      "type": "report",
+      "utility": 0.6185,
+      "reasons": [
+        "I know an unfamiliar person attacked an unfamiliar person (told)",
+        "the watch should hear of it",
+        "my sense of honesty",
+        "I have tried 17 times already",
+        "concern: set on seeing them answer for it (0.98)",
+        "I know Dunstan Mole",
+        "Pip Hollis is my child"
+      ],
+      "createdAt": 9029910,
+      "key": "report:p_15:ev:e_58047",
+      "targetEntity": "p_15",
+      "targetPos": {
+        "x": 94.5066899681853,
+        "y": 14,
+        "z": 122.4340102564544
+      },
+      "data": {
+        "key": "ev:e_58047"
+      }
+    },
+    "report": {
+      "key": "ev:e_58047",
+      "status": "seeking",
+      "attempts": 17,
+      "firstAt": 9029271,
+      "lastAttemptAt": 9029901,
+      "towardId": "p_15"
+    },
+    "knowledge": {
+      "key": "ev:e_58047",
+      "kind": "event",
+      "claim": {
+        "eventId": "e_58047",
+        "type": "attack",
+        "tick": 9011937,
+        "pos": {
+          "x": 95.88362516,
+          "y": 14,
+          "z": 110.5
+        },
+        "significance": 0.7,
+        "actor": "p_16",
+        "target": "p_28"
+      },
+      "confidence": 0.6162500000000001,
+      "learnedAt": 9029262,
+      "source": {
+        "type": "told",
+        "from": "p_37",
+        "viaEvent": "e_67353"
+      },
+      "hops": 1,
+      "sharedWith": []
+    },
+    "speaker": [
+      {
+        "id": "b_17",
+        "kind": "body",
+        "name": "Alwin Hollis's body",
+        "createdAt": 8666400,
+        "tags": [],
+        "ownerId": "p_17",
+        "shape": "humanoid",
+        "pos": {
+          "x": 94.5,
+          "y": 14,
+          "z": 121.5
+        },
+        "vel": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "yaw": -3.4633432079864352,
+        "pose": "stand",
+        "poseUntil": 6049.349999997019,
+        "onGround": true,
+        "path": null,
+        "pathIndex": 4,
+        "pathGoal": {
+          "x": 94.5066899681853,
+          "y": 14,
+          "z": 122.4340102564544
+        },
+        "speed": 5.6,
+        "health": 80,
+        "maxHealth": 80,
+        "dead": false,
+        "lastHitAt": -99,
+        "lastAttackAt": -99,
+        "attackSeq": 0,
+        "hitSeq": 0,
+        "attackTarget": null,
+        "subduedUntil": 0,
+        "sitAnchor": null,
+        "present": true
+      }
+    ],
+    "listener": [
+      {
+        "id": "b_15",
+        "kind": "body",
+        "name": "Dunstan Mole's body",
+        "createdAt": 8666400,
+        "tags": [],
+        "ownerId": "p_15",
+        "shape": "humanoid",
+        "pos": {
+          "x": 94.5066899681853,
+          "y": 14,
+          "z": 122.4340102564544
+        },
+        "vel": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "yaw": -3.2426263749935558,
+        "pose": "sleep",
+        "poseUntil": 5884.799999997418,
+        "onGround": true,
+        "path": null,
+        "pathIndex": 0,
+        "pathGoal": {
+          "x": 94.5,
+          "y": 14,
+          "z": 122.5
+        },
+        "speed": 3.2,
+        "health": 110,
+        "maxHealth": 110,
+        "dead": false,
+        "lastHitAt": 5073.599999999382,
+        "lastAttackAt": 5771.849999997688,
+        "attackSeq": 18,
+        "hitSeq": 7,
+        "attackTarget": null,
+        "subduedUntil": 0,
+        "sitAnchor": {
+          "x": 94.5066899681853,
+          "y": 14,
+          "z": 122.4340102564544
+        },
+        "present": true,
+        "combatAction": {
+          "id": "action_263",
+          "actorBodyId": "b_15",
+          "kind": "attack",
+          "targetBodyId": "b_16",
+          "weaponId": "i_9",
+          "definition": "sword_high",
+          "trajectory": "high",
+          "startedAt": 5771.849999997688,
+          "startTick": 346311,
+          "activeAt": 5772.149999997689,
+          "recoveryAt": 5772.299999997688,
+          "completeAt": 5772.599999997688,
+          "phase": "complete",
+          "outcome": "hit",
+          "facing": 0.25120902657515637,
+          "initialFacing": 0.25120902657515637,
+          "trackingUntil": 5772.049999997688,
+          "turnRate": 1.5707963267948966,
+          "turnBudget": 0.2617993877991494,
+          "reach": 2.9000000000000004,
+          "radius": 0.12,
+          "impact": 14.676365868775141,
+          "exertionCost": 0.039999999999999994,
+          "intent": "arrest",
+          "direction": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "distance": 0,
+          "appliedDistance": 0,
+          "eventId": "e_58816",
+          "variant": "direct",
+          "contact": {
+            "bodyId": "b_16",
+            "region": "head",
+            "position": {
+              "x": 112.29713619561305,
+              "y": 15.65,
+              "z": 111.54124707341064
+            },
+            "at": 5772.187005119773,
+            "eventId": "e_58838"
+          }
+        },
+        "injuries": {
+          "head": 0.16967462077374684
+        }
+      }
+    ],
+    "reachable": false
+  },
+  {
+    "event": {
+      "id": "e_67591",
+      "tick": 9029928,
+      "type": "goal_changed",
+      "category": "cognition",
+      "actor": "p_17",
+      "target": "p_15",
+      "data": {
+        "from": "report",
+        "fromUtility": 0.6185,
+        "to": "report",
+        "utility": 0.6185,
+        "reasons": [
+          "I know an unfamiliar person attacked an unfamiliar person (told)",
+          "the watch should hear of it",
+          "my sense of honesty",
+          "I have tried 18 times already",
+          "concern: set on seeing them answer for it (0.98)",
+          "I know Dunstan Mole",
+          "Pip Hollis is my child"
+        ],
+        "key": "report:p_15:ev:e_58047"
+      },
+      "causes": [
+        "e_67388"
+      ],
+      "effects": [],
+      "perceivedBy": [],
+      "significance": 0.45,
+      "summary": "Alwin Hollis: goal report → report → Dunstan Mole (u=0.62)"
+    },
+    "goal": {
+      "type": "report",
+      "utility": 0.6185,
+      "reasons": [
+        "I know an unfamiliar person attacked an unfamiliar person (told)",
+        "the watch should hear of it",
+        "my sense of honesty",
+        "I have tried 18 times already",
+        "concern: set on seeing them answer for it (0.98)",
+        "I know Dunstan Mole",
+        "Pip Hollis is my child"
+      ],
+      "createdAt": 9029928,
+      "key": "report:p_15:ev:e_58047",
+      "targetEntity": "p_15",
+      "targetPos": {
+        "x": 94.5066899681853,
+        "y": 14,
+        "z": 122.4340102564544
+      },
+      "data": {
+        "key": "ev:e_58047"
+      }
+    },
+    "report": {
+      "key": "ev:e_58047",
+      "status": "seeking",
+      "attempts": 18,
+      "firstAt": 9029271,
+      "lastAttemptAt": 9029919,
+      "towardId": "p_15"
+    },
+    "knowledge": {
+      "key": "ev:e_58047",
+      "kind": "event",
+      "claim": {
+        "eventId": "e_58047",
+        "type": "attack",
+        "tick": 9011937,
+        "pos": {
+          "x": 95.88362516,
+          "y": 14,
+          "z": 110.5
+        },
+        "significance": 0.7,
+        "actor": "p_16",
+        "target": "p_28"
+      },
+      "confidence": 0.6162500000000001,
+      "learnedAt": 9029262,
+      "source": {
+        "type": "told",
+        "from": "p_37",
+        "viaEvent": "e_67353"
+      },
+      "hops": 1,
+      "sharedWith": []
+    },
+    "speaker": [
+      {
+        "id": "b_17",
+        "kind": "body",
+        "name": "Alwin Hollis's body",
+        "createdAt": 8666400,
+        "tags": [],
+        "ownerId": "p_17",
+        "shape": "humanoid",
+        "pos": {
+          "x": 94.5,
+          "y": 14,
+          "z": 121.5
+        },
+        "vel": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "yaw": -3.4633432079864352,
+        "pose": "stand",
+        "poseUntil": 6049.349999997019,
+        "onGround": true,
+        "path": null,
+        "pathIndex": 4,
+        "pathGoal": {
+          "x": 94.5066899681853,
+          "y": 14,
+          "z": 122.4340102564544
+        },
+        "speed": 5.6,
+        "health": 80,
+        "maxHealth": 80,
+        "dead": false,
+        "lastHitAt": -99,
+        "lastAttackAt": -99,
+        "attackSeq": 0,
+        "hitSeq": 0,
+        "attackTarget": null,
+        "subduedUntil": 0,
+        "sitAnchor": null,
+        "present": true
+      }
+    ],
+    "listener": [
+      {
+        "id": "b_15",
+        "kind": "body",
+        "name": "Dunstan Mole's body",
+        "createdAt": 8666400,
+        "tags": [],
+        "ownerId": "p_15",
+        "shape": "humanoid",
+        "pos": {
+          "x": 94.5066899681853,
+          "y": 14,
+          "z": 122.4340102564544
+        },
+        "vel": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "yaw": -3.2426263749935558,
+        "pose": "sleep",
+        "poseUntil": 5884.799999997418,
+        "onGround": true,
+        "path": null,
+        "pathIndex": 0,
+        "pathGoal": {
+          "x": 94.5,
+          "y": 14,
+          "z": 122.5
+        },
+        "speed": 3.2,
+        "health": 110,
+        "maxHealth": 110,
+        "dead": false,
+        "lastHitAt": 5073.599999999382,
+        "lastAttackAt": 5771.849999997688,
+        "attackSeq": 18,
+        "hitSeq": 7,
+        "attackTarget": null,
+        "subduedUntil": 0,
+        "sitAnchor": {
+          "x": 94.5066899681853,
+          "y": 14,
+          "z": 122.4340102564544
+        },
+        "present": true,
+        "combatAction": {
+          "id": "action_263",
+          "actorBodyId": "b_15",
+          "kind": "attack",
+          "targetBodyId": "b_16",
+          "weaponId": "i_9",
+          "definition": "sword_high",
+          "trajectory": "high",
+          "startedAt": 5771.849999997688,
+          "startTick": 346311,
+          "activeAt": 5772.149999997689,
+          "recoveryAt": 5772.299999997688,
+          "completeAt": 5772.599999997688,
+          "phase": "complete",
+          "outcome": "hit",
+          "facing": 0.25120902657515637,
+          "initialFacing": 0.25120902657515637,
+          "trackingUntil": 5772.049999997688,
+          "turnRate": 1.5707963267948966,
+          "turnBudget": 0.2617993877991494,
+          "reach": 2.9000000000000004,
+          "radius": 0.12,
+          "impact": 14.676365868775141,
+          "exertionCost": 0.039999999999999994,
+          "intent": "arrest",
+          "direction": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "distance": 0,
+          "appliedDistance": 0,
+          "eventId": "e_58816",
+          "variant": "direct",
+          "contact": {
+            "bodyId": "b_16",
+            "region": "head",
+            "position": {
+              "x": 112.29713619561305,
+              "y": 15.65,
+              "z": 111.54124707341064
+            },
+            "at": 5772.187005119773,
+            "eventId": "e_58838"
+          }
+        },
+        "injuries": {
+          "head": 0.16967462077374684
+        }
+      }
+    ],
+    "reachable": false
+  },
+  {
+    "event": {
+      "id": "e_67595",
+      "tick": 9029946,
+      "type": "goal_changed",
+      "category": "cognition",
+      "actor": "p_17",
+      "target": "p_15",
+      "data": {
+        "from": "report",
+        "fromUtility": 0.6185,
+        "to": "report",
+        "utility": 0.6185,
+        "reasons": [
+          "I know an unfamiliar person attacked an unfamiliar person (told)",
+          "the watch should hear of it",
+          "my sense of honesty",
+          "I have tried 19 times already",
+          "concern: set on seeing them answer for it (0.98)",
+          "I know Dunstan Mole",
+          "Pip Hollis is my child"
+        ],
+        "key": "report:p_15:ev:e_58047"
+      },
+      "causes": [
+        "e_67388"
+      ],
+      "effects": [],
+      "perceivedBy": [],
+      "significance": 0.45,
+      "summary": "Alwin Hollis: goal report → report → Dunstan Mole (u=0.62)"
+    },
+    "goal": {
+      "type": "report",
+      "utility": 0.6185,
+      "reasons": [
+        "I know an unfamiliar person attacked an unfamiliar person (told)",
+        "the watch should hear of it",
+        "my sense of honesty",
+        "I have tried 19 times already",
+        "concern: set on seeing them answer for it (0.98)",
+        "I know Dunstan Mole",
+        "Pip Hollis is my child"
+      ],
+      "createdAt": 9029946,
+      "key": "report:p_15:ev:e_58047",
+      "targetEntity": "p_15",
+      "targetPos": {
+        "x": 94.5066899681853,
+        "y": 14,
+        "z": 122.4340102564544
+      },
+      "data": {
+        "key": "ev:e_58047"
+      }
+    },
+    "report": {
+      "key": "ev:e_58047",
+      "status": "seeking",
+      "attempts": 19,
+      "firstAt": 9029271,
+      "lastAttemptAt": 9029937,
+      "towardId": "p_15"
+    },
+    "knowledge": {
+      "key": "ev:e_58047",
+      "kind": "event",
+      "claim": {
+        "eventId": "e_58047",
+        "type": "attack",
+        "tick": 9011937,
+        "pos": {
+          "x": 95.88362516,
+          "y": 14,
+          "z": 110.5
+        },
+        "significance": 0.7,
+        "actor": "p_16",
+        "target": "p_28"
+      },
+      "confidence": 0.6162500000000001,
+      "learnedAt": 9029262,
+      "source": {
+        "type": "told",
+        "from": "p_37",
+        "viaEvent": "e_67353"
+      },
+      "hops": 1,
+      "sharedWith": []
+    },
+    "speaker": [
+      {
+        "id": "b_17",
+        "kind": "body",
+        "name": "Alwin Hollis's body",
+        "createdAt": 8666400,
+        "tags": [],
+        "ownerId": "p_17",
+        "shape": "humanoid",
+        "pos": {
+          "x": 94.5,
+          "y": 14,
+          "z": 121.5
+        },
+        "vel": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "yaw": -3.4633432079864352,
+        "pose": "stand",
+        "poseUntil": 6049.349999997019,
+        "onGround": true,
+        "path": null,
+        "pathIndex": 4,
+        "pathGoal": {
+          "x": 94.5066899681853,
+          "y": 14,
+          "z": 122.4340102564544
+        },
+        "speed": 5.6,
+        "health": 80,
+        "maxHealth": 80,
+        "dead": false,
+        "lastHitAt": -99,
+        "lastAttackAt": -99,
+        "attackSeq": 0,
+        "hitSeq": 0,
+        "attackTarget": null,
+        "subduedUntil": 0,
+        "sitAnchor": null,
+        "present": true
+      }
+    ],
+    "listener": [
+      {
+        "id": "b_15",
+        "kind": "body",
+        "name": "Dunstan Mole's body",
+        "createdAt": 8666400,
+        "tags": [],
+        "ownerId": "p_15",
+        "shape": "humanoid",
+        "pos": {
+          "x": 94.5066899681853,
+          "y": 14,
+          "z": 122.4340102564544
+        },
+        "vel": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "yaw": -3.2426263749935558,
+        "pose": "sleep",
+        "poseUntil": 5884.799999997418,
+        "onGround": true,
+        "path": null,
+        "pathIndex": 0,
+        "pathGoal": {
+          "x": 94.5,
+          "y": 14,
+          "z": 122.5
+        },
+        "speed": 3.2,
+        "health": 110,
+        "maxHealth": 110,
+        "dead": false,
+        "lastHitAt": 5073.599999999382,
+        "lastAttackAt": 5771.849999997688,
+        "attackSeq": 18,
+        "hitSeq": 7,
+        "attackTarget": null,
+        "subduedUntil": 0,
+        "sitAnchor": {
+          "x": 94.5066899681853,
+          "y": 14,
+          "z": 122.4340102564544
+        },
+        "present": true,
+        "combatAction": {
+          "id": "action_263",
+          "actorBodyId": "b_15",
+          "kind": "attack",
+          "targetBodyId": "b_16",
+          "weaponId": "i_9",
+          "definition": "sword_high",
+          "trajectory": "high",
+          "startedAt": 5771.849999997688,
+          "startTick": 346311,
+          "activeAt": 5772.149999997689,
+          "recoveryAt": 5772.299999997688,
+          "completeAt": 5772.599999997688,
+          "phase": "complete",
+          "outcome": "hit",
+          "facing": 0.25120902657515637,
+          "initialFacing": 0.25120902657515637,
+          "trackingUntil": 5772.049999997688,
+          "turnRate": 1.5707963267948966,
+          "turnBudget": 0.2617993877991494,
+          "reach": 2.9000000000000004,
+          "radius": 0.12,
+          "impact": 14.676365868775141,
+          "exertionCost": 0.039999999999999994,
+          "intent": "arrest",
+          "direction": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "distance": 0,
+          "appliedDistance": 0,
+          "eventId": "e_58816",
+          "variant": "direct",
+          "contact": {
+            "bodyId": "b_16",
+            "region": "head",
+            "position": {
+              "x": 112.29713619561305,
+              "y": 15.65,
+              "z": 111.54124707341064
+            },
+            "at": 5772.187005119773,
+            "eventId": "e_58838"
+          }
+        },
+        "injuries": {
+          "head": 0.16967462077374684
+        }
+      }
+    ],
+    "reachable": false
+  },
+  {
+    "event": {
+      "id": "e_67600",
+      "tick": 9029964,
+      "type": "goal_changed",
+      "category": "cognition",
+      "actor": "p_17",
+      "target": "p_15",
+      "data": {
+        "from": "report",
+        "fromUtility": 0.6185,
+        "to": "report",
+        "utility": 0.6185,
+        "reasons": [
+          "I know an unfamiliar person attacked an unfamiliar person (told)",
+          "the watch should hear of it",
+          "my sense of honesty",
+          "I have tried 20 times already",
+          "concern: set on seeing them answer for it (0.98)",
+          "I know Dunstan Mole",
+          "Pip Hollis is my child"
+        ],
+        "key": "report:p_15:ev:e_58047"
+      },
+      "causes": [],
+      "effects": [],
+      "perceivedBy": [],
+      "significance": 0.45,
+      "summary": "Alwin Hollis: goal report → report → Dunstan Mole (u=0.62)"
+    },
+    "goal": {
+      "type": "report",
+      "utility": 0.6185,
+      "reasons": [
+        "I know an unfamiliar person attacked an unfamiliar person (told)",
+        "the watch should hear of it",
+        "my sense of honesty",
+        "I have tried 20 times already",
+        "concern: set on seeing them answer for it (0.98)",
+        "I know Dunstan Mole",
+        "Pip Hollis is my child"
+      ],
+      "createdAt": 9029964,
+      "key": "report:p_15:ev:e_58047",
+      "targetEntity": "p_15",
+      "targetPos": {
+        "x": 94.5066899681853,
+        "y": 14,
+        "z": 122.4340102564544
+      },
+      "data": {
+        "key": "ev:e_58047"
+      }
+    },
+    "report": {
+      "key": "ev:e_58047",
+      "status": "seeking",
+      "attempts": 20,
+      "firstAt": 9029271,
+      "lastAttemptAt": 9029955,
+      "towardId": "p_15"
+    },
+    "knowledge": {
+      "key": "ev:e_58047",
+      "kind": "event",
+      "claim": {
+        "eventId": "e_58047",
+        "type": "attack",
+        "tick": 9011937,
+        "pos": {
+          "x": 95.88362516,
+          "y": 14,
+          "z": 110.5
+        },
+        "significance": 0.7,
+        "actor": "p_16",
+        "target": "p_28"
+      },
+      "confidence": 0.6162500000000001,
+      "learnedAt": 9029262,
+      "source": {
+        "type": "told",
+        "from": "p_37",
+        "viaEvent": "e_67353"
+      },
+      "hops": 1,
+      "sharedWith": []
+    },
+    "speaker": [
+      {
+        "id": "b_17",
+        "kind": "body",
+        "name": "Alwin Hollis's body",
+        "createdAt": 8666400,
+        "tags": [],
+        "ownerId": "p_17",
+        "shape": "humanoid",
+        "pos": {
+          "x": 94.5,
+          "y": 14,
+          "z": 121.5
+        },
+        "vel": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "yaw": -3.4633432079864352,
+        "pose": "stand",
+        "poseUntil": 6049.349999997019,
+        "onGround": true,
+        "path": null,
+        "pathIndex": 4,
+        "pathGoal": {
+          "x": 94.5066899681853,
+          "y": 14,
+          "z": 122.4340102564544
+        },
+        "speed": 5.6,
+        "health": 80,
+        "maxHealth": 80,
+        "dead": false,
+        "lastHitAt": -99,
+        "lastAttackAt": -99,
+        "attackSeq": 0,
+        "hitSeq": 0,
+        "attackTarget": null,
+        "subduedUntil": 0,
+        "sitAnchor": null,
+        "present": true
+      }
+    ],
+    "listener": [
+      {
+        "id": "b_15",
+        "kind": "body",
+        "name": "Dunstan Mole's body",
+        "createdAt": 8666400,
+        "tags": [],
+        "ownerId": "p_15",
+        "shape": "humanoid",
+        "pos": {
+          "x": 94.5066899681853,
+          "y": 14,
+          "z": 122.4340102564544
+        },
+        "vel": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "yaw": -3.2426263749935558,
+        "pose": "sleep",
+        "poseUntil": 5884.799999997418,
+        "onGround": true,
+        "path": null,
+        "pathIndex": 0,
+        "pathGoal": {
+          "x": 94.5,
+          "y": 14,
+          "z": 122.5
+        },
+        "speed": 3.2,
+        "health": 110,
+        "maxHealth": 110,
+        "dead": false,
+        "lastHitAt": 5073.599999999382,
+        "lastAttackAt": 5771.849999997688,
+        "attackSeq": 18,
+        "hitSeq": 7,
+        "attackTarget": null,
+        "subduedUntil": 0,
+        "sitAnchor": {
+          "x": 94.5066899681853,
+          "y": 14,
+          "z": 122.4340102564544
+        },
+        "present": true,
+        "combatAction": {
+          "id": "action_263",
+          "actorBodyId": "b_15",
+          "kind": "attack",
+          "targetBodyId": "b_16",
+          "weaponId": "i_9",
+          "definition": "sword_high",
+          "trajectory": "high",
+          "startedAt": 5771.849999997688,
+          "startTick": 346311,
+          "activeAt": 5772.149999997689,
+          "recoveryAt": 5772.299999997688,
+          "completeAt": 5772.599999997688,
+          "phase": "complete",
+          "outcome": "hit",
+          "facing": 0.25120902657515637,
+          "initialFacing": 0.25120902657515637,
+          "trackingUntil": 5772.049999997688,
+          "turnRate": 1.5707963267948966,
+          "turnBudget": 0.2617993877991494,
+          "reach": 2.9000000000000004,
+          "radius": 0.12,
+          "impact": 14.676365868775141,
+          "exertionCost": 0.039999999999999994,
+          "intent": "arrest",
+          "direction": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "distance": 0,
+          "appliedDistance": 0,
+          "eventId": "e_58816",
+          "variant": "direct",
+          "contact": {
+            "bodyId": "b_16",
+            "region": "head",
+            "position": {
+              "x": 112.29713619561305,
+              "y": 15.65,
+              "z": 111.54124707341064
+            },
+            "at": 5772.187005119773,
+            "eventId": "e_58838"
+          }
+        },
+        "injuries": {
+          "head": 0.16967462077374684
+        }
+      }
+    ],
+    "reachable": false
+  },
+  {
+    "event": {
+      "id": "e_67603",
+      "tick": 9029982,
+      "type": "goal_changed",
+      "category": "cognition",
+      "actor": "p_17",
+      "target": "p_15",
+      "data": {
+        "from": "report",
+        "fromUtility": 0.6185,
+        "to": "report",
+        "utility": 0.6185,
+        "reasons": [
+          "I know an unfamiliar person attacked an unfamiliar person (told)",
+          "the watch should hear of it",
+          "my sense of honesty",
+          "I have tried 21 times already",
+          "concern: set on seeing them answer for it (0.98)",
+          "I know Dunstan Mole",
+          "Pip Hollis is my child"
+        ],
+        "key": "report:p_15:ev:e_58047"
+      },
+      "causes": [],
+      "effects": [],
+      "perceivedBy": [],
+      "significance": 0.45,
+      "summary": "Alwin Hollis: goal report → report → Dunstan Mole (u=0.62)"
+    },
+    "goal": {
+      "type": "report",
+      "utility": 0.6185,
+      "reasons": [
+        "I know an unfamiliar person attacked an unfamiliar person (told)",
+        "the watch should hear of it",
+        "my sense of honesty",
+        "I have tried 21 times already",
+        "concern: set on seeing them answer for it (0.98)",
+        "I know Dunstan Mole",
+        "Pip Hollis is my child"
+      ],
+      "createdAt": 9029982,
+      "key": "report:p_15:ev:e_58047",
+      "targetEntity": "p_15",
+      "targetPos": {
+        "x": 94.5066899681853,
+        "y": 14,
+        "z": 122.4340102564544
+      },
+      "data": {
+        "key": "ev:e_58047"
+      }
+    },
+    "report": {
+      "key": "ev:e_58047",
+      "status": "seeking",
+      "attempts": 21,
+      "firstAt": 9029271,
+      "lastAttemptAt": 9029973,
+      "towardId": "p_15"
+    },
+    "knowledge": {
+      "key": "ev:e_58047",
+      "kind": "event",
+      "claim": {
+        "eventId": "e_58047",
+        "type": "attack",
+        "tick": 9011937,
+        "pos": {
+          "x": 95.88362516,
+          "y": 14,
+          "z": 110.5
+        },
+        "significance": 0.7,
+        "actor": "p_16",
+        "target": "p_28"
+      },
+      "confidence": 0.6162500000000001,
+      "learnedAt": 9029262,
+      "source": {
+        "type": "told",
+        "from": "p_37",
+        "viaEvent": "e_67353"
+      },
+      "hops": 1,
+      "sharedWith": []
+    },
+    "speaker": [
+      {
+        "id": "b_17",
+        "kind": "body",
+        "name": "Alwin Hollis's body",
+        "createdAt": 8666400,
+        "tags": [],
+        "ownerId": "p_17",
+        "shape": "humanoid",
+        "pos": {
+          "x": 94.5,
+          "y": 14,
+          "z": 121.5
+        },
+        "vel": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "yaw": -3.4633432079864352,
+        "pose": "stand",
+        "poseUntil": 6049.349999997019,
+        "onGround": true,
+        "path": null,
+        "pathIndex": 4,
+        "pathGoal": {
+          "x": 94.5066899681853,
+          "y": 14,
+          "z": 122.4340102564544
+        },
+        "speed": 5.6,
+        "health": 80,
+        "maxHealth": 80,
+        "dead": false,
+        "lastHitAt": -99,
+        "lastAttackAt": -99,
+        "attackSeq": 0,
+        "hitSeq": 0,
+        "attackTarget": null,
+        "subduedUntil": 0,
+        "sitAnchor": null,
+        "present": true
+      }
+    ],
+    "listener": [
+      {
+        "id": "b_15",
+        "kind": "body",
+        "name": "Dunstan Mole's body",
+        "createdAt": 8666400,
+        "tags": [],
+        "ownerId": "p_15",
+        "shape": "humanoid",
+        "pos": {
+          "x": 94.5066899681853,
+          "y": 14,
+          "z": 122.4340102564544
+        },
+        "vel": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "yaw": -3.2426263749935558,
+        "pose": "sleep",
+        "poseUntil": 5884.799999997418,
+        "onGround": true,
+        "path": null,
+        "pathIndex": 0,
+        "pathGoal": {
+          "x": 94.5,
+          "y": 14,
+          "z": 122.5
+        },
+        "speed": 3.2,
+        "health": 110,
+        "maxHealth": 110,
+        "dead": false,
+        "lastHitAt": 5073.599999999382,
+        "lastAttackAt": 5771.849999997688,
+        "attackSeq": 18,
+        "hitSeq": 7,
+        "attackTarget": null,
+        "subduedUntil": 0,
+        "sitAnchor": {
+          "x": 94.5066899681853,
+          "y": 14,
+          "z": 122.4340102564544
+        },
+        "present": true,
+        "combatAction": {
+          "id": "action_263",
+          "actorBodyId": "b_15",
+          "kind": "attack",
+          "targetBodyId": "b_16",
+          "weaponId": "i_9",
+          "definition": "sword_high",
+          "trajectory": "high",
+          "startedAt": 5771.849999997688,
+          "startTick": 346311,
+          "activeAt": 5772.149999997689,
+          "recoveryAt": 5772.299999997688,
+          "completeAt": 5772.599999997688,
+          "phase": "complete",
+          "outcome": "hit",
+          "facing": 0.25120902657515637,
+          "initialFacing": 0.25120902657515637,
+          "trackingUntil": 5772.049999997688,
+          "turnRate": 1.5707963267948966,
+          "turnBudget": 0.2617993877991494,
+          "reach": 2.9000000000000004,
+          "radius": 0.12,
+          "impact": 14.676365868775141,
+          "exertionCost": 0.039999999999999994,
+          "intent": "arrest",
+          "direction": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "distance": 0,
+          "appliedDistance": 0,
+          "eventId": "e_58816",
+          "variant": "direct",
+          "contact": {
+            "bodyId": "b_16",
+            "region": "head",
+            "position": {
+              "x": 112.29713619561305,
+              "y": 15.65,
+              "z": 111.54124707341064
+            },
+            "at": 5772.187005119773,
+            "eventId": "e_58838"
+          }
+        },
+        "injuries": {
+          "head": 0.16967462077374684
+        }
+      }
+    ],
+    "reachable": false
+  },
+  {
+    "event": {
+      "id": "e_67606",
+      "tick": 9030000,
+      "type": "goal_changed",
+      "category": "cognition",
+      "actor": "p_17",
+      "target": "p_15",
+      "data": {
+        "from": "report",
+        "fromUtility": 0.6185,
+        "to": "report",
+        "utility": 0.6185,
+        "reasons": [
+          "I know an unfamiliar person attacked an unfamiliar person (told)",
+          "the watch should hear of it",
+          "my sense of honesty",
+          "I have tried 22 times already",
+          "concern: set on seeing them answer for it (0.98)",
+          "I know Dunstan Mole",
+          "Pip Hollis is my child"
+        ],
+        "key": "report:p_15:ev:e_58047"
+      },
+      "causes": [],
+      "effects": [],
+      "perceivedBy": [],
+      "significance": 0.45,
+      "summary": "Alwin Hollis: goal report → report → Dunstan Mole (u=0.62)"
+    },
+    "goal": {
+      "type": "report",
+      "utility": 0.6185,
+      "reasons": [
+        "I know an unfamiliar person attacked an unfamiliar person (told)",
+        "the watch should hear of it",
+        "my sense of honesty",
+        "I have tried 22 times already",
+        "concern: set on seeing them answer for it (0.98)",
+        "I know Dunstan Mole",
+        "Pip Hollis is my child"
+      ],
+      "createdAt": 9030000,
+      "key": "report:p_15:ev:e_58047",
+      "targetEntity": "p_15",
+      "targetPos": {
+        "x": 94.5066899681853,
+        "y": 14,
+        "z": 122.4340102564544
+      },
+      "data": {
+        "key": "ev:e_58047"
+      }
+    },
+    "report": {
+      "key": "ev:e_58047",
+      "status": "seeking",
+      "attempts": 22,
+      "firstAt": 9029271,
+      "lastAttemptAt": 9029991,
+      "towardId": "p_15"
+    },
+    "knowledge": {
+      "key": "ev:e_58047",
+      "kind": "event",
+      "claim": {
+        "eventId": "e_58047",
+        "type": "attack",
+        "tick": 9011937,
+        "pos": {
+          "x": 95.88362516,
+          "y": 14,
+          "z": 110.5
+        },
+        "significance": 0.7,
+        "actor": "p_16",
+        "target": "p_28"
+      },
+      "confidence": 0.6162500000000001,
+      "learnedAt": 9029262,
+      "source": {
+        "type": "told",
+        "from": "p_37",
+        "viaEvent": "e_67353"
+      },
+      "hops": 1,
+      "sharedWith": []
+    },
+    "speaker": [
+      {
+        "id": "b_17",
+        "kind": "body",
+        "name": "Alwin Hollis's body",
+        "createdAt": 8666400,
+        "tags": [],
+        "ownerId": "p_17",
+        "shape": "humanoid",
+        "pos": {
+          "x": 94.5,
+          "y": 14,
+          "z": 121.5
+        },
+        "vel": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "yaw": -3.4633432079864352,
+        "pose": "stand",
+        "poseUntil": 6049.349999997019,
+        "onGround": true,
+        "path": null,
+        "pathIndex": 4,
+        "pathGoal": {
+          "x": 94.5066899681853,
+          "y": 14,
+          "z": 122.4340102564544
+        },
+        "speed": 5.6,
+        "health": 80,
+        "maxHealth": 80,
+        "dead": false,
+        "lastHitAt": -99,
+        "lastAttackAt": -99,
+        "attackSeq": 0,
+        "hitSeq": 0,
+        "attackTarget": null,
+        "subduedUntil": 0,
+        "sitAnchor": null,
+        "present": true
+      }
+    ],
+    "listener": [
+      {
+        "id": "b_15",
+        "kind": "body",
+        "name": "Dunstan Mole's body",
+        "createdAt": 8666400,
+        "tags": [],
+        "ownerId": "p_15",
+        "shape": "humanoid",
+        "pos": {
+          "x": 94.5066899681853,
+          "y": 14,
+          "z": 122.4340102564544
+        },
+        "vel": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "yaw": -3.2426263749935558,
+        "pose": "sleep",
+        "poseUntil": 5884.799999997418,
+        "onGround": true,
+        "path": null,
+        "pathIndex": 0,
+        "pathGoal": {
+          "x": 94.5,
+          "y": 14,
+          "z": 122.5
+        },
+        "speed": 3.2,
+        "health": 110,
+        "maxHealth": 110,
+        "dead": false,
+        "lastHitAt": 5073.599999999382,
+        "lastAttackAt": 5771.849999997688,
+        "attackSeq": 18,
+        "hitSeq": 7,
+        "attackTarget": null,
+        "subduedUntil": 0,
+        "sitAnchor": {
+          "x": 94.5066899681853,
+          "y": 14,
+          "z": 122.4340102564544
+        },
+        "present": true,
+        "combatAction": {
+          "id": "action_263",
+          "actorBodyId": "b_15",
+          "kind": "attack",
+          "targetBodyId": "b_16",
+          "weaponId": "i_9",
+          "definition": "sword_high",
+          "trajectory": "high",
+          "startedAt": 5771.849999997688,
+          "startTick": 346311,
+          "activeAt": 5772.149999997689,
+          "recoveryAt": 5772.299999997688,
+          "completeAt": 5772.599999997688,
+          "phase": "complete",
+          "outcome": "hit",
+          "facing": 0.25120902657515637,
+          "initialFacing": 0.25120902657515637,
+          "trackingUntil": 5772.049999997688,
+          "turnRate": 1.5707963267948966,
+          "turnBudget": 0.2617993877991494,
+          "reach": 2.9000000000000004,
+          "radius": 0.12,
+          "impact": 14.676365868775141,
+          "exertionCost": 0.039999999999999994,
+          "intent": "arrest",
+          "direction": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "distance": 0,
+          "appliedDistance": 0,
+          "eventId": "e_58816",
+          "variant": "direct",
+          "contact": {
+            "bodyId": "b_16",
+            "region": "head",
+            "position": {
+              "x": 112.29713619561305,
+              "y": 15.65,
+              "z": 111.54124707341064
+            },
+            "at": 5772.187005119773,
+            "eventId": "e_58838"
+          }
+        },
+        "injuries": {
+          "head": 0.16967462077374684
+        }
+      }
+    ],
+    "reachable": false
+  },
+  {
+    "event": {
+      "id": "e_67625",
+      "tick": 9030018,
+      "type": "goal_changed",
+      "category": "cognition",
+      "actor": "p_17",
+      "target": "p_15",
+      "data": {
+        "from": "report",
+        "fromUtility": 0.6185,
+        "to": "report",
+        "utility": 0.6185,
+        "reasons": [
+          "I know an unfamiliar person attacked an unfamiliar person (told)",
+          "the watch should hear of it",
+          "my sense of honesty",
+          "I have tried 23 times already",
+          "concern: set on seeing them answer for it (0.98)",
+          "I know Dunstan Mole",
+          "Pip Hollis is my child"
+        ],
+        "key": "report:p_15:ev:e_58047"
+      },
+      "causes": [],
+      "effects": [],
+      "perceivedBy": [],
+      "significance": 0.45,
+      "summary": "Alwin Hollis: goal report → report → Dunstan Mole (u=0.62)"
+    },
+    "goal": {
+      "type": "report",
+      "utility": 0.6185,
+      "reasons": [
+        "I know an unfamiliar person attacked an unfamiliar person (told)",
+        "the watch should hear of it",
+        "my sense of honesty",
+        "I have tried 23 times already",
+        "concern: set on seeing them answer for it (0.98)",
+        "I know Dunstan Mole",
+        "Pip Hollis is my child"
+      ],
+      "createdAt": 9030018,
+      "key": "report:p_15:ev:e_58047",
+      "targetEntity": "p_15",
+      "targetPos": {
+        "x": 94.5066899681853,
+        "y": 14,
+        "z": 122.4340102564544
+      },
+      "data": {
+        "key": "ev:e_58047"
+      }
+    },
+    "report": {
+      "key": "ev:e_58047",
+      "status": "seeking",
+      "attempts": 23,
+      "firstAt": 9029271,
+      "lastAttemptAt": 9030009,
+      "towardId": "p_15"
+    },
+    "knowledge": {
+      "key": "ev:e_58047",
+      "kind": "event",
+      "claim": {
+        "eventId": "e_58047",
+        "type": "attack",
+        "tick": 9011937,
+        "pos": {
+          "x": 95.88362516,
+          "y": 14,
+          "z": 110.5
+        },
+        "significance": 0.7,
+        "actor": "p_16",
+        "target": "p_28"
+      },
+      "confidence": 0.6162500000000001,
+      "learnedAt": 9029262,
+      "source": {
+        "type": "told",
+        "from": "p_37",
+        "viaEvent": "e_67353"
+      },
+      "hops": 1,
+      "sharedWith": []
+    },
+    "speaker": [
+      {
+        "id": "b_17",
+        "kind": "body",
+        "name": "Alwin Hollis's body",
+        "createdAt": 8666400,
+        "tags": [],
+        "ownerId": "p_17",
+        "shape": "humanoid",
+        "pos": {
+          "x": 94.5,
+          "y": 14,
+          "z": 121.5
+        },
+        "vel": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "yaw": -3.4633432079864352,
+        "pose": "stand",
+        "poseUntil": 6049.349999997019,
+        "onGround": true,
+        "path": null,
+        "pathIndex": 4,
+        "pathGoal": {
+          "x": 94.5066899681853,
+          "y": 14,
+          "z": 122.4340102564544
+        },
+        "speed": 5.6,
+        "health": 80,
+        "maxHealth": 80,
+        "dead": false,
+        "lastHitAt": -99,
+        "lastAttackAt": -99,
+        "attackSeq": 0,
+        "hitSeq": 0,
+        "attackTarget": null,
+        "subduedUntil": 0,
+        "sitAnchor": null,
+        "present": true
+      }
+    ],
+    "listener": [
+      {
+        "id": "b_15",
+        "kind": "body",
+        "name": "Dunstan Mole's body",
+        "createdAt": 8666400,
+        "tags": [],
+        "ownerId": "p_15",
+        "shape": "humanoid",
+        "pos": {
+          "x": 94.5066899681853,
+          "y": 14,
+          "z": 122.4340102564544
+        },
+        "vel": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "yaw": -3.2426263749935558,
+        "pose": "sleep",
+        "poseUntil": 5884.799999997418,
+        "onGround": true,
+        "path": null,
+        "pathIndex": 0,
+        "pathGoal": {
+          "x": 94.5,
+          "y": 14,
+          "z": 122.5
+        },
+        "speed": 3.2,
+        "health": 110,
+        "maxHealth": 110,
+        "dead": false,
+        "lastHitAt": 5073.599999999382,
+        "lastAttackAt": 5771.849999997688,
+        "attackSeq": 18,
+        "hitSeq": 7,
+        "attackTarget": null,
+        "subduedUntil": 0,
+        "sitAnchor": {
+          "x": 94.5066899681853,
+          "y": 14,
+          "z": 122.4340102564544
+        },
+        "present": true,
+        "combatAction": {
+          "id": "action_263",
+          "actorBodyId": "b_15",
+          "kind": "attack",
+          "targetBodyId": "b_16",
+          "weaponId": "i_9",
+          "definition": "sword_high",
+          "trajectory": "high",
+          "startedAt": 5771.849999997688,
+          "startTick": 346311,
+          "activeAt": 5772.149999997689,
+          "recoveryAt": 5772.299999997688,
+          "completeAt": 5772.599999997688,
+          "phase": "complete",
+          "outcome": "hit",
+          "facing": 0.25120902657515637,
+          "initialFacing": 0.25120902657515637,
+          "trackingUntil": 5772.049999997688,
+          "turnRate": 1.5707963267948966,
+          "turnBudget": 0.2617993877991494,
+          "reach": 2.9000000000000004,
+          "radius": 0.12,
+          "impact": 14.676365868775141,
+          "exertionCost": 0.039999999999999994,
+          "intent": "arrest",
+          "direction": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "distance": 0,
+          "appliedDistance": 0,
+          "eventId": "e_58816",
+          "variant": "direct",
+          "contact": {
+            "bodyId": "b_16",
+            "region": "head",
+            "position": {
+              "x": 112.29713619561305,
+              "y": 15.65,
+              "z": 111.54124707341064
+            },
+            "at": 5772.187005119773,
+            "eventId": "e_58838"
+          }
+        },
+        "injuries": {
+          "head": 0.16967462077374684
+        }
+      }
+    ],
+    "reachable": false
+  },
+  {
+    "event": {
+      "id": "e_67634",
+      "tick": 9030036,
+      "type": "goal_changed",
+      "category": "cognition",
+      "actor": "p_17",
+      "target": "p_15",
+      "data": {
+        "from": "report",
+        "fromUtility": 0.6185,
+        "to": "report",
+        "utility": 0.6185,
+        "reasons": [
+          "I know an unfamiliar person attacked an unfamiliar person (told)",
+          "the watch should hear of it",
+          "my sense of honesty",
+          "I have tried 24 times already",
+          "concern: set on seeing them answer for it (0.98)",
+          "I know Dunstan Mole",
+          "Pip Hollis is my child"
+        ],
+        "key": "report:p_15:ev:e_58047"
+      },
+      "causes": [],
+      "effects": [],
+      "perceivedBy": [],
+      "significance": 0.45,
+      "summary": "Alwin Hollis: goal report → report → Dunstan Mole (u=0.62)"
+    },
+    "goal": {
+      "type": "report",
+      "utility": 0.6185,
+      "reasons": [
+        "I know an unfamiliar person attacked an unfamiliar person (told)",
+        "the watch should hear of it",
+        "my sense of honesty",
+        "I have tried 24 times already",
+        "concern: set on seeing them answer for it (0.98)",
+        "I know Dunstan Mole",
+        "Pip Hollis is my child"
+      ],
+      "createdAt": 9030036,
+      "key": "report:p_15:ev:e_58047",
+      "targetEntity": "p_15",
+      "targetPos": {
+        "x": 94.5066899681853,
+        "y": 14,
+        "z": 122.4340102564544
+      },
+      "data": {
+        "key": "ev:e_58047"
+      }
+    },
+    "report": {
+      "key": "ev:e_58047",
+      "status": "seeking",
+      "attempts": 24,
+      "firstAt": 9029271,
+      "lastAttemptAt": 9030027,
+      "towardId": "p_15"
+    },
+    "knowledge": {
+      "key": "ev:e_58047",
+      "kind": "event",
+      "claim": {
+        "eventId": "e_58047",
+        "type": "attack",
+        "tick": 9011937,
+        "pos": {
+          "x": 95.88362516,
+          "y": 14,
+          "z": 110.5
+        },
+        "significance": 0.7,
+        "actor": "p_16",
+        "target": "p_28"
+      },
+      "confidence": 0.6162500000000001,
+      "learnedAt": 9029262,
+      "source": {
+        "type": "told",
+        "from": "p_37",
+        "viaEvent": "e_67353"
+      },
+      "hops": 1,
+      "sharedWith": []
+    },
+    "speaker": [
+      {
+        "id": "b_17",
+        "kind": "body",
+        "name": "Alwin Hollis's body",
+        "createdAt": 8666400,
+        "tags": [],
+        "ownerId": "p_17",
+        "shape": "humanoid",
+        "pos": {
+          "x": 94.5,
+          "y": 14,
+          "z": 121.5
+        },
+        "vel": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "yaw": -3.4633432079864352,
+        "pose": "stand",
+        "poseUntil": 6049.349999997019,
+        "onGround": true,
+        "path": null,
+        "pathIndex": 4,
+        "pathGoal": {
+          "x": 94.5066899681853,
+          "y": 14,
+          "z": 122.4340102564544
+        },
+        "speed": 5.6,
+        "health": 80,
+        "maxHealth": 80,
+        "dead": false,
+        "lastHitAt": -99,
+        "lastAttackAt": -99,
+        "attackSeq": 0,
+        "hitSeq": 0,
+        "attackTarget": null,
+        "subduedUntil": 0,
+        "sitAnchor": null,
+        "present": true
+      }
+    ],
+    "listener": [
+      {
+        "id": "b_15",
+        "kind": "body",
+        "name": "Dunstan Mole's body",
+        "createdAt": 8666400,
+        "tags": [],
+        "ownerId": "p_15",
+        "shape": "humanoid",
+        "pos": {
+          "x": 94.5066899681853,
+          "y": 14,
+          "z": 122.4340102564544
+        },
+        "vel": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "yaw": -3.2426263749935558,
+        "pose": "sleep",
+        "poseUntil": 5884.799999997418,
+        "onGround": true,
+        "path": null,
+        "pathIndex": 0,
+        "pathGoal": {
+          "x": 94.5,
+          "y": 14,
+          "z": 122.5
+        },
+        "speed": 3.2,
+        "health": 110,
+        "maxHealth": 110,
+        "dead": false,
+        "lastHitAt": 5073.599999999382,
+        "lastAttackAt": 5771.849999997688,
+        "attackSeq": 18,
+        "hitSeq": 7,
+        "attackTarget": null,
+        "subduedUntil": 0,
+        "sitAnchor": {
+          "x": 94.5066899681853,
+          "y": 14,
+          "z": 122.4340102564544
+        },
+        "present": true,
+        "combatAction": {
+          "id": "action_263",
+          "actorBodyId": "b_15",
+          "kind": "attack",
+          "targetBodyId": "b_16",
+          "weaponId": "i_9",
+          "definition": "sword_high",
+          "trajectory": "high",
+          "startedAt": 5771.849999997688,
+          "startTick": 346311,
+          "activeAt": 5772.149999997689,
+          "recoveryAt": 5772.299999997688,
+          "completeAt": 5772.599999997688,
+          "phase": "complete",
+          "outcome": "hit",
+          "facing": 0.25120902657515637,
+          "initialFacing": 0.25120902657515637,
+          "trackingUntil": 5772.049999997688,
+          "turnRate": 1.5707963267948966,
+          "turnBudget": 0.2617993877991494,
+          "reach": 2.9000000000000004,
+          "radius": 0.12,
+          "impact": 14.676365868775141,
+          "exertionCost": 0.039999999999999994,
+          "intent": "arrest",
+          "direction": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "distance": 0,
+          "appliedDistance": 0,
+          "eventId": "e_58816",
+          "variant": "direct",
+          "contact": {
+            "bodyId": "b_16",
+            "region": "head",
+            "position": {
+              "x": 112.29713619561305,
+              "y": 15.65,
+              "z": 111.54124707341064
+            },
+            "at": 5772.187005119773,
+            "eventId": "e_58838"
+          }
+        },
+        "injuries": {
+          "head": 0.16967462077374684
+        }
+      }
+    ],
+    "reachable": false
+  },
+  {
+    "event": {
+      "id": "e_67637",
+      "tick": 9030054,
+      "type": "goal_changed",
+      "category": "cognition",
+      "actor": "p_17",
+      "target": "p_15",
+      "data": {
+        "from": "report",
+        "fromUtility": 0.6185,
+        "to": "report",
+        "utility": 0.6185,
+        "reasons": [
+          "I know an unfamiliar person attacked an unfamiliar person (told)",
+          "the watch should hear of it",
+          "my sense of honesty",
+          "I have tried 25 times already",
+          "concern: set on seeing them answer for it (0.98)",
+          "I know Dunstan Mole",
+          "Pip Hollis is my child"
+        ],
+        "key": "report:p_15:ev:e_58047"
+      },
+      "causes": [],
+      "effects": [],
+      "perceivedBy": [],
+      "significance": 0.45,
+      "summary": "Alwin Hollis: goal report → report → Dunstan Mole (u=0.62)"
+    },
+    "goal": {
+      "type": "report",
+      "utility": 0.6185,
+      "reasons": [
+        "I know an unfamiliar person attacked an unfamiliar person (told)",
+        "the watch should hear of it",
+        "my sense of honesty",
+        "I have tried 25 times already",
+        "concern: set on seeing them answer for it (0.98)",
+        "I know Dunstan Mole",
+        "Pip Hollis is my child"
+      ],
+      "createdAt": 9030054,
+      "key": "report:p_15:ev:e_58047",
+      "targetEntity": "p_15",
+      "targetPos": {
+        "x": 94.5066899681853,
+        "y": 14,
+        "z": 122.4340102564544
+      },
+      "data": {
+        "key": "ev:e_58047"
+      }
+    },
+    "report": {
+      "key": "ev:e_58047",
+      "status": "seeking",
+      "attempts": 25,
+      "firstAt": 9029271,
+      "lastAttemptAt": 9030045,
+      "towardId": "p_15"
+    },
+    "knowledge": {
+      "key": "ev:e_58047",
+      "kind": "event",
+      "claim": {
+        "eventId": "e_58047",
+        "type": "attack",
+        "tick": 9011937,
+        "pos": {
+          "x": 95.88362516,
+          "y": 14,
+          "z": 110.5
+        },
+        "significance": 0.7,
+        "actor": "p_16",
+        "target": "p_28"
+      },
+      "confidence": 0.6162500000000001,
+      "learnedAt": 9029262,
+      "source": {
+        "type": "told",
+        "from": "p_37",
+        "viaEvent": "e_67353"
+      },
+      "hops": 1,
+      "sharedWith": []
+    },
+    "speaker": [
+      {
+        "id": "b_17",
+        "kind": "body",
+        "name": "Alwin Hollis's body",
+        "createdAt": 8666400,
+        "tags": [],
+        "ownerId": "p_17",
+        "shape": "humanoid",
+        "pos": {
+          "x": 94.5,
+          "y": 14,
+          "z": 121.5
+        },
+        "vel": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "yaw": -3.4633432079864352,
+        "pose": "stand",
+        "poseUntil": 6049.349999997019,
+        "onGround": true,
+        "path": null,
+        "pathIndex": 4,
+        "pathGoal": {
+          "x": 94.5066899681853,
+          "y": 14,
+          "z": 122.4340102564544
+        },
+        "speed": 5.6,
+        "health": 80,
+        "maxHealth": 80,
+        "dead": false,
+        "lastHitAt": -99,
+        "lastAttackAt": -99,
+        "attackSeq": 0,
+        "hitSeq": 0,
+        "attackTarget": null,
+        "subduedUntil": 0,
+        "sitAnchor": null,
+        "present": true
+      }
+    ],
+    "listener": [
+      {
+        "id": "b_15",
+        "kind": "body",
+        "name": "Dunstan Mole's body",
+        "createdAt": 8666400,
+        "tags": [],
+        "ownerId": "p_15",
+        "shape": "humanoid",
+        "pos": {
+          "x": 94.5066899681853,
+          "y": 14,
+          "z": 122.4340102564544
+        },
+        "vel": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "yaw": -3.2426263749935558,
+        "pose": "sleep",
+        "poseUntil": 5884.799999997418,
+        "onGround": true,
+        "path": null,
+        "pathIndex": 0,
+        "pathGoal": {
+          "x": 94.5,
+          "y": 14,
+          "z": 122.5
+        },
+        "speed": 3.2,
+        "health": 110,
+        "maxHealth": 110,
+        "dead": false,
+        "lastHitAt": 5073.599999999382,
+        "lastAttackAt": 5771.849999997688,
+        "attackSeq": 18,
+        "hitSeq": 7,
+        "attackTarget": null,
+        "subduedUntil": 0,
+        "sitAnchor": {
+          "x": 94.5066899681853,
+          "y": 14,
+          "z": 122.4340102564544
+        },
+        "present": true,
+        "combatAction": {
+          "id": "action_263",
+          "actorBodyId": "b_15",
+          "kind": "attack",
+          "targetBodyId": "b_16",
+          "weaponId": "i_9",
+          "definition": "sword_high",
+          "trajectory": "high",
+          "startedAt": 5771.849999997688,
+          "startTick": 346311,
+          "activeAt": 5772.149999997689,
+          "recoveryAt": 5772.299999997688,
+          "completeAt": 5772.599999997688,
+          "phase": "complete",
+          "outcome": "hit",
+          "facing": 0.25120902657515637,
+          "initialFacing": 0.25120902657515637,
+          "trackingUntil": 5772.049999997688,
+          "turnRate": 1.5707963267948966,
+          "turnBudget": 0.2617993877991494,
+          "reach": 2.9000000000000004,
+          "radius": 0.12,
+          "impact": 14.676365868775141,
+          "exertionCost": 0.039999999999999994,
+          "intent": "arrest",
+          "direction": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "distance": 0,
+          "appliedDistance": 0,
+          "eventId": "e_58816",
+          "variant": "direct",
+          "contact": {
+            "bodyId": "b_16",
+            "region": "head",
+            "position": {
+              "x": 112.29713619561305,
+              "y": 15.65,
+              "z": 111.54124707341064
+            },
+            "at": 5772.187005119773,
+            "eventId": "e_58838"
+          }
+        },
+        "injuries": {
+          "head": 0.16967462077374684
+        }
+      }
+    ],
+    "reachable": false
+  },
+  {
+    "event": {
+      "id": "e_67639",
+      "tick": 9030072,
+      "type": "goal_changed",
+      "category": "cognition",
+      "actor": "p_17",
+      "target": "p_15",
+      "data": {
+        "from": "report",
+        "fromUtility": 0.6185,
+        "to": "report",
+        "utility": 0.6185,
+        "reasons": [
+          "I know an unfamiliar person attacked an unfamiliar person (told)",
+          "the watch should hear of it",
+          "my sense of honesty",
+          "I have tried 26 times already",
+          "concern: set on seeing them answer for it (0.98)",
+          "I know Dunstan Mole",
+          "Pip Hollis is my child"
+        ],
+        "key": "report:p_15:ev:e_58047"
+      },
+      "causes": [],
+      "effects": [],
+      "perceivedBy": [],
+      "significance": 0.45,
+      "summary": "Alwin Hollis: goal report → report → Dunstan Mole (u=0.62)"
+    },
+    "goal": {
+      "type": "report",
+      "utility": 0.6185,
+      "reasons": [
+        "I know an unfamiliar person attacked an unfamiliar person (told)",
+        "the watch should hear of it",
+        "my sense of honesty",
+        "I have tried 26 times already",
+        "concern: set on seeing them answer for it (0.98)",
+        "I know Dunstan Mole",
+        "Pip Hollis is my child"
+      ],
+      "createdAt": 9030072,
+      "key": "report:p_15:ev:e_58047",
+      "targetEntity": "p_15",
+      "targetPos": {
+        "x": 94.5066899681853,
+        "y": 14,
+        "z": 122.4340102564544
+      },
+      "data": {
+        "key": "ev:e_58047"
+      }
+    },
+    "report": {
+      "key": "ev:e_58047",
+      "status": "seeking",
+      "attempts": 26,
+      "firstAt": 9029271,
+      "lastAttemptAt": 9030063,
+      "towardId": "p_15"
+    },
+    "knowledge": {
+      "key": "ev:e_58047",
+      "kind": "event",
+      "claim": {
+        "eventId": "e_58047",
+        "type": "attack",
+        "tick": 9011937,
+        "pos": {
+          "x": 95.88362516,
+          "y": 14,
+          "z": 110.5
+        },
+        "significance": 0.7,
+        "actor": "p_16",
+        "target": "p_28"
+      },
+      "confidence": 0.6162500000000001,
+      "learnedAt": 9029262,
+      "source": {
+        "type": "told",
+        "from": "p_37",
+        "viaEvent": "e_67353"
+      },
+      "hops": 1,
+      "sharedWith": []
+    },
+    "speaker": [
+      {
+        "id": "b_17",
+        "kind": "body",
+        "name": "Alwin Hollis's body",
+        "createdAt": 8666400,
+        "tags": [],
+        "ownerId": "p_17",
+        "shape": "humanoid",
+        "pos": {
+          "x": 94.5,
+          "y": 14,
+          "z": 121.5
+        },
+        "vel": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "yaw": -3.4633432079864352,
+        "pose": "stand",
+        "poseUntil": 6049.349999997019,
+        "onGround": true,
+        "path": null,
+        "pathIndex": 4,
+        "pathGoal": {
+          "x": 94.5066899681853,
+          "y": 14,
+          "z": 122.4340102564544
+        },
+        "speed": 5.6,
+        "health": 80,
+        "maxHealth": 80,
+        "dead": false,
+        "lastHitAt": -99,
+        "lastAttackAt": -99,
+        "attackSeq": 0,
+        "hitSeq": 0,
+        "attackTarget": null,
+        "subduedUntil": 0,
+        "sitAnchor": null,
+        "present": true
+      }
+    ],
+    "listener": [
+      {
+        "id": "b_15",
+        "kind": "body",
+        "name": "Dunstan Mole's body",
+        "createdAt": 8666400,
+        "tags": [],
+        "ownerId": "p_15",
+        "shape": "humanoid",
+        "pos": {
+          "x": 94.5066899681853,
+          "y": 14,
+          "z": 122.4340102564544
+        },
+        "vel": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "yaw": -3.2426263749935558,
+        "pose": "sleep",
+        "poseUntil": 5884.799999997418,
+        "onGround": true,
+        "path": null,
+        "pathIndex": 0,
+        "pathGoal": {
+          "x": 94.5,
+          "y": 14,
+          "z": 122.5
+        },
+        "speed": 3.2,
+        "health": 110,
+        "maxHealth": 110,
+        "dead": false,
+        "lastHitAt": 5073.599999999382,
+        "lastAttackAt": 5771.849999997688,
+        "attackSeq": 18,
+        "hitSeq": 7,
+        "attackTarget": null,
+        "subduedUntil": 0,
+        "sitAnchor": {
+          "x": 94.5066899681853,
+          "y": 14,
+          "z": 122.4340102564544
+        },
+        "present": true,
+        "combatAction": {
+          "id": "action_263",
+          "actorBodyId": "b_15",
+          "kind": "attack",
+          "targetBodyId": "b_16",
+          "weaponId": "i_9",
+          "definition": "sword_high",
+          "trajectory": "high",
+          "startedAt": 5771.849999997688,
+          "startTick": 346311,
+          "activeAt": 5772.149999997689,
+          "recoveryAt": 5772.299999997688,
+          "completeAt": 5772.599999997688,
+          "phase": "complete",
+          "outcome": "hit",
+          "facing": 0.25120902657515637,
+          "initialFacing": 0.25120902657515637,
+          "trackingUntil": 5772.049999997688,
+          "turnRate": 1.5707963267948966,
+          "turnBudget": 0.2617993877991494,
+          "reach": 2.9000000000000004,
+          "radius": 0.12,
+          "impact": 14.676365868775141,
+          "exertionCost": 0.039999999999999994,
+          "intent": "arrest",
+          "direction": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "distance": 0,
+          "appliedDistance": 0,
+          "eventId": "e_58816",
+          "variant": "direct",
+          "contact": {
+            "bodyId": "b_16",
+            "region": "head",
+            "position": {
+              "x": 112.29713619561305,
+              "y": 15.65,
+              "z": 111.54124707341064
+            },
+            "at": 5772.187005119773,
+            "eventId": "e_58838"
+          }
+        },
+        "injuries": {
+          "head": 0.16967462077374684
+        }
+      }
+    ],
+    "reachable": false
+  },
+  {
+    "event": {
+      "id": "e_67643",
+      "tick": 9030090,
+      "type": "goal_changed",
+      "category": "cognition",
+      "actor": "p_17",
+      "target": "p_15",
+      "data": {
+        "from": "report",
+        "fromUtility": 0.6185,
+        "to": "report",
+        "utility": 0.6185,
+        "reasons": [
+          "I know an unfamiliar person attacked an unfamiliar person (told)",
+          "the watch should hear of it",
+          "my sense of honesty",
+          "I have tried 27 times already",
+          "concern: set on seeing them answer for it (0.98)",
+          "I know Dunstan Mole",
+          "Pip Hollis is my child"
+        ],
+        "key": "report:p_15:ev:e_58047"
+      },
+      "causes": [],
+      "effects": [],
+      "perceivedBy": [],
+      "significance": 0.45,
+      "summary": "Alwin Hollis: goal report → report → Dunstan Mole (u=0.62)"
+    },
+    "goal": {
+      "type": "report",
+      "utility": 0.6185,
+      "reasons": [
+        "I know an unfamiliar person attacked an unfamiliar person (told)",
+        "the watch should hear of it",
+        "my sense of honesty",
+        "I have tried 27 times already",
+        "concern: set on seeing them answer for it (0.98)",
+        "I know Dunstan Mole",
+        "Pip Hollis is my child"
+      ],
+      "createdAt": 9030090,
+      "key": "report:p_15:ev:e_58047",
+      "targetEntity": "p_15",
+      "targetPos": {
+        "x": 94.5066899681853,
+        "y": 14,
+        "z": 122.4340102564544
+      },
+      "data": {
+        "key": "ev:e_58047"
+      }
+    },
+    "report": {
+      "key": "ev:e_58047",
+      "status": "seeking",
+      "attempts": 27,
+      "firstAt": 9029271,
+      "lastAttemptAt": 9030081,
+      "towardId": "p_15"
+    },
+    "knowledge": {
+      "key": "ev:e_58047",
+      "kind": "event",
+      "claim": {
+        "eventId": "e_58047",
+        "type": "attack",
+        "tick": 9011937,
+        "pos": {
+          "x": 95.88362516,
+          "y": 14,
+          "z": 110.5
+        },
+        "significance": 0.7,
+        "actor": "p_16",
+        "target": "p_28"
+      },
+      "confidence": 0.6162500000000001,
+      "learnedAt": 9029262,
+      "source": {
+        "type": "told",
+        "from": "p_37",
+        "viaEvent": "e_67353"
+      },
+      "hops": 1,
+      "sharedWith": []
+    },
+    "speaker": [
+      {
+        "id": "b_17",
+        "kind": "body",
+        "name": "Alwin Hollis's body",
+        "createdAt": 8666400,
+        "tags": [],
+        "ownerId": "p_17",
+        "shape": "humanoid",
+        "pos": {
+          "x": 94.5,
+          "y": 14,
+          "z": 121.5
+        },
+        "vel": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "yaw": -3.4633432079864352,
+        "pose": "stand",
+        "poseUntil": 6049.349999997019,
+        "onGround": true,
+        "path": null,
+        "pathIndex": 4,
+        "pathGoal": {
+          "x": 94.5066899681853,
+          "y": 14,
+          "z": 122.4340102564544
+        },
+        "speed": 5.6,
+        "health": 80,
+        "maxHealth": 80,
+        "dead": false,
+        "lastHitAt": -99,
+        "lastAttackAt": -99,
+        "attackSeq": 0,
+        "hitSeq": 0,
+        "attackTarget": null,
+        "subduedUntil": 0,
+        "sitAnchor": null,
+        "present": true
+      }
+    ],
+    "listener": [
+      {
+        "id": "b_15",
+        "kind": "body",
+        "name": "Dunstan Mole's body",
+        "createdAt": 8666400,
+        "tags": [],
+        "ownerId": "p_15",
+        "shape": "humanoid",
+        "pos": {
+          "x": 94.5066899681853,
+          "y": 14,
+          "z": 122.4340102564544
+        },
+        "vel": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "yaw": -3.2426263749935558,
+        "pose": "sleep",
+        "poseUntil": 5884.799999997418,
+        "onGround": true,
+        "path": null,
+        "pathIndex": 0,
+        "pathGoal": {
+          "x": 94.5,
+          "y": 14,
+          "z": 122.5
+        },
+        "speed": 3.2,
+        "health": 110,
+        "maxHealth": 110,
+        "dead": false,
+        "lastHitAt": 5073.599999999382,
+        "lastAttackAt": 5771.849999997688,
+        "attackSeq": 18,
+        "hitSeq": 7,
+        "attackTarget": null,
+        "subduedUntil": 0,
+        "sitAnchor": {
+          "x": 94.5066899681853,
+          "y": 14,
+          "z": 122.4340102564544
+        },
+        "present": true,
+        "combatAction": {
+          "id": "action_263",
+          "actorBodyId": "b_15",
+          "kind": "attack",
+          "targetBodyId": "b_16",
+          "weaponId": "i_9",
+          "definition": "sword_high",
+          "trajectory": "high",
+          "startedAt": 5771.849999997688,
+          "startTick": 346311,
+          "activeAt": 5772.149999997689,
+          "recoveryAt": 5772.299999997688,
+          "completeAt": 5772.599999997688,
+          "phase": "complete",
+          "outcome": "hit",
+          "facing": 0.25120902657515637,
+          "initialFacing": 0.25120902657515637,
+          "trackingUntil": 5772.049999997688,
+          "turnRate": 1.5707963267948966,
+          "turnBudget": 0.2617993877991494,
+          "reach": 2.9000000000000004,
+          "radius": 0.12,
+          "impact": 14.676365868775141,
+          "exertionCost": 0.039999999999999994,
+          "intent": "arrest",
+          "direction": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "distance": 0,
+          "appliedDistance": 0,
+          "eventId": "e_58816",
+          "variant": "direct",
+          "contact": {
+            "bodyId": "b_16",
+            "region": "head",
+            "position": {
+              "x": 112.29713619561305,
+              "y": 15.65,
+              "z": 111.54124707341064
+            },
+            "at": 5772.187005119773,
+            "eventId": "e_58838"
+          }
+        },
+        "injuries": {
+          "head": 0.16967462077374684
+        }
+      }
+    ],
+    "reachable": false
+  }
+]

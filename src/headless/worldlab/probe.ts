@@ -6,6 +6,8 @@ import type { MemorySink } from '../../sim/telemetry/recorder';
 import { topSignificantEntities } from '../../sim/history/significance';
 import { buildWorldRunSummary } from '../../sim/history/summary';
 import { hungerBand, thirstBand, sleepBand } from '../../sim/core/physiology';
+import { processFor } from '../../sim/world/labor';
+import { BAKE_RATIO, MILL_RATIO } from '../../sim/world/metabolism';
 import { stockAt } from '../../sim/world/stock';
 import { effectivePrice } from '../../sim/world/pricing';
 import { isFood } from '../../sim/world/factory';
@@ -158,6 +160,13 @@ export function takeProbe(ctx: ProbeContext, world: World, worldSecondsElapsed: 
     maxOpenHaulTaskAgeHours: maxOpenHaulTaskAgeHours(world),
     maxActiveConflictAgeHours: maxActiveConflictAgeHours(world),
     recoveryProgress: recoveryProgress(world),
+    productionProgress: world.places().filter(p => p.type === 'mill' || p.type === 'bakery').map(p => {
+      const process = processFor(p.type)!;
+      const requests = world.requests.filter(r => r.type === 'production' && r.payload.placeId === p.id && r.payload.resource === process.output);
+      return { placeId: p.id, inputReady: stockAt(world, process.input, p.id) >= (p.type === 'mill' ? MILL_RATIO.in : BAKE_RATIO.in),
+        demand: requests.filter(r => r.status === 'open' || r.status === 'accepted').reduce((n, r) => n + Math.max(0, (r.payload.quantity ?? 0) - (r.fulfilledQuantity ?? 0)), 0),
+        fulfilled: requests.reduce((n, r) => n + Math.max(0, r.status === 'completed' ? (r.payload.quantity ?? r.fulfilledQuantity ?? 0) : (r.fulfilledQuantity ?? 0)), 0) };
+    }),
     alivePopulation: summary.endingPopulation,
     summary,
     anomalies,

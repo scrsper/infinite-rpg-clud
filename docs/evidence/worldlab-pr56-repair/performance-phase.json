@@ -1,0 +1,55 @@
+{
+  "conditions": "Node 22.23.2, same --cpu-prof settings and scenario inputs; timings observational, not a quota estimate or performance guarantee.",
+  "scope": "Only allocation/navigation/route optimizations. Captured before the subsequent intentional shared-action loop repair; not a claim that all canonical histories remain identical after that behavior repair.",
+  "cases": [
+    {
+      "case": "pressure 918271",
+      "beforeMs": 2367.7421999999997,
+      "afterMs": 1816.1616999999999,
+      "unchangedHashes": [
+        "aeeb0bebca72397d51d404f726a12743b8a99630fdfc30001c7415b7f48033bf"
+      ]
+    },
+    {
+      "case": "pressure 44017",
+      "beforeMs": 2111.4417,
+      "afterMs": 1487.2604000000001,
+      "unchangedHashes": [
+        "cc935cc9c4126866798afd2c3bef7e1677247b700b1bee6c332ee0a28484943d"
+      ]
+    },
+    {
+      "case": "agency",
+      "beforeMs": 2073.4424,
+      "afterMs": 1905.9015999999997,
+      "unchangedHashes": [
+        "fc2299b355df70f7b5311abed1ad67a0495d13b64e19269455749f35574f3add",
+        "fc2299b355df70f7b5311abed1ad67a0495d13b64e19269455749f35574f3add"
+      ]
+    },
+    {
+      "case": "geography 918271",
+      "beforeMs": 907.0355,
+      "afterMs": 619.3680000000004,
+      "unchangedHashes": [
+        "bca23e8d73c474d45dcdf9289c7846ab3408b51d5365df8a8fca172e1f397175"
+      ]
+    },
+    {
+      "case": "geography 44017",
+      "beforeMs": 1323.000399999999,
+      "afterMs": 864.0798000000004,
+      "unchangedHashes": [
+        "8ddf824bed9faf7e60a8eaa545a593fe3e764adb3bc4c5fccdd4967ab191b0f1"
+      ]
+    },
+    {
+      "case": "geography 741",
+      "beforeMs": 1290.4843999999994,
+      "afterMs": 882.0734999999995,
+      "unchangedHashes": [
+        "bd8f9d01abfe869f1493ca655ef1133fdc67d47bc900efa050e3caa3d83ef0fd"
+      ]
+    }
+  ]
+}

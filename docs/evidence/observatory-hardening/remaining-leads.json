@@ -1,0 +1,5612 @@
+{
+  "runs": [
+    {
+      "seed": 918271,
+      "scope": "Remaining rate leads are class F unless an individually documented mechanism establishes C or D. Zero hard failures is not a universal decision-quality proof.",
+      "hourlySamples": 720,
+      "hardFailures": [],
+      "groups": 344,
+      "foodLedger": {
+        "initial": 377,
+        "production": 1051,
+        "consumption": 1129,
+        "spoilage": 170,
+        "transformationInput": 22,
+        "final": 107,
+        "unexplained": 0
+      },
+      "churn": [
+        {
+          "key": "goal_churn:p_6:",
+          "count": 55,
+          "from": 8688837,
+          "to": 8698458,
+          "goals": [
+            {
+              "key": "flee:p_16",
+              "adoptions": 24,
+              "completed": 24,
+              "failedPaths": 0,
+              "first": 8688837,
+              "last": 8698449
+            },
+            {
+              "key": "report:p_16:ev:e_7060",
+              "adoptions": 2,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 8689251,
+              "last": 8691780
+            },
+            {
+              "key": "report:p_15:ev:e_7066",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 8689647,
+              "last": 8689647
+            },
+            {
+              "key": "report:p_14:ev:e_7293",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 8690052,
+              "last": 8690052
+            },
+            {
+              "key": "eat:pl_7",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8690457,
+              "last": 8690529
+            },
+            {
+              "key": "haul:pl_36",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8690538,
+              "last": 8691024
+            },
+            {
+              "key": "report:p_16:ev:e_7298",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8691033,
+              "last": 8691339
+            },
+            {
+              "key": "report:p_16:ev:e_7495",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8691348,
+              "last": 8691357
+            },
+            {
+              "key": "report:p_16:ev:e_7659",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8691366,
+              "last": 8691375
+            },
+            {
+              "key": "report:p_16:ev:e_7837",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8691384,
+              "last": 8691393
+            },
+            {
+              "key": "report:p_16:ev:e_7844",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8691402,
+              "last": 8691411
+            },
+            {
+              "key": "report:p_16:ev:e_8003",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8691420,
+              "last": 8691429
+            },
+            {
+              "key": "report:p_14:ev:e_7066",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 8692176,
+              "last": 8692176
+            },
+            {
+              "key": "report:p_15:ev:e_7293",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 8692581,
+              "last": 8692581
+            },
+            {
+              "key": "drink_water:pl_2",
+              "adoptions": 17,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 8692986,
+              "last": 8698458
+            }
+          ]
+        },
+        {
+          "key": "goal_churn:p_5:",
+          "count": 48,
+          "from": 9308559,
+          "to": 9317604,
+          "goals": [
+            {
+              "key": "report:p_14:ev:e_160533",
+              "adoptions": 2,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9308559,
+              "last": 9308802
+            },
+            {
+              "key": "report:p_15:ev:e_160920",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9308577,
+              "last": 9308577
+            },
+            {
+              "key": "report:p_14:ev:e_161029",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9308712,
+              "last": 9308730
+            },
+            {
+              "key": "report:p_14:ev:e_161140",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9308739,
+              "last": 9308748
+            },
+            {
+              "key": "report:p_14:ev:e_161226",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9308757,
+              "last": 9308766
+            },
+            {
+              "key": "report:p_14:ev:e_161302",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9308775,
+              "last": 9308784
+            },
+            {
+              "key": "report:p_14:ev:e_160920",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9308811,
+              "last": 9308820
+            },
+            {
+              "key": "socialize:pl_7",
+              "adoptions": 18,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9308829,
+              "last": 9316722
+            },
+            {
+              "key": "shelter:pl_7",
+              "adoptions": 2,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9308928,
+              "last": 9317604
+            },
+            {
+              "key": "flee:p_16",
+              "adoptions": 18,
+              "completed": 18,
+              "failedPaths": 0,
+              "first": 9309027,
+              "last": 9317595
+            },
+            {
+              "key": "report:p_14:ev:e_162326",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9311808,
+              "last": 9311817
+            },
+            {
+              "key": "report:p_14:ev:e_162755",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9313626,
+              "last": 9313635
+            }
+          ]
+        },
+        {
+          "key": "goal_churn:p_28:",
+          "count": 41,
+          "from": 8815098,
+          "to": 8824557,
+          "goals": [
+            {
+              "key": "report:p_14:ev:e_30922",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 8815098,
+              "last": 8815098
+            },
+            {
+              "key": "report:p_13:ev:e_23435",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 8815566,
+              "last": 8815566
+            },
+            {
+              "key": "flee:p_13",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8815665,
+              "last": 8816088
+            },
+            {
+              "key": "eat:pl_19",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8816097,
+              "last": 8816160
+            },
+            {
+              "key": "report:p_15:ev:e_22395",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8816169,
+              "last": 8816646
+            },
+            {
+              "key": "report:p_15:ev:e_22584",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8816655,
+              "last": 8816664
+            },
+            {
+              "key": "report:p_15:ev:e_22743",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8816673,
+              "last": 8816682
+            },
+            {
+              "key": "report:p_15:ev:e_23076",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8816691,
+              "last": 8816700
+            },
+            {
+              "key": "report:p_15:ev:e_23202",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8816709,
+              "last": 8816718
+            },
+            {
+              "key": "report:p_15:ev:e_23298",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8816727,
+              "last": 8816736
+            },
+            {
+              "key": "report:p_15:ev:e_23435",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8816745,
+              "last": 8816754
+            },
+            {
+              "key": "report:p_15:ev:e_23527",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8816763,
+              "last": 8816772
+            },
+            {
+              "key": "report:p_15:ev:e_23716",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8816781,
+              "last": 8816790
+            },
+            {
+              "key": "report:p_15:ev:e_23791",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8816799,
+              "last": 8816808
+            },
+            {
+              "key": "report:p_15:ev:e_23919",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8816817,
+              "last": 8816826
+            },
+            {
+              "key": "report:p_15:ev:e_24198",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8816835,
+              "last": 8816844
+            },
+            {
+              "key": "report:p_15:ev:e_24339",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8816853,
+              "last": 8816862
+            },
+            {
+              "key": "report:p_15:ev:e_25360",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8816871,
+              "last": 8816880
+            },
+            {
+              "key": "report:p_15:ev:e_28164",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8816889,
+              "last": 8816898
+            },
+            {
+              "key": "report:p_15:ev:e_29452",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8816907,
+              "last": 8816916
+            },
+            {
+              "key": "report:p_15:ev:e_29539",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8816925,
+              "last": 8816934
+            },
+            {
+              "key": "report:p_15:ev:e_29634",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8816943,
+              "last": 8816952
+            },
+            {
+              "key": "report:p_15:ev:e_29760",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8816961,
+              "last": 8816970
+            },
+            {
+              "key": "report:p_15:ev:e_29874",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8816979,
+              "last": 8816988
+            },
+            {
+              "key": "report:p_15:ev:e_30033",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8816997,
+              "last": 8817006
+            },
+            {
+              "key": "report:p_15:ev:e_30158",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8817015,
+              "last": 8817024
+            },
+            {
+              "key": "report:p_15:ev:e_30594",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8817033,
+              "last": 8817042
+            },
+            {
+              "key": "report:p_15:ev:e_30689",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8817051,
+              "last": 8817060
+            },
+            {
+              "key": "report:p_15:ev:e_30922",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8817069,
+              "last": 8817078
+            },
+            {
+              "key": "report:p_15:ev:e_30985",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8817087,
+              "last": 8817096
+            },
+            {
+              "key": "report:p_15:ev:e_31234",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8817105,
+              "last": 8817114
+            },
+            {
+              "key": "report:p_15:ev:e_31492",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8817123,
+              "last": 8817132
+            },
+            {
+              "key": "report:p_15:ev:e_22170",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8817141,
+              "last": 8817150
+            },
+            {
+              "key": "report:p_15:ev:e_8127",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8817159,
+              "last": 8817168
+            },
+            {
+              "key": "report:p_15:ev:e_8228",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8817177,
+              "last": 8817186
+            },
+            {
+              "key": "report:p_15:ev:e_8234",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8817195,
+              "last": 8817204
+            },
+            {
+              "key": "report:p_15:ev:e_8328",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8817213,
+              "last": 8817222
+            },
+            {
+              "key": "flee:p_16",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8817231,
+              "last": 8817672
+            },
+            {
+              "key": "sleep:pl_19",
+              "adoptions": 2,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8817681,
+              "last": 8824557
+            },
+            {
+              "key": "check_on:p_20",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8824377,
+              "last": 8824548
+            }
+          ]
+        },
+        {
+          "key": "goal_churn:p_24:",
+          "count": 47,
+          "from": 9007860,
+          "to": 9015204,
+          "goals": [
+            {
+              "key": "report:p_15:ev:e_77863",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9007860,
+              "last": 9007860
+            },
+            {
+              "key": "report:p_16:ev:e_78060",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9007959,
+              "last": 9008067
+            },
+            {
+              "key": "report:p_16:ev:e_77863",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9008076,
+              "last": 9008085
+            },
+            {
+              "key": "report:p_16:ev:e_78371",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9008094,
+              "last": 9008103
+            },
+            {
+              "key": "report:p_16:ev:e_78607",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9008112,
+              "last": 9008121
+            },
+            {
+              "key": "report:p_16:ev:e_78796",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9008130,
+              "last": 9008139
+            },
+            {
+              "key": "report:p_16:ev:e_79001",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9008148,
+              "last": 9008157
+            },
+            {
+              "key": "report:p_16:ev:e_79484",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9008166,
+              "last": 9008175
+            },
+            {
+              "key": "report:p_16:ev:e_79969",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9008184,
+              "last": 9008193
+            },
+            {
+              "key": "report:p_16:ev:e_80500",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9008202,
+              "last": 9008211
+            },
+            {
+              "key": "report:p_16:ev:e_80579",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9008220,
+              "last": 9008229
+            },
+            {
+              "key": "socialize:pl_1",
+              "adoptions": 2,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9008238,
+              "last": 9014763
+            },
+            {
+              "key": "report:p_15:ev:e_64539",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9010794,
+              "last": 9010794
+            },
+            {
+              "key": "report:p_14:ev:e_23202",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9011019,
+              "last": 9011019
+            },
+            {
+              "key": "report:p_13:ev:e_23298",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9011046,
+              "last": 9011289
+            },
+            {
+              "key": "report:p_13:ev:e_23435",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9011298,
+              "last": 9011307
+            },
+            {
+              "key": "report:p_13:ev:e_23527",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9011316,
+              "last": 9011325
+            },
+            {
+              "key": "report:p_13:ev:e_24020",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9011334,
+              "last": 9011343
+            },
+            {
+              "key": "report:p_13:ev:e_35610",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9011352,
+              "last": 9011361
+            },
+            {
+              "key": "report:p_13:ev:e_59739",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9011370,
+              "last": 9011370
+            },
+            {
+              "key": "flee:p_3",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9011379,
+              "last": 9011829
+            },
+            {
+              "key": "report:p_16:ev:e_24127",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9011838,
+              "last": 9012333
+            },
+            {
+              "key": "report:p_16:ev:e_88276",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9012342,
+              "last": 9012351
+            },
+            {
+              "key": "report:p_16:ev:e_24333",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9012360,
+              "last": 9012369
+            },
+            {
+              "key": "report:p_16:ev:e_24339",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9012378,
+              "last": 9012387
+            },
+            {
+              "key": "report:p_16:ev:e_25006",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9012396,
+              "last": 9012405
+            },
+            {
+              "key": "report:p_16:ev:e_22584",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9012414,
+              "last": 9012423
+            },
+            {
+              "key": "report:p_16:ev:e_35684",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9012432,
+              "last": 9012441
+            },
+            {
+              "key": "report:p_16:ev:e_53890",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9012450,
+              "last": 9012459
+            },
+            {
+              "key": "report:p_16:ev:e_54086",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9012468,
+              "last": 9012477
+            },
+            {
+              "key": "report:p_16:ev:e_59908",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9012486,
+              "last": 9012495
+            },
+            {
+              "key": "report:p_16:ev:e_60074",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9012504,
+              "last": 9012513
+            },
+            {
+              "key": "report:p_16:ev:e_65370",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9012522,
+              "last": 9012531
+            },
+            {
+              "key": "report:p_16:ev:e_64539",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9012540,
+              "last": 9012549
+            },
+            {
+              "key": "report:p_16:ev:e_59739",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9012558,
+              "last": 9012567
+            },
+            {
+              "key": "attack:p_28",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9012576,
+              "last": 9012576
+            },
+            {
+              "key": "flee:p_28",
+              "adoptions": 3,
+              "completed": 3,
+              "failedPaths": 0,
+              "first": 9013224,
+              "last": 9015195
+            },
+            {
+              "key": "report:p_13:ev:e_89159",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9014610,
+              "last": 9014664
+            },
+            {
+              "key": "report:p_13:ev:e_89531",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9014673,
+              "last": 9014682
+            },
+            {
+              "key": "report:p_13:ev:e_89891",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9014691,
+              "last": 9014700
+            },
+            {
+              "key": "report:p_13:ev:e_90169",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9014709,
+              "last": 9014718
+            },
+            {
+              "key": "report:p_13:ev:e_23076",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9014727,
+              "last": 9014736
+            },
+            {
+              "key": "report:p_13:ev:e_23202",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9014745,
+              "last": 9014754
+            },
+            {
+              "key": "eat:pl_21",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9015204,
+              "last": 9015204
+            }
+          ]
+        },
+        {
+          "key": "goal_churn:p_2:",
+          "count": 55,
+          "from": 9014106,
+          "to": 9022404,
+          "goals": [
+            {
+              "key": "report:p_16:ev:e_89267",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9014106,
+              "last": 9014106
+            },
+            {
+              "key": "flee:p_3",
+              "adoptions": 11,
+              "completed": 10,
+              "failedPaths": 0,
+              "first": 9014232,
+              "last": 9022404
+            },
+            {
+              "key": "report:p_14:ev:e_89531",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9014682,
+              "last": 9014682
+            },
+            {
+              "key": "report:p_15:ev:e_89891",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9014817,
+              "last": 9014817
+            },
+            {
+              "key": "report:p_13:ev:e_22926",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9015096,
+              "last": 9015096
+            },
+            {
+              "key": "report:p_16:ev:e_65029",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9015699,
+              "last": 9015996
+            },
+            {
+              "key": "report:p_16:ev:e_24127",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9016005,
+              "last": 9016014
+            },
+            {
+              "key": "report:p_16:ev:e_24198",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9016023,
+              "last": 9016032
+            },
+            {
+              "key": "report:p_16:ev:e_24333",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9016041,
+              "last": 9016050
+            },
+            {
+              "key": "report:p_16:ev:e_24339",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9016059,
+              "last": 9016068
+            },
+            {
+              "key": "report:p_16:ev:e_23076",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9016077,
+              "last": 9016086
+            },
+            {
+              "key": "report:p_16:ev:e_29138",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9016095,
+              "last": 9016104
+            },
+            {
+              "key": "report:p_16:ev:e_30411",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9016113,
+              "last": 9016122
+            },
+            {
+              "key": "report:p_16:ev:e_23527",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9016131,
+              "last": 9016140
+            },
+            {
+              "key": "report:p_16:ev:e_23919",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9016149,
+              "last": 9016158
+            },
+            {
+              "key": "report:p_16:ev:e_50654",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9016167,
+              "last": 9016176
+            },
+            {
+              "key": "report:p_16:ev:e_53427",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9016185,
+              "last": 9016194
+            },
+            {
+              "key": "report:p_16:ev:e_54086",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9016203,
+              "last": 9016212
+            },
+            {
+              "key": "report:p_16:ev:e_64230",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9016221,
+              "last": 9016230
+            },
+            {
+              "key": "report:p_16:ev:e_64380",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9016239,
+              "last": 9016248
+            },
+            {
+              "key": "report:p_16:ev:e_64539",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9016257,
+              "last": 9016266
+            },
+            {
+              "key": "report:p_16:ev:e_64675",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9016275,
+              "last": 9016284
+            },
+            {
+              "key": "report:p_16:ev:e_64808",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9016293,
+              "last": 9016302
+            },
+            {
+              "key": "report:p_16:ev:e_65158",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9016770,
+              "last": 9016770
+            },
+            {
+              "key": "report:p_13:ev:e_65273",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9017427,
+              "last": 9017922
+            },
+            {
+              "key": "report:p_13:ev:e_65370",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9017931,
+              "last": 9017940
+            },
+            {
+              "key": "report:p_13:ev:e_71763",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9017949,
+              "last": 9017958
+            },
+            {
+              "key": "report:p_13:ev:e_72067",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9017967,
+              "last": 9017976
+            },
+            {
+              "key": "report:p_13:ev:e_73063",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9017985,
+              "last": 9017994
+            },
+            {
+              "key": "report:p_13:ev:e_89267",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9018003,
+              "last": 9018012
+            },
+            {
+              "key": "report:p_13:ev:e_89531",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9018021,
+              "last": 9018030
+            },
+            {
+              "key": "report:p_13:ev:e_89891",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9018039,
+              "last": 9018048
+            },
+            {
+              "key": "report:p_13:ev:e_90169",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9018057,
+              "last": 9018066
+            },
+            {
+              "key": "report:p_13:ev:e_65158",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9018075,
+              "last": 9018084
+            },
+            {
+              "key": "check_on:p_1",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9018093,
+              "last": 9018534
+            },
+            {
+              "key": "report:p_16:ev:e_22584",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9018930,
+              "last": 9018939
+            },
+            {
+              "key": "report:p_16:ev:e_22926",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9018948,
+              "last": 9018957
+            },
+            {
+              "key": "report:p_16:ev:e_29634",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9018966,
+              "last": 9018975
+            },
+            {
+              "key": "report:p_16:ev:e_71253",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9018984,
+              "last": 9018993
+            },
+            {
+              "key": "socialize:pl_1",
+              "adoptions": 6,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9019002,
+              "last": 9022305
+            }
+          ]
+        },
+        {
+          "key": "goal_churn:p_9:",
+          "count": 43,
+          "from": 9011757,
+          "to": 9018075,
+          "goals": [
+            {
+              "key": "report:p_13:ev:e_70723",
+              "adoptions": 2,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9011757,
+              "last": 9016680
+            },
+            {
+              "key": "flee:p_24",
+              "adoptions": 6,
+              "completed": 5,
+              "failedPaths": 0,
+              "first": 9012054,
+              "last": 9016590
+            },
+            {
+              "key": "flee:p_3",
+              "adoptions": 4,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9012450,
+              "last": 9017976
+            },
+            {
+              "key": "report:p_15:ev:e_70723",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9012990,
+              "last": 9012990
+            },
+            {
+              "key": "report:p_13:ev:e_28164",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9013161,
+              "last": 9013161
+            },
+            {
+              "key": "flee:p_28",
+              "adoptions": 3,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9013224,
+              "last": 9018075
+            },
+            {
+              "key": "report:p_13:ev:e_89042",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9013566,
+              "last": 9013575
+            },
+            {
+              "key": "report:p_13:ev:e_89159",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9013584,
+              "last": 9013593
+            },
+            {
+              "key": "report:p_13:ev:e_29760",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9013602,
+              "last": 9013611
+            },
+            {
+              "key": "report:p_13:ev:e_22743",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9013620,
+              "last": 9013629
+            },
+            {
+              "key": "report:p_13:ev:e_30411",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9013638,
+              "last": 9013647
+            },
+            {
+              "key": "report:p_13:ev:e_29634",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9013656,
+              "last": 9013665
+            },
+            {
+              "key": "report:p_13:ev:e_49845",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9013674,
+              "last": 9013683
+            },
+            {
+              "key": "report:p_13:ev:e_30100",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9013692,
+              "last": 9013701
+            },
+            {
+              "key": "report:p_13:ev:e_53427",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9013710,
+              "last": 9013719
+            },
+            {
+              "key": "report:p_13:ev:e_54086",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9013728,
+              "last": 9013737
+            },
+            {
+              "key": "report:p_13:ev:e_72067",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9013746,
+              "last": 9013755
+            },
+            {
+              "key": "report:p_13:ev:e_72794",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9013764,
+              "last": 9013773
+            },
+            {
+              "key": "report:p_13:ev:e_73063",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9013782,
+              "last": 9013791
+            },
+            {
+              "key": "report:p_13:ev:e_73358",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9013800,
+              "last": 9013809
+            },
+            {
+              "key": "check_on:p_10",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9013818,
+              "last": 9013818
+            },
+            {
+              "key": "report:p_13:ev:e_89891",
+              "adoptions": 3,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9014475,
+              "last": 9016698
+            },
+            {
+              "key": "report:p_14:ev:e_28164",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9015258,
+              "last": 9015258
+            },
+            {
+              "key": "socialize:pl_1",
+              "adoptions": 2,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9015942,
+              "last": 9016707
+            },
+            {
+              "key": "report:p_13:ev:e_23076",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9016599,
+              "last": 9016608
+            },
+            {
+              "key": "report:p_13:ev:e_65029",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9016617,
+              "last": 9016626
+            },
+            {
+              "key": "report:p_13:ev:e_65158",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9016635,
+              "last": 9016644
+            },
+            {
+              "key": "report:p_13:ev:e_65273",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9016653,
+              "last": 9016662
+            },
+            {
+              "key": "drink_water:pl_2",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9017877,
+              "last": 9017877
+            }
+          ]
+        },
+        {
+          "key": "goal_churn:p_25:",
+          "count": 59,
+          "from": 9017931,
+          "to": 9026283,
+          "goals": [
+            {
+              "key": "flee:p_28",
+              "adoptions": 8,
+              "completed": 7,
+              "failedPaths": 0,
+              "first": 9017931,
+              "last": 9026283
+            },
+            {
+              "key": "socialize:pl_1",
+              "adoptions": 12,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9018453,
+              "last": 9026184
+            },
+            {
+              "key": "flee:p_3",
+              "adoptions": 3,
+              "completed": 3,
+              "failedPaths": 0,
+              "first": 9019344,
+              "last": 9024564
+            },
+            {
+              "key": "report:p_15:ev:e_89159",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9020118,
+              "last": 9020118
+            },
+            {
+              "key": "report:p_16:ev:e_89159",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9021567,
+              "last": 9021720
+            },
+            {
+              "key": "report:p_13:ev:e_73632",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9022179,
+              "last": 9022287
+            },
+            {
+              "key": "report:p_13:ev:e_93636",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9022629,
+              "last": 9022638
+            },
+            {
+              "key": "report:p_15:ev:e_94749",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9024942,
+              "last": 9024942
+            },
+            {
+              "key": "report:p_13:ev:e_29138",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9025068,
+              "last": 9025302
+            },
+            {
+              "key": "report:p_13:ev:e_29304",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9025311,
+              "last": 9025320
+            },
+            {
+              "key": "report:p_13:ev:e_29311",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9025329,
+              "last": 9025338
+            },
+            {
+              "key": "report:p_13:ev:e_29452",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9025347,
+              "last": 9025356
+            },
+            {
+              "key": "report:p_13:ev:e_29539",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9025365,
+              "last": 9025374
+            },
+            {
+              "key": "report:p_13:ev:e_29634",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9025383,
+              "last": 9025392
+            },
+            {
+              "key": "report:p_13:ev:e_29760",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9025401,
+              "last": 9025410
+            },
+            {
+              "key": "report:p_13:ev:e_29973",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9025419,
+              "last": 9025428
+            },
+            {
+              "key": "report:p_13:ev:e_30033",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9025437,
+              "last": 9025446
+            },
+            {
+              "key": "report:p_13:ev:e_30100",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9025455,
+              "last": 9025464
+            },
+            {
+              "key": "report:p_13:ev:e_30158",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9025473,
+              "last": 9025482
+            },
+            {
+              "key": "report:p_13:ev:e_28164",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9025491,
+              "last": 9025500
+            },
+            {
+              "key": "report:p_13:ev:e_31234",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9025509,
+              "last": 9025518
+            },
+            {
+              "key": "report:p_13:ev:e_23791",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9025527,
+              "last": 9025536
+            },
+            {
+              "key": "report:p_13:ev:e_50431",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9025545,
+              "last": 9025554
+            },
+            {
+              "key": "report:p_13:ev:e_49845",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9025563,
+              "last": 9025572
+            },
+            {
+              "key": "report:p_13:ev:e_53427",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9025581,
+              "last": 9025590
+            },
+            {
+              "key": "report:p_13:ev:e_54086",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9025599,
+              "last": 9025608
+            },
+            {
+              "key": "report:p_13:ev:e_64230",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9025617,
+              "last": 9025626
+            },
+            {
+              "key": "report:p_13:ev:e_64380",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9025635,
+              "last": 9025644
+            },
+            {
+              "key": "report:p_13:ev:e_64539",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9025653,
+              "last": 9025662
+            },
+            {
+              "key": "report:p_13:ev:e_64675",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9025671,
+              "last": 9025680
+            },
+            {
+              "key": "report:p_13:ev:e_64808",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9025689,
+              "last": 9025698
+            },
+            {
+              "key": "report:p_13:ev:e_65029",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9025707,
+              "last": 9025716
+            },
+            {
+              "key": "report:p_13:ev:e_65158",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9025725,
+              "last": 9025734
+            },
+            {
+              "key": "report:p_13:ev:e_65273",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9025743,
+              "last": 9025752
+            },
+            {
+              "key": "report:p_13:ev:e_65370",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9025761,
+              "last": 9025770
+            },
+            {
+              "key": "report:p_13:ev:e_94749",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9025779,
+              "last": 9025788
+            },
+            {
+              "key": "report:p_13:ev:e_94889",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9025797,
+              "last": 9025806
+            },
+            {
+              "key": "report:p_13:ev:e_31492",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9025815,
+              "last": 9025824
+            },
+            {
+              "key": "report:p_13:ev:e_22743",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9025833,
+              "last": 9025842
+            }
+          ]
+        },
+        {
+          "key": "goal_churn:p_12:",
+          "count": 57,
+          "from": 9725241,
+          "to": 9735285,
+          "goals": [
+            {
+              "key": "check_on:p_28",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9725241,
+              "last": 9725241
+            },
+            {
+              "key": "flee:p_31",
+              "adoptions": 27,
+              "completed": 26,
+              "failedPaths": 0,
+              "first": 9725340,
+              "last": 9735285
+            },
+            {
+              "key": "socialize:pl_1",
+              "adoptions": 25,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9725619,
+              "last": 9734133
+            },
+            {
+              "key": "report:p_13:ev:e_232004",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9733476,
+              "last": 9733476
+            },
+            {
+              "key": "report:p_15:ev:e_232004",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9734115,
+              "last": 9734124
+            },
+            {
+              "key": "report:p_16:ev:e_232202",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9734871,
+              "last": 9734880
+            },
+            {
+              "key": "socialize:pl_7",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9734889,
+              "last": 9734889
+            }
+          ]
+        },
+        {
+          "key": "goal_churn:p_37:",
+          "count": 46,
+          "from": 9023898,
+          "to": 9028641,
+          "goals": [
+            {
+              "key": "report:p_16:ev:e_53890",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9023898,
+              "last": 9024051
+            },
+            {
+              "key": "report:p_16:ev:e_69891",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9024060,
+              "last": 9024069
+            },
+            {
+              "key": "report:p_16:ev:e_70082",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9024078,
+              "last": 9024087
+            },
+            {
+              "key": "report:p_16:ev:e_70232",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9024096,
+              "last": 9024105
+            },
+            {
+              "key": "report:p_16:ev:e_70405",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9024114,
+              "last": 9024123
+            },
+            {
+              "key": "report:p_16:ev:e_70524",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9024132,
+              "last": 9024141
+            },
+            {
+              "key": "report:p_16:ev:e_70723",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9024150,
+              "last": 9024159
+            },
+            {
+              "key": "report:p_16:ev:e_70945",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9024168,
+              "last": 9024177
+            },
+            {
+              "key": "report:p_16:ev:e_70952",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9024186,
+              "last": 9024195
+            },
+            {
+              "key": "report:p_16:ev:e_71253",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9024204,
+              "last": 9024213
+            },
+            {
+              "key": "report:p_16:ev:e_71763",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9024222,
+              "last": 9024231
+            },
+            {
+              "key": "report:p_16:ev:e_73063",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9024240,
+              "last": 9024249
+            },
+            {
+              "key": "report:p_16:ev:e_75258",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9024258,
+              "last": 9024267
+            },
+            {
+              "key": "report:p_16:ev:e_75711",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9024276,
+              "last": 9024285
+            },
+            {
+              "key": "report:p_16:ev:e_76587",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9024294,
+              "last": 9024303
+            },
+            {
+              "key": "report:p_16:ev:e_76745",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9024312,
+              "last": 9024321
+            },
+            {
+              "key": "report:p_16:ev:e_76920",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9024330,
+              "last": 9024339
+            },
+            {
+              "key": "report:p_16:ev:e_77038",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9024348,
+              "last": 9024357
+            },
+            {
+              "key": "report:p_16:ev:e_77128",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9024366,
+              "last": 9024375
+            },
+            {
+              "key": "report:p_16:ev:e_77210",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9024384,
+              "last": 9024393
+            },
+            {
+              "key": "report:p_16:ev:e_77289",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9024402,
+              "last": 9024411
+            },
+            {
+              "key": "report:p_16:ev:e_77364",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9024420,
+              "last": 9024429
+            },
+            {
+              "key": "report:p_16:ev:e_77451",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9024438,
+              "last": 9024447
+            },
+            {
+              "key": "report:p_16:ev:e_77528",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9024456,
+              "last": 9024465
+            },
+            {
+              "key": "report:p_16:ev:e_77863",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9024474,
+              "last": 9024483
+            },
+            {
+              "key": "report:p_16:ev:e_89042",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9024492,
+              "last": 9024501
+            },
+            {
+              "key": "report:p_16:ev:e_89159",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9024510,
+              "last": 9024519
+            },
+            {
+              "key": "report:p_16:ev:e_89531",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9024528,
+              "last": 9024537
+            },
+            {
+              "key": "report:p_16:ev:e_89891",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9024546,
+              "last": 9024555
+            },
+            {
+              "key": "report:p_16:ev:e_90169",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9024564,
+              "last": 9024573
+            },
+            {
+              "key": "report:p_16:ev:e_93636",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9024582,
+              "last": 9024591
+            },
+            {
+              "key": "drink_water:pl_2",
+              "adoptions": 3,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9024600,
+              "last": 9027138
+            },
+            {
+              "key": "attack:p_28",
+              "adoptions": 2,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9024798,
+              "last": 9027768
+            },
+            {
+              "key": "flee:p_28",
+              "adoptions": 4,
+              "completed": 3,
+              "failedPaths": 0,
+              "first": 9024978,
+              "last": 9028641
+            },
+            {
+              "key": "report:p_15:ev:e_94889",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9025401,
+              "last": 9025401
+            },
+            {
+              "key": "report:p_16:ev:e_94889",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9026445,
+              "last": 9026760
+            },
+            {
+              "key": "eat:pl_2",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9027147,
+              "last": 9027210
+            },
+            {
+              "key": "socialize:pl_1",
+              "adoptions": 2,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9027219,
+              "last": 9028443
+            },
+            {
+              "key": "report:p_16:ev:e_72794",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9027696,
+              "last": 9027759
+            }
+          ]
+        },
+        {
+          "key": "goal_churn:p_8:",
+          "count": 49,
+          "from": 10524639,
+          "to": 10534053,
+          "goals": [
+            {
+              "key": "flee:p_32",
+              "adoptions": 24,
+              "completed": 4,
+              "failedPaths": 0,
+              "first": 10524639,
+              "last": 10534044
+            },
+            {
+              "key": "drink_water:pl_2",
+              "adoptions": 22,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10525125,
+              "last": 10532928
+            },
+            {
+              "key": "report:p_13:ev:e_387236",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10532937,
+              "last": 10533009
+            },
+            {
+              "key": "socialize:pl_7",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10533468,
+              "last": 10533468
+            },
+            {
+              "key": "sleep:pl_7",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10534053,
+              "last": 10534053
+            }
+          ]
+        },
+        {
+          "key": "goal_churn:p_30:",
+          "count": 43,
+          "from": 10509681,
+          "to": 10520157,
+          "goals": [
+            {
+              "key": "eat:pl_7",
+              "adoptions": 12,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10509681,
+              "last": 10515135
+            },
+            {
+              "key": "flee:p_13",
+              "adoptions": 20,
+              "completed": 21,
+              "failedPaths": 0,
+              "first": 10509780,
+              "last": 10520148
+            },
+            {
+              "key": "flee:p_32",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10515441,
+              "last": 10516152
+            },
+            {
+              "key": "drink_water:pl_2",
+              "adoptions": 10,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10516161,
+              "last": 10520157
+            }
+          ]
+        },
+        {
+          "key": "goal_churn:p_17:",
+          "count": 59,
+          "from": 9552864,
+          "to": 9562800,
+          "goals": [
+            {
+              "key": "flee:p_32",
+              "adoptions": 30,
+              "completed": 29,
+              "failedPaths": 0,
+              "first": 9552864,
+              "last": 9562800
+            },
+            {
+              "key": "haul:pl_26",
+              "adoptions": 29,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9553134,
+              "last": 9562701
+            }
+          ]
+        },
+        {
+          "key": "goal_churn:p_18:",
+          "count": 64,
+          "from": 10516809,
+          "to": 10527474,
+          "goals": [
+            {
+              "key": "eat:pl_4",
+              "adoptions": 27,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10516809,
+              "last": 10525674
+            },
+            {
+              "key": "flee:p_1",
+              "adoptions": 32,
+              "completed": 31,
+              "failedPaths": 0,
+              "first": 10516908,
+              "last": 10527474
+            },
+            {
+              "key": "eat:pl_9",
+              "adoptions": 4,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10526016,
+              "last": 10527033
+            },
+            {
+              "key": "drink_water:pl_2",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10527375,
+              "last": 10527375
+            }
+          ]
+        },
+        {
+          "key": "goal_churn:p_11:",
+          "count": 55,
+          "from": 10513290,
+          "to": 10523766,
+          "goals": [
+            {
+              "key": "flee:p_1",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10513290,
+              "last": 10513515
+            },
+            {
+              "key": "socialize:pl_7",
+              "adoptions": 15,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10513524,
+              "last": 10518186
+            },
+            {
+              "key": "flee:p_13",
+              "adoptions": 27,
+              "completed": 26,
+              "failedPaths": 0,
+              "first": 10513623,
+              "last": 10523766
+            },
+            {
+              "key": "drink_water:pl_2",
+              "adoptions": 12,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10518519,
+              "last": 10523568
+            }
+          ]
+        },
+        {
+          "key": "goal_churn:p_22:",
+          "count": 60,
+          "from": 10513353,
+          "to": 10523802,
+          "goals": [
+            {
+              "key": "eat:pl_3",
+              "adoptions": 30,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10513353,
+              "last": 10523604
+            },
+            {
+              "key": "flee:p_1",
+              "adoptions": 30,
+              "completed": 29,
+              "failedPaths": 0,
+              "first": 10513452,
+              "last": 10523802
+            }
+          ]
+        },
+        {
+          "key": "goal_churn:p_10:",
+          "count": 50,
+          "from": 10513326,
+          "to": 10523901,
+          "goals": [
+            {
+              "key": "flee:p_1",
+              "adoptions": 20,
+              "completed": 19,
+              "failedPaths": 0,
+              "first": 10513326,
+              "last": 10523901
+            },
+            {
+              "key": "socialize:pl_7",
+              "adoptions": 13,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10513605,
+              "last": 10518438
+            },
+            {
+              "key": "flee:p_13",
+              "adoptions": 5,
+              "completed": 5,
+              "failedPaths": 0,
+              "first": 10513704,
+              "last": 10520355
+            },
+            {
+              "key": "drink_water:pl_2",
+              "adoptions": 12,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10518537,
+              "last": 10523703
+            }
+          ]
+        }
+      ],
+      "subsequentProgress": {
+        "scope": "Next completion after each actor worst rate window, for repeatedly displaced ordinary needs with zero completions inside that window. A later completion is bounded progress evidence, not proof every switch was rational. No subsequent receipt is left unknown, not asserted infinite.",
+        "leads": [
+          {
+            "actor": "p_6",
+            "key": "drink_water:pl_2",
+            "from": 8688837,
+            "to": 8698458,
+            "adoptions": 17,
+            "afterCompletion": {
+              "event": "e_13317",
+              "tick": 8699313,
+              "key": "drink_water:pl_2",
+              "delayWorldSeconds": 855
+            },
+            "firstNeeds": {
+              "hunger": 0.347647619047627,
+              "energy": 0.6121346540593618,
+              "social": 0.7904999999999831,
+              "comfort": 0,
+              "thirst": 0.6443000000000096
+            },
+            "firstReasons": [
+              "thirst 0.64"
+            ]
+          },
+          {
+            "actor": "p_30",
+            "key": "eat:pl_7",
+            "from": 10509681,
+            "to": 10520157,
+            "adoptions": 12,
+            "afterCompletion": {
+              "event": "e_394056",
+              "tick": 10579125,
+              "key": "eat:pl_9",
+              "delayWorldSeconds": 58968
+            },
+            "firstNeeds": {
+              "hunger": 0.9834095238095191,
+              "energy": 0.5616255905169835,
+              "social": 1,
+              "comfort": 0,
+              "thirst": 0.5533090909090856
+            },
+            "firstReasons": [
+              "hunger 0.98",
+              "",
+              "must find food"
+            ]
+          },
+          {
+            "actor": "p_30",
+            "key": "drink_water:pl_2",
+            "from": 10509681,
+            "to": 10520157,
+            "adoptions": 10,
+            "afterCompletion": {
+              "event": "e_384017",
+              "tick": 10520931,
+              "key": "drink_water:pl_2",
+              "delayWorldSeconds": 774
+            },
+            "firstNeeds": {
+              "hunger": 1,
+              "energy": 0.55,
+              "social": 1,
+              "comfort": 0,
+              "thirst": 0.7383272727272676
+            },
+            "firstReasons": [
+              "thirst 0.74"
+            ]
+          },
+          {
+            "actor": "p_17",
+            "key": "haul:pl_26",
+            "from": 9552864,
+            "to": 9562800,
+            "adoptions": 29,
+            "afterCompletion": {
+              "event": "e_202731",
+              "tick": 9565302,
+              "key": "haul:pl_26",
+              "delayWorldSeconds": 2502
+            },
+            "firstNeeds": {
+              "hunger": 0.3230952380951875,
+              "energy": 0.6777823853658536,
+              "social": 0.7299999999999938,
+              "comfort": 0.3985000000000013,
+              "thirst": 0.4212121212121185
+            },
+            "firstReasons": [
+              "grain is needed at The Gilded Boar",
+              "the tavern needs grain for brewing",
+              "",
+              "",
+              "and I could use the silver",
+              "purpose: finish the work they took on for them (0.45)",
+              "I took on hauling for Edda Ironhand",
+              "I owe them (accepted_task, 0.45)",
+              "I took on hauling for Edda Ironhand",
+              "purpose: finish the work they took on for Edda Ironhand (priority 0.45)",
+              "I said I would carry grain to The Gilded Boar"
+            ]
+          },
+          {
+            "actor": "p_18",
+            "key": "eat:pl_4",
+            "from": 10516809,
+            "to": 10527474,
+            "adoptions": 27,
+            "afterCompletion": {
+              "event": "e_388612",
+              "tick": 10559064,
+              "key": "eat:pl_23",
+              "delayWorldSeconds": 31590
+            },
+            "firstNeeds": {
+              "hunger": 0.8738888888888865,
+              "energy": 0.55,
+              "social": 1,
+              "comfort": 0,
+              "thirst": 0.4537878787878715
+            },
+            "firstReasons": [
+              "hunger 0.87",
+              "",
+              "must find food"
+            ]
+          },
+          {
+            "actor": "p_11",
+            "key": "drink_water:pl_2",
+            "from": 10513290,
+            "to": 10523766,
+            "adoptions": 12,
+            "afterCompletion": {
+              "event": "e_385755",
+              "tick": 10527996,
+              "key": "drink_water:pl_2",
+              "delayWorldSeconds": 4230
+            },
+            "firstNeeds": {
+              "hunger": 0.4718999999999982,
+              "energy": 0.618817712023711,
+              "social": 1,
+              "comfort": 0,
+              "thirst": 0.607748484848494
+            },
+            "firstReasons": [
+              "thirst 0.61"
+            ]
+          },
+          {
+            "actor": "p_22",
+            "key": "eat:pl_3",
+            "from": 10513353,
+            "to": 10523802,
+            "adoptions": 30,
+            "afterCompletion": null,
+            "firstNeeds": {
+              "hunger": 1,
+              "energy": 0.37077908353618716,
+              "social": 1,
+              "comfort": 0,
+              "thirst": 0.18674242424242526
+            },
+            "firstReasons": [
+              "hunger 1.00",
+              "",
+              "must find food"
+            ]
+          },
+          {
+            "actor": "p_10",
+            "key": "drink_water:pl_2",
+            "from": 10513326,
+            "to": 10523901,
+            "adoptions": 12,
+            "afterCompletion": {
+              "event": "e_385983",
+              "tick": 10528446,
+              "key": "drink_water:pl_2",
+              "delayWorldSeconds": 4545
+            },
+            "firstNeeds": {
+              "hunger": 0.3731746031745431,
+              "energy": 0.3928500451671317,
+              "social": 0.9976666666666543,
+              "comfort": 0,
+              "thirst": 0.6001515151514962
+            },
+            "firstReasons": [
+              "thirst 0.60"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "seed": 918272,
+      "scope": "Remaining rate leads are class F unless an individually documented mechanism establishes C or D. Zero hard failures is not a universal decision-quality proof.",
+      "hourlySamples": 720,
+      "hardFailures": [],
+      "groups": 325,
+      "foodLedger": {
+        "initial": 377,
+        "production": 929,
+        "consumption": 1112,
+        "spoilage": 138,
+        "transformationInput": 6,
+        "final": 50,
+        "unexplained": 0
+      },
+      "churn": [
+        {
+          "key": "goal_churn:p_30:",
+          "count": 43,
+          "from": 10193007,
+          "to": 10202493,
+          "goals": [
+            {
+              "key": "eat:pl_7",
+              "adoptions": 3,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10193007,
+              "last": 10194663
+            },
+            {
+              "key": "flee:p_37",
+              "adoptions": 21,
+              "completed": 21,
+              "failedPaths": 0,
+              "first": 10193106,
+              "last": 10202484
+            },
+            {
+              "key": "sleep:pl_7",
+              "adoptions": 19,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10195122,
+              "last": 10202493
+            }
+          ]
+        },
+        {
+          "key": "goal_churn:p_8:",
+          "count": 43,
+          "from": 10058475,
+          "to": 10066710,
+          "goals": [
+            {
+              "key": "eat:pl_7",
+              "adoptions": 21,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10058475,
+              "last": 10066512
+            },
+            {
+              "key": "flee:p_24",
+              "adoptions": 20,
+              "completed": 19,
+              "failedPaths": 0,
+              "first": 10058673,
+              "last": 10066710
+            },
+            {
+              "key": "flee:p_37",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10065612,
+              "last": 10065882
+            },
+            {
+              "key": "report:p_16:ev:e_280972",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10065891,
+              "last": 10065900
+            }
+          ]
+        },
+        {
+          "key": "goal_churn:p_9:",
+          "count": 49,
+          "from": 10058718,
+          "to": 10066629,
+          "goals": [
+            {
+              "key": "report:p_16:ev:e_275862",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10058718,
+              "last": 10058727
+            },
+            {
+              "key": "report:p_16:ev:e_276072",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10058736,
+              "last": 10058745
+            },
+            {
+              "key": "report:p_16:ev:e_276934",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10058754,
+              "last": 10058763
+            },
+            {
+              "key": "report:p_16:ev:e_277059",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10058772,
+              "last": 10058781
+            },
+            {
+              "key": "report:p_16:ev:e_277168",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10058790,
+              "last": 10058799
+            },
+            {
+              "key": "report:p_16:ev:e_277272",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10058808,
+              "last": 10058817
+            },
+            {
+              "key": "report:p_16:ev:e_277390",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10058826,
+              "last": 10058835
+            },
+            {
+              "key": "report:p_16:ev:e_274503",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10058844,
+              "last": 10058853
+            },
+            {
+              "key": "report:p_16:ev:e_275462",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10058862,
+              "last": 10058880
+            },
+            {
+              "key": "provision_home:pl_18",
+              "adoptions": 18,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10058880,
+              "last": 10065459
+            },
+            {
+              "key": "flee:p_24",
+              "adoptions": 17,
+              "completed": 17,
+              "failedPaths": 0,
+              "first": 10058979,
+              "last": 10066620
+            },
+            {
+              "key": "report:p_16:ev:e_280678",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10065396,
+              "last": 10065450
+            },
+            {
+              "key": "flee:p_37",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10065657,
+              "last": 10065918
+            },
+            {
+              "key": "eat:pl_13",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10065927,
+              "last": 10065990
+            },
+            {
+              "key": "drink_water:pl_2",
+              "adoptions": 2,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10065999,
+              "last": 10066629
+            }
+          ]
+        },
+        {
+          "key": "goal_churn:p_17:",
+          "count": 42,
+          "from": 9813270,
+          "to": 9821505,
+          "goals": [
+            {
+              "key": "flee:p_32",
+              "adoptions": 2,
+              "completed": 2,
+              "failedPaths": 0,
+              "first": 9813270,
+              "last": 9815529
+            },
+            {
+              "key": "drink_water:pl_2",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9813666,
+              "last": 9814341
+            },
+            {
+              "key": "socialize:pl_1",
+              "adoptions": 4,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9814350,
+              "last": 9817896
+            },
+            {
+              "key": "report:p_14:ev:e_233076",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9815538,
+              "last": 9815538
+            },
+            {
+              "key": "report:p_15:ev:e_226676",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9815556,
+              "last": 9815556
+            },
+            {
+              "key": "report:p_13:ev:e_226735",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9815655,
+              "last": 9815655
+            },
+            {
+              "key": "flee:p_31",
+              "adoptions": 3,
+              "completed": 3,
+              "failedPaths": 0,
+              "first": 9816258,
+              "last": 9817887
+            },
+            {
+              "key": "report:p_15:ev:e_226806",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9816951,
+              "last": 9816951
+            },
+            {
+              "key": "report:p_13:ev:e_226879",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9817455,
+              "last": 9817455
+            },
+            {
+              "key": "shelter:pl_7",
+              "adoptions": 2,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9818985,
+              "last": 9821505
+            },
+            {
+              "key": "report:p_15:ev:e_232101",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9819480,
+              "last": 9819966
+            },
+            {
+              "key": "report:p_16:ev:e_236141",
+              "adoptions": 2,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9819975,
+              "last": 9821037
+            },
+            {
+              "key": "flee:p_15",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9820002,
+              "last": 9820506
+            },
+            {
+              "key": "report:p_15:ev:e_236230",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9820515,
+              "last": 9820515
+            },
+            {
+              "key": "report:p_16:ev:e_212175",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9820839,
+              "last": 9820857
+            },
+            {
+              "key": "report:p_16:ev:e_212373",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9820866,
+              "last": 9820875
+            },
+            {
+              "key": "report:p_16:ev:e_226950",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9820884,
+              "last": 9820893
+            },
+            {
+              "key": "report:p_16:ev:e_227029",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9820902,
+              "last": 9820911
+            },
+            {
+              "key": "report:p_16:ev:e_231678",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9820920,
+              "last": 9820929
+            },
+            {
+              "key": "report:p_16:ev:e_231845",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9820938,
+              "last": 9820947
+            },
+            {
+              "key": "report:p_16:ev:e_231988",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9820956,
+              "last": 9820965
+            },
+            {
+              "key": "report:p_16:ev:e_232244",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9820974,
+              "last": 9820983
+            },
+            {
+              "key": "report:p_16:ev:e_232647",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9820992,
+              "last": 9821001
+            },
+            {
+              "key": "report:p_16:ev:e_233076",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9821010,
+              "last": 9821019
+            },
+            {
+              "key": "report:p_16:ev:e_236230",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9821046,
+              "last": 9821055
+            },
+            {
+              "key": "report:p_16:ev:e_236363",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9821064,
+              "last": 9821073
+            },
+            {
+              "key": "report:p_16:ev:e_236468",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9821082,
+              "last": 9821091
+            },
+            {
+              "key": "report:p_16:ev:e_226676",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9821100,
+              "last": 9821109
+            },
+            {
+              "key": "report:p_16:ev:e_226735",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9821118,
+              "last": 9821127
+            },
+            {
+              "key": "report:p_16:ev:e_226806",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9821136,
+              "last": 9821145
+            },
+            {
+              "key": "report:p_16:ev:e_226879",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9821154,
+              "last": 9821163
+            },
+            {
+              "key": "report:p_16:ev:e_233435",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9821172,
+              "last": 9821181
+            },
+            {
+              "key": "report:p_16:ev:e_208140",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9821190,
+              "last": 9821199
+            },
+            {
+              "key": "socialize:pl_7",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9821208,
+              "last": 9821208
+            }
+          ]
+        },
+        {
+          "key": "goal_churn:p_10:",
+          "count": 40,
+          "from": 10058502,
+          "to": 10066719,
+          "goals": [
+            {
+              "key": "flee:p_24",
+              "adoptions": 20,
+              "completed": 20,
+              "failedPaths": 0,
+              "first": 10058502,
+              "last": 10066710
+            },
+            {
+              "key": "socialize:pl_1",
+              "adoptions": 20,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10058736,
+              "last": 10066719
+            }
+          ]
+        },
+        {
+          "key": "goal_churn:p_4:",
+          "count": 44,
+          "from": 10142247,
+          "to": 10149519,
+          "goals": [
+            {
+              "key": "drink_water:pl_2",
+              "adoptions": 22,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10142247,
+              "last": 10149519
+            },
+            {
+              "key": "flee:p_24",
+              "adoptions": 21,
+              "completed": 21,
+              "failedPaths": 0,
+              "first": 10142346,
+              "last": 10149492
+            },
+            {
+              "key": "report:p_13:ev:e_305251",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10149501,
+              "last": 10149510
+            }
+          ]
+        },
+        {
+          "key": "goal_churn:p_2:",
+          "count": 44,
+          "from": 10058547,
+          "to": 10066602,
+          "goals": [
+            {
+              "key": "socialize:pl_1",
+              "adoptions": 22,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10058547,
+              "last": 10066503
+            },
+            {
+              "key": "flee:p_24",
+              "adoptions": 21,
+              "completed": 20,
+              "failedPaths": 0,
+              "first": 10058646,
+              "last": 10066602
+            },
+            {
+              "key": "report:p_16:ev:e_280678",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10065396,
+              "last": 10065468
+            }
+          ]
+        },
+        {
+          "key": "goal_churn:p_5:",
+          "count": 40,
+          "from": 10058565,
+          "to": 10066755,
+          "goals": [
+            {
+              "key": "socialize:pl_1",
+              "adoptions": 17,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10058565,
+              "last": 10065063
+            },
+            {
+              "key": "flee:p_24",
+              "adoptions": 20,
+              "completed": 19,
+              "failedPaths": 0,
+              "first": 10058763,
+              "last": 10066755
+            },
+            {
+              "key": "eat:pl_9",
+              "adoptions": 3,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10065603,
+              "last": 10066557
+            }
+          ]
+        },
+        {
+          "key": "goal_churn:p_7:",
+          "count": 42,
+          "from": 10058655,
+          "to": 10066638,
+          "goals": [
+            {
+              "key": "socialize:pl_1",
+              "adoptions": 5,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10058655,
+              "last": 10060428
+            },
+            {
+              "key": "flee:p_24",
+              "adoptions": 20,
+              "completed": 19,
+              "failedPaths": 0,
+              "first": 10058754,
+              "last": 10066638
+            },
+            {
+              "key": "drink_water:pl_2",
+              "adoptions": 16,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10060905,
+              "last": 10066440
+            },
+            {
+              "key": "report:p_16:ev:e_280678",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10065396,
+              "last": 10065459
+            }
+          ]
+        },
+        {
+          "key": "goal_churn:p_25:",
+          "count": 40,
+          "from": 10138170,
+          "to": 10145820,
+          "goals": [
+            {
+              "key": "drink_water:pl_2",
+              "adoptions": 7,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10138170,
+              "last": 10140717
+            },
+            {
+              "key": "flee:p_16",
+              "adoptions": 17,
+              "completed": 17,
+              "failedPaths": 0,
+              "first": 10138269,
+              "last": 10145811
+            },
+            {
+              "key": "report:p_13:ev:e_277555",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10141095,
+              "last": 10141104
+            },
+            {
+              "key": "report:p_13:ev:e_287383",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10141113,
+              "last": 10141122
+            },
+            {
+              "key": "report:p_13:ev:e_287484",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10141131,
+              "last": 10141140
+            },
+            {
+              "key": "report:p_13:ev:e_287576",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10141149,
+              "last": 10141158
+            },
+            {
+              "key": "report:p_13:ev:e_287683",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10141167,
+              "last": 10141176
+            },
+            {
+              "key": "provision_home:pl_10",
+              "adoptions": 11,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10141185,
+              "last": 10145820
+            }
+          ]
+        },
+        {
+          "key": "goal_churn:p_3:",
+          "count": 44,
+          "from": 10606512,
+          "to": 10613730,
+          "goals": [
+            {
+              "key": "report:p_14:ev:e_358762",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10606512,
+              "last": 10606548
+            },
+            {
+              "key": "report:p_14:ev:e_372788",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10606557,
+              "last": 10606557
+            },
+            {
+              "key": "flee:p_14",
+              "adoptions": 5,
+              "completed": 3,
+              "failedPaths": 0,
+              "first": 10606584,
+              "last": 10613730
+            },
+            {
+              "key": "report:p_13:ev:e_372788",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10607331,
+              "last": 10607331
+            },
+            {
+              "key": "report:p_14:ev:e_373500",
+              "adoptions": 2,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10607349,
+              "last": 10610544
+            },
+            {
+              "key": "report:p_16:ev:e_406169",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10607763,
+              "last": 10607763
+            },
+            {
+              "key": "report:p_14:ev:e_406266",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10607781,
+              "last": 10607799
+            },
+            {
+              "key": "report:p_14:ev:e_406365",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10607808,
+              "last": 10607817
+            },
+            {
+              "key": "report:p_14:ev:e_374839",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10607826,
+              "last": 10607835
+            },
+            {
+              "key": "report:p_14:ev:e_374941",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10607844,
+              "last": 10607853
+            },
+            {
+              "key": "report:p_14:ev:e_375042",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10607862,
+              "last": 10607871
+            },
+            {
+              "key": "report:p_14:ev:e_375145",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10607880,
+              "last": 10607889
+            },
+            {
+              "key": "report:p_14:ev:e_375246",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10607898,
+              "last": 10607907
+            },
+            {
+              "key": "report:p_14:ev:e_375351",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10607916,
+              "last": 10607925
+            },
+            {
+              "key": "report:p_14:ev:e_375464",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10607934,
+              "last": 10607943
+            },
+            {
+              "key": "report:p_14:ev:e_375561",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10607952,
+              "last": 10607961
+            },
+            {
+              "key": "report:p_14:ev:e_380275",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10607970,
+              "last": 10607979
+            },
+            {
+              "key": "report:p_14:ev:e_381002",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10607988,
+              "last": 10607997
+            },
+            {
+              "key": "report:p_14:ev:e_381254",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10608006,
+              "last": 10608015
+            },
+            {
+              "key": "report:p_14:ev:e_381362",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10608024,
+              "last": 10608033
+            },
+            {
+              "key": "report:p_14:ev:e_381483",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10608042,
+              "last": 10608051
+            },
+            {
+              "key": "report:p_14:ev:e_381490",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10608060,
+              "last": 10608069
+            },
+            {
+              "key": "report:p_14:ev:e_381644",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10608078,
+              "last": 10608087
+            },
+            {
+              "key": "report:p_14:ev:e_381650",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10608096,
+              "last": 10608105
+            },
+            {
+              "key": "report:p_14:ev:e_381804",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10608114,
+              "last": 10608123
+            },
+            {
+              "key": "report:p_14:ev:e_381810",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10608132,
+              "last": 10608141
+            },
+            {
+              "key": "report:p_14:ev:e_381976",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10608150,
+              "last": 10608159
+            },
+            {
+              "key": "report:p_14:ev:e_381981",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10608168,
+              "last": 10608177
+            },
+            {
+              "key": "report:p_14:ev:e_382143",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10608186,
+              "last": 10608195
+            },
+            {
+              "key": "report:p_14:ev:e_382761",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10608204,
+              "last": 10608213
+            },
+            {
+              "key": "report:p_14:ev:e_383261",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10608222,
+              "last": 10608231
+            },
+            {
+              "key": "report:p_14:ev:e_386678",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10608240,
+              "last": 10608249
+            },
+            {
+              "key": "report:p_14:ev:e_389364",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10608258,
+              "last": 10608267
+            },
+            {
+              "key": "report:p_14:ev:e_405608",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10608276,
+              "last": 10608285
+            },
+            {
+              "key": "go_home:pl_9",
+              "adoptions": 2,
+              "completed": 2,
+              "failedPaths": 0,
+              "first": 10608294,
+              "last": 10612452
+            },
+            {
+              "key": "report:p_14:ev:e_406169",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10610553,
+              "last": 10610562
+            },
+            {
+              "key": "drink_water:pl_2",
+              "adoptions": 2,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10612461,
+              "last": 10613721
+            }
+          ]
+        }
+      ],
+      "subsequentProgress": {
+        "scope": "Next completion after each actor worst rate window, for repeatedly displaced ordinary needs with zero completions inside that window. A later completion is bounded progress evidence, not proof every switch was rational. No subsequent receipt is left unknown, not asserted infinite.",
+        "leads": [
+          {
+            "actor": "p_30",
+            "key": "sleep:pl_7",
+            "from": 10193007,
+            "to": 10202493,
+            "adoptions": 19,
+            "afterCompletion": {
+              "event": "e_338146",
+              "tick": 10308027,
+              "key": "sleep:pl_7",
+              "delayWorldSeconds": 105534
+            },
+            "firstNeeds": {
+              "hunger": 0.33240000000000725,
+              "energy": 0.55,
+              "social": 1,
+              "comfort": 0,
+              "thirst": 0.49556363636363165
+            },
+            "firstReasons": [
+              "energy need 0.55",
+              ""
+            ]
+          },
+          {
+            "actor": "p_8",
+            "key": "eat:pl_7",
+            "from": 10058475,
+            "to": 10066710,
+            "adoptions": 21,
+            "afterCompletion": {
+              "event": "e_283400",
+              "tick": 10070274,
+              "key": "eat:pl_7",
+              "delayWorldSeconds": 3564
+            },
+            "firstNeeds": {
+              "hunger": 0.6543183333334808,
+              "energy": 0.23411644769495008,
+              "social": 0.7498333333333189,
+              "comfort": 0.8949999999999996,
+              "thirst": 0.12113856060606021
+            },
+            "firstReasons": [
+              "hunger 0.65",
+              "",
+              "must find food"
+            ]
+          },
+          {
+            "actor": "p_9",
+            "key": "provision_home:pl_18",
+            "from": 10058718,
+            "to": 10066629,
+            "adoptions": 18,
+            "afterCompletion": {
+              "event": "e_307662",
+              "tick": 10154892,
+              "key": "provision_home:pl_10",
+              "delayWorldSeconds": 88263
+            },
+            "firstNeeds": {
+              "hunger": 0.3684857142857181,
+              "energy": 0.24208466899475084,
+              "social": 0.652999999999991,
+              "comfort": 0.9766666666666666,
+              "thirst": 0.2604090909090918
+            },
+            "firstReasons": [
+              "the household pantry is running low",
+              "I have surplus food to bring home"
+            ]
+          },
+          {
+            "actor": "p_4",
+            "key": "drink_water:pl_2",
+            "from": 10142247,
+            "to": 10149519,
+            "adoptions": 22,
+            "afterCompletion": {
+              "event": "e_306619",
+              "tick": 10150662,
+              "key": "drink_water:pl_2",
+              "delayWorldSeconds": 1143
+            },
+            "firstNeeds": {
+              "hunger": 0.3753714285714963,
+              "energy": 0.3217060667804454,
+              "social": 0.8049999999999966,
+              "comfort": 1,
+              "thirst": 0.4412121212121205
+            },
+            "firstReasons": [
+              "thirst 0.44"
+            ]
+          },
+          {
+            "actor": "p_7",
+            "key": "drink_water:pl_2",
+            "from": 10058655,
+            "to": 10066638,
+            "adoptions": 16,
+            "afterCompletion": {
+              "event": "e_282936",
+              "tick": 10069086,
+              "key": "drink_water:pl_2",
+              "delayWorldSeconds": 2448
+            },
+            "firstNeeds": {
+              "hunger": 0.33854920634921926,
+              "energy": 0.36742100694444696,
+              "social": 0.765833333333329,
+              "comfort": 0.5858333333333317,
+              "thirst": 0.39412727272726955
+            },
+            "firstReasons": [
+              "thirst 0.39"
+            ]
+          },
+          {
+            "actor": "p_25",
+            "key": "provision_home:pl_10",
+            "from": 10138170,
+            "to": 10145820,
+            "adoptions": 11,
+            "afterCompletion": {
+              "event": "e_308152",
+              "tick": 10156836,
+              "key": "provision_home:pl_30",
+              "delayWorldSeconds": 11016
+            },
+            "firstNeeds": {
+              "hunger": 0.6144146031746185,
+              "energy": 0.32981921296297234,
+              "social": 1,
+              "comfort": 1,
+              "thirst": 0.014132121212121262
+            },
+            "firstReasons": [
+              "the household pantry is running low",
+              "I can bring food home"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "seed": 918273,
+      "scope": "Remaining rate leads are class F unless an individually documented mechanism establishes C or D. Zero hard failures is not a universal decision-quality proof.",
+      "hourlySamples": 720,
+      "hardFailures": [],
+      "groups": 313,
+      "foodLedger": {
+        "initial": 377,
+        "production": 1005,
+        "consumption": 1144,
+        "spoilage": 152,
+        "transformationInput": 14,
+        "final": 72,
+        "unexplained": 0
+      },
+      "churn": [
+        {
+          "key": "goal_churn:p_10:",
+          "count": 45,
+          "from": 8850891,
+          "to": 8860584,
+          "goals": [
+            {
+              "key": "report:p_16:ev:e_29883",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8850891,
+              "last": 8851557
+            },
+            {
+              "key": "report:p_16:ev:e_30053",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8851566,
+              "last": 8851575
+            },
+            {
+              "key": "report:p_16:ev:e_30393",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8851584,
+              "last": 8851593
+            },
+            {
+              "key": "report:p_16:ev:e_31998",
+              "adoptions": 2,
+              "completed": 2,
+              "failedPaths": 0,
+              "first": 8851602,
+              "last": 8852853
+            },
+            {
+              "key": "report:p_16:ev:e_32259",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8851620,
+              "last": 8851629
+            },
+            {
+              "key": "report:p_16:ev:e_32266",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8851638,
+              "last": 8851647
+            },
+            {
+              "key": "report:p_16:ev:e_32651",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8851656,
+              "last": 8851665
+            },
+            {
+              "key": "report:p_16:ev:e_32827",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8851674,
+              "last": 8851683
+            },
+            {
+              "key": "report:p_16:ev:e_33014",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8851692,
+              "last": 8851701
+            },
+            {
+              "key": "report:p_16:ev:e_33242",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8851710,
+              "last": 8851719
+            },
+            {
+              "key": "report:p_16:ev:e_33490",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8851728,
+              "last": 8851737
+            },
+            {
+              "key": "report:p_16:ev:e_33593",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8851746,
+              "last": 8851755
+            },
+            {
+              "key": "report:p_16:ev:e_33737",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8851764,
+              "last": 8851773
+            },
+            {
+              "key": "report:p_16:ev:e_33849",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8851782,
+              "last": 8851791
+            },
+            {
+              "key": "report:p_16:ev:e_33968",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8851800,
+              "last": 8851809
+            },
+            {
+              "key": "report:p_16:ev:e_34828",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8851818,
+              "last": 8851827
+            },
+            {
+              "key": "report:p_16:ev:e_35435",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8851836,
+              "last": 8851845
+            },
+            {
+              "key": "report:p_16:ev:e_35728",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8851854,
+              "last": 8851863
+            },
+            {
+              "key": "report:p_16:ev:e_35920",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8851872,
+              "last": 8851881
+            },
+            {
+              "key": "report:p_16:ev:e_36152",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8851890,
+              "last": 8851899
+            },
+            {
+              "key": "report:p_16:ev:e_36312",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8851908,
+              "last": 8851917
+            },
+            {
+              "key": "report:p_16:ev:e_36481",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8851926,
+              "last": 8851935
+            },
+            {
+              "key": "report:p_16:ev:e_36654",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8851944,
+              "last": 8851953
+            },
+            {
+              "key": "report:p_16:ev:e_28226",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8851962,
+              "last": 8851971
+            },
+            {
+              "key": "report:p_16:ev:e_28751",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8851980,
+              "last": 8851989
+            },
+            {
+              "key": "report:p_16:ev:e_28947",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8851998,
+              "last": 8852007
+            },
+            {
+              "key": "report:p_16:ev:e_29137",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8852016,
+              "last": 8852025
+            },
+            {
+              "key": "report:p_16:ev:e_29310",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8852034,
+              "last": 8852043
+            },
+            {
+              "key": "report:p_16:ev:e_29517",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8852052,
+              "last": 8852061
+            },
+            {
+              "key": "report:p_16:ev:e_29524",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8852070,
+              "last": 8852079
+            },
+            {
+              "key": "report:p_16:ev:e_29768",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8852088,
+              "last": 8852097
+            },
+            {
+              "key": "socialize:pl_1",
+              "adoptions": 6,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8852106,
+              "last": 8860188
+            },
+            {
+              "key": "report:p_13:ev:e_26174",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8855364,
+              "last": 8855490
+            },
+            {
+              "key": "report:p_13:ev:e_26315",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8855499,
+              "last": 8855508
+            },
+            {
+              "key": "report:p_13:ev:e_26795",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8855517,
+              "last": 8855526
+            },
+            {
+              "key": "eat:pl_18",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8856030,
+              "last": 8857974
+            },
+            {
+              "key": "report:p_16:ev:e_28551",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8859378,
+              "last": 8859504
+            },
+            {
+              "key": "flee:p_14",
+              "adoptions": 2,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8859711,
+              "last": 8860584
+            }
+          ]
+        },
+        {
+          "key": "goal_churn:p_12:",
+          "count": 43,
+          "from": 10399476,
+          "to": 10408611,
+          "goals": [
+            {
+              "key": "check_on:p_1",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10399476,
+              "last": 10399476
+            },
+            {
+              "key": "flee:p_28",
+              "adoptions": 8,
+              "completed": 10,
+              "failedPaths": 0,
+              "first": 10399638,
+              "last": 10405956
+            },
+            {
+              "key": "report:p_14:ev:e_310917",
+              "adoptions": 2,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10400088,
+              "last": 10400691
+            },
+            {
+              "key": "report:p_14:ev:e_311087",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10400574,
+              "last": 10400583
+            },
+            {
+              "key": "report:p_14:ev:e_311306",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10400592,
+              "last": 10400601
+            },
+            {
+              "key": "report:p_14:ev:e_311319",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10400610,
+              "last": 10400619
+            },
+            {
+              "key": "report:p_14:ev:e_312294",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10400628,
+              "last": 10400637
+            },
+            {
+              "key": "report:p_14:ev:e_312513",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10400646,
+              "last": 10400655
+            },
+            {
+              "key": "report:p_14:ev:e_312686",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10400664,
+              "last": 10400673
+            },
+            {
+              "key": "sleep:pl_11",
+              "adoptions": 2,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10400700,
+              "last": 10403589
+            },
+            {
+              "key": "eat:pl_5",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10401294,
+              "last": 10401294
+            },
+            {
+              "key": "drink_water:pl_2",
+              "adoptions": 7,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10402248,
+              "last": 10407315
+            },
+            {
+              "key": "eat:pl_6",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10404075,
+              "last": 10404075
+            },
+            {
+              "key": "eat:pl_4",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10406361,
+              "last": 10406361
+            },
+            {
+              "key": "help:p_1",
+              "adoptions": 14,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10407324,
+              "last": 10408611
+            }
+          ]
+        },
+        {
+          "key": "goal_churn:p_6:",
+          "count": 45,
+          "from": 8860863,
+          "to": 8871087,
+          "goals": [
+            {
+              "key": "eat:pl_7",
+              "adoptions": 2,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8860863,
+              "last": 8861574
+            },
+            {
+              "key": "flee:p_3",
+              "adoptions": 7,
+              "completed": 7,
+              "failedPaths": 0,
+              "first": 8861160,
+              "last": 8871078
+            },
+            {
+              "key": "socialize:pl_1",
+              "adoptions": 18,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 8861583,
+              "last": 8870205
+            },
+            {
+              "key": "flee:p_14",
+              "adoptions": 13,
+              "completed": 12,
+              "failedPaths": 0,
+              "first": 8863005,
+              "last": 8871087
+            },
+            {
+              "key": "report:p_16:ev:e_34828",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8864571,
+              "last": 8864751
+            },
+            {
+              "key": "report:p_16:ev:e_43044",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8864760,
+              "last": 8864769
+            },
+            {
+              "key": "report:p_16:ev:e_43208",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8864778,
+              "last": 8864787
+            },
+            {
+              "key": "report:p_16:ev:e_43334",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8864796,
+              "last": 8864805
+            },
+            {
+              "key": "report:p_16:ev:e_43700",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8870439,
+              "last": 8870610
+            }
+          ]
+        },
+        {
+          "key": "goal_churn:p_8:",
+          "count": 40,
+          "from": 8860935,
+          "to": 8871447,
+          "goals": [
+            {
+              "key": "flee:p_3",
+              "adoptions": 4,
+              "completed": 4,
+              "failedPaths": 0,
+              "first": 8860935,
+              "last": 8867496
+            },
+            {
+              "key": "drink_water:pl_2",
+              "adoptions": 20,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 8861268,
+              "last": 8871447
+            },
+            {
+              "key": "flee:p_16",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 8863374,
+              "last": 8863806
+            },
+            {
+              "key": "flee:p_14",
+              "adoptions": 15,
+              "completed": 15,
+              "failedPaths": 0,
+              "first": 8863878,
+              "last": 8871438
+            }
+          ]
+        },
+        {
+          "key": "goal_churn:p_2:",
+          "count": 40,
+          "from": 9116472,
+          "to": 9126939,
+          "goals": [
+            {
+              "key": "socialize:pl_1",
+              "adoptions": 14,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9116472,
+              "last": 9121143
+            },
+            {
+              "key": "flee:p_16",
+              "adoptions": 20,
+              "completed": 19,
+              "failedPaths": 0,
+              "first": 9116760,
+              "last": 9126939
+            },
+            {
+              "key": "drink_water:pl_2",
+              "adoptions": 2,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 9121485,
+              "last": 9122358
+            },
+            {
+              "key": "shelter:pl_7",
+              "adoptions": 4,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 9122754,
+              "last": 9126840
+            }
+          ]
+        },
+        {
+          "key": "goal_churn:p_18:",
+          "count": 42,
+          "from": 10228809,
+          "to": 10239366,
+          "goals": [
+            {
+              "key": "report:p_13:ev:e_278325",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10228809,
+              "last": 10228818
+            },
+            {
+              "key": "report:p_13:ev:e_278476",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10228827,
+              "last": 10228836
+            },
+            {
+              "key": "report:p_13:ev:e_278660",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10228845,
+              "last": 10228854
+            },
+            {
+              "key": "report:p_13:ev:e_278834",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10228863,
+              "last": 10228872
+            },
+            {
+              "key": "report:p_13:ev:e_279009",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10228881,
+              "last": 10228890
+            },
+            {
+              "key": "report:p_13:ev:e_279146",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10228899,
+              "last": 10228908
+            },
+            {
+              "key": "report:p_13:ev:e_279319",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10228917,
+              "last": 10228926
+            },
+            {
+              "key": "report:p_13:ev:e_279396",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10228935,
+              "last": 10228944
+            },
+            {
+              "key": "report:p_13:ev:e_279487",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10228953,
+              "last": 10228962
+            },
+            {
+              "key": "report:p_13:ev:e_279833",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10228971,
+              "last": 10228980
+            },
+            {
+              "key": "report:p_13:ev:e_280022",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10228989,
+              "last": 10228998
+            },
+            {
+              "key": "socialize:pl_1",
+              "adoptions": 14,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10229007,
+              "last": 10238034
+            },
+            {
+              "key": "flee:p_3",
+              "adoptions": 11,
+              "completed": 11,
+              "failedPaths": 0,
+              "first": 10229106,
+              "last": 10239357
+            },
+            {
+              "key": "report:p_14:ev:e_280022",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10231383,
+              "last": 10231383
+            },
+            {
+              "key": "flee:p_31",
+              "adoptions": 3,
+              "completed": 3,
+              "failedPaths": 0,
+              "first": 10231491,
+              "last": 10233570
+            },
+            {
+              "key": "report:p_15:ev:e_280022",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10231905,
+              "last": 10231914
+            },
+            {
+              "key": "eat:pl_23",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10239366,
+              "last": 10239366
+            }
+          ]
+        },
+        {
+          "key": "goal_churn:p_21:",
+          "count": 48,
+          "from": 10417827,
+          "to": 10426656,
+          "goals": [
+            {
+              "key": "flee:p_15",
+              "adoptions": 3,
+              "completed": 3,
+              "failedPaths": 0,
+              "first": 10417827,
+              "last": 10420725
+            },
+            {
+              "key": "report:p_16:ev:e_311319",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10418286,
+              "last": 10418286
+            },
+            {
+              "key": "report:p_15:ev:e_311562",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10418673,
+              "last": 10418673
+            },
+            {
+              "key": "report:p_13:ev:e_311681",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10419564,
+              "last": 10419717
+            },
+            {
+              "key": "report:p_13:ev:e_312092",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10419726,
+              "last": 10419771
+            },
+            {
+              "key": "report:p_13:ev:e_312294",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10419780,
+              "last": 10419789
+            },
+            {
+              "key": "report:p_13:ev:e_312513",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10419798,
+              "last": 10419807
+            },
+            {
+              "key": "report:p_13:ev:e_312686",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10419816,
+              "last": 10419825
+            },
+            {
+              "key": "report:p_13:ev:e_308703",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10419834,
+              "last": 10419852
+            },
+            {
+              "key": "report:p_13:ev:e_310105",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10419861,
+              "last": 10419879
+            },
+            {
+              "key": "report:p_13:ev:e_310917",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10419888,
+              "last": 10419897
+            },
+            {
+              "key": "report:p_13:ev:e_311087",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10419906,
+              "last": 10419915
+            },
+            {
+              "key": "report:p_13:ev:e_311319",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10419924,
+              "last": 10419933
+            },
+            {
+              "key": "report:p_13:ev:e_311562",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10419942,
+              "last": 10419951
+            },
+            {
+              "key": "report:p_13:ev:e_296112",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10419960,
+              "last": 10419969
+            },
+            {
+              "key": "report:p_13:ev:e_298675",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10419978,
+              "last": 10419987
+            },
+            {
+              "key": "sleep:pl_22",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10419996,
+              "last": 10419996
+            },
+            {
+              "key": "flee:p_32",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10420734,
+              "last": 10421220
+            },
+            {
+              "key": "drink_water:pl_2",
+              "adoptions": 14,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10421229,
+              "last": 10426656
+            },
+            {
+              "key": "flee:p_28",
+              "adoptions": 13,
+              "completed": 13,
+              "failedPaths": 0,
+              "first": 10421328,
+              "last": 10426647
+            },
+            {
+              "key": "report:p_14:ev:e_43584",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10421913,
+              "last": 10421922
+            }
+          ]
+        },
+        {
+          "key": "goal_churn:p_9:",
+          "count": 44,
+          "from": 10421778,
+          "to": 10430364,
+          "goals": [
+            {
+              "key": "flee:p_28",
+              "adoptions": 22,
+              "completed": 21,
+              "failedPaths": 0,
+              "first": 10421778,
+              "last": 10430364
+            },
+            {
+              "key": "report:p_14:ev:e_320601",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10422147,
+              "last": 10422156
+            },
+            {
+              "key": "socialize:pl_1",
+              "adoptions": 9,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10422165,
+              "last": 10425351
+            },
+            {
+              "key": "socialize:pl_7",
+              "adoptions": 12,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10425846,
+              "last": 10430265
+            }
+          ]
+        },
+        {
+          "key": "goal_churn:p_20:",
+          "count": 46,
+          "from": 10520598,
+          "to": 10530966,
+          "goals": [
+            {
+              "key": "report:p_13:ev:e_338567",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10520598,
+              "last": 10520598
+            },
+            {
+              "key": "flee:p_14",
+              "adoptions": 20,
+              "completed": 20,
+              "failedPaths": 0,
+              "first": 10520688,
+              "last": 10530966
+            },
+            {
+              "key": "check_on:p_28",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10521120,
+              "last": 10521120
+            },
+            {
+              "key": "report:p_13:ev:e_338650",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10521921,
+              "last": 10521921
+            },
+            {
+              "key": "eat:pl_4",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10522119,
+              "last": 10522119
+            },
+            {
+              "key": "report:p_15:ev:e_338785",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10522893,
+              "last": 10522893
+            },
+            {
+              "key": "report:p_14:ev:e_339629",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10523037,
+              "last": 10523037
+            },
+            {
+              "key": "report:p_16:ev:e_339790",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10523586,
+              "last": 10523586
+            },
+            {
+              "key": "drink_water:pl_2",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10523694,
+              "last": 10523694
+            },
+            {
+              "key": "report:p_13:ev:e_340083",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10524648,
+              "last": 10524648
+            },
+            {
+              "key": "eat:pl_10",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10524747,
+              "last": 10524747
+            },
+            {
+              "key": "report:p_16:ev:e_340165",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10525521,
+              "last": 10525521
+            },
+            {
+              "key": "report:p_14:ev:e_340818",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10526016,
+              "last": 10526016
+            },
+            {
+              "key": "sleep:pl_22",
+              "adoptions": 14,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10526421,
+              "last": 10530867
+            }
+          ]
+        },
+        {
+          "key": "goal_churn:p_13:",
+          "count": 40,
+          "from": 10564500,
+          "to": 10573869,
+          "goals": [
+            {
+              "key": "investigate:pl_11:ev:e_296729",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10564500,
+              "last": 10564950
+            },
+            {
+              "key": "investigate:pl_2:ev:e_310105",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10564959,
+              "last": 10565274
+            },
+            {
+              "key": "investigate:pl_1:ev:e_310917",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10565283,
+              "last": 10565436
+            },
+            {
+              "key": "investigate:pl_1:ev:e_311087",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10565445,
+              "last": 10565679
+            },
+            {
+              "key": "investigate::ev:e_311306",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10565688,
+              "last": 10565967
+            },
+            {
+              "key": "investigate::ev:e_311319",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10565976,
+              "last": 10565985
+            },
+            {
+              "key": "investigate::ev:e_311562",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10565994,
+              "last": 10566003
+            },
+            {
+              "key": "investigate::ev:e_311681",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10566012,
+              "last": 10566021
+            },
+            {
+              "key": "investigate::ev:e_311836",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10566030,
+              "last": 10566039
+            },
+            {
+              "key": "investigate::ev:e_312092",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10566048,
+              "last": 10566111
+            },
+            {
+              "key": "investigate::ev:e_312294",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10566120,
+              "last": 10566129
+            },
+            {
+              "key": "investigate::ev:e_312513",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10566138,
+              "last": 10566156
+            },
+            {
+              "key": "investigate::ev:e_312686",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10566165,
+              "last": 10566192
+            },
+            {
+              "key": "investigate::ev:e_318123",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10566201,
+              "last": 10566570
+            },
+            {
+              "key": "investigate:pl_1:ev:e_320484",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10566579,
+              "last": 10566948
+            },
+            {
+              "key": "investigate:pl_1:ev:e_320601",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10566957,
+              "last": 10566966
+            },
+            {
+              "key": "investigate::ev:e_320836",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10566975,
+              "last": 10567092
+            },
+            {
+              "key": "investigate::ev:e_320988",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10567101,
+              "last": 10567290
+            },
+            {
+              "key": "investigate::ev:e_321107",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10567299,
+              "last": 10567317
+            },
+            {
+              "key": "investigate::ev:e_321218",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10567326,
+              "last": 10567335
+            },
+            {
+              "key": "investigate::ev:e_321312",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10567344,
+              "last": 10567362
+            },
+            {
+              "key": "investigate::ev:e_323598",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10567371,
+              "last": 10567398
+            },
+            {
+              "key": "investigate::ev:e_324749",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10567407,
+              "last": 10567605
+            },
+            {
+              "key": "investigate::ev:e_324817",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10567614,
+              "last": 10567803
+            },
+            {
+              "key": "investigate::ev:e_324993",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10567812,
+              "last": 10568001
+            },
+            {
+              "key": "investigate:pl_16:ev:e_327514",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10568010,
+              "last": 10569018
+            },
+            {
+              "key": "investigate:pl_16:ev:e_327709",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10569027,
+              "last": 10569216
+            },
+            {
+              "key": "investigate:pl_16:ev:e_327882",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10569225,
+              "last": 10569414
+            },
+            {
+              "key": "investigate:pl_16:ev:e_327977",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10569423,
+              "last": 10569621
+            },
+            {
+              "key": "investigate:pl_16:ev:e_328120",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10569630,
+              "last": 10569819
+            },
+            {
+              "key": "investigate:pl_16:ev:e_328222",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10569828,
+              "last": 10570026
+            },
+            {
+              "key": "investigate:pl_2:ev:e_338785",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10570035,
+              "last": 10571070
+            },
+            {
+              "key": "investigate:pl_2:ev:e_339432",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10571079,
+              "last": 10571277
+            },
+            {
+              "key": "investigate::ev:e_340083",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10571286,
+              "last": 10571790
+            },
+            {
+              "key": "investigate::ev:e_340165",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10571799,
+              "last": 10571997
+            },
+            {
+              "key": "drink_water:pl_2",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10572006,
+              "last": 10572672
+            },
+            {
+              "key": "eat:pl_4",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10572681,
+              "last": 10572681
+            },
+            {
+              "key": "investigate:pl_9:ev:e_298126",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10573140,
+              "last": 10573662
+            },
+            {
+              "key": "investigate:pl_9:ev:e_298675",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 10573671,
+              "last": 10573860
+            },
+            {
+              "key": "investigate:pl_23:ev:e_298439",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 10573869,
+              "last": 10573869
+            }
+          ]
+        },
+        {
+          "key": "goal_churn:p_17:",
+          "count": 47,
+          "from": 11197443,
+          "to": 11207955,
+          "goals": [
+            {
+              "key": "flee:p_32",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 11197443,
+              "last": 11197848
+            },
+            {
+              "key": "report:p_16:ev:e_470670",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 11197857,
+              "last": 11197866
+            },
+            {
+              "key": "drink_water:pl_2",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 11197875,
+              "last": 11198991
+            },
+            {
+              "key": "report:p_15:ev:e_462736",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 11199000,
+              "last": 11199000
+            },
+            {
+              "key": "report:p_13:ev:e_468883",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 11199225,
+              "last": 11199225
+            },
+            {
+              "key": "report:p_16:ev:e_469117",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 11199423,
+              "last": 11199621
+            },
+            {
+              "key": "report:p_16:ev:e_469740",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 11199630,
+              "last": 11199639
+            },
+            {
+              "key": "report:p_16:ev:e_470311",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 11199648,
+              "last": 11199657
+            },
+            {
+              "key": "report:p_16:ev:e_470473",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 11199666,
+              "last": 11199675
+            },
+            {
+              "key": "report:p_16:ev:e_455375",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 11199684,
+              "last": 11199693
+            },
+            {
+              "key": "report:p_16:ev:e_462736",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 11199702,
+              "last": 11199711
+            },
+            {
+              "key": "report:p_16:ev:e_468883",
+              "adoptions": 1,
+              "completed": 1,
+              "failedPaths": 0,
+              "first": 11199720,
+              "last": 11199729
+            },
+            {
+              "key": "sleep:pl_23",
+              "adoptions": 13,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 11199738,
+              "last": 11205453
+            },
+            {
+              "key": "flee:p_15",
+              "adoptions": 17,
+              "completed": 17,
+              "failedPaths": 0,
+              "first": 11199936,
+              "last": 11207946
+            },
+            {
+              "key": "shelter:pl_23",
+              "adoptions": 4,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 11205930,
+              "last": 11207361
+            },
+            {
+              "key": "shelter:pl_7",
+              "adoptions": 1,
+              "completed": 0,
+              "failedPaths": 0,
+              "first": 11207955,
+              "last": 11207955
+            }
+          ]
+        }
+      ],
+      "subsequentProgress": {
+        "scope": "Next completion after each actor worst rate window, for repeatedly displaced ordinary needs with zero completions inside that window. A later completion is bounded progress evidence, not proof every switch was rational. No subsequent receipt is left unknown, not asserted infinite.",
+        "leads": [
+          {
+            "actor": "p_8",
+            "key": "drink_water:pl_2",
+            "from": 8860935,
+            "to": 8871447,
+            "adoptions": 20,
+            "afterCompletion": {
+              "event": "e_45727",
+              "tick": 8872905,
+              "key": "drink_water:pl_2",
+              "delayWorldSeconds": 1458
+            },
+            "firstNeeds": {
+              "hunger": 0.6751889682540413,
+              "energy": 0.45428554727914916,
+              "social": 0.9528333333333057,
+              "comfort": 0,
+              "thirst": 0.5288246212121199
+            },
+            "firstReasons": [
+              "thirst 0.53"
+            ]
+          },
+          {
+            "actor": "p_21",
+            "key": "drink_water:pl_2",
+            "from": 10417827,
+            "to": 10426656,
+            "adoptions": 14,
+            "afterCompletion": {
+              "event": "e_325267",
+              "tick": 10431948,
+              "key": "drink_water:pl_2",
+              "delayWorldSeconds": 5292
+            },
+            "firstNeeds": {
+              "hunger": 1,
+              "energy": 0.5623721184536198,
+              "social": 1,
+              "comfort": 0.4672091663777802,
+              "thirst": 0.4065151515151446
+            },
+            "firstReasons": [
+              "thirst 0.41"
+            ]
+          },
+          {
+            "actor": "p_20",
+            "key": "sleep:pl_22",
+            "from": 10520598,
+            "to": 10530966,
+            "adoptions": 14,
+            "afterCompletion": {
+              "event": "e_354646",
+              "tick": 10593975,
+              "key": "sleep:pl_22",
+              "delayWorldSeconds": 63009
+            },
+            "firstNeeds": {
+              "hunger": 1,
+              "energy": 0.6379887023522123,
+              "social": 1,
+              "comfort": 0.8110842743601319,
+              "thirst": 0.4671212121212085
+            },
+            "firstReasons": [
+              "energy need 0.64",
+              "it is my time to sleep"
+            ]
+          },
+          {
+            "actor": "p_17",
+            "key": "sleep:pl_23",
+            "from": 11197443,
+            "to": 11207955,
+            "adoptions": 13,
+            "afterCompletion": null,
+            "firstNeeds": {
+              "hunger": 1,
+              "energy": 0.5691723190901381,
+              "social": 1,
+              "comfort": 0.9219999999999999,
+              "thirst": 0.02469696969696944
+            },
+            "firstReasons": [
+              "energy need 0.57",
+              ""
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "uncompletedMealExample": {
+    "classification": "F",
+    "actor": "p_22",
+    "name": "Tilly Fletcher",
+    "note": "No later completed meal found after the worst churn window. Real poverty and empty stock explain sampled failures; this does not certify every intervening choice.",
+    "lastFailure": {
+      "id": "e_481731",
+      "tick": 11255133,
+      "type": "resource_shortage",
+      "category": "world",
+      "actor": "p_22",
+      "placeId": "pl_10",
+      "pos": {
+        "x": 79.04159210564681,
+        "y": 14,
+        "z": 106.54042293039427
+      },
+      "data": {
+        "need": "food",
+        "reason": "unaffordable",
+        "price": 4,
+        "wealth": 0,
+        "hunger": 1
+      },
+      "causes": [],
+      "effects": [],
+      "perceivedBy": [],
+      "significance": 0.3,
+      "summary": "Tilly Fletcher could not afford food (4 silver a meal)",
+      "visibility": 8
+    },
+    "finalFoodBeliefs": [
+      {
+        "key": "pantry:hh_10",
+        "claim": {
+          "placeId": "pl_22",
+          "quantity": 0,
+          "resource": "food"
+        },
+        "source": {
+          "type": "self"
+        },
+        "learnedAt": 11258310,
+        "confidence": 1
+      },
+      {
+        "key": "food-access:pl_3",
+        "claim": {
+          "placeId": "pl_3",
+          "reason": "unaffordable",
+          "price": 3
+        },
+        "source": {
+          "type": "self",
+          "viaEvent": "e_479786"
+        },
+        "learnedAt": 11216253,
+        "confidence": 1
+      },
+      {
+        "key": "food-access:pl_9",
+        "claim": {
+          "placeId": "pl_9",
+          "reason": "unaffordable",
+          "price": 3
+        },
+        "source": {
+          "type": "self",
+          "viaEvent": "e_480499"
+        },
+        "learnedAt": 11242011,
+        "confidence": 1
+      },
+      {
+        "key": "food-access:pl_7",
+        "claim": {
+          "placeId": "pl_7",
+          "reason": "unavailable"
+        },
+        "source": {
+          "type": "self",
+          "viaEvent": "e_480944"
+        },
+        "learnedAt": 11251227,
+        "confidence": 1
+      },
+      {
+        "key": "food-access:pl_10",
+        "claim": {
+          "placeId": "pl_10",
+          "reason": "unaffordable",
+          "price": 4
+        },
+        "source": {
+          "type": "self",
+          "viaEvent": "e_481731"
+        },
+        "learnedAt": 11255133,
+        "confidence": 1
+      }
+    ],
+    "wealth": 0,
+    "accessibleFood": null
+  }
+}

@@ -1,0 +1,262 @@
+{
+  "checks": [
+    {
+      "name": "screen-up walking",
+      "passed": true,
+      "evidence": {
+        "before": {
+          "pos": {
+            "x": 12035,
+            "y": 24,
+            "z": 20008
+          },
+          "yaw": 0,
+          "mode": "isometric",
+          "cameraMode": 1,
+          "wealth": 20
+        },
+        "after": {
+          "pos": {
+            "x": 12039.805817107677,
+            "y": 24,
+            "z": 20003.194182892323
+          },
+          "yaw": -0.7853981633974483,
+          "mode": "isometric",
+          "cameraMode": 1,
+          "wealth": 20
+        }
+      }
+    },
+    {
+      "name": "screen-down running",
+      "passed": true,
+      "evidence": {
+        "before": {
+          "pos": {
+            "x": 12039.805817107677,
+            "y": 24,
+            "z": 20003.194182892323
+          },
+          "yaw": -0.7853981633974483,
+          "mode": "isometric",
+          "cameraMode": 1,
+          "wealth": 20
+        },
+        "after": {
+          "pos": {
+            "x": 12034.039069192937,
+            "y": 24,
+            "z": 20008.96093080699
+          },
+          "yaw": 2.356194490192345,
+          "mode": "isometric",
+          "cameraMode": 1,
+          "wealth": 20
+        }
+      }
+    },
+    {
+      "name": "repeat interrupted menu flows",
+      "passed": true,
+      "evidence": null
+    },
+    {
+      "name": "root dialogue options",
+      "passed": true,
+      "evidence": [
+        "1What's the news?",
+        "2Who are you?",
+        "3Introduce yourself",
+        "4What do you think of me?",
+        "5Ask about someone…"
+      ]
+    },
+    {
+      "name": "settled conversation fits viewport",
+      "passed": true,
+      "evidence": {
+        "x": 222,
+        "y": 398.984375,
+        "width": 1156,
+        "height": 575.515625
+      }
+    },
+    {
+      "name": "trade confirmation shown",
+      "passed": true,
+      "evidence": null
+    },
+    {
+      "name": "cancel purchase keeps wealth",
+      "passed": true,
+      "evidence": {
+        "wallet": 20
+      }
+    },
+    {
+      "name": "canonical purchase reduces wealth",
+      "passed": true,
+      "evidence": {
+        "before": 20,
+        "after": 17
+      }
+    },
+    {
+      "name": "conversation repeat and interruption",
+      "passed": true,
+      "evidence": {
+        "fixture": "NPC co-location and direct observation, disclosed"
+      }
+    },
+    {
+      "name": "keyboard entry and occupied cutaway",
+      "passed": true,
+      "evidence": {
+        "arrived": true,
+        "at": {
+          "x": 12013.448315814709,
+          "y": 24,
+          "z": 20046.547911443933
+        },
+        "goal": {
+          "x": 12013,
+          "y": 24,
+          "z": 20046
+        },
+        "path": [
+          {
+            "x": 12013.5,
+            "y": 24,
+            "z": 20047.5
+          },
+          {
+            "x": 12013.5,
+            "y": 24,
+            "z": 20046.5
+          }
+        ],
+        "clippedMeshes": 5,
+        "fixture": "test begins at canonical doorway; actual keys enter the physical building"
+      }
+    },
+    {
+      "name": "canonical melee contact",
+      "passed": true,
+      "evidence": {
+        "before": 80,
+        "after": 74.41374615115708,
+        "targetBodyId": "b_5",
+        "action": {
+          "id": "action_1",
+          "commandId": "dialogue-ui:1-868",
+          "actorBodyId": "b_146",
+          "kind": "attack",
+          "targetBodyId": "b_5",
+          "weaponId": null,
+          "definition": "unarmed_high",
+          "trajectory": "high",
+          "startedAt": 36.133333333332565,
+          "startTick": 2168,
+          "activeAt": 36.39333333333256,
+          "recoveryAt": 36.54333333333256,
+          "completeAt": 36.813333333332565,
+          "phase": "complete",
+          "outcome": "hit",
+          "facing": -0.7853981633960491,
+          "initialFacing": -0.7853981633960491,
+          "trackingUntil": 36.29333333333256,
+          "turnRate": 1.5707963267948966,
+          "turnBudget": 0.2617993877991494,
+          "reach": 0.9,
+          "radius": 0.12,
+          "impact": 5.586253848842917,
+          "exertionCost": 0.03333333333333333,
+          "intent": "injure",
+          "direction": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "distance": 0,
+          "appliedDistance": 0,
+          "eventId": "e_2073",
+          "variant": "direct",
+          "moveId": "jab",
+          "repertoireRevision": 2,
+          "techniqueId": "motor:basic-punch",
+          "contact": {
+            "bodyId": "b_5",
+            "region": "head",
+            "position": {
+              "x": 12034.5527039548,
+              "y": 25.511221379853538,
+              "z": 20008.53928364016
+            },
+            "at": 36.4148440908464,
+            "eventId": "e_2089"
+          },
+          "learningEventId": "e_2124"
+        },
+        "fixture": "upright adult NPC staged nearby on traversed open ground in disposable validation world"
+      }
+    },
+    {
+      "name": "combat controls emit canonical commands",
+      "passed": true,
+      "evidence": {
+        "lastCombat": {
+          "kind": "defend",
+          "defend": "backstep",
+          "side": 1,
+          "at": 37040.89999997616,
+          "commandId": "dialogue-ui:1-942",
+          "sequence": 942
+        },
+        "bodyAction": {
+          "id": "action_2",
+          "commandId": "dialogue-ui:1-942",
+          "actorBodyId": "b_146",
+          "kind": "backstep",
+          "definition": "backstep",
+          "techniqueId": "motor:sidestep",
+          "techniqueName": "Sidestep",
+          "trajectory": "high",
+          "repertoireRevision": 2,
+          "startedAt": 37.3333333333325,
+          "activeAt": 37.3333333333325,
+          "recoveryAt": 37.5733333333325,
+          "completeAt": 37.6933333333325,
+          "phase": "complete",
+          "outcome": "pending",
+          "facing": -0.7853981633952108,
+          "direction": {
+            "x": -0.7071067811849654,
+            "y": 0,
+            "z": 0.7071067811881296
+          },
+          "distance": 0.55,
+          "reach": 0,
+          "radius": 0.12,
+          "duck": 0,
+          "contact": null,
+          "capability": {
+            "strength": 0.40141354166666665,
+            "dexterity": 0.4009744956054687,
+            "exertion": 0.876275
+          }
+        }
+      }
+    },
+    {
+      "name": "view switch round-trip",
+      "passed": true,
+      "evidence": {
+        "cutawaysRestored": true
+      }
+    }
+  ],
+  "errors": [],
+  "fixture": "Only movement/menu checks are ordinary-input travel. Dialogue co-location and interior relocation are explicit UI/projection fixtures. No human/controller acceptance.",
+  "modelRequests": []
+}

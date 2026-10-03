@@ -1,0 +1,45 @@
+{
+  "verifiedAt": "2026-10-01",
+  "entries": [
+    {
+      "path": "web/public/textures/couture/ivory-indigo-silk.png",
+      "source": "Authorized Codex image-generation output",
+      "sourceThread": "01a0efd6-ab0e-7e93-aa8a-f4c4a7d5de1a",
+      "sourceImage": "exec-3077d855-56fc-48d3-b7bd-6436cbd08be5.png",
+      "verification": "Byte-identical SHA-256 against original local generated image",
+      "sha256": "3083dacc54ae30d2498056b9def104d2138c762223e4588797255b1dec17eebb"
+    },
+    {
+      "path": "web/public/textures/couture/ivory-sparse-embroidery.png",
+      "source": "Authorized Codex image-generation output",
+      "sourceThread": "01a0efd6-ab0e-7e93-aa8a-f4c4a7d5de1a",
+      "sourceImage": "exec-9f293b07-b239-4b3e-961d-ffe1d86e1ecb.png",
+      "verification": "Byte-identical SHA-256 against original local generated image",
+      "sha256": "22f1e5782a911ff60e95e88228f0965df43f1c98b0cbb9c6085b3a024d042ea2"
+    },
+    {
+      "path": "web/public/textures/world/foliage-branch.png",
+      "source": "Authorized Codex image-generation output",
+      "sourceThread": "01a0efd6-ab0e-7e93-aa8a-f4c4a7d5de1a",
+      "sourceImage": "exec-131d311a-e1a0-4e75-9e24-67e19b1b5667.png",
+      "verification": "Byte-identical SHA-256 against original local generated image",
+      "sha256": "20af26db9062e971bf8bd5a0f2ccc74907d9019ed9db92b5c99827af67484fd2"
+    },
+    {
+      "path": "web/public/textures/world/foliage-pine.png",
+      "source": "Authorized Codex image-generation output",
+      "sourceThread": "01a0efd6-ab0e-7e93-aa8a-f4c4a7d5de1a",
+      "sourceImage": "exec-06344d3d-1393-483f-92e4-cbed77c06580.png",
+      "verification": "Byte-identical SHA-256 against original local generated image",
+      "sha256": "8845b5e6ed4d557983cd569b0007a5cda5dbc71ce73bcf03d763bf38680e48de"
+    },
+    {
+      "path": "web/public/textures/environment/kloppenheim_06_puresky_1k.hdr",
+      "source": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/kloppenheim_06_puresky_1k.hdr",
+      "license": "CC0",
+      "licenseSource": "https://polyhaven.com/license",
+      "verification": "Download command recorded in the same source thread; local file hash",
+      "sha256": "206c67e3a1b992282821cf06662bdd69bbb4915c1c4444a66338a40d6a7d4e34"
+    }
+  ]
+}

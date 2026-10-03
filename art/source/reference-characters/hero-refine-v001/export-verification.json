@@ -1,0 +1,29 @@
+{
+  "reimported_bones": 55,
+  "body_vertices": 70985,
+  "finite_coordinates": true,
+  "skin_sum_range": [
+    0.9999998663552105,
+    1.0000001210719347
+  ],
+  "deformation_tests": [
+    {
+      "bone": "fingers_01_l",
+      "moved_vertices": 6316,
+      "max_displacement_m": 0.04224764735631812
+    },
+    {
+      "bone": "fingers_01_r",
+      "moved_vertices": 6316,
+      "max_displacement_m": 0.04224774965582734
+    },
+    {
+      "bone": "calf_l",
+      "moved_vertices": 7928,
+      "max_displacement_m": 0.23412579030033034
+    }
+  ],
+  "visual_quality_approved": false,
+  "thigh_crease_fixed": false,
+  "browser_motions_verified": false
+}

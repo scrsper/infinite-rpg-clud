@@ -27,6 +27,8 @@ export interface AlphaConfig {
   disconnectGraceSeconds: number;
   maxConnections: number;
   characterCatalogue: string | null;
+  /** Admit the loopback browser gateway (client kind `web`). Off unless an environment opts in. */
+  webGateway: boolean;
   cpuAllocation?: CpuAllocation;
 }
 
@@ -50,6 +52,7 @@ export function loadConfig(path: string): AlphaConfig {
     disconnectGraceSeconds: Math.max(0, raw.disconnectGraceSeconds ?? 120),
     maxConnections: Math.max(1, Math.min(64, raw.maxConnections ?? 8)),
     characterCatalogue: raw.characterCatalogue ? at(raw.characterCatalogue, '') : null,
+    webGateway: raw.webGateway === true,
     ...(cpuAllocation ? { cpuAllocation: { ...cpuAllocation, powerShell: at(cpuAllocation.powerShell, '') } } : {}),
   };
 }

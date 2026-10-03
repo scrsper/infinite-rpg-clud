@@ -1,5 +1,7 @@
 import type { Action, Person, Vec3 } from '../core/types';
 import { makePerson, makeBody } from '../world/factory';
+import { restyleAppearance } from '../world/characterAppearance';
+import type { AppearanceDescription } from '../core/appearance';
 import { reachable } from '../kernel/mechanics';
 import { Simulation } from '../mind/agent';
 import { knowsVeil, MEDITATION_SECONDS } from '../physical/veil';
@@ -19,7 +21,26 @@ export type PersonIntent = { kind: 'yield' } | { kind: 'advance' } | { kind: 're
   | { kind: 'read'; itemId: string }
   | { kind: 'teach'; target: string; key: string };
 
-export interface SpawnOptions { gender?: 'f' | 'm'; age?: number }
+export interface SpawnOptions { gender?: 'f' | 'm'; age?: number; look?: Partial<AppearanceDescription> }
+/** A player's full-stick pace: a steady run (4.5 m/s), with sprint (x1.55) near 7 m/s. The old
+ * 3.4 m/s sat between a walk and a run, so no captured gait fitted it and the body half-walked,
+ * half-ran with sliding feet. A walk is chosen by the client (stick part-way, or the walk toggle)
+ * as a share of this, which the movement intent already carries. */
+export const PLAYER_RUN_SPEED = 4.5;
+
+/**
+ * A new player's default look, as canonical appearance tokens (never asset paths): a grown man,
+ * fair-skinned, hair in a side-swept fringe, ordinary build. Chosen, not rolled, because it is the face the
+ * player spends the game looking at; `SpawnOptions.look` overrides any of it. NPCs keep their own
+ * generated diversity.
+ */
+export const PLAYER_DEFAULT_LOOK: Partial<AppearanceDescription> = {
+  presentation: 'masculine', skinTone: 'fair', hairStyle: 'side_fringe', hairColor: 'brown',
+  eyeColor: 'blue', frame: 'average', stature: 'above_average', faceShape: 'square',
+  // The working kosode and hakama: a traveller's random draw could be the wide-sleeved open coat,
+  // the least convincing piece in the wardrobe, and the one the player would look at all game.
+  garmentSilhouette: 'work_kimono',
+};
 
 /** Connection routing is outside the world-facing Person. No account, human personality,
  * player flag or control origin enters a simulated mind. One facade can host many controls. */
@@ -40,8 +61,13 @@ export class GameSim {
   spawn(connection: string, name: string, pos: Vec3, options: SpawnOptions = {}): string {
     const w = this.simulation.world;
     const age = Number.isInteger(options.age) && options.age! >= 18 && options.age! <= 60 ? options.age! : 25;
-    const p = makePerson(w, { name, age, gender: options.gender === 'm' ? 'm' : 'f', occupation: 'traveler', traits: {}, appearance: {}, bio: '' });
-    p.bodies.push(makeBody(w, p.id, pos).id); this.attach(connection, p.id); return p.id;
+    const gender = options.gender === 'f' ? 'f' : 'm';
+    const p = makePerson(w, { name, age, gender, occupation: 'traveler', traits: {}, appearance: {}, bio: '' });
+    const look = { ...(gender === 'm' ? PLAYER_DEFAULT_LOOK : {}), ...(options.look ?? {}) };
+    if (Object.keys(look).length) p.appearance = restyleAppearance(p.appearance, look, p.occupation, p.age);
+    const body = makeBody(w, p.id, pos);
+    body.speed = PLAYER_RUN_SPEED;
+    p.bodies.push(body.id); this.attach(connection, p.id); return p.id;
   }
   private person(connection: string): Person | undefined { return this.simulation.world.person(this.connections.get(connection)); }
   controlsBody(connection: string, bodyId: string): boolean {

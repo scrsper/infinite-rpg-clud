@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { learn, learnPlace, noteFoodShortage, knownFoodPlace, MAX_KNOWLEDGE, PRUNE_MARGIN } from '../src/sim/mind/knowledge';
+import { learn, learnPlace, noteFoodShortage, knownFoodPlace, locationNotFound, MAX_KNOWLEDGE, PRUNE_MARGIN } from '../src/sim/mind/knowledge';
 import { noteWorkBlocked } from '../src/sim/world/shortfall';
 import { getRel } from '../src/sim/mind/relationships';
 import { identityKey, introduce, knownName, learnIdentity } from '../src/sim/mind/people';
@@ -28,6 +28,31 @@ function fillWithRoutineRumors(tw: ReturnType<typeof createTestWorld>, thinker: 
 }
 
 describe('knowledge retention policy (v0.2.2 Phase 1: semantic soundness of the bound)', () => {
+  it('retains spatial evidence used by an unfinished goal or purpose within the same memory bound', () => {
+    const tw = createTestWorld(918273, 32), w = tw.world;
+    const p = addPerson(tw, 'Helper', 'villager', v(10, 1, 10));
+    const subject = addPerson(tw, 'Absent recipient', 'villager', v(25, 1, 25));
+    const familiar = addPerson(tw, 'Familiar actor', 'villager', v(11, 1, 10));
+    getRel(p, familiar.id).familiarity = 1;
+    p.mind.goal = { type: 'provide', key: `provide:${subject.id}`, targetEntity: subject.id, createdAt: w.now, utility: .8, reasons: [] };
+    const ev = w.emit('perceived', { actor: p.id, target: subject.id, data: { kind: 'failed_handoff' } });
+    locationNotFound(w, p, subject.id, v(10, 1, 10), ev.id);
+    const key = `loc:${subject.id}`, evidence = structuredClone(p.knowledge[key]);
+    const pressure = (prefix: string) => {
+      for (let i = 0; i < 1000; i++) learn(w, p, { key: `${prefix}:${i}`, kind: 'event', claim: { type: 'attack', actor: familiar.id, significance: .7 }, confidence: 1, source: { type: 'witnessed' } }, true);
+      expect(Object.keys(p.knowledge).length).toBeLessThanOrEqual(MAX_KNOWLEDGE + PRUNE_MARGIN);
+    };
+    pressure('goal');
+    expect(p.knowledge[key]).toEqual(evidence);
+    p.mind.pursuits = [{ id: 'purpose', kind: 'tend', subjectId: subject.id, source: { kind: 'concern', id: 'concern' }, priority: .8, createdAt: w.now, lastProgressAt: w.now, attempts: 1, status: 'active', steps: ['provide'], reasons: [], expiresAt: w.now + 86400 }];
+    p.mind.goal = null;
+    pressure('purpose');
+    expect(p.knowledge[key]).toEqual(evidence);
+    p.mind.pursuits[0].status = 'abandoned';
+    pressure('finished');
+    expect(p.knowledge[key]).toBeUndefined();
+  });
+
   it('retains a directly introduced claimed name through routine pressure without verifying it or making friendship', () => {
     const tw = createTestWorld(709, 16), { world } = tw;
     const listener = addPerson(tw, 'Listener', 'farmer', v(3.5, 1, 3.5));

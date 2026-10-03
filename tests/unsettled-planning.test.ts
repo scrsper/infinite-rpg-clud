@@ -33,7 +33,11 @@ it('worship without a known chapel can be planned at the current body position',
   const { body, plan, goal } = fixture();
   const actions = plan(goal('worship'));
   expect(actions.map(a => a.type)).toEqual(['goto', 'pray']);
-  expect(actions.every(a => a.placeId === undefined && a.pos === body.pos)).toBe(true);
+  for (const action of actions) {
+    expect(action.placeId).toBeUndefined();
+    expect(action.pos).toEqual(body.pos);
+    expect(action.pos).not.toBe(body.pos); // The destination survives save/load as a snapshot.
+  }
 });
 
 it('a known local square still anchors ordinary wandering', () => {

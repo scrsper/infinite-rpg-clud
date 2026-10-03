@@ -1,0 +1,141 @@
+{
+  "source": ".debug/worldlab/2026-10-01T14-50-52-029Z-smoke/report.json",
+  "generatedAt": "2026-10-01T14:50:52.032Z",
+  "overall": "FAIL",
+  "scenarios": [
+    {
+      "id": "baseline-village",
+      "verdict": "FAIL",
+      "seeds": [
+        {
+          "seed": 918271,
+          "findings": [
+            {
+              "id": "WL-CONSTRUCTION-MATERIAL-STALLED",
+              "kind": "liveness",
+              "class": "throughput",
+              "severity": "failure",
+              "category": "construction",
+              "message": "the village storage shed has been gathering with an unchanging material deficit (16->16 units short) from day 0.5 to day 2.5 — most deficient: 16 plank still needed; NO producer currently holds any stock (a production/supply problem)."
+            },
+            {
+              "id": "WL-CONSTRUCTION-MATERIAL-STALLED",
+              "kind": "liveness",
+              "class": "throughput",
+              "severity": "failure",
+              "category": "construction",
+              "message": "the village storage shed has been gathering with an unchanging material deficit (16->16 units short) from day 0.75 to day 2.75 — most deficient: 16 plank still needed; NO producer currently holds any stock (a production/supply problem)."
+            },
+            {
+              "id": "WL-CONSTRUCTION-MATERIAL-STALLED",
+              "kind": "liveness",
+              "class": "throughput",
+              "severity": "failure",
+              "category": "construction",
+              "message": "the village storage shed has been gathering with an unchanging material deficit (16->16 units short) from day 1 to day 3 — most deficient: 16 plank still needed; NO producer currently holds any stock (a production/supply problem)."
+            },
+            {
+              "id": "WL-HUNGER-DEPRIVED",
+              "kind": "liveness",
+              "class": "individual",
+              "severity": "failure",
+              "category": "survival",
+              "message": "hunger deprivation across 32 villagers: median streak 6h, p90 18h, p95 24h, max 60h; 1 exceeded the 48h bound: Skarn(bandit)=60h.",
+              "trace": {
+                "id": "WL-HUNGER-DEPRIVED",
+                "title": "hunger deprivation streak",
+                "subjectName": "Skarn",
+                "steps": [
+                  {
+                    "atWorldDays": 103.3,
+                    "label": "A person retained an encounter"
+                  },
+                  {
+                    "atWorldDays": 103.3,
+                    "label": "A person retained an encounter"
+                  },
+                  {
+                    "atWorldDays": 103.3,
+                    "label": "A person retained an encounter"
+                  },
+                  {
+                    "atWorldDays": 103.3,
+                    "label": "A person retained an encounter"
+                  },
+                  {
+                    "atWorldDays": 103.3,
+                    "label": "A person retained an encounter"
+                  },
+                  {
+                    "atWorldDays": 103.3,
+                    "label": "A person retained an encounter"
+                  },
+                  {
+                    "atWorldDays": 103.3,
+                    "label": "A person retained an encounter"
+                  },
+                  {
+                    "atWorldDays": 103.3,
+                    "label": "A person retained an encounter"
+                  },
+                  {
+                    "atWorldDays": 103.3,
+                    "label": "A person retained an encounter"
+                  },
+                  {
+                    "atWorldDays": 103.3,
+                    "label": "A person retained an encounter"
+                  },
+                  {
+                    "atWorldDays": 103.3,
+                    "label": "A person retained an encounter"
+                  },
+                  {
+                    "atWorldDays": 103.3,
+                    "label": "A person retained an encounter"
+                  },
+                  {
+                    "atWorldDays": 103.3,
+                    "label": "A person retained an encounter"
+                  },
+                  {
+                    "atWorldDays": 103.3,
+                    "label": "A person retained an encounter"
+                  },
+                  {
+                    "atWorldDays": 103.3,
+                    "label": "[current state] goal=eat (hunger 1.00; ; must find food); plan=goto -> eat; needs: energy=0.00 hydration=0.17 fatigue=0.04 sleepDebt=8.57h; alive=true; inventory=[a notched sword]"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "WL-TIMBER-HORIZON",
+              "kind": "liveness",
+              "class": "trend",
+              "severity": "warning",
+              "category": "agriculture",
+              "message": "Standing timber capacity is 0 of 84 logs across 14 tracked trees (0% remaining); a felled mature tree takes ~913 world-days to regrow. This is a real, finite budget at the current stock size — not a bug, and not something to fix by shortening regrowth (Constitution §64/§71): if more timber is genuinely needed, the fix is more/larger groves, not faster biology."
+            }
+          ],
+          "productionProgress": [
+            {
+              "placeId": "pl_9",
+              "inputReady": true,
+              "demand": 25,
+              "fulfilled": 5
+            },
+            {
+              "placeId": "pl_30",
+              "inputReady": true,
+              "demand": 0,
+              "fulfilled": 20
+            }
+          ],
+          "resourceTransforms": 9,
+          "maxActiveConflictAgeHours": 0
+        }
+      ]
+    }
+  ]
+}

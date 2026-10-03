@@ -29,6 +29,13 @@ include the private sign-in profile, licensed local assets or packaged executabl
 The following browser-prototype notes are historical and do not describe the
 current Unreal package, controls or save format.
 
+## Play in a browser (experimental Babylon.js client)
+
+A separate browser client for the same world is on the `claude/web-rebirth` branch, with its own launcher
+(`Play Torn Veil Web.cmd`, which never starts or changes a world). It is unrelated to the historical Three.js
+prototype below. Status, run/build commands, evidence and known defects: [`docs/web/README.md`](docs/web/README.md).
+It has not been playtested by a human.
+
 ## Historical browser prototype reference
 
 A prototype of a *living* voxel RPG village: not Minecraft-with-chatbots, and not a normal

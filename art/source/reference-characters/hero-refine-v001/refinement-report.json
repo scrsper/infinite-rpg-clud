@@ -1,0 +1,37 @@
+{
+  "source_checkpoint": "0163b5e",
+  "source": "C:\\Users\\green\\Desktop\\projects\\torn-veil-online\\art\\source\\reference-characters\\hero-v006\\hero.blend",
+  "finger_controls": [
+    {
+      "bone": "fingers_01_l",
+      "moved_vertices": 1249,
+      "max_displacement_m": 0.04242339150056695
+    },
+    {
+      "bone": "fingers_01_r",
+      "moved_vertices": 1248,
+      "max_displacement_m": 0.04242339150056695
+    }
+  ],
+  "eye_centers": {
+    "l": [
+      0.02755453623831272,
+      -0.10315094888210297,
+      1.3867950439453125
+    ],
+    "r": [
+      -0.02755453623831272,
+      -0.10315094888210297,
+      1.3867950439453125
+    ]
+  },
+  "surface_trial": "one subdivision level; visual evaluation required",
+  "reference_match": false,
+  "remaining": [
+    "face likeness fitting",
+    "hair reconstruction",
+    "tailored costume",
+    "thigh crease review",
+    "browser motions"
+  ]
+}

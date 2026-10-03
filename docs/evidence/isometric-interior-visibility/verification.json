@@ -1,0 +1,57 @@
+{
+  "implementationBase": "302aa8cb5a3be4cb2eb376c8263e451d3c6418c3",
+  "sourceSha256": {
+    "src/web/world/props.ts": "7796b0180cf8888249cdcef807457f9d4e00f25818e3b3e2dc4baebc205ea9ba",
+    "scripts/web/isometric.ts": "73f40671426d314a57fac5177692fad5a08a35afc6d41fb052f62fa9141eab85",
+    "tests/web-isometric.test.ts": "8954fdd8bd9cbb503c9ed914e568ef4639041bcb3e250948374f2fbed3b6b8e1"
+  },
+  "focusedWeb": {
+    "files": 8,
+    "tests": 55,
+    "result": "passed"
+  },
+  "typecheck": "passed",
+  "privateBuild": {
+    "result": "passed",
+    "modules": 3346,
+    "output": ".debug/isometric/visibility-bundle"
+  },
+  "browser": {
+    "checks": 19,
+    "result": "passed",
+    "errors": 0,
+    "inferenceRequests": 0,
+    "reviewedScreenshots": [
+      "00-before-door-cutaway.png",
+      "04-isometric-cutaway.png",
+      "04b-interior-traversal.png",
+      "04c-interior-exit.png",
+      "05-interior-combat.png"
+    ],
+    "finalHarnessGuard": "Required interior fixture guard included in final successful rerun",
+    "canonicalMeleeHealth": {
+      "before": 80,
+      "after": 75.00360824669949
+    }
+  },
+  "baseline": {
+    "bundle": "3b8f02b isometric client",
+    "server": "302aa8c checkpoint-loader repair",
+    "diagnostic": "Original baseline head ray was camera-to-head; final acceptance uses orthographic projected-screen picking ray.",
+    "status": "Actor present; frame obscures actor in reviewed screenshot."
+  },
+  "limits": [
+    "One tavern fixture, not exhaustive furniture/layout verification",
+    "Disclosed temporary-world placements; no saved player world used",
+    "No human/gamepad acceptance, Unreal verification or multi-day soak",
+    "Previous Observatory AMBER limits remain"
+  ],
+  "previousHeadCi": 36821844547,
+  "timeoutAffectedLocal": {
+    "files": 5,
+    "tests": 68,
+    "result": "passed",
+    "runtime": "Node 22.23.2",
+    "budgets": "unchanged"
+  }
+}

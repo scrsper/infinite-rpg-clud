@@ -33,6 +33,13 @@ export const CLOSE = {
   noCharacter: 4404,
 } as const;
 
+/** Client kinds the admission check knows. `unreal` and `probe` are native/scripted clients. `web` is the
+ * loopback browser gateway (src/webgate): it authenticates the browser session itself, then speaks this
+ * same protocol on the account's behalf. It is refused unless the environment's config opts in
+ * (`webGateway`) AND the connection arrives from loopback. It is a distinct kind, never a native or
+ * probe client in disguise, so logs and policy can tell them apart. */
+export const CLIENT_KINDS = { unreal: 'unreal', probe: 'probe', web: 'web' } as const;
+
 export type CharacterRequest = { kind: 'auto' } | { kind: 'existing'; personId: string } | { kind: 'new'; name: string; sex: 'f' | 'm' };
 
 const NAME = /^[A-Za-z][A-Za-z '-]{1,30}[A-Za-z]$/;

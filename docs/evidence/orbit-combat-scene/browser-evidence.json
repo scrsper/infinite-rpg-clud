@@ -1,0 +1,735 @@
+{
+  "checks": [
+    {
+      "name": "outdoor orbit tilt and zoom",
+      "passed": true,
+      "evidence": {
+        "before": {
+          "yaw": 0,
+          "pitch": 0.62
+        },
+        "after": {
+          "yaw": 1.1263706143591723,
+          "pitch": 1.05,
+          "distance": 7.136302894091126
+        },
+        "dragTurns": 8
+      }
+    },
+    {
+      "name": "screen-up walking",
+      "passed": true,
+      "evidence": {
+        "before": {
+          "pos": {
+            "x": 12035,
+            "y": 24,
+            "z": 20008
+          },
+          "yaw": 0,
+          "moveYaw": 1.1263706143591723,
+          "mode": "orbit",
+          "cameraMode": 0,
+          "wealth": 20
+        },
+        "after": {
+          "pos": {
+            "x": 12029.062036414083,
+            "y": 24,
+            "z": 20005.172350924837
+          },
+          "yaw": 1.1263706143591723,
+          "moveYaw": 1.1263706143591723,
+          "mode": "orbit",
+          "cameraMode": 0,
+          "wealth": 20
+        }
+      }
+    },
+    {
+      "name": "screen-down running",
+      "passed": true,
+      "evidence": {
+        "before": {
+          "pos": {
+            "x": 12029.062036414083,
+            "y": 24,
+            "z": 20005.172350924837
+          },
+          "yaw": 1.1263706143591723,
+          "moveYaw": 1.1263706143591723,
+          "mode": "orbit",
+          "cameraMode": 0,
+          "wealth": 20
+        },
+        "after": {
+          "pos": {
+            "x": 12036.527252797177,
+            "y": 24,
+            "z": 20008.727275419642
+          },
+          "yaw": -2.015222039230621,
+          "moveYaw": 1.1263706143591723,
+          "mode": "orbit",
+          "cameraMode": 0,
+          "wealth": 20
+        }
+      }
+    },
+    {
+      "name": "repeat interrupted menu flows",
+      "passed": true,
+      "evidence": null
+    },
+    {
+      "name": "root dialogue options",
+      "passed": true,
+      "evidence": [
+        "1What's the news?",
+        "2Who are you?",
+        "3Introduce yourself",
+        "4What do you think of me?",
+        "5Ask about someone…"
+      ]
+    },
+    {
+      "name": "settled conversation fits viewport",
+      "passed": true,
+      "evidence": {
+        "x": 222,
+        "y": 398.984375,
+        "width": 1156,
+        "height": 575.515625
+      }
+    },
+    {
+      "name": "trade confirmation shown",
+      "passed": true,
+      "evidence": null
+    },
+    {
+      "name": "cancel purchase keeps wealth",
+      "passed": true,
+      "evidence": {
+        "wallet": 20
+      }
+    },
+    {
+      "name": "canonical purchase reduces wealth",
+      "passed": true,
+      "evidence": {
+        "before": 20,
+        "after": 17
+      }
+    },
+    {
+      "name": "conversation repeat and interruption",
+      "passed": true,
+      "evidence": {
+        "fixture": "NPC co-location and direct observation, disclosed"
+      }
+    },
+    {
+      "name": "keyboard movement canonically opens the closed door",
+      "passed": true,
+      "evidence": {
+        "before": {
+          "x": 12013.5,
+          "y": 24,
+          "z": 20048.5
+        },
+        "after": {
+          "x": 12013.917883456481,
+          "y": 24,
+          "z": 20046.042390204617
+        },
+        "doorCell": {
+          "x": 12013,
+          "y": 24,
+          "z": 20047
+        },
+        "initialClosed": true,
+        "opened": true,
+        "fixture": "closed starting state through canonical setDoorOpen in disposable world; movement opens it normally"
+      }
+    },
+    {
+      "name": "interior entry actor unobscured",
+      "passed": true,
+      "evidence": {
+        "bodyId": "b_146",
+        "actorPresent": true,
+        "rootEnabled": true,
+        "rootPosition": {
+          "x": 237.61319250402812,
+          "y": 24,
+          "z": 78.40486996330947
+        },
+        "meshCount": 20,
+        "groups": [
+          0
+        ],
+        "enabledMeshes": 20,
+        "inFrustum": 20,
+        "head": {
+          "x": 237.61319250402812,
+          "y": 25.7736,
+          "z": 78.40486996330947
+        },
+        "bounds": [
+          {
+            "name": "ch13.__root__",
+            "min": {
+              "_isDirty": true,
+              "_x": 237.61318969726562,
+              "_y": 24,
+              "_z": 78.40486907958984
+            },
+            "max": {
+              "_isDirty": true,
+              "_x": 237.61318969726562,
+              "_y": 24,
+              "_z": 78.40486907958984
+            }
+          },
+          {
+            "name": "ch13.Accessory_travel_pack_primitive0",
+            "min": {
+              "_isDirty": true,
+              "_x": 237.4770752791636,
+              "_y": 24.84460800190401,
+              "_z": 78.31488720164317
+            },
+            "max": {
+              "_isDirty": true,
+              "_x": 237.74738008190147,
+              "_y": 25.313300370425722,
+              "_z": 78.67978727703805
+            }
+          },
+          {
+            "name": "ch13.Accessory_travel_pack_primitive1",
+            "min": {
+              "_isDirty": true,
+              "_x": 237.50122890801129,
+              "_y": 24.94500478539605,
+              "_z": 78.53982216320642
+            },
+            "max": {
+              "_isDirty": true,
+              "_x": 237.51645867054262,
+              "_y": 24.97496438708236,
+              "_z": 78.56285079924024
+            }
+          }
+        ],
+        "possibleHeadOccluders": []
+      }
+    },
+    {
+      "name": "keyboard entry and occupied cutaway",
+      "passed": true,
+      "evidence": {
+        "arrived": true,
+        "at": {
+          "x": 12013.613192504028,
+          "y": 24,
+          "z": 20046.40486996331
+        },
+        "goal": {
+          "x": 12013,
+          "y": 24,
+          "z": 20046
+        },
+        "path": [
+          {
+            "x": 12013.5,
+            "y": 24,
+            "z": 20046.5
+          }
+        ],
+        "clippedMeshes": 9,
+        "fixture": "test begins at canonical doorway; actual keys enter the physical building"
+      }
+    },
+    {
+      "name": "interior traversal actor unobscured",
+      "passed": true,
+      "evidence": {
+        "at": {
+          "x": 12011.60440081444,
+          "y": 24,
+          "z": 20045.411889694737
+        },
+        "goal": {
+          "x": 12011.5,
+          "y": 24,
+          "z": 20045.5
+        },
+        "rendering": {
+          "bodyId": "b_146",
+          "actorPresent": true,
+          "rootEnabled": true,
+          "rootPosition": {
+            "x": 235.60440081443994,
+            "y": 24,
+            "z": 77.4118896947366
+          },
+          "meshCount": 20,
+          "groups": [
+            0
+          ],
+          "enabledMeshes": 20,
+          "inFrustum": 20,
+          "head": {
+            "x": 235.60440081443994,
+            "y": 25.7736,
+            "z": 77.4118896947366
+          },
+          "bounds": [
+            {
+              "name": "ch13.__root__",
+              "min": {
+                "_isDirty": true,
+                "_x": 235.60440063476562,
+                "_y": 24,
+                "_z": 77.4118881225586
+              },
+              "max": {
+                "_isDirty": true,
+                "_x": 235.60440063476562,
+                "_y": 24,
+                "_z": 77.4118881225586
+              }
+            },
+            {
+              "name": "ch13.Accessory_travel_pack_primitive0",
+              "min": {
+                "_isDirty": true,
+                "_x": 235.55886943413216,
+                "_y": 24.84460800190401,
+                "_z": 77.29844031474178
+              },
+              "max": {
+                "_isDirty": true,
+                "_x": 235.77224855620466,
+                "_y": 25.313300370425722,
+                "_z": 77.6640578315574
+              }
+            },
+            {
+              "name": "ch13.Accessory_travel_pack_primitive1",
+              "min": {
+                "_isDirty": true,
+                "_x": 235.61928190290303,
+                "_y": 24.94500478539605,
+                "_z": 77.57869960566032
+              },
+              "max": {
+                "_isDirty": true,
+                "_x": 235.6304427706055,
+                "_y": 24.97496438708236,
+                "_z": 77.60241171349853
+              }
+            }
+          ],
+          "possibleHeadOccluders": []
+        }
+      }
+    },
+    {
+      "name": "keyboard exit actor unobscured",
+      "passed": true,
+      "evidence": {
+        "at": {
+          "x": 12013.515581217895,
+          "y": 24,
+          "z": 20048.36927939061
+        },
+        "goal": {
+          "x": 12013.5,
+          "y": 24,
+          "z": 20048.5
+        },
+        "rendering": {
+          "bodyId": "b_146",
+          "actorPresent": true,
+          "rootEnabled": true,
+          "rootPosition": {
+            "x": 237.51558121789458,
+            "y": 24,
+            "z": 80.36927939060843
+          },
+          "meshCount": 20,
+          "groups": [
+            0
+          ],
+          "enabledMeshes": 20,
+          "inFrustum": 20,
+          "head": {
+            "x": 237.51558121789458,
+            "y": 25.7736,
+            "z": 80.36927939060843
+          },
+          "bounds": [
+            {
+              "name": "ch13.__root__",
+              "min": {
+                "_isDirty": true,
+                "_x": 237.5155792236328,
+                "_y": 24,
+                "_z": 80.36927795410156
+              },
+              "max": {
+                "_isDirty": true,
+                "_x": 237.5155792236328,
+                "_y": 24,
+                "_z": 80.36927795410156
+              }
+            },
+            {
+              "name": "ch13.Accessory_travel_pack_primitive0",
+              "min": {
+                "_isDirty": true,
+                "_x": 237.3912602264776,
+                "_y": 24.84460800190401,
+                "_z": 80.16926740869106
+              },
+              "max": {
+                "_isDirty": true,
+                "_x": 237.75777766928067,
+                "_y": 25.313300370425722,
+                "_z": 80.4267768145126
+              }
+            },
+            {
+              "name": "ch13.Accessory_travel_pack_primitive1",
+              "min": {
+                "_isDirty": true,
+                "_x": 237.67720307848893,
+                "_y": 24.94500478539605,
+                "_z": 80.31396890228154
+              },
+              "max": {
+                "_isDirty": true,
+                "_x": 237.70048921569318,
+                "_y": 24.97496438708236,
+                "_z": 80.32826791077109
+              }
+            }
+          ],
+          "possibleHeadOccluders": []
+        }
+      }
+    },
+    {
+      "name": "repeated keyboard entry after menus",
+      "passed": true,
+      "evidence": {
+        "at": {
+          "x": 12011.640729395602,
+          "y": 24,
+          "z": 20045.441890916107
+        },
+        "goal": {
+          "x": 12011.5,
+          "y": 24,
+          "z": 20045.5
+        }
+      }
+    },
+    {
+      "name": "locked melee target unobscured",
+      "passed": true,
+      "evidence": {
+        "bodyId": "b_5",
+        "actorPresent": true,
+        "rootEnabled": true,
+        "rootPosition": {
+          "x": 238.17774127050507,
+          "y": 24,
+          "z": 77.8142287157134
+        },
+        "meshCount": 18,
+        "groups": [
+          0
+        ],
+        "enabledMeshes": 18,
+        "inFrustum": 18,
+        "head": {
+          "x": 238.17774127050507,
+          "y": 25.7736,
+          "z": 77.8142287157134
+        },
+        "bounds": [
+          {
+            "name": "ch40.__root__",
+            "min": {
+              "_isDirty": true,
+              "_x": 238.177734375,
+              "_y": 24,
+              "_z": 77.8142318725586
+            },
+            "max": {
+              "_isDirty": true,
+              "_x": 238.177734375,
+              "_y": 24,
+              "_z": 77.8142318725586
+            }
+          },
+          {
+            "name": "ch40.Body",
+            "min": {
+              "_isDirty": true,
+              "_x": 237.83179593365313,
+              "_y": 23.993768505295325,
+              "_z": 77.40625436372265
+            },
+            "max": {
+              "_isDirty": true,
+              "_x": 238.43190976727558,
+              "_y": 25.366626747102437,
+              "_z": 78.25697832091156
+            }
+          },
+          {
+            "name": "ch40.Foot_zori",
+            "min": {
+              "_isDirty": true,
+              "_x": 237.92377705240256,
+              "_y": 23.997436852065395,
+              "_z": 77.65495378099388
+            },
+            "max": {
+              "_isDirty": true,
+              "_x": 238.2814780188746,
+              "_y": 24.100396876475283,
+              "_z": 78.03042579640004
+            }
+          }
+        ],
+        "possibleHeadOccluders": []
+      }
+    },
+    {
+      "name": "canonical melee contact",
+      "passed": true,
+      "evidence": {
+        "before": 80,
+        "after": 73.91262280506183,
+        "targetBodyId": "b_5",
+        "playerPosition": {
+          "x": 12013.464775690334,
+          "y": 24,
+          "z": 20046.527194295883
+        },
+        "targetPosition": {
+          "x": 12014.177733462184,
+          "y": 24,
+          "z": 20045.81423652403
+        },
+        "action": {
+          "id": "action_1",
+          "commandId": "dialogue-ui:1-952",
+          "actorBodyId": "b_146",
+          "kind": "attack",
+          "targetBodyId": "b_5",
+          "weaponId": null,
+          "definition": "unarmed_high",
+          "trajectory": "high",
+          "startedAt": 46.54999999999864,
+          "startTick": 2793,
+          "activeAt": 46.80999999999864,
+          "recoveryAt": 46.95999999999864,
+          "completeAt": 47.22999999999864,
+          "phase": "complete",
+          "outcome": "hit",
+          "facing": -0.7853981633974483,
+          "initialFacing": -0.7853981633974483,
+          "trackingUntil": 46.70999999999864,
+          "turnRate": 1.5707963267948966,
+          "turnBudget": 0.2617993877991494,
+          "reach": 0.9,
+          "radius": 0.12,
+          "impact": 6.087377194938169,
+          "exertionCost": 0.03333333333333333,
+          "intent": "injure",
+          "direction": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "distance": 0,
+          "appliedDistance": 0,
+          "eventId": "e_2447",
+          "variant": "direct",
+          "moveId": "jab",
+          "repertoireRevision": 2,
+          "techniqueId": "motor:basic-punch",
+          "contact": {
+            "bodyId": "b_5",
+            "region": "head",
+            "position": {
+              "x": 12013.922125285337,
+              "y": 25.51222,
+              "z": 20046.138264353027
+            },
+            "at": 46.80999999999864,
+            "eventId": "e_2456"
+          },
+          "learningEventId": "e_2477"
+        },
+        "fixture": "upright adult NPC staged beside player after keyboard interior traversal in disposable validation world"
+      }
+    },
+    {
+      "name": "interior combat actor unobscured",
+      "passed": true,
+      "evidence": {
+        "bodyId": "b_146",
+        "actorPresent": true,
+        "rootEnabled": true,
+        "rootPosition": {
+          "x": 237.07592033236142,
+          "y": 24,
+          "z": 78.69946721422457
+        },
+        "meshCount": 20,
+        "groups": [
+          0
+        ],
+        "enabledMeshes": 20,
+        "inFrustum": 20,
+        "head": {
+          "x": 237.07592033236142,
+          "y": 25.7736,
+          "z": 78.69946721422457
+        },
+        "bounds": [
+          {
+            "name": "ch13.__root__",
+            "min": {
+              "_isDirty": true,
+              "_x": 237.075927734375,
+              "_y": 24,
+              "_z": 78.69947052001953
+            },
+            "max": {
+              "_isDirty": true,
+              "_x": 237.075927734375,
+              "_y": 24,
+              "_z": 78.69947052001953
+            }
+          },
+          {
+            "name": "ch13.Accessory_travel_pack_primitive0",
+            "min": {
+              "_isDirty": true,
+              "_x": 236.83425255501743,
+              "_y": 24.84460800190401,
+              "_z": 78.48624743311478
+            },
+            "max": {
+              "_isDirty": true,
+              "_x": 237.14982334557135,
+              "_y": 25.313300370425722,
+              "_z": 78.83487867843844
+            }
+          },
+          {
+            "name": "ch13.Accessory_travel_pack_primitive1",
+            "min": {
+              "_isDirty": true,
+              "_x": 236.97601744508495,
+              "_y": 24.94500478539605,
+              "_z": 78.53343622975454
+            },
+            "max": {
+              "_isDirty": true,
+              "_x": 236.9946570652741,
+              "_y": 24.97496438708236,
+              "_z": 78.55480150734117
+            }
+          }
+        ],
+        "possibleHeadOccluders": []
+      }
+    },
+    {
+      "name": "combat controls emit canonical commands",
+      "passed": true,
+      "evidence": {
+        "lastCombat": {
+          "kind": "defend",
+          "defend": "backstep",
+          "side": 1,
+          "at": 47471.89999997616,
+          "commandId": "dialogue-ui:1-1025",
+          "sequence": 1025
+        },
+        "bodyAction": {
+          "id": "action_2",
+          "commandId": "dialogue-ui:1-1025",
+          "actorBodyId": "b_146",
+          "kind": "backstep",
+          "definition": "backstep",
+          "techniqueId": "motor:sidestep",
+          "techniqueName": "Sidestep",
+          "trajectory": "high",
+          "repertoireRevision": 2,
+          "startedAt": 47.74999999999857,
+          "activeAt": 47.74999999999857,
+          "recoveryAt": 47.989999999998574,
+          "completeAt": 48.10999999999857,
+          "phase": "complete",
+          "outcome": "pending",
+          "facing": -0.7853981633961726,
+          "direction": {
+            "x": -0.7071067811856455,
+            "y": 0,
+            "z": 0.7071067811874496
+          },
+          "distance": 0.55,
+          "reach": 0,
+          "radius": 0.12,
+          "duck": 0,
+          "contact": null,
+          "capability": {
+            "strength": 0.40184557291666667,
+            "dexterity": 0.4012595481228299,
+            "exertion": 0.87775625
+          }
+        }
+      }
+    },
+    {
+      "name": "view switch round-trip",
+      "passed": true,
+      "evidence": {
+        "cutawaysRestored": true
+      }
+    },
+    {
+      "name": "repeated projection switches retain scene resources",
+      "passed": true,
+      "evidence": {
+        "before": {
+          "meshes": 1006,
+          "materials": 135,
+          "pendingBuilds": 0,
+          "fps": 105.74550579822964
+        },
+        "after": {
+          "meshes": 1006,
+          "materials": 135,
+          "pendingBuilds": 0,
+          "fps": 90.66183137552619
+        },
+        "roundTrips": 6
+      }
+    }
+  ],
+  "errors": [],
+  "fixture": "Movement, interior entry/traversal/exit/reentry and menus use ordinary input. Dialogue co-location, doorway starting position, initial canonical closed-door state and adult combat target staging are disclosed fixtures. No human/controller acceptance.",
+  "modelRequests": []
+}

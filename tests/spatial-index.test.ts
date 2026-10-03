@@ -51,3 +51,16 @@ describe('SpatialIndex query memo', () => {
     expect((index as any).queryCache.size).toBeLessThanOrEqual(256);
   });
 });
+
+it('point updates preserve cached membership, cell crossings, removal and original insertion order',()=>{
+ const index=new SpatialIndex<Entry>(4),a={id:'a',value:1},b={id:'b',value:2},q={x:1,y:0,z:1};
+ index.point(a,q);index.point(b,q);expect(index.query(q,0)).toEqual([a,b]);
+ index.point(a,{x:3.9,y:10,z:3.9});expect(index.query(q,0)).toEqual([a,b]);
+ index.point(a,{x:4,y:0,z:1});expect(index.query(q,0)).toEqual([b]);
+ index.point(a,null);expect(index.query({x:4,y:0,z:1},0)).toEqual([]);
+ index.point(a,q);expect(index.query(q,0)).toEqual([a,b]);
+ index.update(a,{x0:-10000,z0:-10000,x1:10000,z1:10000});
+ expect(index.query({x:999,y:0,z:999},0)).toEqual([a]);
+ index.point(a,q);expect(index.query({x:999,y:0,z:999},0)).toEqual([]);
+ expect(index.query(q,0)).toEqual([a,b]);
+});

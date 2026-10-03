@@ -11,6 +11,7 @@ import { RegionalTransport, REGION_PROTOCOL, MAX_PRESENTATION_MESSAGE_BYTES } fr
 import { FixedScheduler } from '../bridge/scheduler';
 import { FixedRateWindow } from '../bridge/rateWindow';
 import { CoalescedInteractionWake } from '../bridge/interactionWake';
+import { PlayerLanguage } from './playerLanguage';
 import { loadCatalogue } from '../foundry/load';
 import { SAVE_VERSION, readableSaveVersion, serializeChunks } from '../sim/persist/save';
 import { isExternallyControlled, setExternalControl } from '../sim/runtime/controllers';
@@ -18,7 +19,7 @@ import { AccountRegistry, type AccountRecord } from './accounts';
 import { CheckpointEncoder } from './checkpointEncoder';
 import type { AlphaConfig, ReleaseIdentity } from './config';
 import { GENERATOR_VERSION, playableBaselineFingerprint } from './fingerprint';
-import { ALPHA_PROTOCOL, CLOSE, H, parseCharacterRequest } from './protocol';
+import { ALPHA_PROTOCOL, CLIENT_KINDS, CLOSE, H, parseCharacterRequest } from './protocol';
 import type { Lifecycle } from './readiness';
 import { BackupSet, RefuseToStartError, WorldStore, WriterLock, type CheckpointMeta, type GeneratorIdentity } from './store';
 
@@ -79,6 +80,7 @@ export class LiveServer {
   private readonly startedAt = Date.now();
   readonly metrics = { checkpoints: 0, lastSerializeMs: 0, maxSerializeMs: 0, lastCaptureMs: 0, lastMetadataMs: 0, lastTransferMs: 0, lastEncodeMs: 0, maxEncodeMs: 0, lastCheckpointMs: 0, lastCommitMs: 0, lastBytes: 0, backups: 0, lastBackupIso: '', authFailures: 0, rejectedConnections: 0, connectionsServed: 0, recoveredFrom: [] as { generation: number; why: string }[] };
   private adminToken = '';
+  private playerLanguage?: PlayerLanguage;
 
   constructor(readonly config: AlphaConfig, readonly release: ReleaseIdentity, private readonly log: Log) {
     for (const d of [config.stateDir, config.logDir, config.credentialsDir]) mkdirSync(d, { recursive: true });
@@ -242,7 +244,7 @@ export class LiveServer {
     if (this.maintenance && this.ticks % 600 === 0) this.broadcast({ version: 1, type: 'maintenance', message: this.maintenance.message, atMs: this.maintenance.at, inMs: Math.max(0, this.maintenance.at - Date.now()) });
   }
   private broadcast(message: object): void { const payload = JSON.stringify(message); for (const c of this.connections.values()) if (c.socket.readyState === WebSocket.OPEN) c.socket.send(payload); }
-  private close(c: Connection, code: number, reason: string): void { try { c.socket.close(code, reason); } catch { /* already closing */ } }
+  private close(c: Connection, code: number, reason: string): void { this.playerLanguage?.cancel(c.channelId); try { c.socket.close(code, reason); } catch { /* already closing */ } }
 
   // ── HTTP ────────────────────────────────────────────────────────────────────────────────────
   private isAdmin(req: IncomingMessage): boolean {
@@ -341,7 +343,10 @@ export class LiveServer {
     const remote = req.socket.remoteAddress ?? 'unknown', header = (name: string) => { const v = req.headers[name]; return Array.isArray(v) ? v[0] : v; };
     const failures = this.authFailures.get(remote);
     if (failures && Date.now() - failures.since < 60_000 && failures.count >= 10) return this.reject(socket, CLOSE.full, 'Too many failed sign-ins; wait a minute', remote);
-    if (!['unreal', 'probe'].includes(String(header(H.client)))) return this.reject(socket, CLOSE.incompatible, 'Torn Veil client required', remote);
+    const kind = String(header(H.client));
+    const native = kind === CLIENT_KINDS.unreal || kind === CLIENT_KINDS.probe;
+    const gateway = kind === CLIENT_KINDS.web && this.config.webGateway && LOOPBACK.has(remote);
+    if (!native && !gateway) return this.reject(socket, CLOSE.incompatible, kind === CLIENT_KINDS.web ? 'Web gateway not enabled for this environment' : 'Torn Veil client required', remote);
     if (header(H.protocol) !== String(ALPHA_PROTOCOL)) return this.reject(socket, CLOSE.incompatible, `Incompatible client: server protocol ${ALPHA_PROTOCOL}, release ${this.release.version}. Update your client.`, remote);
     if (header(H.region) !== String(REGION_PROTOCOL)) return this.reject(socket, CLOSE.incompatible, `Incompatible client: regional protocol ${REGION_PROTOCOL} required`, remote);
     const account = this.accounts.authenticate(header(H.account), header(H.token));
@@ -371,6 +376,7 @@ export class LiveServer {
     // dies with it, so nothing it queued can be replayed through the new connection.
     if (previous) { this.connections.delete(previous.socket); this.byAccount.delete(account.id); this.close(previous, CLOSE.superseded, 'Signed in from another client'); }
     const channelId = channelFor(account.id);
+    this.playerLanguage?.release(channelId);
     const grace = this.graceTimers.get(channelId); if (grace) { clearTimeout(grace); this.graceTimers.delete(channelId); }
     let created = false;
     if (request.kind === 'new') {
@@ -388,7 +394,7 @@ export class LiveServer {
     const person = w.person(personId!)!;
     const realtime = header(H.interaction) === '2';
     const c: Connection = { socket, serial: ++this.serial, account, channelId, personId: personId!, remote, connectedAt: Date.now(), lastSaveRequest: 0, realtime,
-      stream: new RegionalTransport(e => this.log('info', 'region', { conn: this.serial, ...e }), () => personId), controlWindow: new FixedRateWindow(realtime ? 160 : 80, performance.now()), presentationWindow: new FixedRateWindow(80, performance.now()) };
+      stream: new RegionalTransport(e => this.log('info', 'region', { conn: this.serial, ...e }), () => personId, { structures: kind === CLIENT_KINDS.web }), controlWindow: new FixedRateWindow(realtime ? 160 : 80, performance.now()), presentationWindow: new FixedRateWindow(80, performance.now()) };
     this.connections.set(socket, c); this.byAccount.set(account.id, c); this.metrics.connectionsServed++;
     const interaction = realtime ? this.session.bindInteraction(`${account.id}:${c.serial}`, channelId) : undefined;
     this.log('info', 'connected', { account: account.id, personId, created, remote, serial: c.serial });
@@ -406,6 +412,7 @@ export class LiveServer {
   }
   private onClose(c: Connection, code: number, reason: string): void {
     if (this.connections.get(c.socket) !== c) return; // superseded: the new connection owns the channel
+    this.playerLanguage?.release(c.channelId);
     this.connections.delete(c.socket); this.byAccount.delete(c.account.id);
     this.log('info', 'disconnected', { account: c.account.id, personId: c.personId, code, reason });
     if (this.stopping) return;
@@ -426,6 +433,14 @@ export class LiveServer {
     }
     if (!c.controlWindow.consume(performance.now()).allowed) { this.log('warn', 'control_rate_limit', { account: c.account.id }); this.close(c, 1008, 'Rate limit'); return; }
     if (message.type === 'clock_probe') { socket.send(JSON.stringify({ version: 1, type: 'clock_probe', clientTimeMs: message.clientTimeMs, serverTimeMs: performance.now() })); return; }
+    if (message.type === 'dialogue_text') {
+      this.playerLanguage ??= new PlayerLanguage(this.session);
+      void this.playerLanguage.ask(c.channelId, message.sequence, message.revision, message.text).then(reply => {
+        if (this.connections.get(socket) === c && socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ version: 1, type: 'result', sequence: message.sequence, ...reply }));
+      });
+      return;
+    }
+    if (message.type === 'dialogue_close' || message.type === 'dialogue_option') this.playerLanguage?.cancel(c.channelId);
     if (message.type === 'command') { const receipt = this.session.receiveCommand(message, performance.now(), c.channelId); if (receipt) socket.send(JSON.stringify(receipt)); this.wake?.request(); return; }
     if (message.type === 'save') {
       // Players cannot write saves; they can ask for their progress to be made durable now.

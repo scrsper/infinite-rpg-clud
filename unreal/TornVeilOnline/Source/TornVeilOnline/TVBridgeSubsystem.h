@@ -52,7 +52,7 @@ public:
     bool HasModalScreen() const { return (PlayerShell&&PlayerShell->HasModalScreen()) || (bInspector&&bMechanismsOpen); }
     UPROPERTY() TObjectPtr<UTVPlayerShellWidget> PlayerShell;
     FString FocusedTargetId,FocusedActionId,FocusedKind,MovementRestriction,MobilitySummary;
-    FBox2D FocusedBounds;
+    FBox2D FocusedBounds; FVector2D FocusedAnchor = FVector2D::ZeroVector; FVector FocusedAnchorWorld = FVector::ZeroVector; bool bFocusedAnchor = false;
     void UpdatePlayerShell();
     void UpdateInteractionFocus();
     void UICommand(ETVUICommand Command,const FString& Primary,const FString& Secondary,int32 Index);
@@ -67,9 +67,19 @@ public:
     int32 UISelection=0;
     FString OpenContainerId,OpenContainerName;
     TArray<FString> InventoryItemIds,InventoryItemLabels,ContainerItemIds,ContainerItemLabels;
+    /** Server-projected carried items (with their canonical actions) and the player's own capacities.
+     *  Empty CarriedRows with a non-empty inventory means an older server: legacy rows are built. */
+    TArray<FTVUIItemRow> CarriedRows;
+    TArray<FTVUIActionRow> AbilityRows;
+    /** The timed work the player is doing now (server-projected), shown on the status line. */
+    FString WorkStatus;
+    static bool ParseActionRow(const TSharedPtr<FJsonObject>& J,const FString& ItemId,FTVUIActionRow& Out);
+    void RunProjectedAction(const FString& ActionId);
     FString TalkTargetBody;
     bool bDialogueOpen = false;
-    FString DialogueSpeaker, DialogueOccupation;
+    FString DialogueSpeaker, DialogueOccupation, DialogueSpeakerBody;
+    /** Where the person being spoken to stands, for conversation framing. */
+    bool DialoguePartnerPosition(FVector& Position) const;
     TArray<FString> DialogueLines, DialogueOptionIds, DialogueOptionLabels;
     void CycleTarget();
     void ToggleMechanisms();
@@ -100,6 +110,7 @@ public:
     bool bMechanismsOpen = false;
     TArray<FString> MechanismLabels;
     TArray<TSharedPtr<FJsonObject>> MechanismIntents;
+    TArray<int32> MechanismOf; // which visible mechanism (0-based) each projected action belongs to
     FString KnowledgeSummary, ProjectionMetrics;
     UPROPERTY() TObjectPtr<ATVWorldProjection> WorldProjection;
     UPROPERTY() TObjectPtr<class UInstancedStaticMeshComponent> ArenaBlocks;
@@ -135,7 +146,8 @@ public:
     /** Complete current observed set. Missing rows withdraw presentation; only dead=true is death. */
     UPROPERTY() TMap<FString, TObjectPtr<ATVWildlifePresentation>> WildlifeBodies;
 private:
-    struct FFocusTarget {FString Id,Action,Kind,Label;FVector Position;};
+    struct FFocusTarget {FString Id,Action,Kind,Label;FVector Position;FString Title,Verb,Reason;};
+    FString FocusedTitle,FocusedVerb,FocusedReason; // the focused target, for a person's two-line prompt
     TArray<FFocusTarget> FocusTargets;
     TArray<TSharedPtr<FJsonValue>> ControlTrace;
     double ControlTraceAt=0;

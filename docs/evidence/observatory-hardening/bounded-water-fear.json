@@ -1,0 +1,504 @@
+{
+  "seed": 918271,
+  "sourceCommit": "7c55be6",
+  "classification": "D",
+  "scope": "This observed window only; not all rate warnings.",
+  "actor": "p_30",
+  "window": {
+    "from": 9469281,
+    "to": 9479937,
+    "changes": 81,
+    "waterAdoptions": 41,
+    "fleeAdoptions": 40,
+    "fleeCompletions": 19
+  },
+  "explanation": "Noncritical thirst competes with repeatedly perceived nearby feared Traveler. Finite escapes finish; growing physiology urgency eventually permits the drink. The next completion is 450 world seconds after the final rate-warning event, and the next decision records thirst zero. There is no claim the settlement is safe or that every future goal sequence is sound.",
+  "nextWater": {
+    "id": "e_164814",
+    "tick": 9480387,
+    "type": "goal_completed",
+    "category": "cognition",
+    "actor": "p_30",
+    "data": {
+      "goalType": "drink_water",
+      "goalKey": "drink_water:pl_2"
+    },
+    "causes": [],
+    "effects": [],
+    "perceivedBy": [],
+    "significance": 0.05,
+    "summary": "Fenn Muddle finished drink_water"
+  },
+  "receipts": [
+    {
+      "event": {
+        "id": "e_162410",
+        "tick": 9469281,
+        "type": "goal_changed",
+        "category": "cognition",
+        "actor": "p_30",
+        "placeId": "pl_2",
+        "data": {
+          "from": "flee",
+          "fromUtility": 0.6468255381208778,
+          "to": "drink_water",
+          "utility": 0.5970618181818246,
+          "reasons": [
+            "thirst 0.50"
+          ],
+          "key": "drink_water:pl_2"
+        },
+        "causes": [],
+        "effects": [],
+        "perceivedBy": [],
+        "significance": 0.12,
+        "summary": "Fenn Muddle: goal flee → drink_water @ the village well (u=0.60)"
+      },
+      "needs": {
+        "hunger": 0.45407619047619474,
+        "energy": 0.2633411458333343,
+        "social": 0.7368333333333221,
+        "comfort": 0,
+        "thirst": 0.4963272727272807
+      },
+      "goal": {
+        "type": "drink_water",
+        "utility": 0.5970618181818246,
+        "reasons": [
+          "thirst 0.50"
+        ],
+        "createdAt": 9469281,
+        "key": "drink_water:pl_2",
+        "targetPos": {
+          "x": 94,
+          "y": 14,
+          "z": 96
+        },
+        "targetPlace": "pl_2",
+        "origin": {
+          "x": 97.19993205695647,
+          "y": 14,
+          "z": 99.5
+        },
+        "data": {
+          "water": true
+        }
+      },
+      "decision": {
+        "tick": 9469281,
+        "candidates": [
+          {
+            "type": "drink_water",
+            "key": "drink_water:pl_2",
+            "utility": 0.5970618181818246,
+            "reasons": [
+              "thirst 0.50"
+            ]
+          },
+          {
+            "type": "socialize",
+            "key": "socialize:pl_1",
+            "utility": 0.505467666666659,
+            "reasons": [
+              "social need 0.74",
+              "my appetite for company"
+            ]
+          },
+          {
+            "type": "provision_home",
+            "key": "provision_home:pl_10",
+            "utility": 0.4875,
+            "reasons": [
+              "the household pantry is running low",
+              "I can bring food home"
+            ]
+          },
+          {
+            "type": "idle",
+            "key": "idle:pl_1",
+            "utility": 0.3354999851308093,
+            "reasons": [
+              "I normally beg in the square at this time; other concerns may matter more"
+            ]
+          },
+          {
+            "type": "eat",
+            "key": "eat:pl_7",
+            "utility": 0.3086685714285753,
+            "reasons": [
+              "hunger 0.45",
+              "must find food"
+            ]
+          },
+          {
+            "type": "work",
+            "key": "work:pl_7",
+            "utility": 0.304,
+            "reasons": [
+              "Hilda Vance and Bram Vance and Ysolde Vance work The Gilded Boar"
+            ]
+          },
+          {
+            "type": "sleep",
+            "key": "sleep:pl_7",
+            "utility": 0.13700703125000085,
+            "reasons": [
+              "energy need 0.26"
+            ]
+          },
+          {
+            "type": "idle",
+            "key": "idle:",
+            "utility": 0.1,
+            "reasons": [
+              "nothing better to do"
+            ]
+          }
+        ],
+        "chosen": "drink_water:pl_2",
+        "switched": true,
+        "note": "switched from flee to drink_water"
+      },
+      "bodies": [
+        {
+          "id": "b_30",
+          "pos": {
+            "x": 97.19993205695647,
+            "y": 14,
+            "z": 99.5
+          },
+          "health": 80,
+          "maxHealth": 80,
+          "dead": false,
+          "present": true,
+          "path": null,
+          "pathGoal": {
+            "x": 97.92035997023062,
+            "y": 14,
+            "z": 99.99634945597475
+          }
+        }
+      ]
+    },
+    {
+      "event": {
+        "id": "e_162418",
+        "tick": 9469380,
+        "type": "goal_changed",
+        "category": "cognition",
+        "actor": "p_30",
+        "target": "p_37",
+        "data": {
+          "from": "drink_water",
+          "fromUtility": 0.5970618181818246,
+          "to": "flee",
+          "utility": 0.6438517865117359,
+          "reasons": [
+            "the Traveler is a threat (fear 0.52, dist 7.4)",
+            "my tolerance for danger, unarmed",
+            "concern: wary of them (0.27)",
+            "I know Vex",
+            "the Traveler frightens me"
+          ],
+          "key": "flee:p_37"
+        },
+        "causes": [
+          "e_162413"
+        ],
+        "effects": [],
+        "perceivedBy": [],
+        "significance": 0.45,
+        "summary": "Fenn Muddle: goal drink_water → flee → the Traveler (u=0.64)"
+      },
+      "needs": {
+        "hunger": 0.45537142857143287,
+        "energy": 0.26465736298499326,
+        "social": 0.7078333333333221,
+        "comfort": 0,
+        "thirst": 0.4982181818181898
+      },
+      "goal": {
+        "type": "flee",
+        "utility": 0.6438517865117359,
+        "reasons": [
+          "the Traveler is a threat (fear 0.52, dist 7.4)",
+          "my tolerance for danger, unarmed",
+          "concern: wary of them (0.27)",
+          "I know Vex",
+          "the Traveler frightens me"
+        ],
+        "createdAt": 9469380,
+        "key": "flee:p_37",
+        "targetEntity": "p_37"
+      },
+      "decision": {
+        "tick": 9469380,
+        "candidates": [
+          {
+            "type": "flee",
+            "key": "flee:p_37",
+            "utility": 0.6438517865117359,
+            "reasons": [
+              "the Traveler is a threat (fear 0.52, dist 7.4)",
+              "my tolerance for danger, unarmed",
+              "concern: wary of them (0.27)",
+              "I know Vex",
+              "the Traveler frightens me"
+            ]
+          },
+          {
+            "type": "socialize",
+            "key": "socialize:pl_1",
+            "utility": 0.4855736666666589,
+            "reasons": [
+              "social need 0.71",
+              "my appetite for company"
+            ]
+          },
+          {
+            "type": "idle",
+            "key": "idle:pl_1",
+            "utility": 0.33549099960254297,
+            "reasons": [
+              "I normally beg in the square at this time; other concerns may matter more"
+            ]
+          },
+          {
+            "type": "eat",
+            "key": "eat:pl_7",
+            "utility": 0.3098342857142896,
+            "reasons": [
+              "hunger 0.46",
+              "must find food"
+            ]
+          },
+          {
+            "type": "sleep",
+            "key": "sleep:pl_7",
+            "utility": 0.13819162668649393,
+            "reasons": [
+              "energy need 0.26"
+            ]
+          },
+          {
+            "type": "idle",
+            "key": "idle:",
+            "utility": 0.1,
+            "reasons": [
+              "nothing better to do"
+            ]
+          }
+        ],
+        "chosen": "flee:p_37",
+        "switched": true,
+        "note": "switched from drink_water to flee"
+      },
+      "bodies": [
+        {
+          "id": "b_30",
+          "pos": {
+            "x": 94.78145431813635,
+            "y": 14,
+            "z": 98.51660266712886
+          },
+          "health": 80,
+          "maxHealth": 80,
+          "dead": false,
+          "present": true,
+          "path": [
+            {
+              "x": 96.5,
+              "y": 14,
+              "z": 98.5
+            },
+            {
+              "x": 94.5,
+              "y": 14,
+              "z": 98.5
+            },
+            {
+              "x": 94.5,
+              "y": 14,
+              "z": 96.5
+            }
+          ],
+          "pathGoal": {
+            "x": 94,
+            "y": 14,
+            "z": 96
+          }
+        }
+      ],
+      "threat": {
+        "entityId": "p_37",
+        "bodyId": "b_42",
+        "how": "saw",
+        "tick": 9469380,
+        "pos": {
+          "x": 87.48732792062175,
+          "y": 14,
+          "z": 99.48785981075554
+        },
+        "distance": 7.3585066652117135
+      }
+    },
+    {
+      "event": {
+        "id": "e_164814",
+        "tick": 9480387,
+        "type": "goal_completed",
+        "category": "cognition",
+        "actor": "p_30",
+        "data": {
+          "goalType": "drink_water",
+          "goalKey": "drink_water:pl_2"
+        },
+        "causes": [],
+        "effects": [],
+        "perceivedBy": [],
+        "significance": 0.05,
+        "summary": "Fenn Muddle finished drink_water"
+      }
+    },
+    {
+      "event": {
+        "id": "e_164816",
+        "tick": 9480396,
+        "type": "goal_changed",
+        "category": "cognition",
+        "actor": "p_30",
+        "placeId": "pl_7",
+        "data": {
+          "from": "drink_water",
+          "fromUtility": 0.8422400000000061,
+          "to": "socialize",
+          "utility": 0.611797666666659,
+          "reasons": [
+            "social need 0.89",
+            "my appetite for company",
+            ""
+          ],
+          "key": "socialize:pl_7"
+        },
+        "causes": [],
+        "effects": [],
+        "perceivedBy": [],
+        "significance": 0.12,
+        "summary": "Fenn Muddle: goal drink_water → socialize @ The Gilded Boar (u=0.61)"
+      },
+      "needs": {
+        "hunger": 0.6488952380952393,
+        "energy": 0.4500005787037056,
+        "social": 0.8918333333333223,
+        "comfort": 0,
+        "thirst": 0
+      },
+      "goal": {
+        "type": "socialize",
+        "utility": 0.611797666666659,
+        "reasons": [
+          "social need 0.89",
+          "my appetite for company",
+          ""
+        ],
+        "createdAt": 9480396,
+        "key": "socialize:pl_7",
+        "targetPlace": "pl_7"
+      },
+      "decision": {
+        "tick": 9480396,
+        "candidates": [
+          {
+            "type": "socialize",
+            "key": "socialize:pl_7",
+            "utility": 0.611797666666659,
+            "reasons": [
+              "social need 0.89",
+              "my appetite for company"
+            ]
+          },
+          {
+            "type": "flee",
+            "key": "flee:p_37",
+            "utility": 0.5882208080923965,
+            "reasons": [
+              "the Traveler is a threat (fear 0.46, dist 7.0)",
+              "my tolerance for danger, unarmed",
+              "concern: wary of them (0.25)",
+              "I know Vex",
+              "the Traveler frightens me"
+            ]
+          },
+          {
+            "type": "eat",
+            "key": "eat:pl_7",
+            "utility": 0.48400571428571537,
+            "reasons": [
+              "hunger 0.65",
+              "must find food"
+            ]
+          },
+          {
+            "type": "drink",
+            "key": "drink:pl_7",
+            "utility": 0.3343319297673551,
+            "reasons": [
+              "I normally drink at this time; other concerns may matter more"
+            ]
+          },
+          {
+            "type": "sleep",
+            "key": "sleep:pl_7",
+            "utility": 0.30500052083333506,
+            "reasons": [
+              "energy need 0.45"
+            ]
+          },
+          {
+            "type": "idle",
+            "key": "idle:",
+            "utility": 0.1,
+            "reasons": [
+              "nothing better to do"
+            ]
+          }
+        ],
+        "chosen": "socialize:pl_7",
+        "switched": true,
+        "note": "switched from drink_water to socialize"
+      },
+      "bodies": [
+        {
+          "id": "b_30",
+          "pos": {
+            "x": 94.52976170145999,
+            "y": 14,
+            "z": 96.94766453098688
+          },
+          "health": 80,
+          "maxHealth": 80,
+          "dead": false,
+          "present": true,
+          "path": null,
+          "pathGoal": {
+            "x": 94,
+            "y": 14,
+            "z": 96
+          }
+        }
+      ],
+      "threat": {
+        "entityId": "p_37",
+        "bodyId": "b_42",
+        "how": "saw",
+        "tick": 9480396,
+        "pos": {
+          "x": 88.5,
+          "y": 14,
+          "z": 100.5
+        },
+        "distance": 6.998365056268664
+      }
+    }
+  ]
+}

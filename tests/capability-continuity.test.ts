@@ -45,7 +45,10 @@ describe('civilizational capability continuity', () => {
     const site = world.places().find(p => p.type === 'sawpit')!;
     addPlaceStock(world, 'plank', 6, site.id, site.ownerId, undefined, 'favorable raw supplier endowment');
     placeWorker(world, reader, site); addPlaceStock(world, 'grain', 12, site.id, reader.id, undefined, 'raw process input'); observeNeed(world, reader, site, 10);
-    expect(advanceUntil(world, sim, () => world.events.some(e => e.type === 'method_reproduced' && e.actor === reader.id), 900)).toBe(true);
+    // Errands are walked (2.05 m/s) rather than jogged (3.2 m/s), so the reader's thirst, hunger and a
+    // nap now come due mid-task and reproduction lands near 1180 s (was 179 s). The claim is that an
+    // independent reader reproduces the method, not how quickly; the bound covers one sleep.
+    expect(advanceUntil(world, sim, () => world.events.some(e => e.type === 'method_reproduced' && e.actor === reader.id), 1800)).toBe(true);
     const reproduced = world.events.find(e => e.type === 'method_reproduced' && e.actor === reader.id)!;
     const a = world.kernel.assemblies.find(a => a.id === reproduced.data.assemblyId)!;
     expect(a.outputQuantity).toBeGreaterThan(0); expect(a.creatorId).toBe(reader.id);

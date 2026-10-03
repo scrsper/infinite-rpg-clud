@@ -1,0 +1,98 @@
+{
+  "recordingSha256": "5948b947c1f9461ba730e492176956ed698bd35613667d3c979a831d8693dc20",
+  "fixture": "Frozen recorded observer state; only presentation camera and hour change. Gameplay/isometric views use ordinary camera rig. No human playtest.",
+  "viewport": [
+    1600,
+    900
+  ],
+  "results": [
+    {
+      "view": {
+        "name": "07-night",
+        "hour": 22,
+        "eye": [
+          12032,
+          31,
+          20066
+        ],
+        "target": [
+          12014,
+          29,
+          20041
+        ]
+      },
+      "perf": {
+        "frames": 259,
+        "medianMs": 6.900000095367432,
+        "p95Ms": 7,
+        "p99Ms": 7.100000023841858,
+        "maxMs": 7.699999928474426,
+        "fpsMedian": 144.92753422878744
+      },
+      "meshes": 1226,
+      "activeMeshes": 945,
+      "materials": 324,
+      "grass": 28111,
+      "regions": 9,
+      "pending": 0,
+      "renderer": "webgl2",
+      "gpu": {
+        "vendor": "Google Inc. (AMD)",
+        "renderer": "ANGLE (AMD, AMD Radeon RX 6650 XT (0x000073EF) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "camera": [
+        0,
+        31,
+        98
+      ]
+    },
+    {
+      "view": {
+        "name": "08-rain",
+        "hour": 16,
+        "eye": [
+          12032,
+          31,
+          20066
+        ],
+        "target": [
+          12014,
+          29,
+          20041
+        ],
+        "weather": {
+          "kind": "rain",
+          "intensity": 0.85,
+          "wind": 0.7
+        }
+      },
+      "perf": {
+        "frames": 272,
+        "medianMs": 6.900000095367432,
+        "p95Ms": 8,
+        "p99Ms": 8.800000071525574,
+        "maxMs": 9.599999904632568,
+        "fpsMedian": 144.92753422878744
+      },
+      "meshes": 1226,
+      "activeMeshes": 945,
+      "materials": 324,
+      "grass": 28111,
+      "regions": 9,
+      "pending": 0,
+      "renderer": "webgl2",
+      "gpu": {
+        "vendor": "Google Inc. (AMD)",
+        "renderer": "ANGLE (AMD, AMD Radeon RX 6650 XT (0x000073EF) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "camera": [
+        0,
+        31,
+        98
+      ]
+    }
+  ],
+  "errors": []
+}

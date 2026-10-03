@@ -1,0 +1,82 @@
+{
+  "rendering": {
+    "view": "orbit",
+    "playerActor": true,
+    "enemyActor": true,
+    "camera": {
+      "x": 242.7261845437142,
+      "y": 29.909218239783215,
+      "z": 80.53558438500694
+    },
+    "meshes": 1142,
+    "materials": 279,
+    "fps": 144.64802316031103,
+    "pendingBuilds": 0
+  },
+  "initialHealth": 80,
+  "playerHealth": 63.37808341457413,
+  "enemyAction": {
+    "id": "action_3",
+    "actorBodyId": "b_147",
+    "kind": "attack",
+    "targetBodyId": "b_146",
+    "weaponId": null,
+    "definition": "unarmed_high",
+    "trajectory": "high",
+    "startedAt": 17.900000000000265,
+    "startTick": 1074,
+    "activeAt": 18.160000000000267,
+    "recoveryAt": 18.310000000000265,
+    "completeAt": 18.580000000000265,
+    "phase": "recovery",
+    "outcome": "hit",
+    "facing": -1.4397790851756453,
+    "initialFacing": -1.4397790851756453,
+    "trackingUntil": 18.060000000000265,
+    "turnRate": 1.5707963267948966,
+    "turnBudget": 0.2617993877991494,
+    "reach": 0.9,
+    "radius": 0.12,
+    "impact": 5.812937644745768,
+    "exertionCost": 0.03333333333333333,
+    "intent": "subdue",
+    "direction": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "distance": 0,
+    "appliedDistance": 0,
+    "eventId": "e_1502",
+    "variant": "direct",
+    "moveId": "jab",
+    "repertoireRevision": 2,
+    "techniqueId": "motor:basic-punch",
+    "contact": {
+      "bodyId": "b_146",
+      "region": "head",
+      "position": {
+        "x": 12013.24952452309,
+        "y": 25.51139185341539,
+        "z": 20051.58972077333
+      },
+      "at": 18.269371545427816,
+      "eventId": "e_1507"
+    }
+  },
+  "castFallback": true,
+  "placeId": "pl_3",
+  "enemyId": "p_129",
+  "enemyBodyId": "b_147",
+  "start": {
+    "x": 12013.5,
+    "y": 24,
+    "z": 20051.5
+  },
+  "combatGround": {
+    "x": 12006.5,
+    "y": 24,
+    "z": 20055.5
+  },
+  "fixture": "Disposable initial placement of player and hostile actor outside an existing canonical interior; absent hostiles use the existing Skarn cast via ordinary canonical factories. Ordinary autonomous simulation continues. No human acceptance."
+}

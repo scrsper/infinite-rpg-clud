@@ -12,8 +12,9 @@ function fixture(hydration: number) {
   const tw = createTestWorld(733), p = addPerson(tw, 'Frightened', 'villager', v(12, 1, 12)), q = addPerson(tw, 'Feared', 'villager', v(20, 1, 12));
   const w = tw.world, pb = w.primaryBody(p.id)!, qb = w.primaryBody(q.id)!;
   makePlace(w, 'well', 'Well', { x0: 4, z0: 4, x1: 6, z1: 6, y0: 1, y1: 3 }, { inside: v(5, 1, 5), indoor: false });
-  // Disclosed prior state: wary enough that they register as a threat (fear > 0.25), not terror.
-  getRel(p, q.id).fear = 0.3;
+  // A qualifying fight/flight threat (>0.35), not the ordinary-wariness band that
+  // must leave water candidates intact. The Observatory regression covers that band.
+  getRel(p, q.id).fear = 0.4;
   p.mind.percepts = [{ entityId: q.id, bodyId: qb.id, how: 'saw', pos: { ...qb.pos }, tick: w.now, distance: 8 }];
   p.physiology.hydration = hydration; syncNeeds(p);
   (tw.sim as unknown as { think(p: Person, b: Body): void }).think(p, pb);

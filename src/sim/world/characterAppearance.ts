@@ -242,3 +242,18 @@ export function resolveAppearance(o: AppearanceResolution): Appearance {
   }
   return appearance;
 }
+
+/**
+ * Change chosen tokens of a person's description (a player's chosen look, say) and re-derive the
+ * realized colours from it, so description and colours can never disagree. Garment colours are
+ * kept: they come from the costume family, which this does not change.
+ */
+export function restyleAppearance(appearance: Appearance, changes: Partial<AppearanceDescription>, occupation: string, age: number): Appearance {
+  if (!appearance.description) return appearance;
+  const description: AppearanceDescription = { ...appearance.description, ...changes };
+  const realized = appearanceFromTraits(description, OCCUPATION_CUES[occupation] ?? []);
+  const growth = growthScaleFor(age);
+  const restyled: Appearance = { ...appearance, skin: realized.skin, hair: realized.hair, height: realized.height * growth.height, build: realized.build * growth.build, description };
+  if (description.accessories.includes('beard') && realized.beard !== undefined) restyled.beard = realized.beard; else delete restyled.beard;
+  return restyled;
+}

@@ -48,18 +48,23 @@ export class Navigator {
   }
   private rebuildCell(x: number, z: number): void {
     const g = this.grid; const i = x * g.D + z;
-    // find highest walkable floor: a solid block with 2 clear (non-solid) blocks above. Prefer the lowest such floor near ground (interiors).
+    // Dense columns are contiguous and already in bounds. Custom/sparse grid readers
+    // retain their ordinary accessor; no geographic or door interpretation is cached.
+    const dense = !g.sparse && g.get === VoxelGrid.prototype.get ? g.data : null;
+    const offset = i * g.H;
+    // Find the lowest walkable floor: a solid block with two clear blocks above.
+    // Ascending order can stop at the same floor the former descending scan retained.
     let best = -1, bestCost = 1;
-    for (let y = g.H - 3; y >= 0; y--) {
-      const b = g.get(x, y, z); const def = BLOCKS[b];
+    for (let y = 0; y <= g.H - 3; y++) {
+      const b = dense ? dense[offset + y] : g.get(x, y, z); const def = BLOCKS[b];
       if (b === B.Air || !def.solid || b === B.Fence || b === B.Door) continue;
       if (def.shape === 'cross') continue;
-      const a1 = g.get(x, y + 1, z), a2 = g.get(x, y + 2, z);
+      const a1 = dense ? dense[offset + y + 1] : g.get(x, y + 1, z), a2 = dense ? dense[offset + y + 2] : g.get(x, y + 2, z);
       const d1 = BLOCKS[a1], d2 = BLOCKS[a2];
       if ((!d1.solid || a1 === B.Door) && (!d2.solid || a2 === B.Door)) {
         best = y + 1; bestCost = Math.max(def.walkCost, a1 === B.Door ? BLOCKS[B.Door].walkCost : d1.walkCost, a2 === B.Air ? 1 : a2 === B.Door ? BLOCKS[B.Door].walkCost : d2.walkCost * 0.5);
         if (b === B.Water) bestCost = 30;
-        // keep the lowest floor (interiors under roofs) — continue scanning downward
+        break; // The lowest valid floor preserves interiors under roofs.
       }
     }
     // water surfaces: treat as non-walkable unless shallow
@@ -73,8 +78,19 @@ export class Navigator {
   /** Shared terrain constraint for voluntary movement and crowd separation. A walkable
    * roof is not reachable by stepping sideways from the ground below it. */
   canStepTo(from: Vec3, x: number, z: number): boolean {
-    const cx = Math.floor(x), cz = Math.floor(z);
-    return this.isWalkable(cx, cz) && Math.abs(this.floorY(cx, cz) - from.y) <= 1.05;
+    const cx = Math.floor(x), cz = Math.floor(z), sx = Math.floor(from.x), sz = Math.floor(from.z);
+    const y = this.floorY(cx, cz);
+    return this.isWalkable(cx, cz) && Math.abs(y - from.y) <= 1.05
+      && (cx === sx || cz === sz || this.diagonalClear(sx, sz, cx, cz, from.y, y));
+  }
+
+  private diagonalClear(x: number, z: number, nx: number, nz: number, y: number, ny: number): boolean {
+    // Both sides must support passage at BOTH endpoint heights. Source-only checks
+    // admitted an uphill diagonal whose reverse was rejected, stranding its walker.
+    const sideX = this.floorY(nx, z), sideZ = this.floorY(x, nz);
+    return sideX >= 0 && sideZ >= 0 && this.walkCost(nx, z) < 40 && this.walkCost(x, nz) < 40
+      && Math.abs(sideX - y) <= 1.05 && Math.abs(sideX - ny) <= 1.05
+      && Math.abs(sideZ - y) <= 1.05 && Math.abs(sideZ - ny) <= 1.05;
   }
 
   /** A* path from a to b in block coordinates. Returns list of cell centers (y = floor). */
@@ -116,11 +132,7 @@ export class Navigator {
         const ni = nx * D + nz; if (closed.has(ni)) continue;
         const ny = this.readY(ni); if (ny < 0 || Math.abs(ny - cy) > 1) continue;
         const wc = this.readCost(ni); if (wc >= 40) continue;
-        if (k >= 4) { // diagonal: both orthogonal neighbours must be passable to avoid corner clipping
-          const a1 = (cx + dirs[k][0]) * D + cz, a2 = cx * D + (cz + dirs[k][1]);
-          if (this.readY(a1) < 0 || this.readCost(a1) >= 40 || Math.abs(this.readY(a1) - cy) > 1) continue;
-          if (this.readY(a2) < 0 || this.readCost(a2) >= 40 || Math.abs(this.readY(a2) - cy) > 1) continue;
-        }
+        if (k >= 4 && !this.diagonalClear(cx, cz, nx, nz, cy, ny)) continue;
         const step = (k >= 4 ? 1.414 : 1) * wc + (ny !== cy ? 0.5 : 0);
         const ng = gc + step;
         if (ng < (gScore.get(ni) ?? Infinity)) { gScore.set(ni, ng); came.set(ni, cur); open.push(ng + h(ni) * 1.05, ni); }

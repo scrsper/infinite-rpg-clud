@@ -1,0 +1,131 @@
+{
+  "source": ".debug/worldlab/2026-10-01T08-06-42-010Z-smoke/report.json",
+  "generatedAt": "2026-10-01T08:06:42.016Z",
+  "overall": "FAIL",
+  "scenarios": [
+    {
+      "id": "baseline-village",
+      "verdict": "FAIL",
+      "seeds": [
+        {
+          "seed": 918271,
+          "findings": [
+            {
+              "id": "WL-PRODUCTION-IDLE",
+              "kind": "liveness",
+              "severity": "failure",
+              "category": "production",
+              "message": "Grain/flour sat available (grain=554, flour=54) with zero resource transforms from day 0.25 to day 1.75 — a mill or bakery may be idle despite available inputs."
+            },
+            {
+              "id": "WL-CONFLICT-STUCK-MIDRUN",
+              "kind": "liveness",
+              "class": "integrity",
+              "severity": "failure",
+              "category": "social",
+              "message": "A conflict sat 'active' with no meaningful interaction for 23h at some point during the run, even though none is currently stuck."
+            },
+            {
+              "id": "WL-TIMBER-HORIZON",
+              "kind": "liveness",
+              "class": "trend",
+              "severity": "warning",
+              "category": "agriculture",
+              "message": "Standing timber capacity is 0 of 84 logs across 14 tracked trees (0% remaining); a felled mature tree takes ~913 world-days to regrow. This is a real, finite budget at the current stock size — not a bug, and not something to fix by shortening regrowth (Constitution §64/§71): if more timber is genuinely needed, the fix is more/larger groves, not faster biology."
+            }
+          ],
+          "resourceTransforms": 8,
+          "maxActiveConflictAgeHours": 0
+        }
+      ]
+    },
+    {
+      "id": "food-chain",
+      "verdict": "FAIL",
+      "seeds": [
+        {
+          "seed": 918271,
+          "findings": [
+            {
+              "id": "WL-PRODUCTION-IDLE",
+              "kind": "liveness",
+              "severity": "failure",
+              "category": "production",
+              "message": "Grain/flour sat available (grain=554, flour=54) with zero resource transforms from day 0.25 to day 1.75 — a mill or bakery may be idle despite available inputs."
+            },
+            {
+              "id": "WL-TIMBER-HORIZON",
+              "kind": "liveness",
+              "class": "trend",
+              "severity": "warning",
+              "category": "agriculture",
+              "message": "Standing timber capacity is 0 of 84 logs across 14 tracked trees (0% remaining); a felled mature tree takes ~913 world-days to regrow. This is a real, finite budget at the current stock size — not a bug, and not something to fix by shortening regrowth (Constitution §64/§71): if more timber is genuinely needed, the fix is more/larger groves, not faster biology."
+            }
+          ],
+          "resourceTransforms": 8,
+          "maxActiveConflictAgeHours": 0
+        }
+      ]
+    },
+    {
+      "id": "water-survival",
+      "verdict": "PASS",
+      "seeds": [
+        {
+          "seed": 918271,
+          "findings": [],
+          "resourceTransforms": 8,
+          "maxActiveConflictAgeHours": 0
+        }
+      ]
+    },
+    {
+      "id": "logistics",
+      "verdict": "PASS",
+      "seeds": [
+        {
+          "seed": 918271,
+          "findings": [],
+          "resourceTransforms": 8,
+          "maxActiveConflictAgeHours": 0
+        }
+      ]
+    },
+    {
+      "id": "construction",
+      "verdict": "PASS",
+      "seeds": [
+        {
+          "seed": 918271,
+          "findings": [],
+          "resourceTransforms": 8,
+          "maxActiveConflictAgeHours": 0
+        }
+      ]
+    },
+    {
+      "id": "conflict-resolution",
+      "verdict": "PASS",
+      "seeds": [
+        {
+          "seed": 42424242,
+          "findings": [],
+          "resourceTransforms": 8,
+          "maxActiveConflictAgeHours": 0.5
+        }
+      ]
+    },
+    {
+      "id": "recover-item",
+      "verdict": "PASS",
+      "seeds": [
+        {
+          "seed": 918271,
+          "findings": [],
+          "resourceTransforms": 10,
+          "maxActiveConflictAgeHours": 0
+        }
+      ]
+    }
+  ]
+}

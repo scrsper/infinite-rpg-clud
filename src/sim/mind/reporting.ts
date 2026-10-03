@@ -2,6 +2,7 @@ import type { EntityId, KnowledgeItem, Person, ReportProgress, ReportStatus, Tic
 import type { World } from '../core/world';
 import { SECONDS_PER_HOUR } from '../core/time';
 import { situationForEvent, personalSituationView } from '../social/situation';
+import { conversationReachable } from './socialEvidence';
 
 /**
  * v0.10.1 Part XII — telling the watch about a crime, modelled as progress toward a real outcome.
@@ -47,6 +48,30 @@ export function reportsOf(p: Person): Record<string, ReportProgress> {
 
 export function reportFor(p: Person, key: string): ReportProgress | undefined {
   return p.mind.reports?.[key];
+}
+
+/** A failed approach concerns its listener as well as its incident. Derive that
+ * shared evidence from the existing report records; changing case cannot erase it.
+ * A currently observed opportunity or a successful delivery supersedes old failures. */
+export function canApproachReportListener(world: World, p: Person, listener: Person): boolean {
+  if (p.mind.percepts.some(pc => pc.entityId === listener.id && pc.how === 'saw' && pc.distance <= 3.5))
+    return conversationReachable(world, p, listener);
+  const records = Object.values(p.mind.reports ?? {});
+  const deliveredAt = records.reduce((at, r) => r.deliveredToId === listener.id ? Math.max(at, r.deliveredAt ?? -Infinity) : at, -Infinity);
+  // A case can be delivered to another authority after this failed attempt. Its
+  // status/lastAttemptAt therefore cannot stand in for the listener's failure.
+  // Legacy failed records have the old attempt time; a delivered legacy record
+  // cannot reconstruct that distinction and does not invent it.
+  const failed = records.filter(r => r.towardId === listener.id).flatMap(r => {
+    const at = r.lastFailedAt ?? (r.deliveredAt === undefined ? r.lastAttemptAt : undefined);
+    return at !== undefined && at >= deliveredAt ? [{ at, attempts: r.listenerFailures ?? r.attempts }] : [];
+  });
+  if (!failed.length) return true;
+  const attempts = failed.reduce((n, r) => n + r.attempts, 0);
+  if (attempts >= MAX_REPORT_ATTEMPTS) return false;
+  const lastAt = Math.max(...failed.map(r => r.at));
+  const backoff = Math.min(MAX_REPORT_BACKOFF_SECONDS, REPORT_BACKOFF_SECONDS * 2 ** Math.max(0, attempts - 1));
+  return world.now >= lastAt + backoff;
 }
 
 /** Is anyone this person could tell already in the know? The existing success test, kept in one
@@ -106,7 +131,10 @@ export function refreshReport(world: World, p: Person, k: KnowledgeItem, authori
   // ---- gave up for now, but an authority in plain sight reopens it: standing in front of a
   // guard and saying nothing because of a back-off timer would be the model failing, not working.
   if (r.status === 'unavailable' || r.status === 'no_authority') {
-    const inSight = p.mind.percepts.some(pc => authorities.some(g => g.id === pc.entityId));
+    // Merely seeing the same unreachable guard across a gap is not evidence that the
+    // failed approach can now succeed. Reopen when ordinary conversation is in reach.
+    const inSight = p.mind.percepts.some(pc => pc.how === 'saw' && pc.distance <= 3.5
+      && authorities.some(g => g.id === pc.entityId && conversationReachable(world, p, g)));
     if (inSight) { r.status = 'seeking'; r.deferUntil = undefined; r.note = undefined; }
   }
   if (r.status === 'moot' || r.status === 'delivered') { r.status = 'seeking'; r.note = undefined; }
@@ -154,6 +182,8 @@ export function noteReportDelivered(world: World, p: Person, key: string, toId: 
 export function noteReportFailed(world: World, p: Person, key: string, towardId: EntityId | undefined, why: string): void {
   const store = reportsOf(p);
   const r = store[key] ?? (store[key] = { key, status: 'seeking', attempts: 0, firstAt: world.now, lastAttemptAt: world.now });
+  r.listenerFailures = r.towardId === towardId ? (r.listenerFailures ?? r.attempts) + 1 : 1;
+  r.lastFailedAt = world.now;
   r.attempts += 1;
   r.lastAttemptAt = world.now;
   r.towardId = towardId;

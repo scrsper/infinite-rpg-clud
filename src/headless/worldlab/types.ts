@@ -80,6 +80,8 @@ export interface PersonBands { hunger: SeveritySnapshot; thirst: SeveritySnapsho
 export type RecoveryPhase = 'requested' | 'info-discoverable' | 'item-locatable' | 'recovery-authorized' | 'item-recovered' | 'returned';
 export interface RecoveryProgress { personId: EntityId; itemId: EntityId; phase: RecoveryPhase; }
 
+export interface ProductionProgress { placeId: EntityId; inputReady: boolean; demand: number; fulfilled: number; }
+
 export interface Observation {
   /** World-seconds elapsed since this run's `worldStart` (0 at the initial baseline probe). */
   atWorldSeconds: number;
@@ -106,6 +108,8 @@ export interface Observation {
    * probe's phase — see `RecoveryPhase`. Empty in scenarios with no such desires (cheap: O(alive
    * persons x their own desires), not a world-wide scan). */
   recoveryProgress: RecoveryProgress[];
+  /** Per-workplace request-driven progress; stocked raw materials alone are not demand. */
+  productionProgress: ProductionProgress[];
   alivePopulation: number;
   summary: WorldRunSummary;
   anomalies: Anomaly[];

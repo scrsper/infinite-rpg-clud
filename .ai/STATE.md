@@ -1,4 +1,202 @@
-# Current: consolidated GitHub main, 2026-09-27
+# Current: Babylon visual fidelity pass locally verified (2026-10-01)
+
+Branch `codex/babylon-visual-fidelity-v1`, tested source `3440bc4c7dd1eee53aa703194809cef2abd1d65b`. Presentation now derives continuous plaster/timber facades and sparse exterior dressing from projected structures, corrects outward face orientation, blends terrain and feathered paths, clusters vegetation with GPU grass wind, improves exploration framing/materials/lighting, and applies reversible rain wetness. Existing canonical apertures, collision and reversible cutaways remain authoritative. Simulation and Unreal source are unchanged; no merge.
+
+- Twelve web test files / 67 tests, typecheck and private production build pass. Independent final review found no actionable issues.
+- Disposable real Chrome acceptance: 22 orbit and 20 isometric checks pass, including actual input, doors, interior traversal, combat and cutaway restoration; no browser errors. Fixture staging is disclosed in the evidence. This is automated acceptance, not human/controller acceptance.
+- Eight final high-quality 1600x900 WebGL2 captures are error-free. Warmed median frame times range from 6.9 to 10.3 ms on RX 6650 XT (baseline 6.9 to 9.7 ms); these short samples do not establish low-end or streaming performance.
+- Evidence, retained iterations, live video and verification details: `docs/evidence/babylon-visual-fidelity-v1/`; open `comparisons/index.html` for the eight before/after sliders and `session.json` for reproduction and performance records. The ordinary orbit comparison intentionally includes the camera change.
+- Remaining priorities: more distinct building silhouettes/purpose, richer field margins and forest transitions, better character/interior art and warm night focal points. Water and WebGPU were not validated in this pass. The result improves the existing client but remains visibly procedural.
+
+# Previous: Interior door visibility implemented and locally verified (2026-10-01)
+
+The controlled actor was hidden by unregistered upper door-frame geometry after the building roof/wall cutaway. Frame and hinged leaf now participate in the existing reversible per-building cutaway with owned materials. Canonical collision, automatic door operation, perception, simulation and Unreal source are unchanged.
+
+- Eight focused web files / 55 tests, typecheck and separate private production build pass.
+- Disposable real Chrome acceptance: 19 checks pass, no browser errors/inference requests. Actual keyboard entry/traversal/exit/reentry, interrupted menus, automatic door operation, interior head contact (health 80 to 75.00), defense and camera/cutaway restoration pass. Reviewed screenshots show the player throughout.
+- The harness's original closed-door assumption contradicted existing canonical automatic opening; its verification now follows the real mechanic. Tightened waypoint approach avoids fixture corner cutting; the adult combat fixture requires clear body space/line of passage. No simulation rule or gameplay assertion was weakened.
+- Evidence: docs/evidence/isometric-interior-visibility; details: docs/web/ISOMETRIC_PLAYABLE_SLICE.md. One tavern is covered; other layouts, portrait, human/gamepad and Unreal acceptance remain outside this slice.
+- Loader-repair CI 36821844547 at 302aa8c completed RED: worker loading is fixed (Node 20/22 checks pass), but six wall-clock timeouts remain across five other files; 1,805 tests pass. All 68 affected tests pass locally with unchanged budgets. The full gate now uses documented Desktop/live Node 22, retaining Node 20/22 worker compatibility checks. New-head CI is recorded in draft PR56; check its exact-head result before integration. Main stays unchanged.
+
+# Previous: Checkpoint worker loader compatibility repair (2026-10-01)
+
+The isometric slice at 3b8f02b passed local normal regression (168 files / 1,811 tests), but CI run 36817546294 finished RED at npm test: the Node 20 runner could not load checkpointWorker.ts. Its build and smoke steps were skipped. PR56 records the failure.
+
+Source workers now use a JavaScript entry and tsx's scoped import API. The compiled release worker path and all checkpoint capture/packing/ownership/durability behavior are unchanged. All 38 tests in the five CI-failing suites pass locally; typecheck passes. A small actual Node 20/22 worker check precedes the full CI gate. New exact-head CI remains to be verified; no success is inferred from the local Node 22 result.
+
+The actual Node 20/22 compatibility jobs pass. The full gate reached RED from six unrelated wall-clock timeouts; the locally verified door visibility follow-up and execution-environment adjustment are recorded above. Portrait work stays outside that follow-up. Details and prior evidence remain in docs/web/ISOMETRIC_PLAYABLE_SLICE.md.
+
+# Previous: Optional isometric playable slice (2026-10-01)
+
+Branch codex/isometric-playable-slice preserves inherited work in 21be4e2 and licensed source assets in af9eab8. Optional fixed orthographic Babylon presentation, screen-relative walking/running, pointer interaction, canonical dialogue/trade/combat and per-building cutaways are implemented. Third-person remains available; canonical simulation and Unreal mechanics were not changed by this slice.
+
+- Private production build/typecheck passed. Final focused web verification passed 54 tests in eight files; the full invocation was still running at this checkpoint.
+- Real isolated Chrome acceptance passes 13 checks, including actual keyboard doorway entry, canonical adult melee damage, repeated menus/dialogue/purchase and camera/cutaway reversal. Root-cause fixture corrections and a stale-pointer interaction fix are disclosed in docs/web/ISOMETRIC_PLAYABLE_SLICE.md.
+- Launcher: Play Torn Veil Isometric.cmd; separate bundle/gateway 7492 uses retained isolated web-quality save/world 7490. CheckOnly correctly stopped because the persistent preview world was offline; it started nothing. Ordinary launch can start the existing isolated preview.
+- Generated textures have byte-verified provenance; Poly Haven HDR is CC0. Original ZIP archives and generated GLBs remain local. No saves/services were overwritten or stopped.
+- Draft review only: main stays unchanged; no merge/deploy. Branch ancestry also includes earlier Observatory and deterministic-dialogue work, not just isometric code. Previous AMBER limits remain.
+- Visual review shows interior furniture can hide the player and the inherited portrait is badly framed. Next bounded task should resolve controlled-actor interior visibility with visible entry/traversal/exit/combat evidence; no new art-tool installation is needed.
+
+# Previous: Stage one — deterministic dialogue replacement (2026-09-30)
+
+The authoritative Desktop checkout now uses deterministic dialogue for gameplay and Observatory.
+The model transport, endpoint configuration, model toggle, model benchmark and isolation code
+have been removed. No isometric conversion was started. Existing unrelated web/art changes
+remain in this checkout.
+
+- One weighted parser, bounded canonical intents, player-available references, small follow-up
+  context, adjudicated response plans and deterministic templates; no inference worker or API.
+- The authenticated web gateway admits free-text dialogue. Player payloads contain only speech
+  and status; Observatory exposes the parser evidence and grounded semantic result.
+- Purchases use the same dispatcher/transaction from text and suggested choices. Source/time
+  follow-ups, uncertainty, occupation testimony and perceptible social speech use canonical state.
+- Final focused regression passed 417 tests in 9 files; typecheck, production builds, real Chrome
+  Observatory and isolated production-game UI acceptance passed with inference unavailable.
+  Broad regression passed 165 files / 1,803 tests; its three dialogue failures were resolved and
+  the affected files passed in the final focused run. Full broad suite was not repeated.
+- Details and final verification record: `docs/DETERMINISTIC_DIALOGUE.md`.
+
+# Previous: Observatory simulation integrity — reviewed AMBER handoff (2026-09-30)
+
+Authoritative Desktop checkout, branch `codex/observatory-local-language`. Completed prior
+Observatory/local-language work was preserved in `e59b7da` / `633a5d2`; original seed-918271
+30-day RED was exactly reproduced before simulation edits. Confirmed planning, reporting,
+delivery, memory, navigation and persistence repairs are preserved through simulation commit
+`187a035`; current test-only fixture commit is `2d79e62`. See `docs/OBSERVATORY_HARDENING.md`.
+
+Revision 20 completed all three 30-day seeds with zero configured hard failures, balanced
+edible-unit ledgers, no stuck-path groups or duplicate event identities. Fresh revision-21
+primary matches every prior saved value and property order; its only addition is the persisted
+compaction cursor. Decision-window reviews are identical. Day-15 reload + 15 days matches every
+canonical value and final content hash `461b057fa012be7574cd973a1a4b91366e2b7618cd269eba2e9e0c1f6b7698f4`.
+Raw strict comparison retains four optional `situationId` property-order differences inside
+fixed concern records. Their exact SHA-bound class-C review is saved; no meaningful values or
+collection ordering are normalized. Legacy saves remain best-effort for missing metadata.
+
+Normal coverage: full invocation had 1,409 passes and four living-universe cutoff failures
+(162 files / 1,413 tests). Only that fixture changed to five world days; all 11 of its tests
+then passed with every assertion retained. Other 161 passing files remain valid. Build and
+latest typecheck pass. Real qwen, disabled and offline modes match canonical outcomes.
+Quiet three-hour benchmark trials match the primary final hash; maxima 115.766 / 103.353 /
+99.181 ms, so the unchanged 100 ms budget remains AMBER. Remaining decision/economy/social
+coverage gaps are recorded, not hidden; overall simulation integrity is not universally verified.
+
+Independent revision-21 repeat completed: strict day-1/7/30 comparisons have zero value and
+zero property-order differences. The nine-horizon validation summary, raw continuation plus
+exact-row review and final verification manifest are checked in under
+`docs/evidence/observatory-hardening`. Browser `--hardening` passes with no errors; screenshots
+were visually inspected. The exact `Torn Veil Observatory.cmd` launcher started server PID
+19672 on port 7481; the reviewed seed-918271 day-30 world is loaded paused at tick 11258400.
+Opening it in the Codex browser panel was also requested (queued by the app). Old port 7480 was preserved.
+
+Bounded statuses: DETERMINISM, SAVE/LOAD (canonical values, four disclosed nonsemantic record
+field-order differences) and LOCAL LLM ISOLATION VERIFIED. SIMULATION INTEGRITY, ECONOMY
+CAUSALITY, NPC DECISION-MAKING, KNOWLEDGE, SOCIAL CAUSALITY, EVENT HEALTH and PERFORMANCE
+PARTIAL. Remaining warnings include 16/11/11 worst-window churn actors, incomplete economic
+and epistemic coverage, and maximum-step budget overruns. These are visible, not suppressed.
+The original RED findings are explained and repaired/classified; no universal correctness claim.
+
+Raw evidence: `D:/TornVeilValidation/observatory-hardening-20260930`. Browser subset is populated
+at `.debug/observatory-hardening/reviewed-918271`. Baseline UI files remain under `baseline/replay-918271`;
+eleven bulk files moved to D `baseline-bulk` with before/after SHA verification and checked manifest.
+Preserve the paused reviewed server on port 7481 and old Observatory on port 7480. No live/staging,
+Unreal or web gameplay presentation changes, pushes or merges. C drive is low; large outputs go to D.
+
+# Previous: Observatory and local language — branch `codex/observatory-local-language` (2026-09-29)
+
+Built on the clean web-rebirth checkout at the authoritative Desktop location. Launch with
+`Torn Veil Observatory.cmd` (loopback 7480, disposable in-memory Ashford development worlds).
+Web/Unreal launchers and save schema are unchanged. Inspectors separate truth and belief;
+scenario/time controls, source-backed aggregates, causal graph, WorldLab health, checkpoints,
+and local-language debugging are available. Qwen 3 8B Q4_K_M was already installed and was
+tested through Ollama with GPU offload; no model was downloaded. Natural speech is constrained
+to reviewed grounded realizations. Free text is Observatory-only; unsupported actions refuse.
+Guide, exact limitations and status categories: `docs/OBSERVATORY.md`. Evidence: `.debug/observatory/`.
+This is instrumentation plus a bounded language slice, not a declaration that the simulation
+is correct. Long-run invariant/anomaly findings remain visible and need separate investigation.
+The 30-day ordinary run completed (33 alive before/after; food 377→47; 14 pressured households;
+five injured manifestations). Final health RED: stuck actor, goal churn, repeated events and a
+130.46 ms final step against the 100 ms budget. One-day report/health history also verified.
+35 focused tests, production build/typecheck, real-model and offline browser acceptance passed.
+Final normal regression: 1,361 tests across 159 files passed (1,808.38 seconds).
+
+# Also in progress: web client (Babylon.js) — branch `claude/web-rebirth` (2026-09-29)
+
+User mandate: a browser client over the unchanged simulation, plus a separate `Play Torn Veil Web.cmd`. Lane A only
+(no simulation change; `src/sim` untouched); Lane B (vault/dive) not started. Status, evidence, known defects and the
+human test guide (all human verdicts pending): `docs/web/README.md`, `docs/web/PROGRESS.md`. Isolated preview world
+on ports 7460 (world) / 7470 (gateway); live, staging and the accepted package are untouched.
+
+# Current: human checkpoint 1 — STOPPED for human review (2026-09-28)
+
+Course correction (user, 2026-09-28): human experience first; no simulation breadth. Delivered and
+stopped: one polished conversation, a coherent lineup, readable NPC movement, two player gaits.
+Report, play path and five-minute test: `docs/HUMAN_CHECKPOINT_1.md`.
+Play: `%USERPROFILE%\TornVeilAlpha\playtests\checkpoint-9a2aa61\Play.cmd` → client
+`client-9a2aa61…` + server `0.2.0-inhabit.11` in a fresh world `TornVeilAlpha\checkpoint-human`
+(127.0.0.1:7440). Evidence world `TornVeilAlpha\checkpoint-evidence` (7450, probe accounts ev-a..d).
+The older dev world (7430) is crowded with ~20 autonomous probe characters: not for human review.
+Next action: wait for the human's verdict; then combat inventory/presentation and one environment
+reference scene, as the course correction orders.
+
+# Previous: inhabitable alpha work, branch `claude/inhabitable-alpha` (2026-09-27/28)
+
+Continuation checkpoint for the consolidated alpha brief (playable, inhabitable, visually coherent).
+Baseline: main `223264d`. Integration branch `claude/inhabitable-alpha` (pushed; no PR yet).
+State: **playable checkpoint** — scope incomplete. Coverage: `docs/SIMULATION_TO_PLAYER_COVERAGE.md`.
+
+Protected, untouched: accepted package `client-450b7e5cbc80` + staging `0.1.0-alpha.30` (port 7410,
+its preserved fork — never rehearse over it, never `ops update --env staging`); live alpha.12 (port 7400).
+Development runs in its own root `%USERPROFILE%/TornVeilAlpha/dev-inhabit` (env `dev`, port 7430, seed
+918271, world `tvo-dev-39a6e14c…`), moved between releases with `ops switch --env dev` (backup first).
+Probe accounts journey-a/b/c there; profiles `dev-journey-*` in `%LOCALAPPDATA%/TornVeil/Client`.
+
+Done on the branch (each with tests that fail on the old code):
+- Carried items and abilities projected from canonical rules (no "Eat" on a knife; no Hush until taught;
+  refusals with reasons); a sleeping body can no longer act; interaction-spec check EOL-neutral.
+- Butchering is real timed work at the carcass (interrupt keeps progress; contention refused; save mid-work).
+- Hunting a wild animal is no longer a witnessed crime (a hunter used to hate and attack the hunter).
+- Trade menu grouped by good and price, whole units, paged.
+- Canonical sky: sun/moon/exposure/fog from the world clock and weather (night adapts, noon black-out refused).
+- TV.JourneyProbe + Run-JourneyProbe.ps1: automated ordinary-input journey (sign-in, walk, talk, trade, eat).
+Evidence still valid: full suite 1265/1265 at `2d7f7f9` (later: trade test + native-only changes);
+native TornVeil.Presentation 16/16 (2 known warnings) at the sky change; editor journeys 03 and 05 passed.
+
+Local non-git inputs: `Content/TornVeil/Materials/LocalPalette` regenerated in this checkout with
+`unreal/scripts/create_local_prop_materials.py` and `create_local_village_materials.py` (their input
+`.debug/playable-world-slice2/local-assets/registry.json` copied from the Codex checkout). Without it
+props render white in packages.
+
+Milestone 1 packaged checkpoint (see `docs/CANDIDATE_MANIFEST.md`): client `client-4333a46` (clean) +
+dev server `0.2.0-inhabit.4`; journey-package-04 passed (sign-in → new life → talk → trade → bread → eat)
+and its reconnect run returned the same person.
+
+Since then (all pushed; full suite 1276/1276 at `6468fc5`; native Presentation 16/16):
+- Crowd faces keep their authored skin (mirrored head instances, `create_local_crowd_head_material.py`).
+- Conversations frame the partner (panel docked right); TV.JourneyProbe reports frame time (p95 30.6 ms).
+- Twilight and a reachable moonlight (a natural 20:23 frame was black). Groom PSO ensure fixed.
+- Generator `playable-3` (no numeral names); `playable-1/2` baselines pinned and preserved.
+- A nap is not a night: workers who nap in their break wake for their shift (tavern food 14–22 h).
+Dev world now on server `0.2.0-inhabit.5+6468fc59b54e` (switched with backup; its playable-2
+fingerprint was accepted). Client package `client-6468fc5` in progress.
+
+Local non-git inputs this checkout needs (run once, all write only git-ignored content): LocalPalette
+(`create_local_prop_materials.py`, `create_local_village_materials.py`), `create_local_crowd_head_material.py`
+(75 mirrors), `repair_updo_bindings.py` (else f_003 Updo wearers are bald), and sound:
+`node scripts/audio/synthesize-sounds.mjs` then `import_local_sounds.py` (else the world is silent).
+
+Open: mechanisms need a sustained shortfall (diagnosed, not forced); no player mechanism panel;
+oversized foot blocks; probe does not enter buildings; multi-seed review not yet run; player
+contention/trade not exercised; sounds are synthesized placeholders, unheard by a human.
+Done since: mechanism actions in the action panel; camera never inside a body; probe hold + shared-world
+record; packaged two-client pair passed (client-f5227fd); soundscape (`1aef56f`, native + editor evidence).
+Then: probe route-first mode; packaged evening journey passed at natural 18:32 (tavern food restored by
+the nap fix) and packaged dusk at 20:17 reads as twilight; multi-seed run found and fixed an animal-
+defence crash (`6729ffa`; full suite 1277/1277). Dev world on server `0.2.0-inhabit.6+4d70f2206c99`;
+latest client `client-5730546`. Dev world holds ~15 offline probe characters (journey-a…o).
+Next action: native journeys for haul and protection/butchery → player employment → player invention.
+
+# Previous: consolidated GitHub main, 2026-09-27
 
 GitHub `scrsper/torn-veil-online` / `main` is the source baseline. PRs #51, #52, #53
 and #54 merged on 2026-09-27 (integration commit `1205973`). Active local development
@@ -652,3 +850,10 @@ Original milestone: `docs/PLAYABLE_SEEDED_WORLD.md`; journey evidence:
 This is a functioning continuous-world foundation, not an all-conditions showcase PASS. Starting settlements have primitive technical education and wind boundaries, with no guaranteed finished mechanism. The menu is verified using the existing disclosed workshop. Full human keyboard-driven regional PIE travel and every activity/repair/combat animation have not been visually accepted. Terrain/water, modular roofs/interiors, component geometry and item/crop presentation remain prototypes. No ecology/hydrology, bridges, shipping package, simulation LOD, multiplayer or offline catch-up.
 
 Next: Regional Life and Interaction Acceptance — natural technical history/artifacts, procurement/construction access, complete live Unreal survival/mechanism journey, stronger region/material/facade rendering and recorded animation/performance evidence. Do not manufacture prosperity or disable distant systems for a demonstration.
+
+
+## PR56 scoped production/pursuit/deadline repair (2026-10-01)
+
+Request-aware per-workplace WorldLab probes and bounded shared combat approaches are locally verified (47 focused + 53 adjacent tests, typecheck). Profiled pure geography/navigation/visibility optimizations retain original test deadlines and baseline geographic output. The three-day baseline no longer reports production/conflict stalls but still reports construction supply and bandit hunger; no universal health claim is made. Evidence: `docs/evidence/worldlab-pr56-repair/`. Exact pushed-head PR56 CI is the final aggregate and must be read from the PR checks; no merge/deployment is authorized.
+
+PR56 follow-up: b963cd7 exact-head CI finished red (1,821 pass, two default deadlines and a family trace selection defect). The trace now isolates its triggering canonical situation instead of unrelated later matters; four social traces and 32 focused floor/spatial/pressure/agency regressions pass with unchanged assertions/windows/deadlines, plus typecheck. Pure navigation/spatial overhead reductions preserve replay hashes. See repair followup.json and the current PR checks for final aggregate status.

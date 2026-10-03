@@ -38,6 +38,7 @@ void ATVCharacter::SetupEnhancedInput(UInputComponent* Input) {
         Enhanced->BindAction(A,ETriggerEvent::Started,this,Callback);return A;};
     auto* Sprint=Button(TEXT("Sprint"),&ATVCharacter::SprintOn);
     Enhanced->BindAction(Sprint,ETriggerEvent::Completed,this,&ATVCharacter::SprintOff);Enhanced->BindAction(Sprint,ETriggerEvent::Canceled,this,&ATVCharacter::SprintOff);
+    Button(TEXT("WalkToggle"),&ATVCharacter::WalkToggle);
     auto* Crouch=Button(TEXT("Crouch"),&ATVCharacter::Duck);
     Enhanced->BindAction(Crouch,ETriggerEvent::Completed,this,&ATVCharacter::ReleaseCrouch);Enhanced->BindAction(Crouch,ETriggerEvent::Canceled,this,&ATVCharacter::ReleaseCrouch);
     Button(TEXT("LockTarget"),&ATVCharacter::SelectTarget);Button(TEXT("SwitchTarget"),&ATVCharacter::SwitchTarget);Button(TEXT("Interact"),&ATVCharacter::Interact);

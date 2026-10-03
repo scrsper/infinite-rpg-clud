@@ -1,5 +1,6 @@
 import type { Action, Body, Person, Vec3 } from '../sim/core/types';
 import type { World } from '../sim/core/world';
+import { attendingTo } from '../sim/mind/commitment';
 
 /**
  * General activity presentation (Slice 3 Part 2).
@@ -160,6 +161,12 @@ export function activityPresentation(
   }
   if (body.pose === 'sleep') {
     return { ...base, family: 'rest', detail: 'sleep', posture: 'lie', locomotion: 'idle', station: 'bed' };
+  }
+  // Being spoken to (a player's open conversation): they have stopped to listen and answer.
+  const addressedBy = person ? attendingTo(world, person) : null;
+  if (addressedBy) {
+    const seated = body.pose === 'sit' || body.sitAnchor !== null;
+    return { ...base, facingEntityId: addressedBy, family: 'socialize', detail: seated ? 'sit_and_talk' : 'converse', posture: seated ? 'sit' : 'stand', locomotion: 'idle', station: seated ? 'seat' : null };
   }
   if (body.pose === 'eat' || action?.type === 'eat') {
     const seated = body.pose === 'sit' || body.sitAnchor !== null;

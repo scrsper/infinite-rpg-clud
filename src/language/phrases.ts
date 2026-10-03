@@ -1,0 +1,52 @@
+/** Reviewed vocabulary: weights and declaration order are explicit deterministic tie breakers. */
+export const PHRASES = [
+  ['ask_about_person_location', 10, ['where is', 'where can i find', 'have you seen', 'did you see', 'know where', 'where i can find', 'around', 'which way did']],
+  ['ask_for_directions', 10, ['how do i get to', 'which way', 'directions', 'where is']],
+  ['ask_price', 12, ['how much', 'price', 'cost']],
+  ['request_purchase', 12, ['buy', 'purchase', 'i will take', 'i want to buy']],
+  ['offer_sale', 14, ['sell you', 'can i sell', 'i want to sell']],
+  ['offer_sale', 10, ['sell']],
+  ['ask_about_availability', 13, ['do you sell', 'do you have', 'for sale', 'any bread']],
+  ['ask_about_trade', 8, ['trade', 'too expensive']],
+  ['ask_about_relationship_to_player', 16, ['think of me', 'think about me', 'do you like me', 'do you trust me']],
+  ['ask_about_relationship', 12, ['think about', 'think of', 'relationship']],
+  ['ask_about_ownership', 14, ['who owns', 'belongs to', 'belong to', 'whose']],
+  ['ask_about_rumor', 12, ['did you hear', 'have you heard', 'rumor', 'rumour']],
+  ['offer_information', 14, ['i heard', 'i saw', 'share that', 'tell you', 'let me tell', 'share']],
+  ['ask_about_event', 15, ['what happened', 'news', 'anything new', 'did you see a theft']],
+  ['ask_about_person', 8, ['do you know', 'who are you', 'your name', 'tell me about']],
+  ['ask_about_place', 7, ['tell me about', 'what is this place']],
+  ['ask_about_occupation', 12, ['your job', 'your occupation', 'what do you do']],
+  ['ask_about_work', 15, ['any work', 'work going', 'looking for work']],
+  ['ask_for_help', 11, ['help me', 'can you help']],
+  ['offer_help', 13, ['i can help', 'can i help', 'let me help']],
+  ['ask_about_health', 12, ['how are you', 'are you well', 'feeling']],
+  ['ask_about_injury', 13, ['hurt', 'injured', 'wound']],
+  ['ask_about_weather', 12, ['weather', 'rain', 'wind']],
+  ['ask_about_food', 7, ['food', 'hungry', 'something to eat']],
+  ['ask_about_resources', 7, ['resources', 'supplies', 'materials']],
+  ['ask_about_item', 6, ['item', 'what is that']],
+  ['ask_about_emotion', 14, ['why are you angry', 'what is troubling you', 'what is wrong']],
+  ['ask_provenance', 18, ['who told you', 'who saw', 'where did you hear']],
+  ['ask_certainty', 18, ['are you sure', 'are you certain', 'did you see it yourself']],
+  ['ask_when', 18, ['when', 'how long ago']],
+  ['apologize', 10, ['sorry', 'apologize', 'apologise']],
+  ['thank', 10, ['thank you', 'thanks']],
+  ['compliment', 10, ['you are kind', 'you are helpful', 'good person']],
+  ['insult', 12, ['idiot', 'fool', 'stupid']],
+  ['threaten', 16, ['i will kill', 'i will hurt', 'you will regret']],
+  ['greet', 10, ['hello', 'hi', 'hey', 'greetings', 'good morning']],
+  ['goodbye', 10, ['bye', 'goodbye', 'farewell', 'see you later']],
+  ['agree', 10, ['i agree', 'sounds good']],
+  ['disagree', 10, ['i disagree', 'i do not agree']],
+  ['yes', 10, ['yes', 'yeah', 'sure']],
+  ['no', 10, ['no', 'nope']],
+] as const;
+
+export const WORD_ALIASES: Record<string, string> = { rumour: 'rumor', colour: 'color', apologise: 'apologize', smith: 'blacksmith', bred: 'bread', wheres: 'where is' };
+export const ITEM_WORDS = ['bread', 'flour', 'grain', 'wood', 'stone', 'water', 'ale', 'stew', 'herbs', 'iron', 'axe', 'sword', 'hammer', 'planks', 'food'] as const;
+/** Mentioning trade is weaker than explicitly requesting a transaction. */
+export const TRADE_REQUESTS = {
+  request_purchase: /^(?:please )?(?:buy|purchase)\b|\b(?:can i (?:buy|purchase)|i (?:want to (?:buy|purchase)|will (?:buy|purchase|take)))\b/,
+  offer_sale: /^(?:please )?sell\b|\b(?:can i sell|i (?:want to sell|will sell))\b/,
+};

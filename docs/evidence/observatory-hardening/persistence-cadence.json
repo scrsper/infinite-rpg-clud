@@ -1,0 +1,76 @@
+{
+  "classification": "A",
+  "cause": "Unsaved compaction batch cursor reset on reload; changed history retention and causal-centrality accumulation.",
+  "repairCommit": "187a035",
+  "saveSchema": 25,
+  "additiveField": "lastCompactionEventCount",
+  "before": {
+    "differences": 870975,
+    "valueDifferences": 870975,
+    "propertyOrderDifferences": 0,
+    "categories": {
+      "historicalSignificance": 1,
+      "events": 870974
+    },
+    "first": [
+      {
+        "path": "$.historicalSignificance.13.1",
+        "kind": "value",
+        "a": 184.88920000000115,
+        "b": 185.00920000000116
+      },
+      {
+        "path": "$.events.624.effects.78",
+        "kind": "value",
+        "a": "e_477779",
+        "b": "e_482056"
+      },
+      {
+        "path": "$.events.624.effects.79",
+        "kind": "value",
+        "a": "e_482056",
+        "b": "e_482057"
+      },
+      {
+        "path": "$.events.624.effects.80",
+        "kind": "value",
+        "a": "e_482057"
+      },
+      {
+        "path": "$.events.6083.effects.0",
+        "kind": "value",
+        "a": "e_56718"
+      },
+      {
+        "path": "$.events.6084.id",
+        "kind": "value",
+        "a": "e_56718",
+        "b": "e_56836"
+      },
+      {
+        "path": "$.events.6084.tick",
+        "kind": "value",
+        "a": 8917356,
+        "b": 8918994
+      },
+      {
+        "path": "$.events.6084.type",
+        "kind": "value",
+        "a": "perceived",
+        "b": "told"
+      }
+    ]
+  },
+  "regression": {
+    "test": "tests/observatory-root-causes.test.ts: preserves the event-compaction batch boundary across save/reload",
+    "before": "Reload alone retired event e_152 before the existing batch boundary.",
+    "after": "18 root-cause, persistence and continuation tests passed; typecheck passed."
+  },
+  "after": {
+    "valueDifferences": 0,
+    "propertyOrderDifferences": 4,
+    "orderClassification": "C",
+    "orderReview": "continuation-review.json"
+  },
+  "legacyLimit": "Older saves have no recoverable compaction boundary; their cold-start fallback is not retroactively exact."
+}

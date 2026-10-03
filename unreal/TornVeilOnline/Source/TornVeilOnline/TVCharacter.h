@@ -30,6 +30,8 @@ public:
     bool bCanonicalGuard=false;
     bool bGuardHeld=false,bFocusHeld=false,bTargetLocked=false;
     double LastManualLook=-100;
+    bool bConversationFraming=false; float ConversationDistance=1000.f;
+    FVector LastStepAt=FVector::ZeroVector; // presentation footsteps: ground covered since the last one
     float GuardRefresh=0;
     UPROPERTY() TMap<FString, TObjectPtr<UAnimationAsset>> ActivityAnimations;
     void RebasePresentation(const FVector& Delta);
@@ -119,6 +121,10 @@ public:
     /** Latest embodiment projection. Presentation-only; nothing here reaches the simulation. */
     FTVEmbodimentState Embodiment;
     bool bHasEmbodiment = false;
+    /** Presentation only (TV.Lineup): wear another character's resolved appearance, standing idle. */
+    void CopyPresentationFrom(const ATVCharacter& Source);
+    /** Where the head is drawn: the visible body's head when there is one (scaled, posed), else the driver's. */
+    FVector PresentedHeadLocation() const;
 private:
     int64 PlayedAttackEvents = 0, PlayedHitEvents = 0;
     int64 SkippedAttackEvents = 0, SkippedHitEvents = 0;
@@ -153,6 +159,7 @@ private:
     int32 PendingAttackEvents = 0, PendingHitEvents = 0;
     float PresentationAnimationAge = 99.f;
     bool bSprint = false, bProjected = false;
+    bool bWalk = false; // walk toggle: ordinary pace instead of the default run
     bool bInputModal=false;
 public:
     UFUNCTION(BlueprintCallable, Category = "Torn Veil|Input")
@@ -161,7 +168,7 @@ public:
     void Right(float Value);
 private:
     void Turn(float Value); void Look(float Value); void Zoom(float Value);
-    void SprintOn(); void SprintOff();
+    void SprintOn(); void SprintOff(); void WalkToggle();
     void Animate(float Speed);
     void AnimateCrouch(float Amount,float Dt);
     void ReleaseCrouch(); void LoseFocus(); void HeavyTrigger(float Value); void PracticePhysiology();

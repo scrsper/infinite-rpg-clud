@@ -397,6 +397,8 @@ void UTVBridgeSubsystem::SendDropIntent() {
 void UTVBridgeSubsystem::Interact() {
     if(HasModalScreen()||!IsLive()||FocusedActionId.IsEmpty())return;
     // Prompt, exact highlighted bounds and submitted ID share this one immutable selection.
+    // Someone who cannot talk now: say why at once, locally, instead of a request that fails.
+    if(FocusedKind==TEXT("person_unavailable")){LastResult=FocusedTitle+TEXT(": ")+FocusedReason+TEXT(".");ResultClock=0;return;}
     if(FocusedKind==TEXT("person"))SendIntent(TEXT("talk"),FocusedTargetId);
     else {if(FocusedKind==TEXT("container")&&FocusedActionId.StartsWith(TEXT("open:")))PendingOpenContainer=FocusedTargetId;
         auto M=MakeShared<FJsonObject>();M->SetStringField(TEXT("type"),TEXT("interact"));M->SetStringField(TEXT("interactionId"),FocusedActionId);Send(M);}
@@ -455,11 +457,15 @@ void UTVBridgeSubsystem::Receive(const FString& Message) {
         if(ReceiptStatus!=TEXT("received")) {
             if(const double* At=CommandSentAt.Find(Seq)) {const double Rtt=(FPlatformTime::Seconds()-*At)*1000;TVSample(AppliedRttSamples,Rtt);if(Seq==CombatCommandSequence)TVSample(CombatAppliedRttSamples,Rtt);double Arrival=0,Applied=0;if(M->TryGetNumberField(TEXT("receivedAtMs"),Arrival)&&M->TryGetNumberField(TEXT("appliedAtMs"),Applied)){TVSample(CommandApplicationSamples,Applied-Arrival);if(ClockUncertaintyMs<1e8){TVSample(CommandOutboundSamples,Arrival-(*At*1000+ClockOffsetMs));TVSample(CommandInboundSamples,ReceivedAtMs+ClockOffsetMs-Applied);}}UE_LOG(LogTemp,VeryVerbose,TEXT("TV_COMMAND seq=%d status=%s roundtrip_ms=%.3f"),Seq,*ReceiptStatus,Rtt);}
             CommandSentAt.Remove(Seq);
-            if(ReceiptStatus==TEXT("rejected")||ReceiptStatus==TEXT("cancelled")) {PendingMovement.RemoveAll([Seq](const auto& P){return P.Sequence==Seq;});
+            if(ReceiptStatus==TEXT("rejected")||ReceiptStatus==TEXT("cancelled")) {
+                // A movement sample that expired in a server hitch is already corrected by prediction;
+                // telling the player about it ("Input arrived too late") only flashes noise.
+                const bool bExpiredMove=M->GetStringField(TEXT("result"))==TEXT("expired")&&PendingMovement.ContainsByPredicate([Seq](const auto& P){return P.Sequence==Seq;});
+                PendingMovement.RemoveAll([Seq](const auto& P){return P.Sequence==Seq;});
                 if(BufferedCombat.IsSet()&&BufferedCombat->Sequence==Seq)BufferedCombat.Reset();if(Seq==PendingFeedbackSequence)bCrouchHeld=false;
                 if(Seq==CombatCommandSequence){if(auto* C=Bodies.FindRef(InteractionBody).Get())C->CombatPresentation->RejectAction(PredictedCombat.CommandId);PredictedCombat=FTVLiveCombat();}
-                LastResult=ResultText(M->GetStringField(TEXT("result")));ResultClock=0;}
-            else if(Seq==PendingFeedbackSequence){LastResult=TEXT("Confirmed");ResultClock=0;PendingFeedbackSequence=-1;}
+                if(!bExpiredMove){LastResult=ResultText(M->GetStringField(TEXT("result")));ResultClock=0;}}
+            else if(Seq==PendingFeedbackSequence){PendingFeedbackSequence=-1;} // success shows in the world; no "Confirmed" noise
         }
         return;
     }
@@ -524,6 +530,26 @@ void UTVBridgeSubsystem::Receive(const FString& Message) {
     ServerTick = M->GetNumberField(TEXT("tick")); SinceSnapshot = 0; LastSnapshotReceived=FPlatformTime::Seconds(); ++SnapshotCount; M->TryGetStringField(TEXT("playerId"), PlayerId);
     NearbyInteraction.Empty(); ConsumeInteraction.Empty(); DropInteraction.Empty(); NearbyPrompt.Empty(); ConsumePrompt.Empty(); DropPrompt.Empty(); TalkTargetBody.Empty();
     InventoryItemIds.Empty();InventoryItemLabels.Empty();ContainerItemIds.Empty();ContainerItemLabels.Empty();
+    CarriedRows.Empty();AbilityRows.Empty();
+    const TArray<TSharedPtr<FJsonValue>>* CarriedJson=nullptr;
+    if(M->TryGetArrayField(TEXT("carried"),CarriedJson))for(const auto& V:*CarriedJson){
+        const auto I=V->AsObject();if(!I)continue;FTVUIItemRow Row;if(!I->TryGetStringField(TEXT("id"),Row.Id))continue;
+        FString Name;I->TryGetStringField(TEXT("name"),Name);I->TryGetNumberField(TEXT("quantity"),Row.Quantity);
+        Row.Label=Row.Quantity>1?FString::Printf(TEXT("%s  x%.0f"),*Name,Row.Quantity):Name;
+        const TArray<TSharedPtr<FJsonValue>>* Lines=nullptr;if(I->TryGetArrayField(TEXT("description"),Lines))for(const auto& L:*Lines)Row.Description.Add(L->AsString());
+        const TArray<TSharedPtr<FJsonValue>>* Acts=nullptr;if(I->TryGetArrayField(TEXT("actions"),Acts))for(const auto& A:*Acts){FTVUIActionRow Action;if(ParseActionRow(A->AsObject(),Row.Id,Action))Row.Actions.Add(Action);}
+        CarriedRows.Add(Row);
+    }
+    WorkStatus.Empty();
+    const TSharedPtr<FJsonObject>* Work=nullptr;
+    if(M->TryGetObjectField(TEXT("work"),Work)&&Work&&Work->IsValid()){
+        FString Label,Stop;double Progress=0,Remaining=0;(*Work)->TryGetStringField(TEXT("label"),Label);(*Work)->TryGetStringField(TEXT("stop"),Stop);
+        (*Work)->TryGetNumberField(TEXT("progress"),Progress);(*Work)->TryGetNumberField(TEXT("remainingSeconds"),Remaining);
+        // Remaining is world time; say it as the world counts it, not as a promise of wall-clock time.
+        WorkStatus=FString::Printf(TEXT("%s — %.0f%%, about %.0f min of work left (%s)"),*Label,Progress*100,FMath::CeilToDouble(Remaining/60),*Stop);
+    }
+    const TArray<TSharedPtr<FJsonValue>>* AbilityJson=nullptr;
+    if(M->TryGetArrayField(TEXT("abilities"),AbilityJson))for(const auto& V:*AbilityJson){FTVUIActionRow Action;if(ParseActionRow(V->AsObject(),FString(),Action))AbilityRows.Add(Action);}
     const bool HadContainer=!OpenContainerId.IsEmpty();OpenContainerId.Empty();OpenContainerName.Empty();
     const TSharedPtr<FJsonObject>* Container;
     if(M->TryGetObjectField(TEXT("container"),Container)&&Container&&Container->IsValid()) {
@@ -541,7 +567,8 @@ void UTVBridgeSubsystem::Receive(const FString& Message) {
     }
     FocusTargets.Reset();const TArray<TSharedPtr<FJsonValue>>* Targets;
     if(M->TryGetArrayField(TEXT("interactionTargets"),Targets))for(const auto& V:*Targets){const auto T=V->AsObject();if(!T)continue;const auto P=T->GetObjectField(TEXT("pos"));
-        FocusTargets.Add({T->GetStringField(TEXT("targetId")),T->GetStringField(TEXT("actionId")),T->GetStringField(TEXT("kind")),T->GetStringField(TEXT("label")),FVector(P->GetNumberField(TEXT("x")),P->GetNumberField(TEXT("y")),P->GetNumberField(TEXT("z")))});}
+        FFocusTarget F{T->GetStringField(TEXT("targetId")),T->GetStringField(TEXT("actionId")),T->GetStringField(TEXT("kind")),T->GetStringField(TEXT("label")),FVector(P->GetNumberField(TEXT("x")),P->GetNumberField(TEXT("y")),P->GetNumberField(TEXT("z")))};
+        T->TryGetStringField(TEXT("title"),F.Title);T->TryGetStringField(TEXT("verb"),F.Verb);T->TryGetStringField(TEXT("reason"),F.Reason);FocusTargets.Add(F);}
     const TSharedPtr<FJsonObject>* Journal;
     if(M->TryGetObjectField(TEXT("journal"),Journal)&&Journal&&Journal->IsValid()) {
         // The person's own commitments, wounds and standing - never anyone else's private state.
@@ -579,6 +606,7 @@ void UTVBridgeSubsystem::Receive(const FString& Message) {
         bDialogueOpen = true;
         DialogueSpeaker = (*Dialogue)->GetStringField(TEXT("name"));
         DialogueOccupation = (*Dialogue)->GetStringField(TEXT("occupation"));
+        DialogueSpeakerBody.Empty(); (*Dialogue)->TryGetStringField(TEXT("speakerBodyId"), DialogueSpeakerBody);
         DialogueLines.Empty(); DialogueOptionIds.Empty(); DialogueOptionLabels.Empty();
         const TArray<TSharedPtr<FJsonValue>>* Lines;
         if ((*Dialogue)->TryGetArrayField(TEXT("lines"), Lines)) for (const auto& Line : *Lines) DialogueLines.Add(Line->AsString());
@@ -588,13 +616,13 @@ void UTVBridgeSubsystem::Receive(const FString& Message) {
             DialogueOptionIds.Add(Option->GetStringField(TEXT("id"))); DialogueOptionLabels.Add(Option->GetStringField(TEXT("label")));
         }
     } else {
-        bDialogueOpen = false; DialogueSpeaker.Empty(); DialogueOccupation.Empty(); DialogueLines.Empty(); DialogueOptionIds.Empty(); DialogueOptionLabels.Empty();
+        bDialogueOpen = false; DialogueSpeaker.Empty(); DialogueOccupation.Empty(); DialogueSpeakerBody.Empty(); DialogueLines.Empty(); DialogueOptionIds.Empty(); DialogueOptionLabels.Empty();
     }
-    MechanismLabels.Empty(); MechanismIntents.Empty();
+    MechanismLabels.Empty(); MechanismIntents.Empty(); MechanismOf.Empty();
     const TArray<TSharedPtr<FJsonValue>>* Mechanisms;
-    if(M->TryGetArrayField(TEXT("mechanisms"),Mechanisms)) for(const auto& V:*Mechanisms) {
-        const auto A=V->AsObject(); const TArray<TSharedPtr<FJsonValue>>* Actions;
-        if(A->TryGetArrayField(TEXT("actions"),Actions)) for(const auto& Action:*Actions) { const auto O=Action->AsObject(); MechanismLabels.Add(O->GetStringField(TEXT("label"))); MechanismIntents.Add(O->GetObjectField(TEXT("intent"))); }
+    if(M->TryGetArrayField(TEXT("mechanisms"),Mechanisms)) for(int32 Index=0;Index<Mechanisms->Num();++Index) {
+        const auto A=(*Mechanisms)[Index]->AsObject(); const TArray<TSharedPtr<FJsonValue>>* Actions;
+        if(A&&A->TryGetArrayField(TEXT("actions"),Actions)) for(const auto& Action:*Actions) { const auto O=Action->AsObject(); MechanismLabels.Add(O->GetStringField(TEXT("label"))); MechanismIntents.Add(O->GetObjectField(TEXT("intent"))); MechanismOf.Add(Index); }
     }
     KnowledgeSummary.Empty(); const TSharedPtr<FJsonObject>* Knowledge;
     if(M->TryGetObjectField(TEXT("knowledge"),Knowledge)) {
@@ -700,6 +728,12 @@ void UTVBridgeSubsystem::Receive(const FString& Message) {
     Status = FString::Printf(TEXT("LIVE  |  %d visible people  |  %d wildlife  |  t %.1fs%s"), FMath::Max(0, Bodies.Num() - 1),WildlifeBodies.Num(), ServerTick, bControls ? TEXT("") : TEXT("  |  observer connection"));
 }
 ATVCharacter* UTVBridgeSubsystem::Selected() const { const auto* C = Bodies.Find(SelectedBody); return C ? C->Get() : nullptr; }
+bool UTVBridgeSubsystem::DialoguePartnerPosition(FVector& Position) const {
+    if(!bDialogueOpen||DialogueSpeakerBody.IsEmpty())return false;
+    const AActor* Partner=Bodies.FindRef(DialogueSpeakerBody).Get();
+    if(!IsValid(Partner))return false;
+    Position=Partner->GetActorLocation();return true;
+}
 bool UTVBridgeSubsystem::SelectedTargetPosition(FVector& Position) const {
     AActor* Target=Bodies.FindRef(SelectedBody).Get();
     if(auto* Human=Cast<ATVCharacter>(Target);Human&&(Human->bIncapacitated||Human->bDead))return false;
@@ -777,6 +811,7 @@ FString UTVBridgeSubsystem::ResultText(const FString& Code) {
         {TEXT("insufficient_funds"),TEXT("You cannot afford it.")},{TEXT("unavailable_stock"),TEXT("None left.")},{TEXT("interaction_unavailable"),TEXT("You can't do that from here.")},
         {TEXT("not_carried"),TEXT("You are not carrying that.")},{TEXT("expired"),TEXT("Input arrived too late and was dropped.")},{TEXT("dead"),TEXT("You are dead.")},
         {TEXT("invalid_intent"),TEXT("You can't do that now.")},{TEXT("saved"),TEXT("Progress saved on the server.")},{TEXT("forbidden"),TEXT("Not permitted.")},
+        {TEXT("talk_asleep"),TEXT("They are asleep.")},{TEXT("talk_fleeing"),TEXT("They are fleeing from danger.")},{TEXT("talk_refuses"),TEXT("They will not speak with you.")},{TEXT("talk_too_far"),TEXT("Move closer.")},
         {TEXT("use_command_protocol"),TEXT("Client out of date.")},{TEXT("weapon_unavailable"),TEXT("You no longer hold that weapon.")},{TEXT("standing_blocked"),TEXT("No room to stand.")},
     };
     const FString* T=Text.Find(Code); return T?*T:Code.Replace(TEXT("_"),TEXT(" "));

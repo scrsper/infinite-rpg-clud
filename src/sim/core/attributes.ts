@@ -65,6 +65,8 @@ export function woundSeverity(body: { health: number; maxHealth: number; dead: b
 /** The threshold at which an injury is a real, behaviour-changing wound rather than a bruise —
  * roughly "below half health". Read by mind/agent.ts's think() and social/absence.ts. */
 export const SERIOUS_WOUND = 0.45;
+/** Existing tend-action threshold, shared with its completion test. */
+export const CARE_WOUND_THRESHOLD = 0.08;
 
 export function getPhysicalCapability(p: Person, world: World, ctx: { body?: Body; action?: ToolAction; tool?: Item | null; skill?: number } = {}): PhysicalCapability {
   const attrs: Attributes = p.attributes;

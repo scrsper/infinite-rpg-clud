@@ -1,6 +1,7 @@
 import { provokeAnimal, menacingAnimals } from '../ecology/defense';
 import { maintainProtectionRequests } from '../social/protection';
 import { attemptHush, knowsVeil, meditateOnVeil, MEDITATION_SECONDS, veilStrain, HUSH_RANGE_M } from '../physical/veil';
+import { butcherWork } from '../physical/hand';
 import { naturalDeath } from '../ecology/animals';
 import { knowledgeItems } from './knowledgeView';
 import { combatActionFacts } from '../physical/combatFacts';
@@ -37,7 +38,7 @@ import { maintainConflicts, beginConflict, recordConflictBlow, recordDowning, co
 import { maintainCustody, subdue, takeIntoCustody, beginSurrender, isSubdued } from '../social/custody';
 import { SAW_RATIO, stepMetabolism, stepSpoilage, fieldFor, firstPlot, plantPlot, farmSeedGrain, harvestPlot, mill, bake, saw, findAccessibleFood, eatFood, buyFoodPortion, nearestWaterSource, drinkAt, villageStock, restockTavern, gatherHerbs, SEED_PER_PLOT } from '../world/metabolism';
 import { stepPhysiology, activityLevelFor, heatBand, hungerBand, thirstBand, sleepBand, comfortBand, severityAtLeast, syncNeeds } from '../core/physiology';
-import { isCommittable, EMERGENCY_GOAL_TYPES, interruptionSeverityMet, startCommitment, suspendCommitment, resumeCommitment, finishCommitment, commitmentValidity } from './commitment';
+import { attendingTo, isCommittable, DUTY_ACTIVITIES, EMERGENCY_GOAL_TYPES, interruptionSeverityMet, startCommitment, suspendCommitment, resumeCommitment, finishCommitment, commitmentValidity } from './commitment';
 import { getPhysicalCapability, capabilityFor, movementMultiplier } from '../core/attributes';
 import { skillOf, tradeBatchSeconds } from '../core/skills';
 import { wearTool } from '../core/tools';
@@ -54,7 +55,7 @@ import { stepConstruction, activeBuildProjects, performBuildLabor, MAX_BUILDERS 
 import { stepFire, igniteFire, feedFire, fireIntensityAt, fireAt } from '../world/fire';
 import { willingnessFor, unitPriceFor, tradeOffersFrom, refusalsFrom, purchaseUnits, type TradeOffer, type Refusal, type PurchaseResult } from '../world/commerce';
 import { remember } from './memory';
-import { learn, eventClaim, describeClaim, isCrime, crimeSeverity, locationKnowledge, learnPlace, knownFoodPlace, noteFoodShortage, expectsAffordableFood, foodSearchPlaces, MAX_TESTIMONY_HOPS } from './knowledge';
+import { learn, eventClaim, describeClaim, isCrime, crimeSeverity, locationKnowledge, locationNotFound, learnPlace, knownFoodPlace, noteFoodShortage, expectsAffordableFood, foodSearchPlaces, MAX_TESTIMONY_HOPS } from './knowledge';
 import { realizeClaim, realizeTopic } from './realize';
 import { currentScheduleEntry } from './schedule';
 import { SECONDS_PER_DAY, SECONDS_PER_HOUR } from '../core/time';
@@ -66,7 +67,7 @@ import { payRecoveryReward, recentlyFailedRequests } from '../core/requests';
 import { haulOffersFrom, activeHaulFor, acceptHaulOffer, progressHaul, abandonHaul, buyMealFrom, eatAtHand, drinkHere, type HaulOffer, type HaulProgress } from '../logistics/participation';
 // v0.9 Social Causality Vertical Slice — the four generic primitives this milestone adds.
 import { noteEventForSituations, maintainSituations } from '../social/situation';
-import { refreshReport, reportFor, shouldSeekAuthority, reportUrgencyFactor, noteReportDelivered, noteReportFailed, pruneReports } from './reporting';
+import { refreshReport, reportFor, shouldSeekAuthority, reportUrgencyFactor, noteReportDelivered, noteReportFailed, pruneReports, canApproachReportListener } from './reporting';
 import { appraiseClaim } from '../social/appraisal';
 import { formConcerns, maintainConcerns, activeConcerns, concernActionable, noteConcernActedOn } from './concern';
 import { selectTopic, type Topic } from './conversation';
@@ -161,6 +162,8 @@ interface ExecutionCheckpoint {
   perceptionAccum: number; strategicAccum: number; compactAccum: number; socialAccum: number; inferenceAccum: number; demographicDay: number;
   vacantPosts: Array<Omit<TradePost, 'place' | 'staff' | 'ableStaff' | 'unfit'> & { placeId: string; staffIds: string[]; ableStaffIds: string[]; unfitIds: { personId: string; reason: TradePost['unfit'][number]['reason'] }[] }>;
   awareOfShortage: string[]; lastTopic: [string, Topic][]; pendingSpeech: { personId: string; text: string; at: number }[];
+  /** Distinguish live canonical references from deliberately retained, detached evidence. */
+  lastTopicLinks?: [string, { k?: string; supporting: (string | null)[]; concern?: string; situation?: string }][];
 }
 
 export class Simulation {
@@ -225,7 +228,25 @@ export class Simulation {
           standIns: s.standIns.map(stint => world.workStints.find(x => x.id === stint.id) ?? stint) }];
       });
       this.awareOfShortage = new Set(checkpoint.awareOfShortage);
-      this.lastTopic = new Map(checkpoint.lastTopic);
+      const links = checkpoint.lastTopicLinks && new Map(checkpoint.lastTopicLinks);
+      this.lastTopic = new Map(checkpoint.lastTopic.map(([id, topic]) => {
+        const person = world.person(id);
+        // Old execution snapshots have no alias manifest. Reconnect only equal records;
+        // new snapshots explicitly preserve both live links and detached older evidence.
+        const equal = (a: unknown, b: unknown) => !!a && !!b && JSON.stringify(a) === JSON.stringify(b);
+        const concern = person?.mind.concerns?.find(c => c.id === topic.concern?.id);
+        const situation = world.situations.find(s => s.id === topic.situation?.id);
+        const link = links?.get(id) ?? (!links ? {
+          k: equal(person?.knowledge[topic.k.key], topic.k) ? topic.k.key : undefined,
+          supporting: topic.supporting.map(k => equal(person?.knowledge[k.key], k) ? k.key : null),
+          concern: equal(concern, topic.concern) ? concern?.id : undefined,
+          situation: equal(situation, topic.situation) ? situation?.id : undefined,
+        } : undefined);
+        return [id, { ...topic, k: link?.k ? person?.knowledge[link.k] ?? topic.k : topic.k,
+          supporting: topic.supporting.map((k, i) => link?.supporting[i] ? person?.knowledge[link.supporting[i]!] ?? k : k),
+          concern: link?.concern ? concern ?? topic.concern : topic.concern,
+          situation: link?.situation ? situation ?? topic.situation : topic.situation }];
+      }));
       this.pendingSpeech = checkpoint.pendingSpeech.flatMap(s => { const p = world.person(s.personId); return p ? [{ p, text: s.text, at: s.at }] : []; });
     }
     const cadence=(world.restoredExecution as ExecutionCheckpoint|null)?.interactionCadence;
@@ -235,6 +256,13 @@ export class Simulation {
       perceptionAccum: this.perceptionAccum, strategicAccum: this.strategicAccum, compactAccum: this.compactAccum, socialAccum: this.socialAccum, inferenceAccum: this.inferenceAccum, demographicDay: this.demographicDay,
       vacantPosts: this.vacantPosts.map(({ place, staff, ableStaff, unfit, ...post }) => ({ ...post, placeId: place.id, staffIds: staff.map(p => p.id), ableStaffIds: ableStaff.map(p => p.id), unfitIds: unfit.map(u => ({ personId: u.person.id, reason: u.reason })) })),
       awareOfShortage: [...this.awareOfShortage], lastTopic: [...this.lastTopic], pendingSpeech: this.pendingSpeech.map(s => ({ personId: s.p.id, text: s.text, at: s.at })),
+      lastTopicLinks: [...this.lastTopic].map(([id, topic]) => {
+        const person = world.person(id);
+        return [id, { k: person?.knowledge[topic.k.key] === topic.k ? topic.k.key : undefined,
+          supporting: topic.supporting.map(k => person?.knowledge[k.key] === k ? k.key : null),
+          concern: topic.concern && person?.mind.concerns?.includes(topic.concern) ? topic.concern.id : undefined,
+          situation: topic.situation && world.situations.includes(topic.situation) ? topic.situation.id : undefined }];
+      }),
     });
     // v0.9: every canonical event flows through ongoing-matter bookkeeping exactly once (see
     // World.eventObserver). The re-entrancy guard exists because `noteEventForSituations` itself
@@ -533,7 +561,10 @@ export class Simulation {
       // Extraction is a commitment to one finite source. Reusing just "chop:" kept a
       // depleted tree's finished plan even after the chooser found a different live tree.
       const source = type === 'chop' || type === 'gather' ? o.data?.nodeId : undefined;
-      const key = `${type}:${source ?? o.targetEntity ?? o.targetPlace ?? ''}`;
+      // An investigation/report/accusation acts on one piece of evidence. A different case
+      // at the same place or about the same person must not resurrect the old finished plan.
+      const matter = type === 'investigate' || type === 'report' ? o.data?.key : type === 'confront' ? o.data?.crime : undefined;
+      const key = `${type}:${source ?? o.targetEntity ?? o.targetPlace ?? ''}${matter ? ':' + matter : ''}`;
       const boost = motivationBoost(p, type, o.targetEntity ?? o.targetPlace, o.data?.beneficiary as EntityId | undefined, o.data?.resource as ItemType | undefined, now);
       const data = boost.pursuitId && !o.data?.pursuitId ? { ...(o.data ?? {}), pursuitId: boost.pursuitId } : o.data;
       cands.push({ type, utility: boost.bonus ? clamp(utility + boost.bonus) : utility, reasons: boost.bonus ? [...reasons, ...boost.reasons] : reasons, createdAt: now, key, ...o, data });
@@ -603,6 +634,15 @@ export class Simulation {
       const attackingMe = ob.pose === 'attack' && ob.attackTarget === p.id && dist2(ob.pos, pos) < 3;
       const knownCriminal = (p.occupation === 'guard' || p.occupation === 'captain') && !other.hostile && pc.distance < 17 && this.knownCrimesBy(p, other.id).length > 0;
       const freshAggression = attackingMe || (pc.how === 'saw' && ob.pose === 'attack');
+      const defeated = lastConflictBetween(w, p.id, other.id)?.downed;
+      if (!freshAggression && defeated?.who === other.id && defeated.by === p.id) continue;
+      // Wariness alone need not demand fight/flight. Previously fear in (.25, .35]
+      // suppressed water and labor, but raised neither response below: turning toward
+      // an acquaintance erased those goals and made shelter win, every other think.
+      if (!attackingMe && !hostileFaction && !knownCriminal && (r?.fear ?? 0) <= 0.35) {
+        if (fear > 0.25 && (!avoid || pc.distance < avoid.d)) avoid = { id: other.id, d: pc.distance };
+        continue;
+      }
       // v0.2.3 re-engagement gate (Priority 7): a conflict that already ended does NOT restart
       // just because grudge/fear is still high and the other party wandered back into view.
       // Only fresh aggression, or a fresh crime learned since the conflict wound down, re-opens it.
@@ -757,8 +797,12 @@ export class Simulation {
     // physical half of the same question (world/locality.ts).
     const authorities = crimes.length && !isGuard && !p.hostile
       ? w.livingPersons().filter(g => (g.occupation === 'guard' || g.occupation === 'captain')
-        && near(pos, w.place(g.workId ?? '')?.inside ?? w.primaryBody(g.id)?.pos))
+        && near(pos, this.knownGuardPosition(p, g)))
       : EMPTY_PERSONS;
+    // A nearby observed sleeping/downed listener (or an obstructed conversation) is
+    // not made available by changing which incident we want to report. Distant,
+    // unseen guards remain approachable from the person's own location evidence.
+    const approachableAuthorities = authorities.filter(g => canApproachReportListener(w, p, g));
     for (const k of crimes) {
       const sev = crimeSeverity(k.claim.type); const victimClose = k.claim.target ? isClose(p, k.claim.target) : false; const victimIsMe = k.claim.target === p.id;
       const actorIsMe = k.claim.actor === p.id; if (actorIsMe) continue;
@@ -773,8 +817,8 @@ export class Simulation {
         // is over as far as THIS person has heard, whether there is anyone to tell, and how many
         // trips have already come to nothing — and it is what decides whether to set out again.
         const progress = refreshReport(w, p, k, authorities);
-        const untold = authorities.filter(g => !k.sharedWith.includes(g.id));
-        const eligible = p.occupation !== 'child' || victimClose;
+        const untold = approachableAuthorities.filter(g => !k.sharedWith.includes(g.id));
+        const eligible = k.hops < MAX_TESTIMONY_HOPS && (p.occupation !== 'child' || victimClose);
         if (eligible && untold.length && shouldSeekAuthority(w, progress)) {
           // Someone already on their way to tell a particular guard keeps going to that guard
           // while they are still untold. Re-picking the nearest every tick flipped the target as
@@ -782,13 +826,14 @@ export class Simulation {
           // land. At seed 918271 an eyewitness to a theft switched guards twice in ten minutes,
           // went into back-off and went home without telling anyone.
           const heading = m.goal?.type === 'report' && m.goal.data?.key === k.key
+            && m.plan.some(a => a.status === 'pending' || a.status === 'active')
             ? untold.find(u => u.id === m.goal!.targetEntity) : undefined;
           const g = heading ?? this.nearestKnownGuard(p, pos, untold);
           if (g) {
             const base = clamp(0.45 + sev * 0.5 + p.traits.honesty * 0.2 + (victimClose ? 0.15 : 0) + (victimIsMe ? 0.1 : 0) - (threat ? 0.15 : 0));
             const reasons = [`I know ${describeClaim(w, k)} (${k.source.type})`, `the watch should hear of it`, 'my sense of honesty'];
             if (progress.attempts > 0) reasons.push(`I have tried ${progress.attempts} time${progress.attempts === 1 ? '' : 's'} already`);
-            G('report', base * reportUrgencyFactor(progress) * bodyRoom, reasons, { targetEntity: g.id, data: { key: k.key } });
+            G('report', base * reportUrgencyFactor(progress) * bodyRoom, reasons, { targetEntity: g.id, targetPos: this.knownGuardPosition(p, g) ?? undefined, data: { key: k.key } });
           }
         }
       }
@@ -978,11 +1023,12 @@ export class Simulation {
       if (!evidence || w.now - (evidence.lastConfirmedAt ?? evidence.learnedAt) >= 3600) continue;
       if (field && (field.ownerId === p.id || p.workId === field.placeId || sched?.placeId === field.placeId)) {
         const rainingNow = w.weather.kind === 'rain' || w.weather.kind === 'storm';
+        const seedShortage = p.knowledge[`short:${field.placeId}:grain`];
         // Ripe crops perish in days; the next crop takes weeks. Harvest remains real labor
         // against finite plots, even when today's bread counter and granary look full.
         if (evidence.claim.ripe) G('harvest', clamp(0.7 + (rainingNow ? -0.1 : 0)) * routineWeight(p), [`wheat is ripe in ${perceivedName(w, p, field.placeId)}`], { targetPlace: field.placeId, causeEvent: evidence.source.viaEvent, data: { fieldId: field.id, resource: 'grain' } });
         // v0.3 Priority 13: sowing needs seed grain at the farm — don't adopt `plant` without it.
-        else if (evidence.claim.fallow && !rainingNow) G('plant', 0.58 * routineWeight(p), [`there is fallow ground in ${perceivedName(w, p, field.placeId)}`], { targetPlace: field.placeId, data: { fieldId: field.id, resource: 'grain' } });
+        else if (evidence.claim.fallow && !rainingNow && (!seedShortage || seedShortage.handled === true)) G('plant', 0.58 * routineWeight(p), [`there is fallow ground in ${perceivedName(w, p, field.placeId)}`], { targetPlace: field.placeId, data: { fieldId: field.id, resource: 'grain' } });
       }
     }
     // v0.3 Living World I: physical logistics, extraction, and construction labour. Low-drama
@@ -1318,6 +1364,25 @@ export class Simulation {
       }
       if (byKey.size !== cands.length) { cands.length = 0; cands.push(...byKey.values()); }
     }
+    // A failed physical route is evidence for the next deliberation. Rechecking the
+    // planner can discover an opened route; it must not re-adopt and emit another failed
+    // action while the same route is still impossible. This is scoped to the actor's
+    // recorded attempt and origin, not omniscient knowledge of remote stock or people.
+    const blockedGoals: string[] = [];
+    for (let i = cands.length - 1; i >= 0; i--) {
+      const candidate = cands[i], k = p.knowledge[`route:${candidate.key}`];
+      if (!k?.claim.blocked || !k.claim.origin || !k.claim.destination) continue;
+      const origin = k.claim.origin as Vec3, destination = k.claim.destination as Vec3;
+      if (dist2(body.pos, origin) > 1 || Math.abs(body.pos.y - origin.y) > 1) continue;
+      const observedTarget = candidate.targetEntity && m.percepts.find(pc => pc.entityId === candidate.targetEntity)?.pos;
+      if (observedTarget && (dist2(observedTarget, destination) > 2.5 || Math.abs(observedTarget.y - destination.y) > 1)) continue;
+      if (w.nav.findPath(body.pos, destination)) continue;
+      blockedGoals.push(`${candidate.key} (${k.claim.reason}; ${k.source.viaEvent})`);
+      // Resting does not require reaching the usual public seat. If that route failed,
+      // the same idle action can rest where the body already is, without relocation.
+      if (candidate.type === 'idle') { candidate.data = { ...candidate.data, stationary: true }; continue; }
+      cands.splice(i, 1);
+    }
     // ---- choose with hysteresis + goal commitment (v0.5 §III)
     cands.sort((a, b) => b.utility - a.utility);
     const best0 = cands[0]; const cur = m.goal;
@@ -1353,6 +1418,13 @@ export class Simulation {
       const withinGrace = now - cur.createdAt < NEED_GOAL_GRACE_SECONDS;
       protect(cands.find(c => c.key === cur.key), cur.type === 'sleep' ? 'emergency_only' : 'committed', withinGrace);
     }
+    // Finish the finite escape before resuming an ordinary errand. Its trigger may
+    // leave the view cone as the actor turns away. A severe bodily need or another
+    // emergency can still compete; resuming cargo is not fresh evidence of safety.
+    if (cur?.type === 'flee' && curInProgress && !EMERGENCY_GOAL_TYPES.has(best0.type)
+      && !interruptionSeverityMet('committed', best0.type, needBands) && heat !== 'dangerous') {
+      best = cands.find(c => c.key === cur.key) ?? cur;
+    }
     let chosen = best; let switched = false; let note = '';
     if (cur && cur.key !== best.key) {
       const curCand = cands.find(c => c.key === cur.key);
@@ -1366,7 +1438,15 @@ export class Simulation {
       // disengage step mid-plan, exactly the kind of "goal completes on paper but never really
       // finishes" defect this stabilization pass exists to close.
       const inFlightPipeline = cur.type === 'rob' || cur.type === 'attack' || cur.type === 'confront';
-      const curU = curCand?.utility ?? (inFlightPipeline ? 0.9 : 0);
+      // New proposals depend on current perception, location and evidence freshness.
+      // Leaving a food source's bounds, losing sight of a field, or turning away from
+      // danger does not invalidate the finite trip already undertaken on that evidence.
+      // Preserve its last assessment when no fresh candidate reassesses it. Otherwise
+      // a weaker routine wins against an artificial zero, reverses the actor, and
+      // regenerates the stronger proposal at the same boundary every think tick.
+      // Actions still enforce prerequisites and finish/fail normally. Fresh candidate
+      // utility, stronger needs, and immediate danger still compete below.
+      const curU = curCand?.utility ?? (curInProgress ? cur.utility : inFlightPipeline ? 0.9 : 0);
       // v0.5 §III: a 'committed' goal (haul/build) whose deliverable is still open must NOT lose
       // hysteresis protection just because THIS particular leg's plan finished (goto+load+goto+
       // unload is one leg of a possibly-many-trip haul) — that reset-to-unprotected-at-every-
@@ -1381,17 +1461,40 @@ export class Simulation {
       // docs/V0_5_HUMAN_PHYSIOLOGY_AUTONOMOUS_ECONOMY.md).
       const committedNotDone = !!m.commitment && m.commitment.status === 'active' && cur.key === m.commitment.goalKey;
       const done = (m.plan.length === 0 || m.plan.every(a => a.status === 'done' || a.status === 'failed')) && !committedNotDone;
-      if (!done && best.utility < curU + GOAL_HYSTERESIS && !(best.type === 'flee' || best.type === 'attack' || best.type === 'confront' || best.type === 'rob')) { chosen = { ...cur, utility: curU }; note = `kept ${cur.type} (hysteresis)`; }
+      // Seeing a different feared person is not by itself a reason to throw away the
+      // same finite escape. New evidence that the refuge is unsafe does justify replanning.
+      const escapeDestination = cur.type === 'flee' ? m.plan.find(a => a.type === 'goto' && a.data?.flee)?.pos : undefined;
+      const newThreat = best.type === 'flee' ? m.percepts.find(pc => pc.entityId === best.targetEntity) : undefined;
+      const refugeThreatened = !!escapeDestination && !!newThreat && dist2(escapeDestination, newThreat.pos) < 8;
+      const challenger = m.percepts.find(pc => pc.entityId === best.targetEntity && pc.how === 'saw');
+      const challengerBody = challenger && w.body(challenger.bodyId);
+      const directlyAttacked = !!challenger && challenger.distance < 3 && challengerBody?.pose === 'attack' && challengerBody.attackTarget === p.id;
+      // Critical physiology is also an emergency. Proximity fear still competes
+      // by utility, but cannot categorically cancel its invested attempt. An
+      // observed immediate attack remains fresh grounds to interrupt it.
+      const criticalAttempt = cur.type === 'drink_water' && severityAtLeast(needBands.thirst, 'critical')
+        || cur.type === 'eat' && severityAtLeast(needBands.hunger, 'critical')
+        || cur.type === 'sleep' && severityAtLeast(needBands.sleep, 'critical');
+      // A distant feared face is a scored concern, not an unconditional interruption.
+      // Likewise two equally urgent attack targets cannot reset each other's approach
+      // every think tick. Fresh immediate danger still overrides commitment.
+      const emergency = (best.type === 'attack' || best.type === 'confront' || best.type === 'rob') && (cur.type !== best.type || directlyAttacked)
+        || best.type === 'flee' && (cur.type === 'flee' ? refugeThreatened : !!newThreat && newThreat.distance < 8 && (!criticalAttempt || directlyAttacked));
+      if (!done && best.utility < curU + GOAL_HYSTERESIS && !emergency) { chosen = { ...cur, utility: curU }; note = `kept ${cur.type} (hysteresis)`; }
       else { switched = true; note = best === best0 ? `switched from ${cur.type} to ${best.type}` : `resumed ${best.type} (committed)`; }
     } else if (!cur) { switched = true; note = `adopted ${best.type}`; }
-    else if (cur.type === 'report' && cur.data?.key !== best.data?.key) {
-      // The same guard, a different crime. `Goal.key` is type + target, so without this the old
-      // goal was kept and its finished plan rebuilt. The crime already told was told again every
-      // few seconds, for hours, and the new one never reached the watch. On main and PR #49 alike
-      // this pinned some residents at a guard's side, re-telling one crime over a thousand times.
-      switched = true; note = `now reporting ${best.data?.key}`;
+    else {
+      // A terminal plan has no invested journey left to protect. A same-key
+      // candidate can carry newer location/resource evidence; rebuilding the old
+      // goal instead kept sending failed reports to an address already disproved.
+      chosen = curInProgress ? cur : { ...best, createdAt: cur.createdAt };
+      if (!curInProgress && m.plan.some(a => a.status === 'failed')) {
+        chosen = best; switched = true;
+      }
+      if (!curInProgress && cur.type === 'idle' && best.data?.stationary) chosen = { ...cur, data: { ...cur.data, stationary: true } };
+      note = switched ? `reconsidered failed ${cur.type}` : best === best0 ? `continuing ${cur.type}` : `continuing ${cur.type} (committed)`;
     }
-    else { chosen = cur; note = best === best0 ? `continuing ${cur.type}` : `continuing ${cur.type} (committed)`; }
+    if (blockedGoals.length) note += `; blocked routes: ${blockedGoals.join(', ')}`;
     m.decision = { tick: now, candidates: cands.slice(0, 8).map(c => ({ type: c.type, key: c.key, utility: c.utility, reasons: c.reasons.filter(Boolean) })), chosen: chosen.key, switched, note };
     if (switched) {
       // v0.5 §III: commitment transitions, driven by what we're actually leaving/adopting —
@@ -1418,10 +1521,12 @@ export class Simulation {
       }
       this.setGoal(p, chosen, this.plan(p, body, chosen), note);
     }
-    else if (m.plan.length === 0 || m.plan.every(a => a.status === 'done' || a.status === 'failed')) { m.plan = this.plan(p, body, chosen); }
+    else if (m.plan.length === 0 || m.plan.every(a => a.status === 'done' || a.status === 'failed')) { m.goal = chosen; m.plan = this.plan(p, body, chosen); }
   }
   private setGoal(p: Person, g: Goal, plan: Action[], note: string): void {
-    const w = this.world; const prev = p.mind.goal; p.mind.goal = g; p.mind.plan = plan;
+    const w = this.world; const prev = p.mind.goal;
+    const failedAction = p.mind.plan.some(a => a.status === 'failed');
+    p.mind.goal = g; p.mind.plan = plan;
     // v0.10.1 §XII: a report that is being ABANDONED is an attempt that did not land, and has to
     // be recorded as one. `tell` records the case where they arrived and the guard had moved on;
     // this records every other way the errand ends — a failed path, an interruption, something
@@ -1430,7 +1535,8 @@ export class Simulation {
     if (prev && prev.type === 'report' && prev.key !== g.key) {
       const key = prev.data?.key as string | undefined;
       const record = key ? reportFor(p, key) : undefined;
-      if (key && record && record.status !== 'delivered' && record.status !== 'moot') {
+      if (key && record && record.status !== 'delivered' && record.status !== 'moot'
+        && !(record.lastAttemptAt >= prev.createdAt && failedAction)) {
         noteReportFailed(w, p, key, prev.targetEntity, 'set out and did not get there');
       }
     }
@@ -1459,7 +1565,7 @@ export class Simulation {
       // or for noise?" answerable from the event log alone — the difference between a person
       // changing their mind and a person flickering.
       data: { from: prev?.type, fromUtility: prev?.utility, to: g.type, utility: g.utility, reasons: g.reasons, key: g.key, pursuitId: g.data?.pursuitId, beliefInputs: g.data?.beliefInputs }, summary: `${p.name}: goal ${prev ? prev.type + ' → ' : ''}${g.type}${target} (u=${g.utility.toFixed(2)})` });
-    for (const action of plan) if (action.type === 'mechanism_task') action.data = { ...action.data, intentionEvent: adopted.id };
+    for (const action of plan) if (action.type === 'mechanism_task' || action.type === 'give' || action.type === 'pickup' || action.type === 'tell') action.data = { ...action.data, intentionEvent: adopted.id };
     // v0.2.3: choosing to flee an opponent we have a live conflict with IS breaking off that
     // conflict (Constitution §11 disengagement) — mark it so `maintainConflicts` settles it.
     if (g.type === 'flee' && g.targetEntity) {
@@ -1503,6 +1609,10 @@ export class Simulation {
    */
   private reengagementBlocked(p: Person, otherId: EntityId): boolean {
     const c = lastConflictBetween(this.world, p.id, otherId);
+    // The participant's recorded victory survives the temporary downed pose. The
+    // action executor already respects it; selecting attack again must respect it too.
+    // Fresh visible aggression bypasses this gate at the caller as before.
+    if (c?.downed?.who === otherId && c.downed.by === p.id) return true;
     if (!c || c.status === 'active') return false;
     const since = c.resolvedAt ?? c.lastMeaningfulInteraction;
     const newCrime = this.knownCrimesBy(p, otherId).some(k => k.learnedAt > since);
@@ -1520,9 +1630,19 @@ export class Simulation {
    * (`world/locality.ts`).
    */
   private nearestKnownGuard(p: Person, pos: Vec3, guards: Person[]): Person | null {
-    const w = this.world; let best: Person | null = null; let bd = Infinity;
-    for (const g of guards) { if (!near(pos, w.positionOf(g.id))) continue; const loc = p.knowledge[`loc:${g.id}`]?.claim.pos ?? w.place(g.workId)?.inside ?? w.primaryBody(g.id)?.pos; if (!loc) continue; const d = dist2(pos, loc); if (d < bd) { bd = d; best = g; } }
+    let best: Person | null = null; let bd = Infinity;
+    for (const g of guards) { const loc = this.knownGuardPosition(p, g); if (!loc || !near(pos, loc)) continue; const d = dist2(pos, loc); if (d < bd) { bd = d; best = g; } }
     return best;
+  }
+  private knownGuardPosition(p: Person, guard: Person): Vec3 | null {
+    const seen = p.mind.percepts.find(pc => pc.entityId === guard.id)?.pos ?? p.knowledge[`loc:${guard.id}`]?.claim.pos;
+    if (seen) return seen;
+    const post = knownPlaceForPerson(this.world, p, 'guardhouse');
+    // The existing public-post fallback is scoped to that post's staff. Knowing a local
+    // guardhouse does not locate every guard in a larger, multi-settlement world.
+    if (post?.id !== guard.workId) return null;
+    const searched = p.knowledge[`loc:${guard.id}`]?.claim.searched as Vec3[] | undefined;
+    return searched?.some(q => Math.hypot(q.x - post.inside.x, q.y - post.inside.y, q.z - post.inside.z) < 3.5) ? null : post.inside;
   }
   placeIdOfType(type: import('../core/types').PlaceType, p: Person): string | undefined { return knownPlaceForPerson(this.world, p, type)?.id; }
   tavernId(p: Person): string { return knownPlaceForPerson(this.world, p, 'tavern')?.id ?? p.homeId!; }
@@ -1532,7 +1652,9 @@ export class Simulation {
 
   // ------------------------------------------------------------------ planning
   private plan(p: Person, body: Body, g: Goal): Action[] {
-    const w = this.world; const A = (a: Partial<Action> & { type: Action['type'] }): Action => ({ status: 'pending', ...a });
+    // A positional destination is a snapshot. Tracking a moving entity is explicitly
+    // represented by targetEntity; a shared Body.pos reference cannot survive JSON saves.
+    const w = this.world; const A = (a: Partial<Action> & { type: Action['type'] }): Action => ({ status: 'pending', ...a, ...(a.pos ? { pos: { ...a.pos } } : {}) });
     const place = w.place(g.targetPlace);
     const anchorIn = (pl: Place | undefined, kinds: Anchor['kind'][], ownedOnly = false): Vec3 | null => {
       if (!pl) return null;
@@ -1545,7 +1667,9 @@ export class Simulation {
       case 'compose': return inventionPlan(w, p, g);
       case 'study_record': case 'record_method': return recordPlan(w, g);
       case 'share_family': case 'teach_method': return [A({ type: 'goto', targetEntity: g.targetEntity }), A({ type: 'tell', targetEntity: g.targetEntity, data: { key: g.data?.key } })];
-      case 'sleep': { const home = w.place(p.homeId); const bed = anchorIn(home, ['bed'], true) ?? anchorIn(home, ['bed']) ?? home?.inside ?? body.pos; return [A({ type: 'goto', pos: bed, placeId: home?.id }), A({ type: 'manage_household' }), A({ type: 'sleep', pos: bed, duration: 3 * SECONDS_PER_HOUR })]; }
+      case 'sleep': { const home = w.place(p.homeId); const bed = anchorIn(home, ['bed'], true) ?? anchorIn(home, ['bed']) ?? home?.inside ?? body.pos; // A sleep lain down for outside one's own sleeping hours is a nap (see the sleep action).
+        const nap = !!p.schedule.length && currentScheduleEntry(p, w.clock.hourF)?.activity !== 'sleep';
+        return [A({ type: 'goto', pos: bed, placeId: home?.id }), A({ type: 'manage_household' }), A({ type: 'sleep', pos: bed, duration: 3 * SECONDS_PER_HOUR, ...(nap ? { data: { nap: true } } : {}) })]; }
       case 'provision_home': {
         const home = w.place(p.homeId);
         if (!home || !place) return [];
@@ -1581,7 +1705,7 @@ export class Simulation {
         return [A({ type: 'goto', pos: spot, placeId: pl?.id }), A({ type: 'work', pos: spot, duration: 40 * 60 + w.rng.next() * 30 * 60, placeId: pl?.id })];
       }
       case 'worship': { const pl = place ?? w.place(this.chapelId(p)); const spot = ((p.occupation === 'priest' || p.occupation === 'acolyte') ? anchorIn(pl, ['altar']) : anchorIn(pl, ['seat'])) ?? pl?.inside ?? body.pos; return [A({ type: 'goto', pos: spot, placeId: pl?.id }), A({ type: 'pray', pos: spot, duration: 40 * 60 })]; }
-      case 'socialize': case 'drink': case 'play': case 'idle': { const pl = place ?? w.place(this.squareId(p)); const spot = anchorIn(pl, g.type === 'drink' ? ['seat', 'inside'] : ['seat', 'inside', 'work']) ?? pl?.inside ?? body.pos; return [A({ type: 'goto', pos: spot, placeId: pl?.id }), A({ type: g.type === 'play' ? 'wait' : 'sit', pos: spot, duration: (g.type === 'play' ? 8 : 25) * 60 + w.rng.next() * 15 * 60, data: { social: true } })]; }
+      case 'socialize': case 'drink': case 'play': case 'idle': { const pl = g.data?.stationary ? undefined : place ?? w.place(this.squareId(p)); const spot = anchorIn(pl, g.type === 'drink' ? ['seat', 'inside'] : ['seat', 'inside', 'work']) ?? pl?.inside ?? body.pos; return [A({ type: 'goto', pos: spot, placeId: pl?.id }), A({ type: g.type === 'play' ? 'wait' : 'sit', pos: spot, duration: (g.type === 'play' ? 8 : 25) * 60 + w.rng.next() * 15 * 60, data: { social: true } })]; }
       case 'wander': {
         // v0.6 §VI/§VII: a hunger-driven search (no known food source) targets a nearby place
         // NOT yet known as a food source, rather than idle jitter — arriving there and perceiving
@@ -1609,8 +1733,47 @@ export class Simulation {
       case 'patrol': { const pts = p.patrol ?? []; const start = Math.floor(w.rng.next() * pts.length); const acts: Action[] = []; for (let i = 0; i < pts.length; i++) { const pt = pts[(start + i) % pts.length]; acts.push(A({ type: 'goto', pos: pt }), A({ type: 'look', duration: 40, pos: pt })); } return acts.length ? acts : [A({ type: 'wait', duration: 60 })]; }
       case 'guard_post': { const pl = place ?? w.place(p.workId); const post = p.occupation === 'guard' ? (localPlaces(w, body.pos).find(x => x.type === 'gate' && x.name.includes('east'))?.anchors[0].pos ?? pl?.inside) : anchorIn(pl, ['post', 'work', 'inside']); return [A({ type: 'goto', pos: post ?? body.pos }), A({ type: 'look', duration: 20 * 60, pos: post ?? body.pos })]; }
       case 'hush': return [A({ type: 'hush', targetEntity: g.targetEntity, data: { ...g.data } })];
-      case 'flee': { const threatPos = w.primaryBody(g.targetEntity!)?.pos ?? body.pos; const guards = w.livingPersons().filter(q => (q.occupation === 'guard' || q.occupation === 'captain') && q.id !== g.targetEntity); const gd = p.traits.sociability > 0.3 && !p.hostile ? this.nearestKnownGuard(p, body.pos, guards) : null; let dest: Vec3; if (gd) { dest = p.knowledge[`loc:${gd.id}`]?.claim.pos ?? w.place(gd.workId)?.inside ?? w.primaryBody(gd.id)!.pos; } else { const home = w.place(p.homeId); dest = home?.inside ?? this.awayFrom(body.pos, threatPos, 18); } if (dist2(dest, threatPos) < 8) dest = this.awayFrom(body.pos, threatPos, 20); return [A({ type: 'goto', pos: dest, run: true, data: { flee: true } }), A({ type: 'wait', duration: 3 * 60, data: { hide: true } })]; }
-      case 'report': { const g2 = w.person(g.targetEntity!)!; return [A({ type: 'goto', targetEntity: g2.id, run: true }), A({ type: 'tell', targetEntity: g2.id, data: { key: g.data?.key } })]; }
+      case 'flee': {
+        const threatPos = p.mind.percepts.find(pc => pc.entityId === g.targetEntity)?.pos
+          ?? p.knowledge[`loc:${g.targetEntity}`]?.claim.pos ?? body.pos;
+        // Turning to flee can put the danger behind the view cone. Keep the observed
+        // threats of this unfinished escape in its action parameters, just as we keep
+        // its destination. Otherwise two dangers repeatedly erase each other from the
+        // next plan. These are remembered observations, never unseen live positions.
+        const priorEscape = p.mind.goal?.type === 'flee' && p.mind.plan.some(a => a.status === 'pending' || a.status === 'active')
+          ? p.mind.plan.find(a => a.data?.flee) : undefined;
+        const escapeThreats: { entityId: EntityId; pos: Vec3; observedAt: number }[] =
+          (priorEscape?.data?.escapeThreats ?? []).map((old: { entityId: EntityId; pos: Vec3; observedAt: number }) => {
+            const seen = p.mind.percepts.find(pc => pc.entityId === old.entityId);
+            const remembered = p.knowledge[`loc:${old.entityId}`];
+            return seen ? { entityId: old.entityId, pos: { ...seen.pos }, observedAt: seen.tick }
+              : remembered?.claim.pos && remembered.learnedAt > old.observedAt
+                ? { entityId: old.entityId, pos: { ...remembered.claim.pos }, observedAt: remembered.learnedAt }
+                : { ...old, pos: { ...old.pos } };
+          });
+        if (g.targetEntity && !escapeThreats.some(t => t.entityId === g.targetEntity)) {
+          const seen = p.mind.percepts.find(pc => pc.entityId === g.targetEntity);
+          const remembered = p.knowledge[`loc:${g.targetEntity}`];
+          if (seen || remembered?.claim.pos) escapeThreats.push({ entityId: g.targetEntity, pos: { ...threatPos }, observedAt: seen?.tick ?? remembered.learnedAt });
+        }
+        const feared = (id: EntityId) => (relOrNull(p, id)?.fear ?? 0) > 0.35 || socialEvidence(p, id, w.now).caution >= 0.15;
+        // A uniform does not override this mind's evidence that the person is dangerous.
+        // Otherwise fleeing one feared watchman chooses another as refuge, then reverses.
+        const guards = w.livingPersons().filter(q => (q.occupation === 'guard' || q.occupation === 'captain') && q.id !== g.targetEntity && !feared(q.id) && !escapeThreats.some(t => t.entityId === q.id));
+        const dangers = [threatPos, ...escapeThreats.map(t => t.pos)];
+        for (const pc of p.mind.percepts) if (pc.entityId !== g.targetEntity && feared(pc.entityId)) dangers.push(pc.pos);
+        for (const k of knowledgeItems(p)) if (k.kind === 'location' && k.claim.pos && k.claim.entityId !== g.targetEntity && feared(k.claim.entityId)) dangers.push(k.claim.pos);
+        const gd = p.traits.sociability > 0.3 && !p.hostile ? this.nearestKnownGuard(p, body.pos, guards) : null;
+        let dest = gd ? this.knownGuardPosition(p, gd)! : w.place(p.homeId)?.inside ?? this.awayFrom(body.pos, threatPos, 18, dangers);
+        if (dangers.some(pos => dist2(dest, pos) < 8) || !w.nav.findPath(body.pos, dest)) dest = this.awayFrom(body.pos, threatPos, 20, dangers);
+        return [A({ type: 'goto', pos: { ...dest }, run: true, data: { flee: true, escapeThreats } }), A({ type: 'wait', duration: 3 * 60, data: { hide: true } })];
+      }
+      case 'report': {
+        const guard = w.person(g.targetEntity!);
+        const dest = g.targetPos ?? (guard && this.knownGuardPosition(p, guard));
+        // Travel to the witnessed/remembered position, not an unseen moving body's live position.
+        return [A({ type: 'goto', pos: dest ? { ...dest } : undefined, run: true }), A({ type: 'tell', targetEntity: g.targetEntity, data: { key: g.data?.key } })];
+      }
       case 'investigate': { return [A({ type: 'goto', pos: g.targetPos!, run: p.occupation === 'captain' }), A({ type: 'look', duration: 3 * 60, pos: g.targetPos!, data: { key: g.data?.key, investigate: true } })]; }
       case 'confront': case 'attack': return [A({ type: 'goto', targetEntity: g.targetEntity, run: true }), A({ type: g.type === 'confront' ? 'talk' : 'attack', targetEntity: g.targetEntity, data: g.data })];
       case 'court': return [A({ type: 'goto', targetEntity: g.targetEntity }), A({ type: 'propose', targetEntity: g.targetEntity, duration: 90 })];
@@ -1697,10 +1860,10 @@ export class Simulation {
       case 'provide': {
         const to = w.person(g.targetEntity!);
         const it = w.item(g.data?.itemId as EntityId | undefined);
-        if (!to || !it || !to.alive) return [A({ type: 'wait', duration: 5 * 60 })];
+        if (!to || !it || !to.alive) return [A({ type: 'give', targetEntity: g.targetEntity, data: { item: g.data?.itemId, provision: true } })];
         const toBody = w.primaryBody(to.id);
         const seen = p.mind.percepts.some(pc => pc.entityId === to.id);
-        const dest = (seen && toBody ? toBody.pos : undefined) ?? g.targetPos ?? toBody?.pos ?? (to.homeId ? w.place(to.homeId)?.inside : undefined) ?? body.pos;
+        const dest = (seen && toBody ? toBody.pos : undefined) ?? g.targetPos ?? body.pos;
         const acts: Action[] = [];
         if (it.holderId !== p.id) {
           const src = it.pos ?? w.place(g.data?.sourcePlaceId as EntityId | undefined)?.inside ?? w.place(p.homeId)?.inside ?? body.pos;
@@ -1727,10 +1890,20 @@ export class Simulation {
     }
   }
   private anchorTaken(pos: Vec3, selfBody: string): boolean { for (const b of this.world.activeBodies()) if (b.id !== selfBody && b.sitAnchor && b.sitAnchor.x === pos.x && b.sitAnchor.z === pos.z) return true; return false; }
-  private awayFrom(from: Vec3, threat: Vec3, d: number): Vec3 {
+  private awayFrom(from: Vec3, threat: Vec3, d: number, dangers: Vec3[] = []): Vec3 {
     const w = this.world; let dx = from.x - threat.x, dz = from.z - threat.z; const l = Math.hypot(dx, dz) || 1; dx /= l; dz /= l;
-    for (let tries = 0; tries < 8; tries++) { const ang = (tries / 8) * Math.PI * 2 * (tries % 2 ? 1 : -1) * 0.25; const cx = Math.cos(ang) * dx - Math.sin(ang) * dz, cz = Math.sin(ang) * dx + Math.cos(ang) * dz; const x = Math.round(from.x + cx * d), z = Math.round(from.z + cz * d); const n = w.nav.nearestWalkable(x, z, 4); if (n) return { x: n.x + 0.5, y: w.nav.floorY(n.x, n.z), z: n.z + 0.5 }; }
-    return from;
+    for (let tries = 0; tries < 8; tries++) {
+      const ang = (tries / 8) * Math.PI * 2 * (tries % 2 ? 1 : -1) * 0.25;
+      const cx = Math.cos(ang) * dx - Math.sin(ang) * dz, cz = Math.sin(ang) * dx + Math.cos(ang) * dz;
+      const x = Math.round(from.x + cx * d), z = Math.round(from.z + cz * d);
+      const n = w.nav.nearestWalkable(x, z, 4, from.y) ?? w.nav.nearestWalkable(x, z, 4);
+      if (!n) continue;
+      const destination = { x: n.x + 0.5, y: w.nav.floorY(n.x, n.z), z: n.z + 0.5 };
+      // Walkable columns may be isolated roofs. Use the ordinary navigator to reject an
+      // impossible proposed route and consider another direction, before committing to it.
+      if (dangers.every(pos => dist2(destination, pos) >= 8) && w.nav.findPath(from, destination)) return destination;
+    }
+    return { ...from };
   }
 
   /** Both controller types submit a plan; canonical handlers resolve every attempt. */
@@ -1753,6 +1926,13 @@ export class Simulation {
     // entries, which never triggers a replan (the pending tail action isn't done/failed). Compact
     // spent entries once the plan is clearly not a normal 2–14 step plan any more.
     if (m.plan.length > 28) m.plan = m.plan.filter(x => x.status === 'pending' || x.status === 'active');
+    // Spoken to while standing, sitting or working in place: turn to the speaker. (Someone walking
+    // an errand stops first, in 'goto'; urgent goals are excluded by attendingTo.)
+    const addressedBy = attendingTo(w, p);
+    if (addressedBy && Math.hypot(body.vel.x, body.vel.z) < 0.05) {
+      const speaker = w.primaryBody(addressedBy);
+      if (speaker) body.yaw = Math.atan2(-(speaker.pos.x - body.pos.x), -(speaker.pos.z - body.pos.z));
+    }
     const a = m.plan.find(x => x.status === 'pending' || x.status === 'active'); if (!a) { if (body.pose !== 'stand' && body.pose !== 'walk' && body.poseUntil < w.physicalTime) body.pose = 'stand'; return; }
     if (a.status === 'pending') { a.status = 'active'; a.startedAt = w.now; this.beginAction(p, body, a); }
     switch (a.type) {
@@ -1793,8 +1973,16 @@ export class Simulation {
         actOnRecord(w, p, a, physDt); body.pose = 'work'; break;
       }
       case 'goto': {
-        // Observational only (Constitution §53): records that pathing failed, for headless
-        // telemetry/anomaly detection. Never changes canonical decisions itself.
+        // Spoken to: stop and face the speaker for as long as they keep talking, unless where I am
+        // going is urgent. The trip is not abandoned; it resumes when the attention lapses.
+        const heed = attendingTo(w, p);
+        if (heed) {
+          const hb = w.primaryBody(heed);
+          body.vel.x = 0; body.vel.z = 0; body.pose = 'stand';
+          if (hb) body.yaw = Math.atan2(-(hb.pos.x - body.pos.x), -(hb.pos.z - body.pos.z));
+          break;
+        }
+        // An actual failed attempt supplies self evidence for subsequent deliberation.
         const failGoto = (reason: string) => {
           const suspect = m.goal?.type === 'investigate' ? m.goal.data?.suspect as EntityId | undefined : undefined;
           if (suspect) this.losePursuit(p, suspect);
@@ -1802,15 +1990,31 @@ export class Simulation {
           // Later steps depend on getting there. A failed trip cannot become a remote
           // purchase, meal, work shift, or observation of an unvisited counter's stock.
           for (const next of m.plan.slice(m.plan.indexOf(a))) if (next.status === 'pending' || next.status === 'active') next.status = 'failed';
-          w.emit('path_failure', { actor: p.id, pos: body.pos, significance: 0, data: { reason, goal: m.goal?.type, destination: dest, placeId: a.placeId }, summary: `${p.name} could not path (${reason})` });
+          if (m.goal?.type === 'report' && m.goal.data?.key) noteReportFailed(w, p, String(m.goal.data.key), m.goal.targetEntity, reason);
+          const failure = w.emit('path_failure', { actor: p.id, pos: body.pos, significance: 0, data: { reason, goal: m.goal?.type, destination: dest, placeId: a.placeId }, summary: `${p.name} could not path (${reason})` });
+          if (dest && m.goal) {
+            const key = `route:${m.goal.key}`, claim = { blocked: true, goalKey: m.goal.key, origin: { ...body.pos }, destination: { ...dest }, reason, text: 'That route was blocked when I tried it.' };
+            learn(w, p, { key, kind: 'state', claim, confidence: 1, source: { type: 'self', viaEvent: failure.id } }, true);
+            // A fresh failed route supersedes this actor's own older attempt, even at
+            // equal confidence. Preserve provenance and the exact attempted positions.
+            const k = p.knowledge[key];
+            if (k) Object.assign(k, { claim, learnedAt: w.now, lastConfirmedAt: w.now, source: { type: 'self', viaEvent: failure.id }, sharedWith: [] });
+          }
         };
         let dest = a.pos ?? null;
-        if (a.targetEntity) { const tb = w.primaryBody(a.targetEntity); if (!tb) { failGoto('target has no body'); break; } dest = tb.pos; if (dist2(body.pos, dest) < 1.8) { body.path = null; a.status = 'done'; body.pose = 'stand'; body.yaw = Math.atan2(-(dest.x - body.pos.x), -(dest.z - body.pos.z)); break; } if (!body.path || !body.pathGoal || dist2(body.pathGoal, dest) > 2.5) this.pathTo(body, dest, a); }
+        const attackApproach = !!a.targetEntity && m.plan.some(next => next.type === 'attack' && next.targetEntity === a.targetEntity && (next.status === 'pending' || next.status === 'active'));
+        // Arrival must satisfy the action this approach serves. Social distance can
+        // exceed an unarmed reach, otherwise done-goto/attack retries never progress.
+        const arrivalReach = attackApproach ? Math.min(1.8, combatReach(w, p)) : 1.8;
+        if (a.targetEntity) { const tb = w.primaryBody(a.targetEntity); if (!tb) { failGoto('target has no body'); break; } dest = tb.pos; if (dist2(body.pos, dest) < arrivalReach) { body.path = null; a.status = 'done'; body.pose = 'stand'; body.yaw = Math.atan2(-(dest.x - body.pos.x), -(dest.z - body.pos.z)); break; } if (!body.path || !body.pathGoal || dist2(body.pathGoal, dest) > 2.5) this.pathTo(body, dest, a); }
         if (!dest) { failGoto('no destination'); break; }
         const withinArrival = !a.targetEntity && dist2(body.pos, dest) < 1.2
           && Math.abs(body.pos.y - dest.y) <= 1 && w.nav.clearWalk(body.pos, dest);
         if (!body.path && !withinArrival) { this.pathTo(body, dest, a); if (!body.path) { failGoto('no path found'); break; } }
-        body.speed = a.run ? 5.6 : (p.occupation === 'child' ? 3.6 : 3.2 + (p.age > 60 ? -0.8 : 0));
+        // Errands are walked briskly; urgency (flight, alarm, a fight, help) runs. The old 3.2 m/s
+        // "walk" was a jog, so every routine trip across the village looked like running. 2.05 m/s
+        // is a purposeful walk, and the natural pace of the walk cycle people are drawn with.
+        body.speed = a.run ? 5.6 : (p.age > 60 ? 1.5 : 2.05);
         // v0.8 "The Legible World" §B: a hauler physically carrying real cargo (a claimed,
         // in-transit HaulTask with units actually loaded) is visually distinct from an ordinary
         // walk — previously indistinguishable, so the player could never tell "moving supplies"
@@ -1823,6 +2027,7 @@ export class Simulation {
         if (arrived) {
           body.path = null;
           body.vel.x = 0; body.vel.z = 0; body.pose = 'stand';
+          if (attackApproach && dist2(body.pos, dest) > arrivalReach) { failGoto('attack target is out of reach'); break; }
           if (!a.targetEntity && dist2(body.pos, dest) > 3) { failGoto('destination is out of reach'); break; }
           a.status = 'done';
           if (a.data?.flee) w.emit('fled', { actor: p.id, pos: body.pos, significance: 0.3, summary: `${p.name} fled to ${w.placeAt(body.pos)?.name ?? 'safety'}` });
@@ -1848,7 +2053,14 @@ export class Simulation {
         body.pose = 'sleep';
         const wellRested = p.needs.energy <= 0.02 && w.now - (a.startedAt ?? 0) > (a.duration ?? 0) * 0.5;
         const overslept = w.now - (a.startedAt ?? 0) > 9 * SECONDS_PER_HOUR;
-        if (wellRested || overslept) {
+        // A nap is not a night. Sleep taken outside one's own sleeping hours ends once the sleeper
+        // is no longer tired and their duty begins; otherwise a tired innkeeper's afternoon rest ran
+        // to full restoration through the whole evening shift, and the shifted cycle repeated daily.
+        // Night sleep, and anyone without a schedule (a player), still wake only when rested.
+        const due = currentScheduleEntry(p, w.clock.hourF);
+        const dutyCalls = a.data?.nap === true && a.startedAt !== undefined && w.now - a.startedAt > SECONDS_PER_HOUR
+          && !!due && DUTY_ACTIVITIES.has(due.activity) && !severityAtLeast(sleepBand(p), 'uncomfortable');
+        if (wellRested || overslept || dutyCalls) {
           p.physiology.lastSleepAt = w.now;
           if (overslept) w.emit('sleep_completed', { actor: p.id, significance: 0.03, summary: `${p.name} woke up` });
           a.status = 'done';
@@ -1856,6 +2068,12 @@ export class Simulation {
         break;
       }
       case 'hush': { const r = attemptHush(w, p, a.data?.bodyId ?? ''); a.data = { ...a.data, result: r }; a.status = r === 'calmed' || r === 'resisted' ? 'done' : 'failed'; break; }
+      case 'butcher': {
+        // Real labour at the carcass; progress stays with it if this stint stops (physical/hand.ts).
+        const r = butcherWork(w, p, body, a.targetEntity!, worldDt);
+        if (r === 'working') { body.pose = 'work'; break; }
+        a.status = r === 'done' ? 'done' : 'failed'; a.data = { ...a.data, outcome: r }; body.pose = 'stand'; break;
+      }
       case 'meditate': { if (!knowsVeil(p) || body.pose === 'downed') { a.status = 'failed'; break; } body.pose = 'sit'; body.vel = { x: 0, y: 0, z: 0 }; if (this.elapsed(a)) a.status = meditateOnVeil(w, p, a.duration ?? MEDITATION_SECONDS) ? 'done' : 'failed'; break; }
       case 'sit': if (!this.settleRestPosition(body, a.pos, physDt)) break; body.pose = 'sit'; p.needs.social = clamp(p.needs.social - worldDt / (3 * SECONDS_PER_HOUR)); this.maybeChat(p, body); if (this.elapsed(a)) a.status = 'done'; break;
       case 'eat': {
@@ -2077,7 +2295,7 @@ export class Simulation {
             if (dist2(body.pos, spot) > 2.5) { a.status = 'pending'; m.plan.unshift({ type: 'goto', pos: spot, status: 'pending' }); break; }
             body.pos.x = plot.x + 0.5; body.pos.z = plot.z + 0.5;
             if (a.type === 'harvest') harvestPlot(w, field, plot, p);
-            else if (!plantPlot(w, field, plot, p)) { a.status = 'done'; break; } // out of seed grain — stop
+            else if (!plantPlot(w, field, plot, p)) { a.status = 'failed'; break; } // real work stoppage, not completion
           } else { a.status = 'done'; break; } // no more actionable plots
         }
         if (this.elapsed(a)) a.status = 'done';
@@ -2202,6 +2420,15 @@ export class Simulation {
         // does not simply set out again at the same urgency.
         if (!t || !tb || dist2(body.pos, tb.pos) > 3.5) {
           if (key && p.knowledge[key]) noteReportFailed(w, p, key, a.targetEntity, t ? `${t.name} had moved on` : 'they were not there');
+          // The search failed for this listener, not just for this one incident.
+          // Otherwise another case immediately reuses the same disproved address.
+          if (a.targetEntity && !m.percepts.some(pc => pc.entityId === a.targetEntity)) {
+            const ev = w.emit('perceived', { actor: p.id, target: a.targetEntity, pos: { ...body.pos }, category: 'cognition', significance: .12,
+              causes: a.data?.intentionEvent ? [a.data.intentionEvent] : [],
+              data: { kind: 'failed_report', reason: 'recipient_not_in_reach', key }, summary: `${p.name} could not find the intended listener here` });
+            locationNotFound(w, p, a.targetEntity, body.pos, ev.id);
+            a.data = { ...a.data, failureReason: 'recipient_not_in_reach', failureEvent: ev.id };
+          }
           a.status = 'failed'; break;
         }
         const k = key ? p.knowledge[key] : undefined;
@@ -2212,7 +2439,14 @@ export class Simulation {
           if ((t.occupation === 'guard' || t.occupation === 'captain') && key) {
             if (heard) noteReportDelivered(w, p, key, t.id); else noteReportFailed(w, p, key, t.id, `could not make ${t.name} hear it`);
           }
-          if (!heard) { a.status = 'failed'; break; }
+          if (!heard) {
+            const reason = k.hops >= MAX_TESTIMONY_HOPS ? 'testimony_exhausted' : 'conversation_unavailable';
+            const ev = w.emit('perceived', { actor: p.id, target: t.id, pos: { ...body.pos }, category: 'cognition', significance: .12,
+              causes: a.data?.intentionEvent ? [a.data.intentionEvent] : [], data: { kind: 'failed_report', reason, key },
+              summary: `${p.name} could not deliver the report` });
+            a.data = { ...a.data, failureReason: reason, failureEvent: ev.id };
+            a.status = 'failed'; break;
+          }
         } else if (key) { a.status = 'failed'; break; }
         body.pose = 'talk'; body.poseUntil = w.physicalTime + 2; a.status = 'done'; break;
       }
@@ -2252,7 +2486,12 @@ export class Simulation {
         // record as well as the live pose means the same fight ends the same way whether the
         // world is stepped sixty times a second or once a calendar day.
         const liveConflict = a.targetEntity ? conflictBetween(w, p.id, a.targetEntity) : undefined;
-        if (tb.pose === 'downed' || liveConflict?.downed?.who === a.targetEntity
+        // Deliberation permits responding to newly witnessed aggression after an
+        // earlier defeat. Execution must honor that same evidence: otherwise it
+        // immediately completes the old defeat, then reselects this response while
+        // the observed strike is still in progress. Present incapacity still wins.
+        const witnessedAggression = tb.pose === 'attack' && m.percepts.some(pc => pc.entityId === a.targetEntity && pc.bodyId === tb.id && pc.how === 'saw');
+        if (tb.pose === 'downed' || (liveConflict?.downed?.who === a.targetEntity && !witnessedAggression)
           || (tp && (tp.surrender || tp.custody?.active || tb.subduedUntil > w.physicalTime))) {
           const intent = a.data?.intent as ConflictIntent | undefined;
           const isGuard = p.occupation === 'guard' || p.occupation === 'captain';
@@ -2268,7 +2507,8 @@ export class Simulation {
           // v0.2.3: bound the pursuit (Constitution §11 disengagement — "do not create endless
           // world-spanning pursuit"). Give up after a few failed approaches, or if the target has
           // simply outrun us; the conflict then lapses to disengaging/deterrence via maintenance.
-          const chased = (a.data && (a.data._chase = (a.data._chase ?? 0) + (m.plan[0]?.status === 'failed' ? 1 : 0)));
+          a.data ??= {};
+          const chased = a.data._chase = (a.data._chase ?? 0) + 1;
           if (d > 46 || (chased ?? 0) > 4) {
             if (a.targetEntity) this.losePursuit(p, a.targetEntity);
             a.status = 'done'; break;
@@ -2278,7 +2518,14 @@ export class Simulation {
           m.plan.unshift({ type: 'goto', targetEntity: a.targetEntity, run: true, status: 'pending' });
           break;
         }
-        if (w.physicalTime - body.lastAttackAt > MELEE_SWING_SECONDS) this.attack(p, body, tb, a.data?.intent as ConflictIntent | undefined);
+        if (w.physicalTime - body.lastAttackAt > MELEE_SWING_SECONDS) {
+          const result = this.attack(p, body, tb, a.data?.intent as ConflictIntent | undefined);
+          if (!result.attempted && result.rejection !== 'cooldown') {
+            a.data = { ...a.data, attackRejection: result.rejection };
+            if (a.targetEntity) this.losePursuit(p, a.targetEntity);
+            a.status = 'failed';
+          }
+        }
         // If that blow put the target down/out, the guard at the top of this case re-runs next
         // substep and takes over (custody escort / disengage). Here just stop on a kill.
         if (tb.dead) a.status = 'done';
@@ -2359,7 +2606,7 @@ export class Simulation {
       case 'use': { if (a.data?.heal) { const tb = w.primaryBody(a.targetEntity!); if (tb && dist2(body.pos, tb.pos) < 3) { body.pose = 'work'; tb.health = Math.min(tb.maxHealth, tb.health + worldDt * 0.02); if (this.elapsed(a)) { a.status = 'done'; if (tb.pose === 'downed') tb.pose = 'stand'; w.emit('heal', { actor: p.id, target: a.targetEntity, pos: body.pos, significance: 0.4, visibility: 12, summary: `${p.name} tended to ${w.nameOf(a.targetEntity)}'s wounds` }); this.say(p, `There. You'll live.`); } } else a.status = 'failed'; } else a.status = 'done'; break; }
       case 'pickup': {
         const it = w.item(a.targetEntity!);
-        if (it && it.pos && !it.holderId && dist2(body.pos, it.pos) < 2.5) {
+        if (it && it.quantity > 0 && it.pos && !it.holderId && dist2(body.pos, it.pos) < 2.5) {
           // v0.10 §I.B: a `provide` errand takes a PORTION off a household stack rather than the
           // whole larder — `takePortionInHand` (world/metabolism.ts) is the same split-and-carry
           // step a purchase performs once payment has cleared, with no price, because this is
@@ -2368,19 +2615,37 @@ export class Simulation {
           if (a.data?.provision) {
             if (a.data.ownProvisions && (it.ownerId !== p.id || it.haulTaskId)) { a.status = 'failed'; break; }
             const carried = takePortionInHand(w, p, it, PROVISION_UNITS, 'to bring to someone who needs it');
-            if (carried) for (const step of m.plan) { if (step.type === 'give' && step.data?.provision) step.data.item = carried.id; }
+            if (!carried) { a.status = 'failed'; break; }
+            for (const step of m.plan) { if (step.type === 'give' && step.data?.provision) step.data.item = carried.id; }
+            if (m.goal?.type === 'provide') {
+              m.goal.data = { ...m.goal.data, itemId: carried.id };
+              if (m.commitment?.goalKey === m.goal.key) m.commitment.data = { ...m.commitment.data, itemId: carried.id };
+            }
           } else this.takeItem(p, it, 'recovered');
-        }
+        } else { a.status = 'failed'; break; }
         a.status = 'done'; break;
       }
       // v0.8 §P0-G/H: the delivery step of the 'help_recover_item' plan — hand a carried item
       // (already in `p.inventory` from the preceding 'pickup' step) to the person it was fetched
-      // for. Fails harmlessly (does nothing, just ends) if the recipient walked out of reach or
-      // the item somehow isn't actually being carried — never teleports the hand-off.
-      case 'give': { const it = w.item(a.data?.item); const to = w.person(a.targetEntity!); const tb = to ? w.primaryBody(to.id) : undefined; if (it && to && tb && it.holderId === p.id && dist2(body.pos, tb.pos) < 3.5) { this.giveItem(p, to, it); } a.status = 'done'; break; }
+      // for. Failure is evidence and cannot count as successful pursuit progress.
+      case 'give': {
+        const it = w.item(a.data?.item), to = w.person(a.targetEntity!);
+        const reachable = to && w.activeBodies().find(b => b.ownerId === to.id && !b.dead && dist2(body.pos, b.pos) < 3.5);
+        if (it && to && to.alive && reachable && it.holderId === p.id && it.quantity > 0) {
+          this.giveItem(p, to, it, reachable.pos); a.status = 'done';
+        } else {
+          const reason = !it || it.holderId !== p.id || it.quantity <= 0 ? 'item_not_carried' : 'recipient_not_in_reach';
+          const ev = w.emit('perceived', { actor: p.id, target: a.targetEntity, pos: { ...body.pos }, category: 'cognition', significance: .12,
+            causes: a.data?.intentionEvent ? [a.data.intentionEvent] : [],
+            data: { kind: 'failed_handoff', reason, itemId: a.data?.item }, summary: `${p.name} could not hand over the item: ${reason}` });
+          if (reason === 'recipient_not_in_reach' && a.targetEntity && !m.percepts.some(pc => pc.entityId === a.targetEntity)) locationNotFound(w, p, a.targetEntity, body.pos, ev.id);
+          a.data = { ...a.data, failureReason: reason, failureEvent: ev.id }; a.status = 'failed';
+        }
+        break;
+      }
       default: a.status = 'done';
     }
-    if (a.status === 'done' && m.plan.every(x => x.status === 'done' || x.status === 'failed')) {
+    if (a.status === 'done' && m.plan.every(x => x.status === 'done')) {
       const g = m.goal;
       if (g) {
         // v0.10: naming the goal and the purpose it was serving makes a completed PLAN legible.
@@ -2399,7 +2664,7 @@ export class Simulation {
         // A pantry delivery is one errand, unlike a multi-trip haul. Its old carried-food
         // pointer must not remain protected after the food was deposited. A still-low
         // pantry can motivate a fresh purchase/collection through ordinary deliberation.
-        if (g.type === 'provision_home') {
+        if (g.type === 'provision_home' || g.type === 'provide') {
           if (m.commitment?.goalKey === g.key) finishCommitment(w, p, 'completed');
           m.goal = null;
         }
@@ -2408,8 +2673,13 @@ export class Simulation {
     }
     if (a.status === 'failed') {
       body.sitAnchor = null; body.path = null;
-      if (m.goal?.type === 'provision_home') {
-        if (m.commitment?.goalKey === m.goal.key) finishCommitment(w, p, 'abandoned', 'the provisioning errand could not be completed');
+      // Remaining steps depended on this action succeeding. Do not run a handoff after a
+      // failed pickup, or count a later wait as completion of a failed plan.
+      if (a.type === 'give' || a.type === 'pickup') for (const step of m.plan) if (step.status === 'pending' || step.status === 'active') step.status = 'failed';
+      if (m.goal?.type === 'provision_home' || m.goal?.type === 'provide' || (a.type === 'give' && m.goal?.type === 'help_recover_item')) {
+        const pu = pursuitById(p, m.goal.data?.pursuitId as string | undefined);
+        if (pu) pu.currentStep = undefined;
+        if (m.commitment?.goalKey === m.goal.key) finishCommitment(w, p, 'abandoned', a.data?.failureReason ?? 'the provisioning errand could not be completed');
         m.goal = null; m.plan = [];
       }
       // v0.2.1 Priority 7 fix: every OTHER action failure forces an immediate rethink next
@@ -3008,11 +3278,11 @@ export class Simulation {
     const ev = w.emit('drop', { actor: p.id, item: it.id, pos, significance: 0.1, visibility: 8, summary: `${p.name} dropped ${it.name}` });
     it.provenance.push({ tick: w.now, eventId: ev.id, from: p.id, to: null, how: 'dropped' });
   }
-  giveItem(from: Person, to: Person, it: import('../core/types').Item): WorldEvent {
+  giveItem(from: Person, to: Person, it: import('../core/types').Item, at?: Vec3): WorldEvent {
     const w = this.world; from.inventory = from.inventory.filter(x => x !== it.id); to.inventory.push(it.id); it.holderId = to.id;
     const returned = it.ownerId === to.id; if (!returned) it.ownerId = to.id;
     it.provenance.push({ tick: w.now, from: from.id, to: to.id, how: returned ? 'returned' : 'gift' });
-    const pos = w.primaryBody(to.id)?.pos;
+    const pos = at ?? w.primaryBody(to.id)?.pos;
     // v0.10 §II: a real material gift now has durable consequences — it creates an obligation that
     // can still be shaping the recipient's decisions days later (social/obligation.ts). An event a
     // later state points back at for its provenance must be significant enough to survive

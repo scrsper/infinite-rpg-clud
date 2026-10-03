@@ -1,3 +1,4 @@
+import { converse, type ConversationalIntent } from './conversationalIntent';
 import { knowsVeil } from '../physical/veil';
 import { availableForMartial } from './martialPractice';
 import { canExecuteTechnique } from './martialKnowledge';
@@ -113,11 +114,11 @@ export class DialogueSystem {
     const rel = getRel(npc, player.id);
     const hostileNow = npc.hostile && rel.fear < 0.5;
     if (hostileNow) { opts.push({ label: 'I don\'t think so.', next: () => { this.sim.say(npc, 'Then we do it the hard way.'); npc.mind.alarm = 1; getRel(npc, player.id).grudge = 1; return null; } }); opts.push({ label: 'Leave', next: () => null }); return opts; }
-    opts.push({ label: "What's the news?", next: () => this.news(npc, player) });
-    opts.push({ label: 'Who are you?', next: () => { introduce(w, npc, player); return { speaker: npc, lines: [this.identity(npc)], options: this.options(npc, player) }; } });
+    opts.push({ label: "What's the news?", next: () => this.canonicalReply(npc, player, { intent: 'ask_about_event', topic: 'news', knowledgeId: null }) });
+    opts.push({ label: 'Who are you?', next: () => this.canonicalReply(npc, player, { intent: 'ask_about_person', topic: 'you', knowledgeId: null }) });
     if (!npc.knowledge['identity:' + player.id]) opts.push({ label: 'Introduce yourself', next: () => { introduce(w, player, npc); return { speaker: npc, lines: ['Good to meet you.'], options: this.options(npc, player) }; } });
-    opts.push({ label: 'What do you think of me?', next: () => ({ speaker: npc, lines: [this.opinionOfPlayer(npc, player)], options: this.options(npc, player) }) });
-    if (activeConcerns(npc).some(c => c.intensity > 0.15)) opts.push({ label: "What's troubling you?", next: () => this.troubles(npc, player) });
+    opts.push({ label: 'What do you think of me?', next: () => this.canonicalReply(npc, player, { intent: 'ask_about_relationship_to_player', topic: 'you', knowledgeId: null }) });
+    if (activeConcerns(npc).some(c => c.intensity > 0.15)) opts.push({ label: "What's troubling you?", next: () => this.canonicalReply(npc, player, { intent: 'ask_about_emotion', topic: 'you', knowledgeId: null }) });
     opts.push({ label: 'Ask about someone…', next: () => this.askAboutMenu(npc, player) });
     // v0.10.1 Part VII: whether Trade is on the table is decided by whether this person actually
     // has anything they would sell (`world/commerce.ts`), not by whether their occupation is on a
@@ -150,13 +151,27 @@ export class DialogueSystem {
     if (player.inventory.length) opts.push({ label: 'Give something…', next: () => this.giveMenu(npc, player) });
     const known = Object.values(player.knowledge).filter(k => k.kind === 'event' && !k.sharedWith.includes(npc.id) && !npc.knowledge[k.key]);
     if (known.length) opts.push({ label: 'Tell them something…', next: () => this.tellMenu(npc, player) });
-    if (rel.grudge > 0.2 || rel.fear > 0.3) opts.push({ label: 'Apologize', next: () => this.apologize(npc, player) });
+    if (rel.grudge > 0.2 || rel.fear > 0.3) opts.push({ label: 'Apologize', next: () => this.canonicalReply(npc, player, { intent: 'apologize', topic: 'you', knowledgeId: null }) });
     const desire = npc.desires.find(d => !d.fulfilled);
     if (desire) opts.push({ label: 'Is there anything you need?', next: () => this.hearDesire(npc, player, desire) });
     const wantedItems = Object.values(player.knowledge).filter(k => k.kind === 'fact' && k.claim.wantedItem && !w.person(k.claim.requesterId)?.desires.find(d => d.targetId === k.claim.itemId)?.fulfilled);
     if (wantedItems.length) opts.push({ label: 'Ask about an item…', next: () => this.askAboutItemMenu(npc, player, wantedItems) });
     opts.push({ label: 'Goodbye', next: () => null });
     return opts;
+  }
+  private canonicalReply(npc: Person, player: Person, input: ConversationalIntent): DialogueState {
+    const r = converse(this.sim, player, npc, input);
+    return { speaker: npc, lines: [r.line], options: this.options(npc, player) };
+  }
+  /** Shared existing semantic responses for free text and suggested actions. */
+  respond(npc: Person, player: Person, intent: string): DialogueState | null {
+    if (intent === 'news') return this.news(npc, player);
+    if (intent === 'apology_action') return this.apologize(npc, player);
+    if (intent === 'ask_about_relationship_to_player') return { speaker: npc, lines: [this.opinionOfPlayer(npc, player)], options: this.options(npc, player) };
+    if (intent === 'ask_about_emotion') return this.troubles(npc, player);
+    if (intent === 'ask_about_work' || intent === 'offer_help') return this.workMenu(npc, player);
+    if (intent === 'trade_menu') return this.trade(npc, player);
+    return null;
   }
   /**
    * v0.8 "The Legible World" §E: hearing a desire used to be pure flavor text with no lasting
@@ -200,7 +215,7 @@ export class DialogueSystem {
   private identity(npc: Person): string {
     const w = this.world; const home = perceivedName(w, npc, npc.homeId); const work = npc.workId ? perceivedName(w, npc, npc.workId) : null;
     const fam = Object.entries(npc.relationships).filter(([, r]) => r.tags.some(t => ['spouse', 'child', 'parent'].includes(t))).map(([id, r]) => `${perceivedName(w, npc, id)} (my ${r.tags.find(t => ['spouse', 'child', 'parent'].includes(t))})`);
-    return `I'm ${npc.name}${npc.title ? ', ' + npc.title : ''}, ${npc.age} years, the ${npc.occupation} here. I live at ${home}${work ? ` and work at ${work}` : ''}.${fam.length ? ` My family: ${fam.join(', ')}.` : ''} ${npc.bio}`;
+    return `I'm ${npc.name}${npc.title ? ', ' + npc.title : ''}, ${npc.age} years, the ${npc.occupation} here. ${npc.homeId ? `I live at ${home}` : 'I have no home here'}${work ? ` and work at ${work}` : ''}.${fam.length ? ` My family: ${fam.join(', ')}.` : ''} ${npc.bio}`;
   }
   private opinionOfPlayer(npc: Person, player: Person): string {
     const w = this.world; const r = getRel(npc, player.id); const mems = memoriesAbout(npc, player.id);
@@ -329,9 +344,18 @@ export class DialogueSystem {
   /** Open straight into the Trade menu — the client's "Trade" prompt on a selected person. Same
    * state the `Trade` option produces; the shortcut skips the greeting, not any of the rules. */
   startTrade(npc: Person, player: Person): DialogueState { return this.trade(npc, player); }
-  private trade(npc: Person, player: Person): DialogueState {
+  private trade(npc: Person, player: Person, page = 0): DialogueState {
     const w = this.world;
-    const offers = this.sim.tradeOffers(npc, player);
+    // One row per good and price, whatever number of stacks it sits in, and whole units only:
+    // a buyer sees "bread, 1s each, 55 to be had", not three identical rows or "9.375 planks".
+    const grouped = new Map<string, ReturnType<typeof this.sim.tradeOffers>[number] & { total: number }>();
+    for (const o of this.sim.tradeOffers(npc, player)) {
+      if (o.item.quantity > 1 && Math.floor(o.available) < 1) continue;
+      const single = o.item.quantity <= 1, key = single ? `${o.item.name}@${o.unitPrice}` : `${o.item.type}@${o.unitPrice}`;
+      const units = single ? 1 : Math.floor(o.available), seen = grouped.get(key);
+      if (seen) seen.total += units; else grouped.set(key, { ...o, total: units });
+    }
+    const PAGE = 7, all = [...grouped.values()], offers = all.slice(page * PAGE, page * PAGE + PAGE);
     if (!offers.length) {
       const refusals = this.sim.tradeRefusals(npc, player);
       const hostile = refusals.find(r => r.reason === 'hostile');
@@ -339,27 +363,20 @@ export class DialogueSystem {
       const first = refusals[0];
       return { speaker: npc, lines: [first ? `Nothing for sale — ${first.note}.` : `I've nothing to sell just now.`], options: this.options(npc, player) };
     }
-    const opts: DialogueOption[] = offers.slice(0, 8).map(o => {
+    const opts: DialogueOption[] = offers.map(o => {
       const stack = o.item.quantity > 1;
       const label = stack
-        ? `Buy ${o.item.type} (${o.unitPrice}s each, ${o.available} to be had)`
-        : `Buy ${o.item.name} (${o.unitPrice}s)`;
+        ? `Buy ${o.item.type} (${o.unitPrice}s each, ${o.total} to be had)`
+        : `Buy ${o.item.name} (${o.unitPrice}s${o.total > 1 ? `, ${o.total} to be had` : ''})`;
       return {
         label,
-        next: () => {
-          if (stack) {
-            const r = this.sim.buyUnits(player, npc, o.item, 1);
-            if (!r.units) return { speaker: npc, lines: [r.refused ? refusalLine(npc, r.refused) : `You haven't the coin.`], options: this.options(npc, player) };
-            adjustRel(w, npc, player.id, { affection: 0.05, trust: 0.05 }, 'traded', r.event?.id);
-            return { speaker: npc, lines: [`${r.units} ${o.item.type}, ${r.paid} silver. ${npc.traits.greed > 0.7 ? 'Pleasure doing business.' : 'Fair price.'}`], options: this.options(npc, player) };
-          }
-          const ev = this.sim.buyItem(player, npc, o.item);
-          if (!ev) return { speaker: npc, lines: [player.wealth < o.unitPrice ? `You haven't the coin.` : `I've changed my mind about that one.`], options: this.options(npc, player) };
-          adjustRel(w, npc, player.id, { affection: 0.05, trust: 0.05 }, 'traded', ev.id);
-          return { speaker: npc, lines: [`Done. ${npc.traits.greed > 0.7 ? 'Pleasure doing business.' : 'Fair price.'}`], options: this.options(npc, player) };
-        },
+        next: () => this.canonicalReply(npc, player, { intent: 'request_purchase', topic: o.item.type, itemId: o.item.id, quantity: 1, knowledgeId: null }),
       };
     });
+    if (all.length > PAGE) {
+      const next = (page + 1) * PAGE < all.length ? page + 1 : 0;
+      opts.push({ label: next ? 'More goods…' : 'Back to the first goods', next: () => this.trade(npc, player, next) });
+    }
     // Selling TO them: the mirror of the same rules. They will not knowingly buy what someone
     // else owns, and `sellItem` conserves the money and the object.
     const markup = 1 + npc.traits.greed * 0.5 - Math.max(0, disposition(npc, player.id)) * 0.3;

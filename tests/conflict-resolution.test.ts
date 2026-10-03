@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { setExternalControl } from '../src/sim/runtime/controllers';
+import { combatReach } from '../src/sim/physical/combat';
 import { createTestWorld, addPerson, step, face, v } from './helpers/world';
 import type { RNG } from '../src/sim/core/rng';
 import { makeItem } from '../src/sim/world/factory';
@@ -113,6 +115,35 @@ describe('disengagement (Constitution §11, v0.2.3)', () => {
     expect(pf).toBeLessThan(60); // not a per-substep path_failure storm
     expect(g.mind.pursuitCooldowns?.[crim.id]).toBeGreaterThan(tw.world.now);
     expect(g.mind.investigated.has(crimeKey)).toBe(false); // never reached the scene
+  });
+});
+
+describe('bounded unsuccessful combat approaches', () => {
+  it('does not repeat a social-distance arrival when an unarmed attack still needs closer range', () => {
+    const tw = createTestWorld(742, 30);
+    const a = addPerson(tw, 'Approaching', 'farmer', v(10, 1, 10));
+    const b = addPerson(tw, 'Waiting', 'farmer', v(11.7, 1, 10));
+    setExternalControl(a, true); setExternalControl(b, true);
+    const ab = tw.world.primaryBody(a.id)!, bb = tw.world.primaryBody(b.id)!;
+    expect(Math.hypot(ab.pos.x - bb.pos.x, ab.pos.z - bb.pos.z)).toBeGreaterThan(combatReach(tw.world, a));
+    tw.sim.submitIntention(a, { type: 'attack', targetEntity: b.id, status: 'pending', data: { intent: 'injure' } });
+    step(tw, 3);
+    expect(ab.attackSeq > 0 || (a.mind.pursuitCooldowns?.[b.id] ?? 0) > tw.world.now).toBe(true);
+    expect(a.mind.plan.filter(x => x.type === 'goto' && x.status === 'done').length).toBeLessThan(6);
+  });
+  it('stops an exhausted rejected attack instead of standing over its target indefinitely', () => {
+    const tw = createTestWorld(743, 30);
+    const a = addPerson(tw, 'Spent', 'farmer', v(10, 1, 10));
+    const b = addPerson(tw, 'Waiting', 'farmer', v(11, 1, 10));
+    setExternalControl(a, true); setExternalControl(b, true);
+    a.physiology.fatigue = 1;
+    const c = beginConflict(tw.world, { initiator: a.id, target: b.id, cause: 'dispute', intent: 'injure' });
+    tw.sim.submitIntention(a, { type: 'attack', targetEntity: b.id, status: 'pending', data: { intent: 'injure' } });
+    step(tw, 0.1);
+    expect(a.mind.plan.find(x => x.type === 'attack')?.status).toBe('failed');
+    expect(a.mind.pursuitCooldowns?.[b.id]).toBeGreaterThan(tw.world.now);
+    expect(c.status).toBe('disengaging');
+    expect(tw.world.primaryBody(a.id)!.attackSeq).toBe(0);
   });
 });
 

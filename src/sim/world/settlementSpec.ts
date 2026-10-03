@@ -22,7 +22,29 @@ export function settlementSeed(worldSeed: number, site: SettlementSite): number 
 const GIVEN = ['Aster', 'Briar', 'Cora', 'Dain', 'Elowen', 'Flint', 'Galen', 'Hester', 'Iris', 'Jonas', 'Kael', 'Lark', 'Maren', 'Nico', 'Orla', 'Perrin', 'Rhea', 'Silas', 'Thora', 'Una', 'Wren', 'Yara'];
 const SURNAMES = ['Alder', 'Brook', 'Cairn', 'Dale', 'Elm', 'Fen', 'Grove', 'Hart', 'Ives', 'Juniper', 'Keld', 'Linden', 'Moss', 'Nettle', 'Oak', 'Pike', 'Reed', 'Stone', 'Thorne', 'Vale'];
 
-export function generateSettlementSpec(worldSeed: number, site: SettlementSite, conditions?: { moisture: number; stone: number }): SettlementSpec {
+/**
+ * More households than surnames share family names, and a family may repeat a given name. Nobody
+ * in the world is called "Rhea Ives 2": a clash takes the next unused given name in the list. It
+ * draws nothing from the RNG, so every other generated fact of a seed is unchanged.
+ */
+export function unusedName(given: string, surname: string, givenNames: readonly string[], taken: ReadonlySet<string>): string {
+  const start = Math.max(0, givenNames.indexOf(given));
+  for (let k = 0; k < givenNames.length; k++) {
+    const name = `${givenNames[(start + k) % givenNames.length]} ${surname}`;
+    if (!taken.has(name)) return name;
+  }
+  let suffix = 2; while (taken.has(`${given} ${surname} ${suffix}`)) suffix++;
+  return `${given} ${surname} ${suffix}`; // every given name already carries this surname
+}
+
+/** Generator revisions before naming revision 1 numbered a clash; worlds recorded under them keep it. */
+export function legacyName(given: string, surname: string, taken: ReadonlySet<string>): string {
+  let name = `${given} ${surname}`, suffix = 2;
+  while (taken.has(name)) name = `${given} ${surname} ${suffix++}`;
+  return name;
+}
+
+export function generateSettlementSpec(worldSeed: number, site: SettlementSite, conditions?: { moisture: number; stone: number }, namingVersion?: 1): SettlementSpec {
   if (!site.id || !Number.isSafeInteger(site.x) || !Number.isSafeInteger(site.z) || site.x < 0 || site.z < 0) throw new Error('Settlement sites require an ID and nonnegative integer coordinates');
   const seed = settlementSeed(worldSeed, site), rng = new RNG(seed);
   const moisture = conditions?.moisture ?? rng.range(0.2, 0.85), relief = conditions ? 2 : rng.int(1, 4);
@@ -48,8 +70,8 @@ export function generateSettlementSpec(worldSeed: number, site: SettlementSite, 
   const familyNames = rng.shuffle([...SURNAMES]);
   const names = new Set<string>();
   const add = (household: number, gender: 'm' | 'f', age: number, occupation: Occupation, parents: string[] = []) => {
-    const base = `${rng.pick(GIVEN)} ${familyNames[household % familyNames.length]}`;
-    let name = base, suffix = 2; while (names.has(name)) name = `${base} ${suffix++}`; names.add(name);
+    const given = rng.pick(GIVEN), surname = familyNames[household % familyNames.length];
+    const name = namingVersion === 1 ? unusedName(given, surname, GIVEN, names) : legacyName(given, surname, names); names.add(name);
     const p: GeneratedResident = { key: `person_${residents.length}`, name, household, gender, age, occupation, parents, wealth: age < 18 ? 0 : rng.int(15, 95) };
     residents.push(p); return p;
   };

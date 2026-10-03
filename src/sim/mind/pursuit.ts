@@ -3,10 +3,11 @@ import { knownPlaceForPerson } from '../world/locality';
 import { socialMotivation } from './socialEvidence';
 import type { Concern, EntityId, EventId, Goal, GoalType, Item, Obligation, Person, Pursuit, PursuitKind, PursuitStatus, Vec3 } from '../core/types';
 import type { World } from '../core/world';
-import { concernsOf, concernGoalBoost } from './concern';
+import { concernsOf, concernGoalBoost, resolveConcern } from './concern';
 import { getRel, isClose, isFamily } from './relationships';
 import { liveObligations, obligationsOf, obligationGoalBoost } from '../social/obligation';
-import { woundSeverity, SERIOUS_WOUND } from '../core/attributes';
+import { woundSeverity, SERIOUS_WOUND, CARE_WOUND_THRESHOLD } from '../core/attributes';
+import { learn } from './knowledge';
 import { isFood } from '../world/factory';
 import { SECONDS_PER_HOUR } from '../core/time';
 import { requestById } from '../core/requests';
@@ -412,7 +413,7 @@ function tendSteps(world: World, p: Person, pu: Pursuit): PursuitStep[] {
   // upkeep will discharge on the strength of having seen them.
   if (seen && theirBody) {
     const wound = woundSeverity(theirBody);
-    if (wound > 0.08 || theirBody.pose === 'downed') {
+    if (wound > CARE_WOUND_THRESHOLD || theirBody.pose === 'downed') {
       const steps: PursuitStep[] = [{
         goal: 'help', targetEntity: subjectId, fit: 1,
         reason: `${subject.name} is hurt and in front of me`,
@@ -583,12 +584,13 @@ function reciprocateSteps(world: World, p: Person, pu: Pursuit): PursuitStep[] {
 
 /** Where this person BELIEVES the other is — their own remembered sighting, else that person's
  * home, which is ordinary social knowledge. Never the live body. */
-function believedPosition(world: World, p: Person, subjectId: EntityId): { pos: Vec3; placeId?: EntityId } | null {
+export function believedPosition(world: World, p: Person, subjectId: EntityId): { pos: Vec3; placeId?: EntityId } | null {
   const loc = p.knowledge[`loc:${subjectId}`];
   const remembered = loc?.claim.pos as Vec3 | undefined;
   if (remembered) return { pos: { ...remembered }, placeId: (loc.claim.placeId as EntityId | undefined) };
-  const subject = world.person(subjectId);
-  const home = subject?.homeId ? world.place(subject.homeId) : undefined;
+  const knownHome = p.knowledge[`home:${subjectId}`]?.claim.placeId as EntityId | undefined;
+  const home = knownHome ? world.place(knownHome) : undefined;
+  if (home && (loc?.claim.searched as Vec3[] | undefined)?.some(q => Math.hypot(q.x - home.inside.x, q.y - home.inside.y, q.z - home.inside.z) < 3.5)) return null;
   if (home) return { pos: { ...home.inside }, placeId: home.id };
   return null;
 }
@@ -690,10 +692,10 @@ export function satisfiedNow(world: World, p: Person, pu: Pursuit): string | nul
   if (pu.status !== 'active' && pu.status !== 'deferred') return null;
   if (pu.kind === 'tend' && pu.subjectId) {
     const subject = world.person(pu.subjectId);
-    const seen = p.mind.percepts.some(pc => pc.entityId === pu.subjectId);
+    const seen = p.mind.percepts.find(pc => pc.entityId === pu.subjectId);
     if (!subject || !seen) return null;
-    const body = world.primaryBody(pu.subjectId);
-    if (subject.alive && body && !body.dead && body.pose !== 'downed' && body.health >= body.maxHealth * 0.9) return 'seen_well';
+    const body = world.body(seen.bodyId);
+    if (subject.alive && body && !body.dead && body.pose !== 'downed' && woundSeverity(body) <= CARE_WOUND_THRESHOLD) return 'seen_well';
     return null;
   }
   if (pu.kind === 'recover' && pu.itemId) {
@@ -706,6 +708,22 @@ export function satisfiedNow(world: World, p: Person, pu: Pursuit): string | nul
 
 export function resolvePursuit(world: World, p: Person, pu: Pursuit, status: PursuitStatus, resolution: string): void {
   if (pu.status !== 'active' && pu.status !== 'deferred') return;
+  if (resolution === 'seen_well' && pu.kind === 'tend' && pu.subjectId) {
+    const seen = p.mind.percepts.find(pc => pc.entityId === pu.subjectId), body = seen && world.body(seen.bodyId);
+    if (body && !body.dead && body.pose !== 'downed' && woundSeverity(body) <= CARE_WOUND_THRESHOLD) {
+      const ev = world.emit('perceived', { actor: p.id, target: pu.subjectId, pos: world.positionOf(p.id) ?? undefined,
+        significance: .2, data: { kind: 'observed_recovery', subjectBodyId: body.id, state: 'unharmed' }, summary: `${p.name} saw that the person they were tending no longer needed care` });
+      const key = `state:${pu.subjectId}`;
+      const claim = { entityId: pu.subjectId, bodyId: body.id, state: 'unharmed', wound: Math.round(woundSeverity(body) * 100) / 100, tick: world.now };
+      const source = { type: 'witnessed' as const, viaEvent: ev.id };
+      // This is a newer local observation, not corroboration of the old injury.
+      // learn() intentionally does not replace equally confident standing claims.
+      const k = learn(world, p, { key, kind: 'state', claim, confidence: 1, source }, true) ?? p.knowledge[key];
+      if (k) Object.assign(k, { claim, confidence: 1, source, hops: 0, learnedAt: world.now, lastConfirmedAt: world.now, sharedWith: [] });
+      const concern = pu.source.kind === 'concern' && concernsOf(p).find(c => c.id === pu.source.id);
+      if (concern) resolveConcern(world, p, concern, 'seen_well');
+    }
+  }
   pu.status = status;
   pu.resolvedAt = world.now;
   pu.resolution = resolution;

@@ -6,7 +6,8 @@ public class TornVeilOnline : ModuleRules {
         PublicDependencyModuleNames.AddRange(new string[] { "EnhancedInput", "CommonUI", "CommonInput", "Slate", "SlateCore" });
         PrivateDependencyModuleNames.Add("HairStrandsCore"); // installed, bound hair cards on modular faces
         if (Target.bBuildEditor) PrivateDependencyModuleNames.Add("ApplicationCore"); // native keyboard acceptance
-        if (Target.bBuildEditor) PrivateDependencyModuleNames.AddRange(new string[] { "UnrealEd", "MovieSceneCapture", "ImageWrapper", "RenderCore", "MeshDescription", "StaticMeshDescription" }); // editor-only PIE evidence capture
+        PrivateDependencyModuleNames.Add("ImageWrapper"); // TV.Record evidence video, packaged builds too
+        if (Target.bBuildEditor) PrivateDependencyModuleNames.AddRange(new string[] { "UnrealEd", "MovieSceneCapture", "RenderCore", "MeshDescription", "StaticMeshDescription" }); // editor-only PIE evidence capture
         if (Target.bBuildEditor) PrivateDependencyModuleNames.AddRange(new string[] { "AnimGraph", "BlueprintGraph", "IKRig", "IKRigDeveloper" }); // reproducible local Foundry pose blueprints
         PrivateDependencyModuleNames.Add("ImageCore"); // completed Lit-frame acceptance readback
         // JSON read with FFileHelper at runtime (palettes, appearance grammar, the machine-local

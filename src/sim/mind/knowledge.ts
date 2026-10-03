@@ -133,6 +133,9 @@ function practicalKnowledge(k: KnowledgeItem, now: number): boolean {
   const age = now - (k.lastConfirmedAt ?? k.learnedAt);
   if (k.key.startsWith('food-access:')) return age < FOOD_PREFERENCE_WINDOW_SECONDS;
   if (k.key.startsWith('pantry:')) return age < 24 * 3600;
+  // A recent local hunting result drives the existing one-hunt-interval retry
+  // decision. Routine social episodes must not erase it between action and thought.
+  if (k.key.startsWith('game:')) return age < 30 * 60;
   return k.key.startsWith('short:') && !k.handled && age < 2 * 3600;
 }
 
@@ -147,12 +150,17 @@ function relationalWeight(p: Person, k: KnowledgeItem): number {
   return Math.min(1.7, r.familiarity + Math.abs(r.affection) * 0.4 + Math.abs(r.respect) * 0.3 + r.fear * 0.5 + r.grudge * 0.4);
 }
 
-function knowledgeScore(p: Person, k: KnowledgeItem, now: number, obligationBases: ReadonlySet<string>): number {
+function knowledgeScore(p: Person, k: KnowledgeItem, now: number, obligationBases: ReadonlySet<string>, activeSpatialKeys: ReadonlySet<string>): number {
   if (k.source.type === 'prior') return FOUNDATIONAL_SCORE + k.confidence;
   // The bounded obligation ledger still relies on this experience to explain a debt
   // or its recent resolution. Retain its evidence above routine episodes, without
   // expanding the knowledge budget or manufacturing a replacement when forgotten.
   if (obligationBases.has(k.key)) return PRACTICAL_BASE + k.confidence;
+  // A route failure or an unsuccessful search is practical evidence for the errand
+  // still being attempted. Evicting it beneath older crime episodes resurrected a
+  // disproved home destination every think. Relevance comes from the existing goal
+  // and purposes; the evidence is neither permanent nor exempt from the memory cap.
+  if (activeSpatialKeys.has(k.key)) return PRACTICAL_BASE + k.confidence;
   if (practicalKnowledge(k, now)) return PRACTICAL_BASE + k.confidence - (now - (k.lastConfirmedAt ?? k.learnedAt)) / 86400 * 0.002;
   const significance = k.claim.significance ?? 0.2;
   const unresolvedCrime = k.kind === 'event' && isCrime(k.claim.type, k.claim.intent) && !k.handled;
@@ -199,13 +207,22 @@ function pruneKnowledge(world: World, p: Person): void {
   if (keys.length <= MAX_KNOWLEDGE + PRUNE_MARGIN) return;
   const now = world.now;
   const obligationBases = new Set((p.mind.obligations ?? []).flatMap(o => o.basisKey ? [o.basisKey] : []));
+  const activeSpatialKeys = new Set<string>();
+  if (p.mind.goal) {
+    activeSpatialKeys.add(`route:${p.mind.goal.key}`);
+    if (p.mind.goal.targetEntity) activeSpatialKeys.add(`loc:${p.mind.goal.targetEntity}`);
+  }
+  for (const pu of p.mind.pursuits ?? []) if ((pu.status === 'active' || pu.status === 'deferred') && pu.subjectId) activeSpatialKeys.add(`loc:${pu.subjectId}`);
+  // Failed reports about different incidents share the same listener-location
+  // evidence. Its relevance survives switching cases until those reports retire.
+  for (const r of Object.values(p.mind.reports ?? {})) if (r.towardId && (r.status === 'unavailable' || r.status === 'no_authority')) activeSpatialKeys.add(`loc:${r.towardId}`);
   // Scores are pure and fixed for this synchronous prune. Evaluate each once rather than
   // rebuilding relationship/evidence weights for every comparison in the sort.
-  const ranked = keys.map(key => ({ key, score: knowledgeScore(p, p.knowledge[key], now, obligationBases) }));
+  const ranked = keys.map(key => ({ key, score: knowledgeScore(p, p.knowledge[key], now, obligationBases, activeSpatialKeys) }));
   ranked.sort((a, b) => b.score - a.score);
   for (const { key } of ranked.slice(MAX_KNOWLEDGE)) {
     const k = p.knowledge[key];
-    if (k.claim.method || isActivelyRelevant(p, key, k, now)) {
+    if (k.claim.method || activeSpatialKeys.has(key) || isActivelyRelevant(p, key, k, now)) {
       world.emit('knowledge_forgotten', {
         actor: p.id, significance: k.claim.method ? 0.6 : 0, category: k.claim.method ? 'history' : 'cognition', causes: k.source.viaEvent ? [k.source.viaEvent] : [],
         data: { key, kind: k.kind, wasUnresolvedCrime: k.kind === 'event' && isCrime(k.claim.type, k.claim.intent) && !k.handled },
@@ -281,6 +298,9 @@ export function eventClaim(world: World, e: WorldEvent, saw: boolean): Record<st
     for (const key of ['assemblyId', 'output', 'outcome', 'operation']) if (e.data[key] !== undefined) claim[key] = e.data[key];
   }
   if (e.type === 'introduction') claim.claimedName = e.data.claimedName;
+  // Striking or killing a wild animal is hunting, not violence against a victim: a hunter who saw
+  // a stranger bring down a boar menacing the village used to come to hate them blow by blow.
+  if (huntsWildGame(world, e.type, e.target)) claim.intent = 'hunt';
   // Whether a hushed animal or person went quiet is plainly visible; hearing a gesture is not.
   if (saw && e.type === 'veil_hush') claim.success = e.data.success === true;
   // Causal Society: a stoppage is ABOUT a material, and the material is the whole content of the
@@ -324,7 +344,8 @@ export function describeClaim(world: World, k: KnowledgeItem, observer?: Person)
         default: return c.text ?? `${c.type}${where}`;
       }
     }
-    case 'location': return `${perceivedName(world, observer, c.entityId)} is at ${c.placeId ? perceivedName(world, observer, c.placeId) : `(${Math.round(c.pos?.x)}, ${Math.round(c.pos?.z)})`}`;
+    case 'location': return c.pos ? `${perceivedName(world, observer, c.entityId)} is at ${c.placeId ? perceivedName(world, observer, c.placeId) : `(${Math.round(c.pos.x)}, ${Math.round(c.pos.z)})`}`
+      : `${perceivedName(world, observer, c.entityId)} was not found at the searched locations`;
     case 'ownership': return `${perceivedName(world, observer, c.itemId)} belongs to ${perceivedName(world, observer, c.ownerId)}`;
     case 'state': return c.text ?? `${perceivedName(world, observer, c.entityId)} is ${c.state}`;
     case 'fact': return c.text ?? k.key;
@@ -473,6 +494,23 @@ export function locationKnowledge(world: World, p: Person, entityId: EntityId, p
   p.knowledge[key] = { key, kind: 'location', claim: { entityId, pos: { ...pos }, placeId: place?.id }, confidence: 1, learnedAt: world.now, source, hops: 0, sharedWith: [] };
   pruneKnowledge(world, p);
 }
+
+/** An unsuccessful local search refutes a location, not the person's existence or their
+ * whereabouts elsewhere. A later sighting replaces this same location belief normally. */
+export function locationNotFound(world: World, p: Person, entityId: EntityId, pos: Vec3, eventId: string): void {
+  const key = `loc:${entityId}`, old = p.knowledge[key];
+  const remembered = old?.claim.pos as Vec3 | undefined;
+  // A newer sighting/testimony elsewhere is not disproved by reaching an old destination.
+  if (remembered && Math.hypot(remembered.x - pos.x, remembered.y - pos.y, remembered.z - pos.z) >= 3.5) return;
+  const searched: Vec3[] = [...(old?.claim.searched ?? [])];
+  // Overlapping search areas are not interchangeable. An older center can be
+  // within reach of this one yet outside reach of the destination just checked.
+  // Keep the actual new observation; only identical centers are duplicates.
+  if (!searched.some(q => q.x === pos.x && q.y === pos.y && q.z === pos.z)) searched.push({ ...pos });
+  p.knowledge[key] = { key, kind: 'location', claim: { entityId, searched }, confidence: 1,
+    learnedAt: world.now, source: { type: 'witnessed', viaEvent: eventId }, hops: 0, sharedWith: [] };
+  pruneKnowledge(world, p);
+}
 // Conflict intents that represent lawful or defensive force rather than criminal aggression
 // (Constitution §11: hostile force is not automatically a crime, and a guard's own arrest
 // cannot be indistinguishable from the crime it's answering — without this, every witnessed
@@ -483,8 +521,17 @@ export function locationKnowledge(world: World, p: Person, entityId: EntityId, p
 const LAWFUL_INTENTS = new Set(['subdue', 'arrest', 'defend', 'avoid', 'drive_off']);
 export function isCrime(type: string, intent?: string): boolean {
   if (type !== 'attack' && type !== 'kill' && type !== 'theft') return false;
+  // Hunting or driving off a wild animal harms no one's person or property.
+  if ((type === 'attack' || type === 'kill') && intent === 'hunt') return false;
   if (type === 'attack' && intent && LAWFUL_INTENTS.has(intent)) return false;
   return true;
+}
+/** An attack on, or killing of, a wild animal (no one's person, no one's beast). What the target
+ * was is plain to anyone who saw it or was told of it, unlike a person's private intent. */
+export function huntsWildGame(world: World, type: string, targetId: string | null | undefined): boolean {
+  if (type !== 'attack' && type !== 'kill') return false;
+  const target = targetId ? world.get(targetId) as { kind?: string; wildlife?: unknown } | undefined : undefined;
+  return target?.kind === 'creature' && !!target.wildlife;
 }
 export function crimeSeverity(type: string): number { return type === 'kill' ? 1 : type === 'attack' ? 0.6 : type === 'theft' ? 0.35 : 0; }
 

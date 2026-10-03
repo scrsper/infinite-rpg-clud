@@ -1,4 +1,4 @@
-import type { Goal, GoalCommitment, GoalType, Interruptibility, Person } from '../core/types';
+import type { EntityId, Goal, GoalCommitment, GoalType, Interruptibility, Person } from '../core/types';
 import type { World } from '../core/world';
 import { severityAtLeast, type Severity } from '../core/physiology';
 
@@ -52,6 +52,19 @@ export function isCommittable(type: GoalType): boolean { return interruptibility
  * ('dangerous' forcing a rest `idle`) and an active `threat` are checked separately by the
  * caller, since those are conditions rather than goal types. */
 export const EMERGENCY_GOAL_TYPES = new Set<GoalType>(['flee', 'attack', 'confront', 'surrender', 'help']);
+/** Scheduled occupational duties: what ends a daytime nap once the sleeper is rested enough. */
+export const DUTY_ACTIVITIES = new Set<GoalType>(['work', 'guard_post', 'patrol']);
+/** Goals nobody stops for because someone started talking to them. */
+const URGENT_GOAL_TYPES = new Set<string>([...EMERGENCY_GOAL_TYPES, 'report', 'rob', 'escort_custody', 'return_home_safe']);
+
+/** Whom this person is attending to (someone talking to them now), or null if nobody, the
+ *  attention has lapsed, or their own goal is urgent. */
+export function attendingTo(world: World, p: Person): EntityId | null {
+  const at = p.mind.addressedBy;
+  if (!at || at.until <= world.physicalTime) return null;
+  if (p.mind.goal && URGENT_GOAL_TYPES.has(p.mind.goal.type)) return null;
+  return at.entityId;
+}
 
 /**
  * Whether `interruptingType` is allowed to break a goal with `interruptibility`, given the

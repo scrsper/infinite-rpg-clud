@@ -69,10 +69,27 @@ describe('a protection opportunity arising from a real animal attack', () => {
     const wealthBefore = player.wealth, victimWealthBefore = victim.wealth;
     for (let i = 0; i < 40 && !sb.dead; i++) { s.sim.applyHit(player, pb, sb, 18, 'kill'); stepFor(s, 0.3); }
     expect(sb.dead).toBe(true);
-    // 5. Dress the carcass for proof and meat.
+    // 5. Dress the carcass for proof and meat: half an hour's work at the carcass. Beside her herd
+    // that work is (correctly) broken off by their blows, which butchery-work.test.ts covers. Here,
+    // as a disclosed placement fixture, the carcass is carried to the village square to be dressed.
+    const quiet = s.spawnPoint(9); sb.pos = { ...quiet, x: quiet.x + 3 }; sb.vel = { x: 0, y: 0, z: 0 };
+    const down = () => pb.pose === 'downed' || pb.subduedUntil > w.physicalTime;
+    for (let i = 0; i < 300 && down(); i++) stepFor(s, 1);
+    expect(down(), 'the player recovers from the fight').toBe(false);
     standBeside(w, pb, sb.pos, 1.2); stepFor(s, 0.2);
     expect(say(s, { type: 'interact', interactionId: `butcher:${sb.id}` }).result).toBe('accepted');
-    expect(player.inventory.map(id => w.item(id)).some(i => i?.type === 'meat' && i.tags.includes('species:woodland_boar'))).toBe(true);
+    const hasMeat = () => player.inventory.map(id => w.item(id)).some(i => i?.type === 'meat' && i.tags.includes('species:woodland_boar'));
+    // If a stint is still interrupted, the work stays on the carcass: go back to it.
+    let stints = 1; const refusals: string[] = [];
+    for (let i = 0; i < 600 && !hasMeat(); i++) {
+      stepFor(s, 1);
+      const working = player.mind.plan[0]?.type === 'butcher' && player.mind.plan[0].status !== 'failed' && player.mind.plan[0].status !== 'done';
+      if (!hasMeat() && !working && sb.present && stints < 30) {
+        standBeside(w, pb, sb.pos, 1.2); stepFor(s, 0.5);
+        const retry = say(s, { type: 'interact', interactionId: `butcher:${sb.id}` }).result; refusals.push(`${retry}/${pb.pose}/${player.physiology.fatigue.toFixed(2)}`); if (retry === 'accepted') stints++;
+      }
+    }
+    expect(hasMeat(), `after ${stints} stints, ${sb.butcheredSeconds ?? 0} s of work on the carcass; retries ${[...new Set(refusals)].join(' ')}`).toBe(true);
     expect(player.capability?.bySkill.hunting?.effectiveSeconds ?? 0).toBeGreaterThan(0);
     // 6. Back to the requester with the proof.
     standBeside(w, pb, w.primaryBody(victim.id)!.pos, 1.5); stepFor(s, 0.5);

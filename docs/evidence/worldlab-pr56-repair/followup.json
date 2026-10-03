@@ -1,0 +1,200 @@
+{
+  "previousHead": "b963cd7e6ee9ebacbbae53454e940d0137169ba7",
+  "previousCI": {
+    "run": 36880903874,
+    "conclusion": "failure",
+    "passed": 1821,
+    "failed": 3,
+    "failures": [
+      "agency default deadline 5432ms",
+      "pressure 918271 default deadline 5338ms",
+      "family trace: no silent sampled perspective"
+    ],
+    "build": "skipped",
+    "smoke": "skipped"
+  },
+  "diagnosis": "All later situations involving the subject were treated as the triggering matter, including unrelated confrontations. Select the trigger situation and matching theft item loss only; retain existing assertions and observation windows.",
+  "familyAfter": {
+    "checks": [
+      {
+        "name": "a situation was opened",
+        "pass": true,
+        "detail": "harm/resolved:recovered, property/active"
+      },
+      {
+        "name": "more than one mind learned of it",
+        "pass": true,
+        "detail": "19 people: Garrick Ironhand, Edda Ironhand, Tomas Reed, Mara Bramble, Hilda Vance, Ysolde Vance"
+      },
+      {
+        "name": "the same event meant materially different things",
+        "pass": true,
+        "detail": "personal significance ranged 0.08..1.00 across 19 who know of it"
+      },
+      {
+        "name": "knowledge produced concerns",
+        "pass": true,
+        "detail": "31 people carrying 224 concerns"
+      },
+      {
+        "name": "concerns changed what people did",
+        "pass": true,
+        "detail": "Garrick Ironhand:sleep, Edda Ironhand:sleep, Osric Bramble:sleep, Hilda Vance:sleep, Ysolde Vance:sleep, Wendel Crane:sleep"
+      },
+      {
+        "name": "relationships toward the actor moved",
+        "pass": true,
+        "detail": "26 people"
+      },
+      {
+        "name": "different people describe it differently",
+        "pass": true,
+        "detail": "6 distinct grounded lines from 6 speakers"
+      },
+      {
+        "name": "silence is a real outcome for the uninvolved",
+        "pass": true,
+        "detail": "2 of 8 had nothing worth saying"
+      },
+      {
+        "name": "a real secondary consequence occurred",
+        "pass": true,
+        "detail": "Tomas Reed is at 100% health (wound 0.00) | Tomas Reed took 10 blow(s) | Tomas Reed completed 0 work shift(s) since | Edda Ironhand: goal help → check_on → Tomas Reed (u=0.76)"
+      }
+    ],
+    "perspectives": [
+      {
+        "id": "p_3",
+        "standing": [
+          "the person it happened to"
+        ],
+        "belief": {
+          "key": "ev:e_11169",
+          "source": "witnessed",
+          "hops": 0,
+          "confidence": 1,
+          "claim": "Bors Ashwood -> Tomas Reed (attack)"
+        },
+        "line": "Watch yourself around Bors Ashwood. Bors Ashwood attacked Tomas Reed near Chapel of the Lantern-Bearer, I saw it myself. No one has answered for it."
+      },
+      {
+        "id": "p_5",
+        "standing": [
+          "spouse/introduced of Tomas Reed",
+          "introduced of Bors Ashwood"
+        ],
+        "belief": {
+          "key": "ev:e_11437",
+          "source": "told",
+          "from": "Bors Ashwood",
+          "hops": 1,
+          "confidence": 0.7,
+          "claim": "Hale Dorn -> Bors Ashwood (arrest_attempt)"
+        },
+        "line": "Hale Dorn came to take Bors Ashwood into custody, Bors Ashwood told me."
+      },
+      {
+        "id": "p_1",
+        "standing": [
+          "foster/employer/introduced of Tomas Reed",
+          "rival/introduced of Bors Ashwood",
+          "works at Ironhand's Smithy alongside Tomas Reed"
+        ],
+        "belief": {
+          "key": "ev:e_11169",
+          "source": "told",
+          "from": "Jory Fletcher",
+          "hops": 2,
+          "confidence": 0.44,
+          "claim": "Bors Ashwood -> Tomas Reed (attack)"
+        },
+        "line": "I'd stay clear of Bors Ashwood. Bors Ashwood attacked Tomas Reed near Chapel of the Lantern-Bearer, Jory Fletcher says so, though I only half believe it. No one has answered for it."
+      },
+      {
+        "id": "p_13",
+        "standing": [
+          "of the watch"
+        ],
+        "belief": null,
+        "line": null
+      },
+      {
+        "id": "p_37",
+        "standing": [
+          "unrelated traveler"
+        ],
+        "belief": null,
+        "line": null
+      },
+      {
+        "id": "p_10",
+        "standing": [
+          "introduced of Tomas Reed",
+          "introduced of Bors Ashwood"
+        ],
+        "belief": {
+          "key": "ev:e_11169",
+          "source": "told",
+          "from": "Hale Dorn",
+          "hops": 1,
+          "confidence": 0.62,
+          "claim": "Bors Ashwood -> Tomas Reed (attack)"
+        },
+        "line": "Bors Ashwood came to blows with Tomas Reed near Chapel of the Lantern-Bearer, I had it from Hale Dorn."
+      },
+      {
+        "id": "p_14",
+        "standing": [
+          "of the watch"
+        ],
+        "belief": {
+          "key": "ev:e_11169",
+          "source": "witnessed",
+          "hops": 0,
+          "confidence": 1,
+          "claim": "Bors Ashwood -> Tomas Reed (attack)"
+        },
+        "line": "I'd stay clear of Bors Ashwood. Bors Ashwood came to blows with Tomas Reed near Chapel of the Lantern-Bearer, I was there. No one has answered for it."
+      },
+      {
+        "id": "p_15",
+        "standing": [
+          "of the watch"
+        ],
+        "belief": {
+          "key": "ev:e_11169",
+          "source": "told",
+          "from": "Ysolde Vance",
+          "hops": 3,
+          "confidence": 0.3,
+          "claim": "Bors Ashwood -> Tomas Reed (attack)"
+        },
+        "line": "Bors Ashwood's trouble, if you ask me. Bors Ashwood came to blows with Tomas Reed near Chapel of the Lantern-Bearer, Ysolde Vance told me, if it's even true."
+      }
+    ]
+  },
+  "verification": {
+    "socialTraces": {
+      "files": 1,
+      "passed": 4,
+      "log": ".debug/isometric/repair-social-traces.log"
+    },
+    "focused": {
+      "files": 5,
+      "passed": 32,
+      "log": ".debug/isometric/repair-followup-focused.log"
+    },
+    "typecheck": "passed",
+    "performanceBefore": "pressure 1877.5674 aeeb0bebca72397d51d404f726a12743b8a99630fdfc30001c7415b7f48033bf\r\nagency 1893.6995000000002 fc2299b355df70f7b5311abed1ad67a0495d13b64e19269455749f35574f3add fc2299b355df70f7b5311abed1ad67a0495d13b64e19269455749f35574f3add",
+    "performanceAfter": "pressure 1797.301 aeeb0bebca72397d51d404f726a12743b8a99630fdfc30001c7415b7f48033bf\r\nagency 1853.4969999999998 fc2299b355df70f7b5311abed1ad67a0495d13b64e19269455749f35574f3add fc2299b355df70f7b5311abed1ad67a0495d13b64e19269455749f35574f3add",
+    "timingLimits": "Observational local profiles, not CI guarantees. Canonical replay hashes match. Original deadlines remain unchanged."
+  },
+  "sha256": {
+    "src/headless/social/trace.ts": "cc7fb20e4585e965785b0fd29ebeb09e6daad8518c4b64d788f2743876336788",
+    "src/sim/physical/nav.ts": "24a7d522088d1d6c9d505c1972ba6b89f45347bf99681ed00278d8185ed00b65",
+    "src/sim/core/spatial.ts": "becfd547fc2fd8ef56196d9431c039ce06e0150f5055bbd5ab98f33f03155761",
+    "tests/social-trace-matter.test.ts": "e862446d32d21241391a9123ad47a87e488898f4106a7d0299e8dc38e83e93f6",
+    "tests/navigation.test.ts": "afe239150808c8e110840bed1302ea90bada884d99872aa4939e43106cce441b",
+    "tests/spatial-index.test.ts": "5fa802452272721fa64467c5290371d59169676c753f7b73ff6c9ac859627232"
+  }
+}

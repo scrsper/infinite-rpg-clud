@@ -80,6 +80,25 @@ bool FTVCommonUIProjection::RunTest(const FString&) {
     }
     TestNotNull(TEXT("empty inventory has a desired focus target"),static_cast<UTVCommonActivatableWidget*>(Inventory)->NativeGetDesiredFocusTarget());
     Inventory->WidgetTree->ForEachWidget([&](UWidget* W){if(auto* Text=Cast<UTextBlock>(W))TestTrue(TEXT("text has a real font/composite font"),Text->GetFont().FontObject!=nullptr||Text->GetFont().CompositeFont.IsValid());});
+    // Projected carried items: only the server's available actions become buttons; an unavailable
+    // one is shown with its reason and cannot be submitted. The row identity travels unchanged.
+    {
+        auto* Carried=BuildWidget<UTVInventoryWidget>(PC);FTVUICommandRequested ItemSink;FString ActionId,ItemId;int32 ItemCommands=0;
+        ItemSink.AddLambda([&](ETVUICommand C,const FString& P,const FString& Sec,int32){if(C==ETVUICommand::ItemAction){ActionId=P;ItemId=Sec;++ItemCommands;}});
+        FTVUISnapshot Items;FTVUIItemRow Loaf;Loaf.Id=TEXT("i_loaf");Loaf.Label=TEXT("a round loaf");Loaf.Description.Add(TEXT("food"));
+        FTVUIActionRow Eat;Eat.Id=TEXT("consume:i_loaf");Eat.Kind=TEXT("eat");Eat.Label=TEXT("Eat a round loaf");Eat.bAvailable=true;Loaf.Actions.Add(Eat);
+        FTVUIActionRow Drop;Drop.Id=TEXT("drop:i_loaf");Drop.Kind=TEXT("drop");Drop.Label=TEXT("Drop a round loaf");Drop.bAvailable=false;Drop.Reason=TEXT("There is no clear ground at your feet to set it down.");Loaf.Actions.Add(Drop);
+        Items.Inventory.Add(Loaf);Carried->SetSnapshot(Items);Carried->SetCommandDelegate(&ItemSink);
+        auto ItemButtons=Buttons(Carried);TestEqual(TEXT("one available action plus Back; the refused one is not a button"),ItemButtons.Num(),2);
+        if(ItemButtons.Num()==2)ItemButtons[0]->OnClicked.Broadcast();
+        TestEqual(TEXT("available action routes its projected id"),ActionId,Eat.Id);TestEqual(TEXT("with its item"),ItemId,Loaf.Id);
+        bool ReasonShown=false;Carried->WidgetTree->ForEachWidget([&](UWidget* W){if(auto* T=Cast<UTextBlock>(W))ReasonShown|=T->GetText().ToString().Contains(Drop.Reason);});
+        TestTrue(TEXT("the refusal reason is readable"),ReasonShown);
+        Carried->SetSnapshot(Items);TestEqual(TEXT("an unchanged snapshot does not rebuild (focus survives)"),Buttons(Carried).Num(),2);
+        auto* Abilities=BuildWidget<UTVActionPanelWidget>(PC);FTVUIActionRow Train;Train.Id=TEXT("train");Train.Kind=TEXT("train");Train.Label=TEXT("Train");Train.bAvailable=false;Train.Reason=TEXT("You are too thirsty to practise.");
+        Abilities->UpdateAbilities({Train});Abilities->Configure(TEXT("Abilities"),FString());
+        TestEqual(TEXT("an unlearned or unready capacity offers no button (crouch and Back remain)"),Buttons(Abilities).Num(),2);
+    }
     auto* Container=BuildWidget<UTVContainerWidget>(PC);
     FTVUICommandRequested Sink;ETVUICommand Last=ETVUICommand::Back;FString Id;
     Sink.AddLambda([&](ETVUICommand C,const FString& P,const FString&,int32){Last=C;Id=P;});Container->SetCommandDelegate(&Sink);

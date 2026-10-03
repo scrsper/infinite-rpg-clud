@@ -98,7 +98,7 @@ const DEFAULT_GARMENT: GarmentShape = { upper: ['tunic'], lower: ['trousers'] };
 
 /** Canonical hair style -> the shape vocabulary a hair pack ships. */
 const HAIR_SHAPE: Record<string, string[]> = {
-  shaved: [], cropped: ['short'], short_swept: ['short'], topknot: ['bound', 'topknot'],
+  shaved: [], cropped: ['cropped', 'short'], short_swept: ['swept', 'short'], side_fringe: ['swept', 'medium'], topknot: ['bound', 'topknot'],
   warrior_bun: ['bound', 'bun'], tied_back: ['bound', 'medium'], ponytail: ['bound', 'ponytail'],
   loose_long: ['long', 'loose'], wavy_long: ['long', 'loose', 'wavy'], braided: ['bound', 'braid'],
   twin_braid: ['bound', 'braid'], updo_ornamented: ['bound', 'updo'], bob: ['short', 'loose'],
@@ -177,7 +177,9 @@ export function slotRules(traits: ProjectedAppearanceDescription): SlotRule[] {
     // `modern` too: a whole-body mesh with baked-in modern clothing (Quantum's tactical vest and
     // cap) dressed an Ashford villager even though every garment slot already refused modern kit.
     { slot: 'body', required: [age], preferred: compact([cut, frame]), forbidden: age === 'child' ? ['placeholder', 'modern', 'armor', 'wholeBody'] : ['placeholder', 'modern'], relax: [age], optional: false },
-    { slot: 'head', required: [age], preferred: compact([cut, traits.faceShape, traits.skinTone]), forbidden: ['placeholder'], relax: [age], optional: false },
+    // A face carries its complexion (the catalogue tags it with the skin tones it can represent);
+    // a wrong complexion is the most visible mismatch, so it outranks face shape.
+    { slot: 'head', required: [age], preferred: compact([cut, traits.skinTone, traits.faceShape]), forbidden: ['placeholder'], relax: [age], optional: false },
     ...(hair.length
       ? [{ slot: 'hair' as const, required: [hair[0]], preferred: compact([...hair.slice(1), cut, traits.hairColor]), forbidden: [], relax: [hair[0]], optional: true }]
       : []),

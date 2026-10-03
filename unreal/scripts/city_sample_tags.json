@@ -1,0 +1,22 @@
+{
+  "_about": "Extra catalogue tags for City Sample Crowd assets that their names and folders do not carry. Faces: the canonical skin tones (SkinToneId) each face can represent — each face is a cell of the shared FaceColorAtlas (AtlasSelector = face index - 1; female cells are the top two rows, male the bottom two), read off the exported atlas (.debug/human/atlas/face.png); every tone has at least one face per sex. Hair: the shape a canonical hair style asks for (`swept`, `cropped`). Applied by audit_character_assets.py and by scripts/foundry/tag-catalogue.mjs.",
+  "f_001_nrw_FaceMesh": ["brown", "deep"],
+  "f_002_nrw_FaceMesh": ["pale", "fair"],
+  "f_003_nrw_FaceMesh": ["porcelain", "pale"],
+  "f_004_nrw_FaceMesh": ["warm", "tan"],
+  "f_005_nrw_FaceMesh": ["tan", "olive", "bronze"],
+  "f_006_nrw_FaceMesh": ["pale", "fair"],
+  "m_001_nrw_FaceMesh": ["brown", "deep"],
+  "m_002_nrw_FaceMesh": ["porcelain", "pale", "fair"],
+  "m_003_nrw_FaceMesh": ["fair", "warm"],
+  "m_004_nrw_FaceMesh": ["warm", "tan"],
+  "m_005_nrw_FaceMesh": ["tan", "olive", "bronze"],
+  "m_006_nrw_FaceMesh": ["olive", "brown"],
+  "Hair_M_SideSweptFringe": ["swept"],
+  "Hair_S_PulledBack": ["swept"],
+  "Hair_S_BuzzCut": ["cropped"],
+  "Hair_S_AfroFade": ["cropped"],
+  "Hair_S_CurlyFade": ["cropped"],
+  "Hair_S_HairLoss": ["cropped"],
+  "Hair_S_Pixie": ["cropped"]
+}

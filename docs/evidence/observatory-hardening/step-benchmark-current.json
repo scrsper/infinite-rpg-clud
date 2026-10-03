@@ -1,0 +1,49 @@
+{
+  "input": "D:/TornVeilValidation/observatory-hardening-20260930/revision-21/repaired-918271/day-29.875.save.json.gz",
+  "hours": 3,
+  "instrumentation": "No in-step profiler or event listeners. Includes cold path caches on each independent restore. Three consecutive trials; shared-host wall times.",
+  "runs": [
+    {
+      "run": 0,
+      "initialHash": "e2d1a1631df2bc01b5455f131b5bf6e8c0ddcfa38bb9f8fe50af972b9ac361c2",
+      "finalHash": "461b057fa012be7574cd973a1a4b91366e2b7618cd269eba2e9e0c1f6b7698f4",
+      "worldTime": 11258400,
+      "steps": 1200,
+      "wallMs": 5598.6724,
+      "median": 3.310099999999693,
+      "p95": 12.315399999999954,
+      "max": 115.76600000000053,
+      "finalStep": 12.844199999999546,
+      "navSearches": 377,
+      "navCacheHits": 46
+    },
+    {
+      "run": 1,
+      "initialHash": "e2d1a1631df2bc01b5455f131b5bf6e8c0ddcfa38bb9f8fe50af972b9ac361c2",
+      "finalHash": "461b057fa012be7574cd973a1a4b91366e2b7618cd269eba2e9e0c1f6b7698f4",
+      "worldTime": 11258400,
+      "steps": 1200,
+      "wallMs": 5019.1093,
+      "median": 2.861399999999776,
+      "p95": 12.253199999999197,
+      "max": 103.35280000000057,
+      "finalStep": 11.040199999999459,
+      "navSearches": 377,
+      "navCacheHits": 46
+    },
+    {
+      "run": 2,
+      "initialHash": "e2d1a1631df2bc01b5455f131b5bf6e8c0ddcfa38bb9f8fe50af972b9ac361c2",
+      "finalHash": "461b057fa012be7574cd973a1a4b91366e2b7618cd269eba2e9e0c1f6b7698f4",
+      "worldTime": 11258400,
+      "steps": 1200,
+      "wallMs": 4847.0641,
+      "median": 2.7181999999993423,
+      "p95": 11.62420000000202,
+      "max": 99.18130000000019,
+      "finalStep": 13.316500000000815,
+      "navSearches": 377,
+      "navCacheHits": 46
+    }
+  ]
+}

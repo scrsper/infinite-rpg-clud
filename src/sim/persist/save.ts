@@ -232,12 +232,13 @@ function checkpointData(world: World, compactEvents: boolean): { snapshot: Recor
   const chronicleCompactedEventIds = [...world.chronicleCompactedEventIds];
   const chronicleEventAliases = [...world.chronicleEventAliases.entries()];
   const historicalSignificance = [...world.historicalSignificance.entries()];
+  const lastCompactionEventCount = world.lastCompactionEventCount;
   // v0.8 §P1 (independent audit §3.5): the actual PRNG stream position at save time, not just
   // the original generation seed — see `core/rng.ts`'s `RNG.state()` doc. Additive/optional (an
   // old save simply lacks these fields), so no SAVE_VERSION bump is needed — `deserialize` below
   // falls back to today's behavior (rewind to post-generation position) when absent.
   const rng = world.rng.state(); const weatherRng = world.weatherRng.state(); const demographicRng = world.demographicRng.state();
-  return { snapshot: { version: SAVE_VERSION, ecology: world.ecology, martialLearning: martialPersistenceState(world), creatures: world.creatures(), controllers: world.persons().filter(isExternallyControlled).map(p => ({ id: p.id, acting: hasExternalIntention(p) })), execution, pendingStimuli: world.pendingStimuli.map(e => e.id), runTally: world.runTally, kernel: world.kernel, seed: world.seed, physicalPlaces: world.places(), settlements: world.settlements(), settlementSites: world.settlementSites, geography: world.geography?.spec, wildernessRegions: [...world.wildernessRegions], clock: world.clock.state(), physicalTime: world.physicalTime, weather: world.weather, counters: world.getCounters(), playerId: world.playerId, persons, bodies, items, containers, places, factions, conflicts, fields, haulTasks, resourceNodes, constructionProjects, requests, fires, situations, workStints, households, chronicleEras, chronicleCompactedEventIds, chronicleEventAliases, historicalSignificance, diffs, doors, events: events, eventEncoding: eventTable ? { format: eventTable.format, appearances: eventTable.appearances } : undefined, rng, weatherRng, demographicRng, savedAt: Date.now() }, encodedFields: eventTable ? { events: eventTable.rows } : {} };
+  return { snapshot: { version: SAVE_VERSION, ecology: world.ecology, martialLearning: martialPersistenceState(world), creatures: world.creatures(), controllers: world.persons().filter(isExternallyControlled).map(p => ({ id: p.id, acting: hasExternalIntention(p) })), execution, pendingStimuli: world.pendingStimuli.map(e => e.id), runTally: world.runTally, kernel: world.kernel, seed: world.seed, physicalPlaces: world.places(), settlements: world.settlements(), settlementSites: world.settlementSites, geography: world.geography?.spec, wildernessRegions: [...world.wildernessRegions], clock: world.clock.state(), physicalTime: world.physicalTime, weather: world.weather, counters: world.getCounters(), playerId: world.playerId, persons, bodies, items, containers, places, factions, conflicts, fields, haulTasks, resourceNodes, constructionProjects, requests, fires, situations, workStints, households, chronicleEras, chronicleCompactedEventIds, chronicleEventAliases, historicalSignificance, lastCompactionEventCount, diffs, doors, events: events, eventEncoding: eventTable ? { format: eventTable.format, appearances: eventTable.appearances } : undefined, rng, weatherRng, demographicRng, savedAt: Date.now() }, encodedFields: eventTable ? { events: eventTable.rows } : {} };
 }
 
 /** Keep the save bounded without breaking any retained event's causal references. */
@@ -356,6 +357,12 @@ export function deserialize(raw: string): { world: World; gen: ReturnType<typeof
     world.chronicleEventAliases = new Map(data.chronicleEventAliases ?? world.chronicleEras.flatMap(era => era.sourceEventIds.map(id => [id, era.anchorEventId])));
     if (data.historicalSignificance) world.historicalSignificance = new Map(data.historicalSignificance);
     else world.rebuildHistoricalSignificance();
+    // Old saves lack this maintenance boundary and retain their previous cold-start
+    // behavior. New saves resume the exact batch instead of retiring history early.
+    if (data.lastCompactionEventCount !== undefined) {
+      if (!Number.isSafeInteger(data.lastCompactionEventCount) || data.lastCompactionEventCount < 0) return null;
+      world.lastCompactionEventCount = data.lastCompactionEventCount;
+    }
 
     for (const s of data.items) { const i = world.item(s.id); if (i) Object.assign(i, s); else world.add({ ...s, tags: [...s.tags], pos: s.pos ? { ...s.pos } : null, provenance: s.provenance.map((entry: Item['provenance'][number]) => ({ ...entry })) } as Item); }
     for (const s of data.containers ?? []) {
@@ -387,7 +394,6 @@ export function deserialize(raw: string): { world: World; gen: ReturnType<typeof
     for (const s of data.places) { const p = world.place(s.id); if (!p) continue; p.ownerId = s.ownerId; s.anchors.forEach((o: string | null, i: number) => { if (p.anchors[i]) p.anchors[i].ownerId = o ?? undefined; }); }
     for (const s of data.factions ?? []) { const f = world.faction(s.id); if (!f) continue; f.leaderId = s.leaderId; f.knowledge = s.knowledge; }
     if (data.diffs?.length) { world.grid.recording = false; world.grid.applyDiffs(data.diffs); world.grid.initCaches(); world.nav.rebuildAll(); world.grid.dirtyChunks.clear(); }
-    if (data.doors?.length) world.grid.restoreDoorStates(data.doors);
     // v0.2.4: canonical plot state is authoritative — re-project it onto the grid (harmless if
     // the diffs already restored the same blocks; corrects any drift).
     if (world.fields.length) syncFieldBlocks(world);
@@ -396,6 +402,9 @@ export function deserialize(raw: string): { world: World; gen: ReturnType<typeof
     // blocks, this restores the Place's identity/anchors). Idempotent.
     if (world.resourceNodes.length) syncResourceNodeBlocks(world);
     for (const proj of world.constructionProjects) if (proj.status === 'complete') materializeStructure(world, proj);
+    // Reconstructing a completed structure clears and rebuilds its door voxel. Restore
+    // the saved open/closed state after that projection, so loading is not a door action.
+    if (data.doors?.length) world.grid.restoreDoorStates(data.doors);
     if (world.resourceNodes.length || world.constructionProjects.some(p => p.status === 'complete')) { world.grid.dirtyChunks.clear(); world.nav.rebuildAll(); }
     world.grid.recording = true;
     world.rebuildLivingIndices();

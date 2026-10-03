@@ -20,6 +20,10 @@ public:
     void SetMessage(const FString& Message) { Message_ = Message; }
     FTVSignInSubmitted OnSubmitted;
     void FocusFirstControl();
+    /** Exactly what the "begin a new life" button does, with the fields as they stand. */
+    void BeginNewLife() { Submit(true); }
+    /** Exactly what the "continue" button does. */
+    void ContinueCharacter() { Submit(false); }
 protected:
     virtual TSharedRef<SWidget> RebuildWidget() override;
     virtual void NativeConstruct() override;

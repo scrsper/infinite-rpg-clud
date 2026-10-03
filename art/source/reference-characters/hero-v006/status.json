@@ -1,0 +1,29 @@
+{
+  "slot": "hero",
+  "macro": {
+    "gender": 0.0,
+    "age": 0.4,
+    "muscle": 0.42,
+    "weight": 0.43,
+    "proportions": 0.5,
+    "height": 0.5,
+    "cupsize": 0.5,
+    "firmness": 0.5,
+    "race": {
+      "asian": 0.33,
+      "caucasian": 0.33,
+      "african": 0.33
+    }
+  },
+  "height_m": 1.4882500171661377,
+  "status": "silhouette workbench; face likeness and cloth weighting unapproved",
+  "source": "MPFB 2.0.17; no VRoid/procedural loft body reused",
+  "remaining": [
+    "eyes/face target fitting",
+    "sleeve pattern opening",
+    "coat swing weights",
+    "rig finger mapping",
+    "reference comparison",
+    "NPC generation"
+  ]
+}

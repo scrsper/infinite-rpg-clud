@@ -1,0 +1,27 @@
+{
+  "baseline": "fe07feb42aee8077540f236bcd3b9f3dad0c0fea",
+  "checks": {
+    "appearanceTests": "2 PASS",
+    "typecheck": "PASS",
+    "privateBuild": "PASS 3346 modules",
+    "materialPassBrowser": "22 PASS before final crimson mesh mapping",
+    "finalScene": "PASS same controlled body, canonical damage, ornate meshes; input video captured"
+  },
+  "sourceSha256": {
+    "scripts/web/Play-CameraCombat.ps1": "35a37615d87647413c89227fb0a010922b540b9f2908f82c8b0c0477b7e4ff1a",
+    "scripts/web/playable-scene.ts": "7cf178e587f5c1c7f9dfd05e748f993daa1226c34c6159cb0acf6d4988ce3321",
+    "src/web/actors/appearanceMap.ts": "71bea76d62faa66cb52aa1118549ec06cd90d5012f6170893ac88e48ca210de4",
+    "src/web/actors/characterMaterials.ts": "318c8efc5207403c42efe28aeca235bc2a6a4521f06461c17f2b3b41ff0ebe72",
+    "src/web/render/materials.ts": "80588a8f431e13b944ae28d894b3cb09e3d60d00d06a30253942ad36d8b049cc",
+    "tests/web-appearance.test.ts": "b7390c07786ef8dfc5fa20138adb856d8be89bd26f43be3a3367fcd8ffb0149b"
+  },
+  "artifactSha256": {
+    "06-playable-courtyard.png": "4332990adffe2f26f483f72582c7fa93ecd3ed5bc9b42679a37ef86b9bf310b8",
+    "07-character-readability.png": "1710b08bcb17308037ead07715a105cee396d8f163620bc313f254823af313e8",
+    "scene-visual-playthrough.webm": "8e14c2f37d3100148d5be70ed629a971ba6aa719fba422271cc1727e71d39fc9",
+    "playable-scene.json": "340833dee9f7edec3500b776dd68ea44a656efb77386e159a14ed5add93eaf1a",
+    "browser-evidence.json": "3c6f8322c980efbb4c2805e9a6e9dc3c956f7f5d8f57facff7b8dffde77ff40a"
+  },
+  "libraryScreenshot": "file_0000000065d48230ae9524c310132839",
+  "localXattrsSupported": false
+}

@@ -1,0 +1,95 @@
+{
+  "at": "2026-10-01T18:03:44.169445+00:00",
+  "branch": "codex/orbit-combat-scene",
+  "base": "8084a3bbef9b7ec70c7626c90300ec06e6c79cd8",
+  "localMainUnchanged": "223264d46ff31f6457bdf4349133e4cadc45227e",
+  "runtime": "Node 22.23.2 / installed Chrome",
+  "verification": {
+    "webAggregate": {
+      "files": 8,
+      "tests": 58,
+      "result": "PASS",
+      "command": "node node_modules/vitest/vitest.mjs run tests/web-isometric.test.ts tests/web-input.test.ts tests/web-client-logic.test.ts tests/web-structures.test.ts tests/web-boundary.test.ts tests/web-governor.test.ts tests/web-differential.test.ts tests/web-gateway.test.ts",
+      "laterChanges": "Camera conversation-return transition and restoring unchanged shoulder zoom were followed by all 6 camera tests; no other tested gameplay source changed."
+    },
+    "finalCameraTests": {
+      "tests": 6,
+      "result": "PASS"
+    },
+    "typecheck": "PASS after final source changes",
+    "privateProductionBuild": {
+      "modules": 3346,
+      "result": "PASS",
+      "bundle": ".debug/orbit/bundle"
+    },
+    "browser": {
+      "checks": 22,
+      "result": "PASS",
+      "errors": [],
+      "modelRequests": [],
+      "videoExportAndOwnedCleanup": "PASS / exit 0"
+    },
+    "actualPlayableScene": {
+      "result": "PASS",
+      "rendering": {
+        "view": "orbit",
+        "playerActor": true,
+        "enemyActor": true,
+        "camera": {
+          "x": 242.7261845437142,
+          "y": 29.909218239783215,
+          "z": 80.53558438500694
+        },
+        "meshes": 1142,
+        "materials": 279,
+        "fps": 144.64802316031103,
+        "pendingBuilds": 0
+      },
+      "autonomousCanonicalAttack": "hit",
+      "playerHealthBefore": 80,
+      "playerHealthAfter": 63.37808341457413,
+      "castFallback": true
+    },
+    "launcherCheckOnly": "PASS / Node 22.23.2 / private bundle and generated character kit present"
+  },
+  "notRun": [
+    "human playtest",
+    "physical gamepad acceptance",
+    "full simulation regression",
+    "Unreal checks",
+    "remote CI",
+    "long-session/multi-day soak"
+  ],
+  "sourceSHA256": {
+    "src/web/app.ts": "b4c4b2c5bad189f03a9c4bf1e915bba86d1137e3c1760f1fed2694f898552687",
+    "src/web/game/bindings.ts": "b569c4a796a7ca751c21a5e31ac3e079fa00f0913a1b643d68cc7fdc2ef7e944",
+    "src/web/game/cameraRig.ts": "af2c9160f01a801f2381c9a71b34aaab1c079d2a5b1635f314cea8c65b53b24b",
+    "src/web/game/controller.ts": "a374f4cdee4e231dac01217a73fa7ed283def2a9167b26fc0db9de7159d25be0",
+    "src/web/game/input.ts": "3cf2e188a956231ad5da487b538fa3e33db12720f2162943b9c5f48fb78dec10",
+    "src/web/ui/settingsPanel.ts": "fc02bb1f863c5bd37a2c41787f6e1dc93d23b6e880a469b30e31de26267d6e7b",
+    "src/web/world/props.ts": "b1059227993889270ed9fb5be373dd117026cba0fdc7f715f834ff2eb541692b",
+    "src/web/world/regionManager.ts": "62c4bcccd17b734d9b1a27f9bd9ec83905dad3f1109ccfb01bc370f83e0d2a5e",
+    "scripts/web/isometric.ts": "3b8869d70c8d78ca52bbe593553aa0c88a63c6d3615fe8a5b7a907f5d3a51d3b",
+    "scripts/web/playable-scene.ts": "bd1568188e3a05556721afe42697390aa0fcd2fe4786a751fae7df6ee1d77ad4",
+    "scripts/web/Play-Web.ps1": "9f5228bd7fcd832575c61b23677ddeb7511b5fba3af99379e512e44adb187826",
+    "scripts/web/Play-CameraCombat.ps1": "708d4638e66237d812631b9d4da23cca658fd4fd58bcccf045aaa822d4d4c9f1",
+    "tests/web-input.test.ts": "205b9d0914dcb2bed056bace607b24d7e3747e806955f24f4e6d75d85446cf8f",
+    "tests/web-isometric.test.ts": "a9ae2c903a0d0c748d6a058c647c4afcf71326b48f11a8fd9b422f50a4628e68",
+    "Play Torn Veil Camera Combat.cmd": "2b9617aaf962787eeb834b5d7bd7c317aa90d5cf38ff3ed8e6e83af7dd642ac3"
+  },
+  "artifactsSHA256": {
+    "01-isometric-settlement.png": "31dcd380a0df8b7fcc371e8619b760f46a410a940dc4bc3a9ca94fc3983bf984",
+    "02-after-movement.png": "3ee8323415aa0264d5c0268578e7735d0b395072bc1548034da495ea865a4fef",
+    "03-isometric-conversation.png": "b0ba28244153786317a28c88fec943813bfe47e5e4ed0a82bbb9c0c584e00b6f",
+    "03b-trade-confirm.png": "29656c028293b1f4207b6c7ec6e56a4ca4407d4e39f4a2413f728e81b376cc3a",
+    "04-isometric-cutaway.png": "5e02c99faac2f8bb369011c45fd05fa845fe166511a167c0af7fb516d0e11e8c",
+    "04b-interior-traversal.png": "5d0e7175a7743017c9a05fcb3eebffc0f0640f7aef075d5afe46de082a98e93d",
+    "04c-interior-exit.png": "259e742771258aa8e0c9c2de205d898cbf124e43a7aa1cb2f4b523bb81f039ff",
+    "05-interior-combat.png": "9cd40241407067ab078728a4c80c78fb49917a1d794c3eb6fbcb5bc231433791",
+    "05-isometric-action.png": "5608a06b0c24284982e0cea1f84af6a0cf8b3f27b47f55f641dba80e62a7ee4b",
+    "06-playable-courtyard.png": "7d53cb7760fbde1fe389263b0c66e81f713a808adf3059299acd9c74a397b652",
+    "browser-evidence.json": "1b235f32627d490a7663e56a0f741d3f1821382d2fd7e5de3c19e0ce42f3d83e",
+    "orbit-playthrough.webm": "2061180f3627dc5bd25b2c5177801abf34bb3cf9f4b385462db1940b97dc3220",
+    "playable-scene.json": "0b1f192f5b64281e2df9d08c438e2cb6120bb812e1cc2b04ccd2ce28e2edeb00"
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "run": 36821844547,
+  "head": "302aa8cb5a3be4cb2eb376c8263e451d3c6418c3",
+  "conclusion": "failure",
+  "workerNode20": "passed",
+  "workerNode22": "passed",
+  "typecheck": "passed",
+  "normal": {
+    "files": 168,
+    "passedFiles": 163,
+    "failedFiles": 5,
+    "tests": 1811,
+    "passedTests": 1805,
+    "failedTests": 6,
+    "durationSeconds": 3480.03
+  },
+  "failures": [
+    {
+      "file": "agency-worldlab.test.ts",
+      "failedTests": 1,
+      "reason": "5000ms timeout",
+      "measuredMs": 6195
+    },
+    {
+      "file": "causal-pressure.test.ts",
+      "failedTests": 2,
+      "reason": "5000ms timeout",
+      "measuredMs": [
+        6394,
+        5822
+      ]
+    },
+    {
+      "file": "embodied-economy.test.ts",
+      "failedTests": 1,
+      "reason": "5000ms timeout",
+      "measuredMs": 5149
+    },
+    {
+      "file": "playable-vista.test.ts",
+      "failedTests": 1,
+      "reason": "5000ms timeout",
+      "measuredMs": 7350
+    },
+    {
+      "file": "stress-benchmarks.test.ts",
+      "failedTests": 1,
+      "reason": "60000ms timeout",
+      "measuredMs": 60761
+    }
+  ],
+  "build": "skipped",
+  "smoke": "skipped",
+  "focusedLocalNode22": {
+    "files": 5,
+    "tests": 68,
+    "result": "passed",
+    "budgets": "unchanged"
+  },
+  "executionChange": "Full gate uses documented Desktop/live Node 22; actual Node 20/22 checkpoint compatibility jobs retained. No timeout/assertion/simulation changes.",
+  "nextHeadCi": "Verify independently after follow-up push; no remote pass inferred."
+}

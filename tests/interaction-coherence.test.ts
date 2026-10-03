@@ -353,7 +353,8 @@ describe('reporting: progress toward a real outcome', () => {
     for (let i = 0; i < MAX_REPORT_ATTEMPTS; i++) noteReportFailed(tw.world, witness, key, guard.id, 'nobody there');
     expect(witness.mind.reports![key].status).toBe('no_authority');
 
-    witness.mind.percepts = [{ entityId: guard.id, bodyId: tw.world.primaryBody(guard.id)!.id, pos: v(20, 1, 20), distance: 2, how: 'saw', tick: tw.world.now }];
+    const body = tw.world.primaryBody(guard.id)!; body.pos = v(7, 1, 5);
+    witness.mind.percepts = [{ entityId: guard.id, bodyId: body.id, pos: { ...body.pos }, distance: 2, how: 'saw', tick: tw.world.now }];
     const r = refreshReport(tw.world, witness, witness.knowledge[key], [guard]);
     expect(r.status).toBe('seeking');
     expect(shouldSeekAuthority(tw.world, r)).toBe(true);

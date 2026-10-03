@@ -1,0 +1,1912 @@
+{
+  "classification": "A",
+  "sourceCommit": "f7380cb",
+  "seed": 918271,
+  "actor": "p_26",
+  "name": "Kestrel",
+  "worst": {
+    "type": "goal_churn",
+    "entity": "p_26",
+    "occurrences": 355,
+    "firstSeen": 11170146,
+    "lastSeen": 11176518,
+    "relatedEvents": [
+      "e_473955",
+      "e_473965",
+      "e_473969",
+      "e_473974",
+      "e_473978",
+      "e_473982",
+      "e_473987",
+      "e_473995",
+      "e_474003",
+      "e_474013",
+      "e_474017",
+      "e_474023",
+      "e_474029",
+      "e_474034",
+      "e_474038",
+      "e_474041",
+      "e_474046",
+      "e_474050",
+      "e_474053",
+      "e_474059"
+    ],
+    "data": {
+      "windowHours": 3
+    }
+  },
+  "rows": [
+    {
+      "event": {
+        "id": "e_473955",
+        "tick": 11170146,
+        "type": "goal_changed",
+        "category": "cognition",
+        "actor": "p_26",
+        "placeId": "pl_34",
+        "data": {
+          "from": "work",
+          "fromUtility": 0.49512356990664963,
+          "to": "work",
+          "utility": 0.4905363962863485,
+          "reasons": [
+            "I normally hunt at this time; other concerns may matter more",
+            "",
+            "",
+            "concern: short of meat at them (0.11)",
+            "there is no meat at The Gilded Boar",
+            "meat is what my trade puts out"
+          ],
+          "key": "work:pl_34"
+        },
+        "causes": [],
+        "effects": [],
+        "perceivedBy": [],
+        "significance": 0.12,
+        "summary": "Kestrel: goal work → work @ the northern forest (u=0.49)"
+      },
+      "actorAtEmission": {
+        "id": "p_26",
+        "name": "Kestrel",
+        "alive": true,
+        "needs": {
+          "hunger": 0.3029316666668661,
+          "energy": 0.12020939999431957,
+          "social": 0.8778333333332531,
+          "comfort": 0,
+          "thirst": 0.07857712121212079
+        },
+        "wealth": 33,
+        "homeId": "pl_24",
+        "workId": "pl_34",
+        "householdId": "hh_14",
+        "inventory": [
+          {
+            "id": "i_6",
+            "kind": "item",
+            "name": "a hunting knife",
+            "createdAt": 8666400,
+            "tags": [],
+            "type": "dagger",
+            "ownerId": "p_26",
+            "holderId": "p_26",
+            "pos": null,
+            "placeId": null,
+            "containerId": null,
+            "provenance": [
+              {
+                "tick": -22869600,
+                "from": null,
+                "to": "p_26",
+                "how": "owned"
+              }
+            ],
+            "value": 15,
+            "damage": 14,
+            "quantity": 1,
+            "description": "",
+            "named": false
+          }
+        ],
+        "bodies": [
+          {
+            "id": "b_26",
+            "pos": {
+              "x": 129.59978244754998,
+              "y": 15,
+              "z": 40.08357622922267
+            },
+            "health": 80,
+            "maxHealth": 80,
+            "injuries": {
+              "head": 0.31566852981201005,
+              "torso": 0.220727338159791,
+              "leg": 0.20550629492544834
+            },
+            "dead": false,
+            "present": true,
+            "path": null,
+            "pathGoal": {
+              "x": 130,
+              "y": 15,
+              "z": 39
+            }
+          }
+        ],
+        "goal": {
+          "type": "work",
+          "utility": 0.4905363962863485,
+          "reasons": [
+            "I normally hunt at this time; other concerns may matter more",
+            "",
+            "",
+            "concern: short of meat at them (0.11)",
+            "there is no meat at The Gilded Boar",
+            "meat is what my trade puts out"
+          ],
+          "createdAt": 11170146,
+          "key": "work:pl_34",
+          "targetPlace": "pl_34",
+          "data": {
+            "label": "hunt"
+          }
+        },
+        "plan": [
+          {
+            "status": "pending",
+            "type": "goto",
+            "pos": {
+              "x": 130,
+              "y": 15,
+              "z": 39
+            },
+            "placeId": "pl_34"
+          },
+          {
+            "status": "pending",
+            "type": "gather",
+            "pos": {
+              "x": 130,
+              "y": 15,
+              "z": 39
+            },
+            "duration": 1800,
+            "data": {
+              "nodeId": "node_18"
+            }
+          }
+        ],
+        "decision": {
+          "tick": 11170146,
+          "candidates": [
+            {
+              "type": "work",
+              "key": "work:pl_34",
+              "utility": 0.4905363962863485,
+              "reasons": [
+                "I normally hunt at this time; other concerns may matter more",
+                "concern: short of meat at them (0.11)",
+                "there is no meat at The Gilded Boar",
+                "meat is what my trade puts out"
+              ]
+            },
+            {
+              "type": "socialize",
+              "key": "socialize:pl_1",
+              "utility": 0.45471766666662505,
+              "reasons": [
+                "social need 0.88",
+                "my appetite for company"
+              ]
+            },
+            {
+              "type": "provision_home",
+              "key": "provision_home:pl_7",
+              "utility": 0.425,
+              "reasons": [
+                "the household pantry is running low",
+                "I can bring food home"
+              ]
+            },
+            {
+              "type": "eat",
+              "key": "eat:pl_34",
+              "utility": 0.17263850000017952,
+              "reasons": [
+                "hunger 0.30"
+              ]
+            },
+            {
+              "type": "idle",
+              "key": "idle:",
+              "utility": 0.1,
+              "reasons": [
+                "nothing better to do"
+              ]
+            },
+            {
+              "type": "sleep",
+              "key": "sleep:pl_24",
+              "utility": 0.008188459994887612,
+              "reasons": [
+                "energy need 0.12"
+              ]
+            }
+          ],
+          "chosen": "work:pl_34",
+          "switched": true,
+          "note": "reconsidered failed work"
+        },
+        "commitment": null,
+        "investigated": [],
+        "noFoodUntil": 9984585,
+        "percepts": [
+          {
+            "entityId": "p_16",
+            "bodyId": "b_16",
+            "how": "heard",
+            "tick": 11170146,
+            "pos": {
+              "x": 124.0029342118674,
+              "y": 14,
+              "z": 41.999021929377534
+            },
+            "distance": 5.915542443724415
+          }
+        ]
+      }
+    },
+    {
+      "event": {
+        "id": "e_473965",
+        "tick": 11170164,
+        "type": "goal_changed",
+        "category": "cognition",
+        "actor": "p_26",
+        "placeId": "pl_34",
+        "data": {
+          "from": "work",
+          "fromUtility": 0.4905363962863485,
+          "to": "work",
+          "utility": 0.49054331177262744,
+          "reasons": [
+            "I normally hunt at this time; other concerns may matter more",
+            "",
+            "",
+            "concern: short of meat at them (0.11)",
+            "there is no meat at The Gilded Boar",
+            "meat is what my trade puts out"
+          ],
+          "key": "work:pl_34"
+        },
+        "causes": [],
+        "effects": [],
+        "perceivedBy": [],
+        "significance": 0.12,
+        "summary": "Kestrel: goal work → work @ the northern forest (u=0.49)"
+      },
+      "actorAtEmission": {
+        "id": "p_26",
+        "name": "Kestrel",
+        "alive": true,
+        "needs": {
+          "hunger": 0.3037038888890883,
+          "energy": 0.120104619901727,
+          "social": 0.878333333333253,
+          "comfort": 0,
+          "thirst": 0.08005136363636323
+        },
+        "wealth": 33,
+        "homeId": "pl_24",
+        "workId": "pl_34",
+        "householdId": "hh_14",
+        "inventory": [
+          {
+            "id": "i_6",
+            "kind": "item",
+            "name": "a hunting knife",
+            "createdAt": 8666400,
+            "tags": [],
+            "type": "dagger",
+            "ownerId": "p_26",
+            "holderId": "p_26",
+            "pos": null,
+            "placeId": null,
+            "containerId": null,
+            "provenance": [
+              {
+                "tick": -22869600,
+                "from": null,
+                "to": "p_26",
+                "how": "owned"
+              }
+            ],
+            "value": 15,
+            "damage": 14,
+            "quantity": 1,
+            "description": "",
+            "named": false
+          }
+        ],
+        "bodies": [
+          {
+            "id": "b_26",
+            "pos": {
+              "x": 129.59978244754998,
+              "y": 15,
+              "z": 40.08357622922267
+            },
+            "health": 80,
+            "maxHealth": 80,
+            "injuries": {
+              "head": 0.31566852981201005,
+              "torso": 0.220727338159791,
+              "leg": 0.20550629492544834
+            },
+            "dead": false,
+            "present": true,
+            "path": null,
+            "pathGoal": {
+              "x": 130,
+              "y": 15,
+              "z": 39
+            }
+          }
+        ],
+        "goal": {
+          "type": "work",
+          "utility": 0.49054331177262744,
+          "reasons": [
+            "I normally hunt at this time; other concerns may matter more",
+            "",
+            "",
+            "concern: short of meat at them (0.11)",
+            "there is no meat at The Gilded Boar",
+            "meat is what my trade puts out"
+          ],
+          "createdAt": 11170164,
+          "key": "work:pl_34",
+          "targetPlace": "pl_34",
+          "data": {
+            "label": "hunt"
+          }
+        },
+        "plan": [
+          {
+            "status": "pending",
+            "type": "goto",
+            "pos": {
+              "x": 130,
+              "y": 15,
+              "z": 39
+            },
+            "placeId": "pl_34"
+          },
+          {
+            "status": "pending",
+            "type": "gather",
+            "pos": {
+              "x": 130,
+              "y": 15,
+              "z": 39
+            },
+            "duration": 1800,
+            "data": {
+              "nodeId": "node_18"
+            }
+          }
+        ],
+        "decision": {
+          "tick": 11170164,
+          "candidates": [
+            {
+              "type": "work",
+              "key": "work:pl_34",
+              "utility": 0.49054331177262744,
+              "reasons": [
+                "I normally hunt at this time; other concerns may matter more",
+                "concern: short of meat at them (0.11)",
+                "there is no meat at The Gilded Boar",
+                "meat is what my trade puts out"
+              ]
+            },
+            {
+              "type": "socialize",
+              "key": "socialize:pl_1",
+              "utility": 0.454976666666625,
+              "reasons": [
+                "social need 0.88",
+                "my appetite for company"
+              ]
+            },
+            {
+              "type": "provision_home",
+              "key": "provision_home:pl_7",
+              "utility": 0.425,
+              "reasons": [
+                "the household pantry is running low",
+                "I can bring food home"
+              ]
+            },
+            {
+              "type": "eat",
+              "key": "eat:pl_34",
+              "utility": 0.17333350000017947,
+              "reasons": [
+                "hunger 0.30"
+              ]
+            },
+            {
+              "type": "idle",
+              "key": "idle:",
+              "utility": 0.1,
+              "reasons": [
+                "nothing better to do"
+              ]
+            },
+            {
+              "type": "sleep",
+              "key": "sleep:pl_24",
+              "utility": 0.008094157911554295,
+              "reasons": [
+                "energy need 0.12"
+              ]
+            }
+          ],
+          "chosen": "work:pl_34",
+          "switched": true,
+          "note": "reconsidered failed work"
+        },
+        "commitment": null,
+        "investigated": [],
+        "noFoodUntil": 9984585,
+        "percepts": []
+      }
+    },
+    {
+      "event": {
+        "id": "e_473969",
+        "tick": 11170182,
+        "type": "goal_changed",
+        "category": "cognition",
+        "actor": "p_26",
+        "placeId": "pl_34",
+        "data": {
+          "from": "work",
+          "fromUtility": 0.49054331177262744,
+          "to": "work",
+          "utility": 0.49054331177262744,
+          "reasons": [
+            "I normally hunt at this time; other concerns may matter more",
+            "",
+            "",
+            "concern: short of meat at them (0.11)",
+            "there is no meat at The Gilded Boar",
+            "meat is what my trade puts out"
+          ],
+          "key": "work:pl_34"
+        },
+        "causes": [],
+        "effects": [],
+        "perceivedBy": [],
+        "significance": 0.12,
+        "summary": "Kestrel: goal work → work @ the northern forest (u=0.49)"
+      },
+      "actorAtEmission": {
+        "id": "p_26",
+        "name": "Kestrel",
+        "alive": true,
+        "needs": {
+          "hunger": 0.3037038888890883,
+          "energy": 0.120104619901727,
+          "social": 0.878333333333253,
+          "comfort": 0,
+          "thirst": 0.08005136363636323
+        },
+        "wealth": 33,
+        "homeId": "pl_24",
+        "workId": "pl_34",
+        "householdId": "hh_14",
+        "inventory": [
+          {
+            "id": "i_6",
+            "kind": "item",
+            "name": "a hunting knife",
+            "createdAt": 8666400,
+            "tags": [],
+            "type": "dagger",
+            "ownerId": "p_26",
+            "holderId": "p_26",
+            "pos": null,
+            "placeId": null,
+            "containerId": null,
+            "provenance": [
+              {
+                "tick": -22869600,
+                "from": null,
+                "to": "p_26",
+                "how": "owned"
+              }
+            ],
+            "value": 15,
+            "damage": 14,
+            "quantity": 1,
+            "description": "",
+            "named": false
+          }
+        ],
+        "bodies": [
+          {
+            "id": "b_26",
+            "pos": {
+              "x": 129.59978244754998,
+              "y": 15,
+              "z": 40.08357622922267
+            },
+            "health": 80,
+            "maxHealth": 80,
+            "injuries": {
+              "head": 0.31566852981201005,
+              "torso": 0.220727338159791,
+              "leg": 0.20550629492544834
+            },
+            "dead": false,
+            "present": true,
+            "path": null,
+            "pathGoal": {
+              "x": 130,
+              "y": 15,
+              "z": 39
+            }
+          }
+        ],
+        "goal": {
+          "type": "work",
+          "utility": 0.49054331177262744,
+          "reasons": [
+            "I normally hunt at this time; other concerns may matter more",
+            "",
+            "",
+            "concern: short of meat at them (0.11)",
+            "there is no meat at The Gilded Boar",
+            "meat is what my trade puts out"
+          ],
+          "createdAt": 11170182,
+          "key": "work:pl_34",
+          "targetPlace": "pl_34",
+          "data": {
+            "label": "hunt"
+          }
+        },
+        "plan": [
+          {
+            "status": "pending",
+            "type": "goto",
+            "pos": {
+              "x": 130,
+              "y": 15,
+              "z": 39
+            },
+            "placeId": "pl_34"
+          },
+          {
+            "status": "pending",
+            "type": "gather",
+            "pos": {
+              "x": 130,
+              "y": 15,
+              "z": 39
+            },
+            "duration": 1800,
+            "data": {
+              "nodeId": "node_18"
+            }
+          }
+        ],
+        "decision": {
+          "tick": 11170182,
+          "candidates": [
+            {
+              "type": "work",
+              "key": "work:pl_34",
+              "utility": 0.49054331177262744,
+              "reasons": [
+                "I normally hunt at this time; other concerns may matter more",
+                "concern: short of meat at them (0.11)",
+                "there is no meat at The Gilded Boar",
+                "meat is what my trade puts out"
+              ]
+            },
+            {
+              "type": "socialize",
+              "key": "socialize:pl_1",
+              "utility": 0.454976666666625,
+              "reasons": [
+                "social need 0.88",
+                "my appetite for company"
+              ]
+            },
+            {
+              "type": "provision_home",
+              "key": "provision_home:pl_7",
+              "utility": 0.425,
+              "reasons": [
+                "the household pantry is running low",
+                "I can bring food home"
+              ]
+            },
+            {
+              "type": "eat",
+              "key": "eat:pl_34",
+              "utility": 0.17333350000017947,
+              "reasons": [
+                "hunger 0.30"
+              ]
+            },
+            {
+              "type": "idle",
+              "key": "idle:",
+              "utility": 0.1,
+              "reasons": [
+                "nothing better to do"
+              ]
+            },
+            {
+              "type": "sleep",
+              "key": "sleep:pl_24",
+              "utility": 0.008094157911554295,
+              "reasons": [
+                "energy need 0.12"
+              ]
+            }
+          ],
+          "chosen": "work:pl_34",
+          "switched": true,
+          "note": "reconsidered failed work"
+        },
+        "commitment": null,
+        "investigated": [],
+        "noFoodUntil": 9984585,
+        "percepts": []
+      }
+    },
+    {
+      "event": {
+        "id": "e_473974",
+        "tick": 11170200,
+        "type": "goal_changed",
+        "category": "cognition",
+        "actor": "p_26",
+        "placeId": "pl_34",
+        "data": {
+          "from": "work",
+          "fromUtility": 0.49054331177262744,
+          "to": "work",
+          "utility": 0.49054331177262744,
+          "reasons": [
+            "I normally hunt at this time; other concerns may matter more",
+            "",
+            "",
+            "concern: short of meat at them (0.11)",
+            "there is no meat at The Gilded Boar",
+            "meat is what my trade puts out"
+          ],
+          "key": "work:pl_34"
+        },
+        "causes": [],
+        "effects": [],
+        "perceivedBy": [],
+        "significance": 0.12,
+        "summary": "Kestrel: goal work → work @ the northern forest (u=0.49)"
+      },
+      "actorAtEmission": {
+        "id": "p_26",
+        "name": "Kestrel",
+        "alive": true,
+        "needs": {
+          "hunger": 0.3037038888890883,
+          "energy": 0.120104619901727,
+          "social": 0.878333333333253,
+          "comfort": 0,
+          "thirst": 0.08005136363636323
+        },
+        "wealth": 33,
+        "homeId": "pl_24",
+        "workId": "pl_34",
+        "householdId": "hh_14",
+        "inventory": [
+          {
+            "id": "i_6",
+            "kind": "item",
+            "name": "a hunting knife",
+            "createdAt": 8666400,
+            "tags": [],
+            "type": "dagger",
+            "ownerId": "p_26",
+            "holderId": "p_26",
+            "pos": null,
+            "placeId": null,
+            "containerId": null,
+            "provenance": [
+              {
+                "tick": -22869600,
+                "from": null,
+                "to": "p_26",
+                "how": "owned"
+              }
+            ],
+            "value": 15,
+            "damage": 14,
+            "quantity": 1,
+            "description": "",
+            "named": false
+          }
+        ],
+        "bodies": [
+          {
+            "id": "b_26",
+            "pos": {
+              "x": 129.59978244754998,
+              "y": 15,
+              "z": 40.08357622922267
+            },
+            "health": 80,
+            "maxHealth": 80,
+            "injuries": {
+              "head": 0.31566852981201005,
+              "torso": 0.220727338159791,
+              "leg": 0.20550629492544834
+            },
+            "dead": false,
+            "present": true,
+            "path": null,
+            "pathGoal": {
+              "x": 130,
+              "y": 15,
+              "z": 39
+            }
+          }
+        ],
+        "goal": {
+          "type": "work",
+          "utility": 0.49054331177262744,
+          "reasons": [
+            "I normally hunt at this time; other concerns may matter more",
+            "",
+            "",
+            "concern: short of meat at them (0.11)",
+            "there is no meat at The Gilded Boar",
+            "meat is what my trade puts out"
+          ],
+          "createdAt": 11170200,
+          "key": "work:pl_34",
+          "targetPlace": "pl_34",
+          "data": {
+            "label": "hunt"
+          }
+        },
+        "plan": [
+          {
+            "status": "pending",
+            "type": "goto",
+            "pos": {
+              "x": 130,
+              "y": 15,
+              "z": 39
+            },
+            "placeId": "pl_34"
+          },
+          {
+            "status": "pending",
+            "type": "gather",
+            "pos": {
+              "x": 130,
+              "y": 15,
+              "z": 39
+            },
+            "duration": 1800,
+            "data": {
+              "nodeId": "node_18"
+            }
+          }
+        ],
+        "decision": {
+          "tick": 11170200,
+          "candidates": [
+            {
+              "type": "work",
+              "key": "work:pl_34",
+              "utility": 0.49054331177262744,
+              "reasons": [
+                "I normally hunt at this time; other concerns may matter more",
+                "concern: short of meat at them (0.11)",
+                "there is no meat at The Gilded Boar",
+                "meat is what my trade puts out"
+              ]
+            },
+            {
+              "type": "socialize",
+              "key": "socialize:pl_1",
+              "utility": 0.454976666666625,
+              "reasons": [
+                "social need 0.88",
+                "my appetite for company"
+              ]
+            },
+            {
+              "type": "provision_home",
+              "key": "provision_home:pl_7",
+              "utility": 0.425,
+              "reasons": [
+                "the household pantry is running low",
+                "I can bring food home"
+              ]
+            },
+            {
+              "type": "eat",
+              "key": "eat:pl_34",
+              "utility": 0.17333350000017947,
+              "reasons": [
+                "hunger 0.30"
+              ]
+            },
+            {
+              "type": "idle",
+              "key": "idle:",
+              "utility": 0.1,
+              "reasons": [
+                "nothing better to do"
+              ]
+            },
+            {
+              "type": "sleep",
+              "key": "sleep:pl_24",
+              "utility": 0.008094157911554295,
+              "reasons": [
+                "energy need 0.12"
+              ]
+            }
+          ],
+          "chosen": "work:pl_34",
+          "switched": true,
+          "note": "reconsidered failed work"
+        },
+        "commitment": null,
+        "investigated": [],
+        "noFoodUntil": 9984585,
+        "percepts": []
+      }
+    }
+  ],
+  "events": [
+    {
+      "event": {
+        "id": "e_473953",
+        "tick": 11170128,
+        "type": "arrived",
+        "category": "cognition",
+        "actor": "p_26",
+        "placeId": "pl_34",
+        "pos": {
+          "x": 129.59978244754998,
+          "y": 15,
+          "z": 40.08357622922267
+        },
+        "data": {},
+        "causes": [],
+        "effects": [],
+        "perceivedBy": [],
+        "significance": 0.05,
+        "summary": "Kestrel arrived at the northern forest"
+      }
+    },
+    {
+      "event": {
+        "id": "e_473954",
+        "tick": 11170128,
+        "type": "resource_observed",
+        "category": "cognition",
+        "actor": "p_26",
+        "placeId": "pl_34",
+        "pos": {
+          "x": 130,
+          "y": 15,
+          "z": 39
+        },
+        "data": {
+          "nodeId": "node_18",
+          "available": false
+        },
+        "causes": [],
+        "effects": [],
+        "perceivedBy": [],
+        "significance": 0.05,
+        "summary": "Kestrel found no game at the northern forest"
+      }
+    },
+    {
+      "event": {
+        "id": "e_473955",
+        "tick": 11170146,
+        "type": "goal_changed",
+        "category": "cognition",
+        "actor": "p_26",
+        "placeId": "pl_34",
+        "data": {
+          "from": "work",
+          "fromUtility": 0.49512356990664963,
+          "to": "work",
+          "utility": 0.4905363962863485,
+          "reasons": [
+            "I normally hunt at this time; other concerns may matter more",
+            "",
+            "",
+            "concern: short of meat at them (0.11)",
+            "there is no meat at The Gilded Boar",
+            "meat is what my trade puts out"
+          ],
+          "key": "work:pl_34"
+        },
+        "causes": [],
+        "effects": [],
+        "perceivedBy": [],
+        "significance": 0.12,
+        "summary": "Kestrel: goal work → work @ the northern forest (u=0.49)"
+      },
+      "actorAtEmission": {
+        "id": "p_26",
+        "name": "Kestrel",
+        "alive": true,
+        "needs": {
+          "hunger": 0.3029316666668661,
+          "energy": 0.12020939999431957,
+          "social": 0.8778333333332531,
+          "comfort": 0,
+          "thirst": 0.07857712121212079
+        },
+        "wealth": 33,
+        "homeId": "pl_24",
+        "workId": "pl_34",
+        "householdId": "hh_14",
+        "inventory": [
+          {
+            "id": "i_6",
+            "kind": "item",
+            "name": "a hunting knife",
+            "createdAt": 8666400,
+            "tags": [],
+            "type": "dagger",
+            "ownerId": "p_26",
+            "holderId": "p_26",
+            "pos": null,
+            "placeId": null,
+            "containerId": null,
+            "provenance": [
+              {
+                "tick": -22869600,
+                "from": null,
+                "to": "p_26",
+                "how": "owned"
+              }
+            ],
+            "value": 15,
+            "damage": 14,
+            "quantity": 1,
+            "description": "",
+            "named": false
+          }
+        ],
+        "bodies": [
+          {
+            "id": "b_26",
+            "pos": {
+              "x": 129.59978244754998,
+              "y": 15,
+              "z": 40.08357622922267
+            },
+            "health": 80,
+            "maxHealth": 80,
+            "injuries": {
+              "head": 0.31566852981201005,
+              "torso": 0.220727338159791,
+              "leg": 0.20550629492544834
+            },
+            "dead": false,
+            "present": true,
+            "path": null,
+            "pathGoal": {
+              "x": 130,
+              "y": 15,
+              "z": 39
+            }
+          }
+        ],
+        "goal": {
+          "type": "work",
+          "utility": 0.4905363962863485,
+          "reasons": [
+            "I normally hunt at this time; other concerns may matter more",
+            "",
+            "",
+            "concern: short of meat at them (0.11)",
+            "there is no meat at The Gilded Boar",
+            "meat is what my trade puts out"
+          ],
+          "createdAt": 11170146,
+          "key": "work:pl_34",
+          "targetPlace": "pl_34",
+          "data": {
+            "label": "hunt"
+          }
+        },
+        "plan": [
+          {
+            "status": "pending",
+            "type": "goto",
+            "pos": {
+              "x": 130,
+              "y": 15,
+              "z": 39
+            },
+            "placeId": "pl_34"
+          },
+          {
+            "status": "pending",
+            "type": "gather",
+            "pos": {
+              "x": 130,
+              "y": 15,
+              "z": 39
+            },
+            "duration": 1800,
+            "data": {
+              "nodeId": "node_18"
+            }
+          }
+        ],
+        "decision": {
+          "tick": 11170146,
+          "candidates": [
+            {
+              "type": "work",
+              "key": "work:pl_34",
+              "utility": 0.4905363962863485,
+              "reasons": [
+                "I normally hunt at this time; other concerns may matter more",
+                "concern: short of meat at them (0.11)",
+                "there is no meat at The Gilded Boar",
+                "meat is what my trade puts out"
+              ]
+            },
+            {
+              "type": "socialize",
+              "key": "socialize:pl_1",
+              "utility": 0.45471766666662505,
+              "reasons": [
+                "social need 0.88",
+                "my appetite for company"
+              ]
+            },
+            {
+              "type": "provision_home",
+              "key": "provision_home:pl_7",
+              "utility": 0.425,
+              "reasons": [
+                "the household pantry is running low",
+                "I can bring food home"
+              ]
+            },
+            {
+              "type": "eat",
+              "key": "eat:pl_34",
+              "utility": 0.17263850000017952,
+              "reasons": [
+                "hunger 0.30"
+              ]
+            },
+            {
+              "type": "idle",
+              "key": "idle:",
+              "utility": 0.1,
+              "reasons": [
+                "nothing better to do"
+              ]
+            },
+            {
+              "type": "sleep",
+              "key": "sleep:pl_24",
+              "utility": 0.008188459994887612,
+              "reasons": [
+                "energy need 0.12"
+              ]
+            }
+          ],
+          "chosen": "work:pl_34",
+          "switched": true,
+          "note": "reconsidered failed work"
+        },
+        "commitment": null,
+        "investigated": [],
+        "noFoodUntil": 9984585,
+        "percepts": [
+          {
+            "entityId": "p_16",
+            "bodyId": "b_16",
+            "how": "heard",
+            "tick": 11170146,
+            "pos": {
+              "x": 124.0029342118674,
+              "y": 14,
+              "z": 41.999021929377534
+            },
+            "distance": 5.915542443724415
+          }
+        ]
+      }
+    },
+    {
+      "event": {
+        "id": "e_473956",
+        "tick": 11170146,
+        "type": "arrived",
+        "category": "cognition",
+        "actor": "p_26",
+        "placeId": "pl_34",
+        "pos": {
+          "x": 129.59978244754998,
+          "y": 15,
+          "z": 40.08357622922267
+        },
+        "data": {},
+        "causes": [],
+        "effects": [],
+        "perceivedBy": [],
+        "significance": 0.05,
+        "summary": "Kestrel arrived at the northern forest"
+      }
+    },
+    {
+      "event": {
+        "id": "e_473957",
+        "tick": 11170146,
+        "type": "resource_observed",
+        "category": "cognition",
+        "actor": "p_26",
+        "placeId": "pl_34",
+        "pos": {
+          "x": 130,
+          "y": 15,
+          "z": 39
+        },
+        "data": {
+          "nodeId": "node_18",
+          "available": false
+        },
+        "causes": [],
+        "effects": [],
+        "perceivedBy": [],
+        "significance": 0.05,
+        "summary": "Kestrel found no game at the northern forest"
+      }
+    },
+    {
+      "event": {
+        "id": "e_473965",
+        "tick": 11170164,
+        "type": "goal_changed",
+        "category": "cognition",
+        "actor": "p_26",
+        "placeId": "pl_34",
+        "data": {
+          "from": "work",
+          "fromUtility": 0.4905363962863485,
+          "to": "work",
+          "utility": 0.49054331177262744,
+          "reasons": [
+            "I normally hunt at this time; other concerns may matter more",
+            "",
+            "",
+            "concern: short of meat at them (0.11)",
+            "there is no meat at The Gilded Boar",
+            "meat is what my trade puts out"
+          ],
+          "key": "work:pl_34"
+        },
+        "causes": [],
+        "effects": [],
+        "perceivedBy": [],
+        "significance": 0.12,
+        "summary": "Kestrel: goal work → work @ the northern forest (u=0.49)"
+      },
+      "actorAtEmission": {
+        "id": "p_26",
+        "name": "Kestrel",
+        "alive": true,
+        "needs": {
+          "hunger": 0.3037038888890883,
+          "energy": 0.120104619901727,
+          "social": 0.878333333333253,
+          "comfort": 0,
+          "thirst": 0.08005136363636323
+        },
+        "wealth": 33,
+        "homeId": "pl_24",
+        "workId": "pl_34",
+        "householdId": "hh_14",
+        "inventory": [
+          {
+            "id": "i_6",
+            "kind": "item",
+            "name": "a hunting knife",
+            "createdAt": 8666400,
+            "tags": [],
+            "type": "dagger",
+            "ownerId": "p_26",
+            "holderId": "p_26",
+            "pos": null,
+            "placeId": null,
+            "containerId": null,
+            "provenance": [
+              {
+                "tick": -22869600,
+                "from": null,
+                "to": "p_26",
+                "how": "owned"
+              }
+            ],
+            "value": 15,
+            "damage": 14,
+            "quantity": 1,
+            "description": "",
+            "named": false
+          }
+        ],
+        "bodies": [
+          {
+            "id": "b_26",
+            "pos": {
+              "x": 129.59978244754998,
+              "y": 15,
+              "z": 40.08357622922267
+            },
+            "health": 80,
+            "maxHealth": 80,
+            "injuries": {
+              "head": 0.31566852981201005,
+              "torso": 0.220727338159791,
+              "leg": 0.20550629492544834
+            },
+            "dead": false,
+            "present": true,
+            "path": null,
+            "pathGoal": {
+              "x": 130,
+              "y": 15,
+              "z": 39
+            }
+          }
+        ],
+        "goal": {
+          "type": "work",
+          "utility": 0.49054331177262744,
+          "reasons": [
+            "I normally hunt at this time; other concerns may matter more",
+            "",
+            "",
+            "concern: short of meat at them (0.11)",
+            "there is no meat at The Gilded Boar",
+            "meat is what my trade puts out"
+          ],
+          "createdAt": 11170164,
+          "key": "work:pl_34",
+          "targetPlace": "pl_34",
+          "data": {
+            "label": "hunt"
+          }
+        },
+        "plan": [
+          {
+            "status": "pending",
+            "type": "goto",
+            "pos": {
+              "x": 130,
+              "y": 15,
+              "z": 39
+            },
+            "placeId": "pl_34"
+          },
+          {
+            "status": "pending",
+            "type": "gather",
+            "pos": {
+              "x": 130,
+              "y": 15,
+              "z": 39
+            },
+            "duration": 1800,
+            "data": {
+              "nodeId": "node_18"
+            }
+          }
+        ],
+        "decision": {
+          "tick": 11170164,
+          "candidates": [
+            {
+              "type": "work",
+              "key": "work:pl_34",
+              "utility": 0.49054331177262744,
+              "reasons": [
+                "I normally hunt at this time; other concerns may matter more",
+                "concern: short of meat at them (0.11)",
+                "there is no meat at The Gilded Boar",
+                "meat is what my trade puts out"
+              ]
+            },
+            {
+              "type": "socialize",
+              "key": "socialize:pl_1",
+              "utility": 0.454976666666625,
+              "reasons": [
+                "social need 0.88",
+                "my appetite for company"
+              ]
+            },
+            {
+              "type": "provision_home",
+              "key": "provision_home:pl_7",
+              "utility": 0.425,
+              "reasons": [
+                "the household pantry is running low",
+                "I can bring food home"
+              ]
+            },
+            {
+              "type": "eat",
+              "key": "eat:pl_34",
+              "utility": 0.17333350000017947,
+              "reasons": [
+                "hunger 0.30"
+              ]
+            },
+            {
+              "type": "idle",
+              "key": "idle:",
+              "utility": 0.1,
+              "reasons": [
+                "nothing better to do"
+              ]
+            },
+            {
+              "type": "sleep",
+              "key": "sleep:pl_24",
+              "utility": 0.008094157911554295,
+              "reasons": [
+                "energy need 0.12"
+              ]
+            }
+          ],
+          "chosen": "work:pl_34",
+          "switched": true,
+          "note": "reconsidered failed work"
+        },
+        "commitment": null,
+        "investigated": [],
+        "noFoodUntil": 9984585,
+        "percepts": []
+      }
+    },
+    {
+      "event": {
+        "id": "e_473966",
+        "tick": 11170164,
+        "type": "arrived",
+        "category": "cognition",
+        "actor": "p_26",
+        "placeId": "pl_34",
+        "pos": {
+          "x": 129.59978244754998,
+          "y": 15,
+          "z": 40.08357622922267
+        },
+        "data": {},
+        "causes": [],
+        "effects": [],
+        "perceivedBy": [],
+        "significance": 0.05,
+        "summary": "Kestrel arrived at the northern forest"
+      }
+    },
+    {
+      "event": {
+        "id": "e_473967",
+        "tick": 11170164,
+        "type": "resource_observed",
+        "category": "cognition",
+        "actor": "p_26",
+        "placeId": "pl_34",
+        "pos": {
+          "x": 130,
+          "y": 15,
+          "z": 39
+        },
+        "data": {
+          "nodeId": "node_18",
+          "available": false
+        },
+        "causes": [],
+        "effects": [],
+        "perceivedBy": [],
+        "significance": 0.05,
+        "summary": "Kestrel found no game at the northern forest"
+      }
+    },
+    {
+      "event": {
+        "id": "e_473969",
+        "tick": 11170182,
+        "type": "goal_changed",
+        "category": "cognition",
+        "actor": "p_26",
+        "placeId": "pl_34",
+        "data": {
+          "from": "work",
+          "fromUtility": 0.49054331177262744,
+          "to": "work",
+          "utility": 0.49054331177262744,
+          "reasons": [
+            "I normally hunt at this time; other concerns may matter more",
+            "",
+            "",
+            "concern: short of meat at them (0.11)",
+            "there is no meat at The Gilded Boar",
+            "meat is what my trade puts out"
+          ],
+          "key": "work:pl_34"
+        },
+        "causes": [],
+        "effects": [],
+        "perceivedBy": [],
+        "significance": 0.12,
+        "summary": "Kestrel: goal work → work @ the northern forest (u=0.49)"
+      },
+      "actorAtEmission": {
+        "id": "p_26",
+        "name": "Kestrel",
+        "alive": true,
+        "needs": {
+          "hunger": 0.3037038888890883,
+          "energy": 0.120104619901727,
+          "social": 0.878333333333253,
+          "comfort": 0,
+          "thirst": 0.08005136363636323
+        },
+        "wealth": 33,
+        "homeId": "pl_24",
+        "workId": "pl_34",
+        "householdId": "hh_14",
+        "inventory": [
+          {
+            "id": "i_6",
+            "kind": "item",
+            "name": "a hunting knife",
+            "createdAt": 8666400,
+            "tags": [],
+            "type": "dagger",
+            "ownerId": "p_26",
+            "holderId": "p_26",
+            "pos": null,
+            "placeId": null,
+            "containerId": null,
+            "provenance": [
+              {
+                "tick": -22869600,
+                "from": null,
+                "to": "p_26",
+                "how": "owned"
+              }
+            ],
+            "value": 15,
+            "damage": 14,
+            "quantity": 1,
+            "description": "",
+            "named": false
+          }
+        ],
+        "bodies": [
+          {
+            "id": "b_26",
+            "pos": {
+              "x": 129.59978244754998,
+              "y": 15,
+              "z": 40.08357622922267
+            },
+            "health": 80,
+            "maxHealth": 80,
+            "injuries": {
+              "head": 0.31566852981201005,
+              "torso": 0.220727338159791,
+              "leg": 0.20550629492544834
+            },
+            "dead": false,
+            "present": true,
+            "path": null,
+            "pathGoal": {
+              "x": 130,
+              "y": 15,
+              "z": 39
+            }
+          }
+        ],
+        "goal": {
+          "type": "work",
+          "utility": 0.49054331177262744,
+          "reasons": [
+            "I normally hunt at this time; other concerns may matter more",
+            "",
+            "",
+            "concern: short of meat at them (0.11)",
+            "there is no meat at The Gilded Boar",
+            "meat is what my trade puts out"
+          ],
+          "createdAt": 11170182,
+          "key": "work:pl_34",
+          "targetPlace": "pl_34",
+          "data": {
+            "label": "hunt"
+          }
+        },
+        "plan": [
+          {
+            "status": "pending",
+            "type": "goto",
+            "pos": {
+              "x": 130,
+              "y": 15,
+              "z": 39
+            },
+            "placeId": "pl_34"
+          },
+          {
+            "status": "pending",
+            "type": "gather",
+            "pos": {
+              "x": 130,
+              "y": 15,
+              "z": 39
+            },
+            "duration": 1800,
+            "data": {
+              "nodeId": "node_18"
+            }
+          }
+        ],
+        "decision": {
+          "tick": 11170182,
+          "candidates": [
+            {
+              "type": "work",
+              "key": "work:pl_34",
+              "utility": 0.49054331177262744,
+              "reasons": [
+                "I normally hunt at this time; other concerns may matter more",
+                "concern: short of meat at them (0.11)",
+                "there is no meat at The Gilded Boar",
+                "meat is what my trade puts out"
+              ]
+            },
+            {
+              "type": "socialize",
+              "key": "socialize:pl_1",
+              "utility": 0.454976666666625,
+              "reasons": [
+                "social need 0.88",
+                "my appetite for company"
+              ]
+            },
+            {
+              "type": "provision_home",
+              "key": "provision_home:pl_7",
+              "utility": 0.425,
+              "reasons": [
+                "the household pantry is running low",
+                "I can bring food home"
+              ]
+            },
+            {
+              "type": "eat",
+              "key": "eat:pl_34",
+              "utility": 0.17333350000017947,
+              "reasons": [
+                "hunger 0.30"
+              ]
+            },
+            {
+              "type": "idle",
+              "key": "idle:",
+              "utility": 0.1,
+              "reasons": [
+                "nothing better to do"
+              ]
+            },
+            {
+              "type": "sleep",
+              "key": "sleep:pl_24",
+              "utility": 0.008094157911554295,
+              "reasons": [
+                "energy need 0.12"
+              ]
+            }
+          ],
+          "chosen": "work:pl_34",
+          "switched": true,
+          "note": "reconsidered failed work"
+        },
+        "commitment": null,
+        "investigated": [],
+        "noFoodUntil": 9984585,
+        "percepts": []
+      }
+    },
+    {
+      "event": {
+        "id": "e_473970",
+        "tick": 11170182,
+        "type": "arrived",
+        "category": "cognition",
+        "actor": "p_26",
+        "placeId": "pl_34",
+        "pos": {
+          "x": 129.59978244754998,
+          "y": 15,
+          "z": 40.08357622922267
+        },
+        "data": {},
+        "causes": [],
+        "effects": [],
+        "perceivedBy": [],
+        "significance": 0.05,
+        "summary": "Kestrel arrived at the northern forest"
+      }
+    },
+    {
+      "event": {
+        "id": "e_473971",
+        "tick": 11170182,
+        "type": "resource_observed",
+        "category": "cognition",
+        "actor": "p_26",
+        "placeId": "pl_34",
+        "pos": {
+          "x": 130,
+          "y": 15,
+          "z": 39
+        },
+        "data": {
+          "nodeId": "node_18",
+          "available": false
+        },
+        "causes": [],
+        "effects": [],
+        "perceivedBy": [],
+        "significance": 0.05,
+        "summary": "Kestrel found no game at the northern forest"
+      }
+    },
+    {
+      "event": {
+        "id": "e_473974",
+        "tick": 11170200,
+        "type": "goal_changed",
+        "category": "cognition",
+        "actor": "p_26",
+        "placeId": "pl_34",
+        "data": {
+          "from": "work",
+          "fromUtility": 0.49054331177262744,
+          "to": "work",
+          "utility": 0.49054331177262744,
+          "reasons": [
+            "I normally hunt at this time; other concerns may matter more",
+            "",
+            "",
+            "concern: short of meat at them (0.11)",
+            "there is no meat at The Gilded Boar",
+            "meat is what my trade puts out"
+          ],
+          "key": "work:pl_34"
+        },
+        "causes": [],
+        "effects": [],
+        "perceivedBy": [],
+        "significance": 0.12,
+        "summary": "Kestrel: goal work → work @ the northern forest (u=0.49)"
+      },
+      "actorAtEmission": {
+        "id": "p_26",
+        "name": "Kestrel",
+        "alive": true,
+        "needs": {
+          "hunger": 0.3037038888890883,
+          "energy": 0.120104619901727,
+          "social": 0.878333333333253,
+          "comfort": 0,
+          "thirst": 0.08005136363636323
+        },
+        "wealth": 33,
+        "homeId": "pl_24",
+        "workId": "pl_34",
+        "householdId": "hh_14",
+        "inventory": [
+          {
+            "id": "i_6",
+            "kind": "item",
+            "name": "a hunting knife",
+            "createdAt": 8666400,
+            "tags": [],
+            "type": "dagger",
+            "ownerId": "p_26",
+            "holderId": "p_26",
+            "pos": null,
+            "placeId": null,
+            "containerId": null,
+            "provenance": [
+              {
+                "tick": -22869600,
+                "from": null,
+                "to": "p_26",
+                "how": "owned"
+              }
+            ],
+            "value": 15,
+            "damage": 14,
+            "quantity": 1,
+            "description": "",
+            "named": false
+          }
+        ],
+        "bodies": [
+          {
+            "id": "b_26",
+            "pos": {
+              "x": 129.59978244754998,
+              "y": 15,
+              "z": 40.08357622922267
+            },
+            "health": 80,
+            "maxHealth": 80,
+            "injuries": {
+              "head": 0.31566852981201005,
+              "torso": 0.220727338159791,
+              "leg": 0.20550629492544834
+            },
+            "dead": false,
+            "present": true,
+            "path": null,
+            "pathGoal": {
+              "x": 130,
+              "y": 15,
+              "z": 39
+            }
+          }
+        ],
+        "goal": {
+          "type": "work",
+          "utility": 0.49054331177262744,
+          "reasons": [
+            "I normally hunt at this time; other concerns may matter more",
+            "",
+            "",
+            "concern: short of meat at them (0.11)",
+            "there is no meat at The Gilded Boar",
+            "meat is what my trade puts out"
+          ],
+          "createdAt": 11170200,
+          "key": "work:pl_34",
+          "targetPlace": "pl_34",
+          "data": {
+            "label": "hunt"
+          }
+        },
+        "plan": [
+          {
+            "status": "pending",
+            "type": "goto",
+            "pos": {
+              "x": 130,
+              "y": 15,
+              "z": 39
+            },
+            "placeId": "pl_34"
+          },
+          {
+            "status": "pending",
+            "type": "gather",
+            "pos": {
+              "x": 130,
+              "y": 15,
+              "z": 39
+            },
+            "duration": 1800,
+            "data": {
+              "nodeId": "node_18"
+            }
+          }
+        ],
+        "decision": {
+          "tick": 11170200,
+          "candidates": [
+            {
+              "type": "work",
+              "key": "work:pl_34",
+              "utility": 0.49054331177262744,
+              "reasons": [
+                "I normally hunt at this time; other concerns may matter more",
+                "concern: short of meat at them (0.11)",
+                "there is no meat at The Gilded Boar",
+                "meat is what my trade puts out"
+              ]
+            },
+            {
+              "type": "socialize",
+              "key": "socialize:pl_1",
+              "utility": 0.454976666666625,
+              "reasons": [
+                "social need 0.88",
+                "my appetite for company"
+              ]
+            },
+            {
+              "type": "provision_home",
+              "key": "provision_home:pl_7",
+              "utility": 0.425,
+              "reasons": [
+                "the household pantry is running low",
+                "I can bring food home"
+              ]
+            },
+            {
+              "type": "eat",
+              "key": "eat:pl_34",
+              "utility": 0.17333350000017947,
+              "reasons": [
+                "hunger 0.30"
+              ]
+            },
+            {
+              "type": "idle",
+              "key": "idle:",
+              "utility": 0.1,
+              "reasons": [
+                "nothing better to do"
+              ]
+            },
+            {
+              "type": "sleep",
+              "key": "sleep:pl_24",
+              "utility": 0.008094157911554295,
+              "reasons": [
+                "energy need 0.12"
+              ]
+            }
+          ],
+          "chosen": "work:pl_34",
+          "switched": true,
+          "note": "reconsidered failed work"
+        },
+        "commitment": null,
+        "investigated": [],
+        "noFoodUntil": 9984585,
+        "percepts": []
+      }
+    }
+  ],
+  "laterCheckpoint": {
+    "tick": 11247600,
+    "knowledgeCount": 435,
+    "gameKnowledge": [],
+    "note": "This later checkpoint is not represented as the exact earlier failure-time memory."
+  },
+  "regression": "hunt-memory-before-valid.log fails: recent observed unavailable game lost under pressure. hunt-memory-after.log: 74 tests pass; unknown remote replenishment remains unknown; old evidence can expire."
+}

@@ -2,6 +2,9 @@ import type { Person } from '../core/types';
 import { clamp } from '../core/human';
 import type { World } from '../core/world';
 import { learn } from './knowledge';
+import { farmSeedGrain, SEED_PER_PLOT } from '../world/metabolism';
+import { clearShortfall } from '../world/shortfall';
+import { reachable } from '../kernel/mechanics';
 
 /** Crop state enters the mind only through local visible plots. A shift/home address does not
  * reveal remote harvests. This is evidence; it proposes no action and assigns no worker. */
@@ -15,7 +18,7 @@ export function observeFields(world: World, p: Person): void {
     if (!place || Math.hypot(place.inside.x - body.pos.x, place.inside.z - body.pos.z) > 24) continue;
     let visible = false, ripe = false, fallow = false;
     for (const plot of field.plots) {
-      const mature = plot.state === 'mature', bare = plot.state === 'fallow' || plot.state === 'harvested';
+      const mature = plot.state === 'mature', bare = plot.state === 'fallow';
       // Once a state is witnessed, further identical plots add no evidence to this claim.
       if (visible && (!mature || ripe) && (!bare || fallow)) continue;
       if (Math.hypot(plot.x - body.pos.x, plot.z - body.pos.z) >= 16
@@ -24,8 +27,13 @@ export function observeFields(world: World, p: Person): void {
       if (ripe && fallow) break;
     }
     if (!visible) continue;
-    const claim = { fieldId: field.id, placeId: field.placeId, ripe, fallow };
     const key = `field-observation:${field.id}`, prior = p.knowledge[key];
+    // Seeing distant crops does not reveal the seed bin. Physical stocktaking at the
+    // farm can revise an earlier failed sowing attempt through the shared shortfall path.
+    const atStock = reachable(world, p, place.inside);
+    const seedGrain = atStock ? farmSeedGrain(world, field) : prior?.claim.seedGrain;
+    const claim = { fieldId: field.id, placeId: field.placeId, ripe, fallow, ...(seedGrain === undefined ? {} : { seedGrain }) };
+    if (atStock && seedGrain >= SEED_PER_PLOT) clearShortfall(world, p, place.id, 'grain');
     if (prior && JSON.stringify(prior.claim) === JSON.stringify(claim)) { prior.lastConfirmedAt = world.now; continue; }
     const ev = world.emit('production_observed', { actor: p.id, pos: body.pos, category: 'cognition', significance: 0.2,
       data: { ...claim }, summary: `${p.name} noticed the visible state of a field` });
