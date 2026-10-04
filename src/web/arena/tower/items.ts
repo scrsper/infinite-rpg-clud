@@ -86,8 +86,9 @@ export const describe = (it: Gear): string => [...it.affixes.map(affixText), ...
 let serial = 0;
 /** Rarity roll: deeper floors and better sources shift the odds up (Diablo's magic find). */
 export function rollRarity(floor: number, rnd: () => number, bonus = 0): number {
-  const r = rnd() - floor * .004 - bonus * .12;
-  return r < .015 ? 4 : r < .07 ? 3 : r < .25 ? 2 : r < .58 ? 1 : 0;
+  const r = rnd() - floor * .003 - bonus * .05;
+  // Mythics only from floor 25; below that the roll caps at legendary.
+  return r < .008 ? (floor >= 25 ? 4 : 3) : r < .045 ? 3 : r < .22 ? 2 : r < .55 ? 1 : 0;
 }
 
 function rollAffixes(n: number, ilvl: number, rnd: () => number, slot: 'weapon' | 'armor' | 'charm'): Affix[] {

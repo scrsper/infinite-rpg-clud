@@ -24,3 +24,7 @@ CC-BY assets (attribution required, Creative Commons Attribution 4.0):
 - **culturalibre**: warrior helmet 02
 
 Animation source: KayKit Character Pack Skeletons by Kay Lousberg (CC0), retargeted at runtime.
+
+Skeletons (skeleton, skeleton_mage, skeleton_brute): bone meshes authored procedurally in `art/tools/arena/build_arena_stylized.py`
+(original work, same licence as this repository), rigidly skinned to the MPFB game_engine rig; the mage wears the donitz monk robe (CC0).
+Orcs and goblins are re-proportioned MPFB bodies (CC0) with authored ears and tusks.

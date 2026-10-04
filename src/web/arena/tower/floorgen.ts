@@ -39,6 +39,7 @@ export interface FloorPlan {
   props: { key: string; x: number; z: number; yaw: number }[];
   chests: { x: number; z: number; yaw: number }[];
   foes: { kind: FoeKind; x: number; z: number }[];
+  faction?: 'greenskin' | 'undead' | 'raider';
   boss?: { kind: FoeKind; name: string; x: number; z: number; hpMul: number; dmgMul: number; scale: number };
   god?: God; shrine?: { x: number; z: number };
   start: { x: number; z: number }; exit: { x: number; z: number };
@@ -96,12 +97,11 @@ export function planFloor(runSeed: number, floor: number): FloorPlan {
   // Enemies: count and mix scale with the floor.
   const foes: FloorPlan['foes'] = [];
   const count = kind === 'shrine' || kind === 'summit' ? 3 + Math.floor(floor / 15) : Math.min(30, 3 + Math.floor(floor * .55));
+  // Each floor belongs to a faction (greenskins, the dead, raiders); a fifth of its foes are drawn from the others.
+  const faction = floorFaction(floor, rnd);
   for (let i = 0; i < count; i++) {
-    const r = rnd();
-    // Early floors are mostly raiders; archers from 4, soldiers from 3 (rising), mystics from 7.
-    // Goblin packs from the start, goblin archers from 2, orcs from 4; human raiders, archers, soldiers and mystics mixed in.
-    const k: FoeKind = floor >= 7 && r < .06 ? 'mage' : floor >= 4 && r < .16 ? 'rogue' : floor >= 2 && r < .28 ? 'goblin_archer' : r < .52 ? 'goblin'
-      : floor >= 4 && r < .52 + Math.min(.18, (floor - 3) * .02) ? 'orc' : floor >= 3 && r < .74 ? 'warrior' : 'minion';
+    const own = rnd() < .8, f = own ? faction : (['greenskin', 'undead', 'raider'] as Faction[])[Math.floor(rnd() * 3)];
+    const k = rollFoe(f, floor, rnd());
     let x = 0, z = 0;
     for (let t = 0; t < 20; t++) { x = (rnd() * 2 - 1) * (half - 3); z = (rnd() * 2 - 1) * (half - 3); if (Math.hypot(x - start.x, z - start.z) > 14) break; }
     foes.push({ kind: k, x, z });
@@ -109,14 +109,28 @@ export function planFloor(runSeed: number, floor: number): FloorPlan {
   const tier = theme.tier;
   let boss: FloorPlan['boss'], god: God | undefined, shrine: FloorPlan['shrine'];
   const bossName = () => `${BOSS_FIRST[Math.floor(rnd() * BOSS_FIRST.length)]} ${BOSS_EPITHET[tier][Math.floor(rnd() * 3)]}`;
-  if (kind === 'boss') boss = { kind: rnd() < .55 ? 'orc' : 'warrior', name: bossName(), x: 0, z: -half * .35, hpMul: 6 + floor * .25, dmgMul: 1.3 + floor * .02, scale: 1.3 };
+  if (kind === 'boss') boss = { kind: faction === 'undead' ? 'skeleton_brute' : faction === 'greenskin' ? 'orc' : 'warrior', name: bossName(), x: 0, z: -half * .35, hpMul: 6 + floor * .25, dmgMul: 1.3 + floor * .02, scale: 1.3 };
   if (kind === 'shrine' || kind === 'summit') {
     god = GODS[Math.floor(rnd() * GODS.length)];
     shrine = { x: 0, z: -half * .45 };
     boss = { kind: 'warrior', name: kind === 'summit' ? `${god.name}, ${god.title}` : `Champion of ${god.name}`, x: 0, z: -half * .3, hpMul: (kind === 'summit' ? 30 : 9) + floor * .3, dmgMul: 1.5 + floor * .025, scale: kind === 'summit' ? 1.6 : 1.4 };
   }
   const objective = kind === 'battle' ? 'Defeat every foe on the floor' : kind === 'boss' ? `Defeat ${boss!.name}` : kind === 'shrine' ? `Defeat the ${boss!.name} and claim a boon` : `Face ${boss!.name}`;
-  return { floor, seed: runSeed, half, theme, kind, walls, props, chests, foes, boss, god, shrine, start, exit, objective };
+  return { floor, seed: runSeed, half, theme, kind, walls, props, chests, foes, boss, god, shrine, start, exit, objective, faction };
+}
+
+export type Faction = 'greenskin' | 'undead' | 'raider';
+/** Floor 1 is goblins; the dead rise from floor 3; raiders are always about. */
+export function floorFaction(floor: number, rnd: () => number): Faction {
+  if (floor <= 2) return 'greenskin';
+  const r = rnd();
+  return r < .38 ? 'greenskin' : r < .7 ? 'undead' : 'raider';
+}
+/** One foe of a faction, unlocking its stronger kinds with depth. */
+export function rollFoe(f: Faction, floor: number, r: number): FoeKind {
+  if (f === 'greenskin') return floor >= 2 && r < .24 ? 'goblin_archer' : floor >= 4 && r < .24 + Math.min(.26, (floor - 3) * .03) ? 'orc' : 'goblin';
+  if (f === 'undead') return floor >= 6 && r < .14 ? 'skeleton_mage' : floor >= 5 && r < .14 + Math.min(.2, (floor - 4) * .025) ? 'skeleton_brute' : 'skeleton';
+  return floor >= 7 && r < .1 ? 'mage' : floor >= 4 && r < .26 ? 'rogue' : floor >= 3 && r < .55 ? 'warrior' : 'minion';
 }
 
 export { TIERS };

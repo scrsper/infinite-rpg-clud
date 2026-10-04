@@ -33,6 +33,10 @@ ORC_FACE = [('head-square', 1), ('chin-prognathism-incr', .9), ('chin-width-incr
 GOBLIN_FACE = [('head-triangular', .8), ('chin-triangle', .8), ('chin-prominent-incr', .6), ('nose-scale-vert-incr', 1), ('nose-trans-forward', .9),
                ('nose-point-down', .7), ('nose-hump-incr', .6), ('eyebrows-angle-up', .7), ('mouth-scale-horiz-incr', .5), ('mouth-angles-up', .5),
                ('l-ear-shape-pointed', 1), ('r-ear-shape-pointed', 1), ('l-ear-wing-incr', 1), ('r-ear-wing-incr', 1)]
+# Bone scales: orcs are top-heavy with small heads on huge shoulders, long thick arms and big hands; goblins
+# have big heads, long arms, huge hands and feet on short legs.
+ORC_BODY = {'spine_02': 1.06, 'spine_03': 1.12, 'neck_01': .74, 'head': .92, 'clavicle_l': 1.12, 'clavicle_r': 1.12, 'upperarm_l': 1.1, 'upperarm_r': 1.1, 'hand_l': 1.32, 'hand_r': 1.32, 'thigh_l': .94, 'thigh_r': .94, 'foot_l': 1.12, 'foot_r': 1.12}
+GOBLIN_BODY = {'spine_03': .92, 'head': 2.0, 'neck_01': .78, 'upperarm_l': 1.08, 'upperarm_r': 1.08, 'lowerarm_l': 1.16, 'lowerarm_r': 1.16, 'hand_l': 1.42, 'hand_r': 1.42, 'thigh_l': .86, 'thigh_r': .86, 'calf_l': .92, 'calf_r': .92, 'foot_l': 1.38, 'foot_r': 1.38}
 # Palette hex is sRGB (as picked by eye); Blender base colours are linear.
 C = lambda h: tuple((((h >> s) & 255) / 255) ** 2.2 for s in (16, 8, 0))
 # Palette per garment slot; clothes keys match MakeHuman asset names.
@@ -62,18 +66,25 @@ PEOPLE = {
                   clothes={'rehmanpolanski_viking_tunic': C(0x6a5440), 'rehmanpolanski_viking_pants': C(0x3a3228), 'rehmanpolanski_viking_boots': C(0x3a2618)},
                   skin=C(0xd9a07a), hair_color=C(0x5a3a1c), coat=C(0x4a3a22)),
     # Monsters: MPFB bodies pushed to non-human proportions, green skins, authored ears and tusks.
-    'orc': dict(phenotype=body(1, 1, .78, .95, .5, (.4, .1, .5)), gender='male', hair=None, tusks=True, targets=ORC_FACE,
+    # Creature proportions (pose-scaled, then applied as rest; scales inherit down the chain).
+    'orc': dict(phenotype=body(1, 1, .78, .95, .5, (.4, .1, .5)), gender='male', hair=None, tusks=True, targets=ORC_FACE, proportions=ORC_BODY,
                 clothes={'rehmanpolanski_viking_pants': C(0x3a2e22), 'rehmanpolanski_viking_boots': C(0x2a1c12), 'toigo_gloves_short': C(0x4a3020)},
                 skin=C(0x6f8a45), hair_color=C(0x141410)),
-    'orc_chief': dict(phenotype=body(1, 1, .85, 1, .62, (.4, .1, .5)), gender='male', hair=None, tusks=True, targets=ORC_FACE,
+    'orc_chief': dict(phenotype=body(1, 1, .85, 1, .62, (.4, .1, .5)), gender='male', hair=None, tusks=True, targets=ORC_FACE, proportions={**ORC_BODY, 'spine_03': 1.2},
                 clothes={'rehmanpolanski_viking_pants': C(0x2a2018), 'rehmanpolanski_viking_boots': C(0x1c140e), 'toigo_gloves_short': C(0x2a1a10), 'culturalibre_warrior_helmet_02': C(0x3a2a20)},
                 skin=C(0x5e7a3a), hair_color=C(0x141410), coat=C(0x5a2a18)),
-    'goblin': dict(phenotype=body(1, .3, .25, 0, .2, (.2, .4, .4)), gender='male', hair=None, ears=.15, targets=GOBLIN_FACE,
+    'goblin': dict(phenotype=body(1, .3, .25, 0, .2, (.2, .4, .4)), gender='male', hair=None, ears=.15, targets=GOBLIN_FACE, proportions=GOBLIN_BODY,
                 clothes={'toigo_harem_pants': C(0x5a4a2a), 'culturalibre_male_boots': C(0x3a2a18)},
                 skin=C(0x8fa847), hair_color=C(0x222222)),
-    'goblin_archer': dict(phenotype=body(1, .35, .25, 0, .2, (.2, .4, .4)), gender='male', hair=None, ears=.15, targets=GOBLIN_FACE,
+    'goblin_archer': dict(phenotype=body(1, .35, .25, 0, .2, (.2, .4, .4)), gender='male', hair=None, ears=.15, targets=GOBLIN_FACE, proportions=GOBLIN_BODY,
                 clothes={'toigo_harem_pants': C(0x3a4a2a), 'culturalibre_male_boots': C(0x2a2014), 'maciekg_leather_helmet': C(0x5a3a1e)},
                 skin=C(0x7f9a3e), hair_color=C(0x222222)),
+    # Skeletons: the human rig with every flesh mesh removed and a low-poly bone set rigidly skinned on it.
+    'skeleton': dict(phenotype=body(1, .3, .15, .55, .5), gender='male', hair=None, skeleton=dict(bone=C(0xe4d9be), glow=(1.0, .35, .08), thick=1.0), clothes={}),
+    'skeleton_mage': dict(phenotype=body(1, .3, .15, .55, .5), gender='male', hair=None, skeleton=dict(bone=C(0xd8d2c0), glow=(.3, .8, 1.0), thick=.9),
+                          clothes={'donitz_monk_robe': C(0x241c30)}),
+    'skeleton_brute': dict(phenotype=body(1, .9, .3, .9, .5), gender='male', hair=None, skeleton=dict(bone=C(0xcfc3a4), glow=(1.0, .15, .05), thick=1.55),
+                           clothes={}, proportions={'spine_03': 1.12, 'head': 1.15, 'hand_l': 1.25, 'hand_r': 1.25}),
     'wren': dict(phenotype=body(0, .55, .45, .52, .4, (.1, .1, .8)), gender='female', hair='elvs_french_braid_variation',
                  clothes={'mindfront_lusekofta': C(0x2a3e5c), 'toigo_wool_pants': C(0x2c2a26), 'punkduck_medieval_boots': C(0x4a2a1a), 'toigo_gloves_short': C(0x3a2418)},
                  skin=C(0xf0c8ae), hair_color=C(0x1a120e)),
@@ -194,6 +205,109 @@ def build_coat(rig, base, H, color):
     return [torso, skirt]
 
 
+def reproportion(rig, scales):
+    """Scale pose bones, bake the deformation into every skinned mesh, then make the pose the new rest."""
+    vl = bpy.context.view_layer
+    vl.objects.active = rig; bpy.ops.object.mode_set(mode='POSE')
+    for n, k in scales.items():
+        pb = rig.pose.bones.get(n)
+        if pb: pb.scale = (k, k, k)
+    bpy.ops.object.mode_set(mode='OBJECT')
+    for o in [o for o in bpy.data.objects if o.type == 'MESH']:
+        mods = [m for m in o.modifiers if m.type == 'ARMATURE' and m.object == rig]
+        if not mods: continue
+        vl.objects.active = o
+        if o.data.shape_keys: bpy.ops.object.shape_key_remove(all=True, apply_mix=True)
+        for m in mods:
+            name = m.name; bpy.ops.object.modifier_apply(modifier=name)
+            nm = o.modifiers.new(name, 'ARMATURE'); nm.object = rig
+            bpy.ops.object.modifier_move_to_index(modifier=name, index=0)
+    vl.objects.active = rig; bpy.ops.object.mode_set(mode='POSE')
+    bpy.ops.pose.select_all(action='SELECT'); bpy.ops.pose.armature_apply(selected=False)
+    bpy.ops.object.mode_set(mode='OBJECT')
+
+
+def rigid_parts(rig, name, parts, mat):
+    """Join (bmesh, bone) parts into one mesh, each part fully weighted to its bone."""
+    bm = bmesh.new(); groups = []
+    for pbm, bone in parts:
+        start = len(bm.verts)
+        me = bpy.data.meshes.new('tmp'); pbm.to_mesh(me); pbm.free(); bm.from_mesh(me); bpy.data.meshes.remove(me)
+        bm.verts.ensure_lookup_table(); groups.append((bone, list(range(start, len(bm.verts)))))
+    me = bpy.data.meshes.new(name); bm.to_mesh(me); bm.free()
+    o = bpy.data.objects.new(name, me); bpy.context.collection.objects.link(o)
+    for bone, idx in groups:
+        vg = o.vertex_groups.get(bone) or o.vertex_groups.new(name=bone); vg.add(idx, 1.0, 'REPLACE')
+    set_material(o, mat); flat(o)
+    arm = o.modifiers.new('Skin', 'ARMATURE'); arm.object = rig
+    o.parent = rig; o.matrix_parent_inverse = rig.matrix_world.inverted()
+    return o
+
+
+def build_skeleton(rig, H, spec):
+    """A low-poly skeleton on the game_engine rig: limb bones with joint knobs, spine, ribcage, pelvis, skull and jaw."""
+    from mathutils import Matrix as M
+    S = H / 1.75 * spec.get('thick', 1); W = rig.matrix_world
+    B = lambda n: (W @ rig.data.bones[n].head_local, W @ rig.data.bones[n].tail_local)
+    def rod(a, b, r0, r1, seg=6):
+        bm = bmesh.new(); d = b - a
+        bmesh.ops.create_cone(bm, cap_ends=True, segments=seg, radius1=r0, radius2=r1, depth=d.length)
+        rot = Vector((0, 0, 1)).rotation_difference(d.normalized()).to_matrix().to_4x4()
+        bmesh.ops.transform(bm, matrix=M.Translation((a + b) / 2) @ rot, verts=bm.verts); return bm
+    def ball(c, r, sx=1, sy=1, sz=1, sub=1):
+        bm = bmesh.new(); bmesh.ops.create_icosphere(bm, subdivisions=sub, radius=r)
+        bmesh.ops.transform(bm, matrix=M.Translation(c) @ M.Diagonal((sx, sy, sz, 1)), verts=bm.verts); return bm
+    def ring(c, rx, ry, t, seg=10, open_front=True):
+        bm = bmesh.new(); pts = []
+        for i in range(seg + 1):
+            a = (i / seg) * (math.pi * 1.7 if open_front else math.pi * 2) + (math.pi * .15 if open_front else 0) - math.pi / 2
+            pts.append(c + Vector((math.cos(a) * rx, -math.sin(a) * ry * -1, 0)))
+        for p, q in zip(pts, pts[1:]):
+            r = rod(p, q, t, t, 4); me = bpy.data.meshes.new('t'); r.to_mesh(me); r.free(); bm.from_mesh(me); bpy.data.meshes.remove(me)
+        return bm
+    parts = []
+    for side in ('l', 'r'):
+        for n, r0, r1 in (('upperarm', .038, .028), ('lowerarm', .03, .024), ('thigh', .052, .036), ('calf', .04, .03), ('clavicle', .02, .018)):
+            a, b = B(f'{n}_{side}'); parts.append((rod(a, b, r0 * S, r1 * S), f'{n}_{side}'))
+            parts.append((ball(b, r1 * S * 1.5), f'{n}_{side}')); parts.append((ball(a, r0 * S * 1.25), f'{n}_{side}'))
+        a, b = B(f'hand_{side}'); m0, m1 = B(f'middle_01_{side}'); parts.append((rod(a, m1, .03 * S, .02 * S, 5), f'hand_{side}'))
+        for f in ('index', 'middle', 'ring', 'pinky', 'thumb'):
+            if f'{f}_01_{side}' in rig.data.bones:
+                a1, _ = B(f'{f}_01_{side}'); _, b3 = B(f'{f}_03_{side}'); parts.append((rod(a1, b3, .009 * S, .006 * S, 4), f'{f}_01_{side}'))
+        a, b = B(f'foot_{side}'); _, t = B(f'ball_{side}'); parts.append((rod(a, t, .036 * S, .024 * S, 5), f'foot_{side}'))
+    # Spine: vertebra knobs from pelvis to neck.
+    for n in ('spine_01', 'spine_02', 'spine_03', 'neck_01'):
+        a, b = B(n)
+        for k in range(3): parts.append((ball(a.lerp(b, k / 3) + Vector((0, .01 * S, 0)), .026 * S, 1.4, 1, .75, 0), n))
+        parts.append((rod(a, b, .016 * S, .016 * S, 5), n))
+    # Ribcage: rings around spine_02 / spine_03, widest in the middle; sternum down the front.
+    s2a, s2b = B('spine_02'); s3a, s3b = B('spine_03')
+    for k, (bn, t) in enumerate((('spine_02', .3), ('spine_02', .75), ('spine_03', .1), ('spine_03', .45), ('spine_03', .8))):
+        a, b = (s2a, s2b) if bn == 'spine_02' else (s3a, s3b)
+        w = (.105, .12, .125, .12, .1)[k] * S
+        parts.append((ring(a.lerp(b, t) + Vector((0, -.03 * S, 0)), w * 1.08, w * .82, .014 * S), bn))
+    parts.append((rod(s2b + Vector((0, -.115 * S, -.02 * S)), s3a.lerp(s3b, .9) + Vector((0, -.1 * S, 0)), .012 * S, .01 * S, 4), 'spine_03'))
+    # Pelvis: a basin.
+    pa, pb = B('pelvis'); parts.append((ring(pa + Vector((0, 0, .03 * S)), .11 * S, .075 * S, .024 * S, 10, False), 'pelvis'))
+    parts.append((rod(pa, B('spine_01')[0] + Vector((0, 0, .01 * S)), .02 * S, .018 * S, 5), 'pelvis'))
+    parts.append((ball(pa + Vector((0, .02 * S, -.01 * S)), .05 * S, 1.6, .9, .9), 'pelvis'))
+    # Skull, jaw, cheekbones; dark sockets with glowing points.
+    ha, hb = B('head'); hh = (hb - ha).length
+    c = ha + (hb - ha) * .55
+    parts.append((ball(c + Vector((0, .005 * S, .01 * S)), hh * .72, .82, .98, .92, 2), 'head'))
+    parts.append((ball(c + Vector((0, -hh * .32, -hh * .42)), hh * .3, 1.0, .7, .45, 1), 'head'))   # jaw
+    for side in (1, -1): parts.append((ball(c + Vector((side * hh * .27, -hh * .36, -hh * .12)), hh * .1, 1, .8, .7, 0), 'head'))
+    rigid_parts(rig, 'skeleton_bones', parts, flat_material('bone', spec['bone'], .75))
+    sockets = [(ball(c + Vector((side * hh * .17, -hh * .43, 0)), hh * .12, 1, .45, 1, 1), 'head') for side in (1, -1)]
+    rigid_parts(rig, 'skeleton_sockets', sockets, flat_material('socket', C(0x120d0a), .9))
+    m = flat_material('glow', spec['glow'], .5)
+    bsdf = next(n for n in m.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
+    for k in ('Emission Color', 'Emission'):
+        if k in bsdf.inputs: bsdf.inputs[k].default_value = (*spec['glow'], 1); break
+    if 'Emission Strength' in bsdf.inputs: bsdf.inputs['Emission Strength'].default_value = 4
+    rigid_parts(rig, 'skeleton_eyes', [(ball(c + Vector((side * hh * .17, -hh * .5, 0)), hh * .045, 1, 1, 1, 1), 'head') for side in (1, -1)], m)
+
+
 def head_frame(rig):
     hb = rig.data.bones['head']
     h0 = rig.matrix_world @ hb.head_local; h1 = rig.matrix_world @ hb.tail_local
@@ -280,9 +394,10 @@ for pid, spec in PEOPLE.items():
     rig = base.parent if base.parent and base.parent.type == 'ARMATURE' else next(o for o in bpy.data.objects if o.type == 'ARMATURE')
     rig.name = 'Armature'
     H = base.dimensions.z
+    if spec.get('proportions'): reproportion(rig, spec['proportions'])
     meshes = [o for o in bpy.data.objects if o.type == 'MESH']
     proxy = next((o for o in meshes if o is not base and 'generic' in o.name.lower()), None)
-    skin = flat_material('skin', spec['skin'], .7)
+    skin = flat_material('skin', spec.get('skin', (.5, .5, .5)), .7)
     for o in meshes:
         n = o.name.lower()
         for m in o.modifiers:
@@ -300,6 +415,10 @@ for pid, spec in PEOPLE.items():
             src = (o.get('asset_source') or '')
             col = next((c for k, c in spec['clothes'].items() if k in str(src)), (.4, .4, .4))
         set_material(o, flat_material(o.name, col)); decimate(o, .35); flat(o)
+    if spec.get('skeleton'):
+        for o in [o for o in bpy.data.objects if o.type == 'MESH' and (o is proxy or 'low-poly' in o.name.lower())]: bpy.data.objects.remove(o)
+        proxy = True   # base stays out of the export
+        build_skeleton(rig, H, spec['skeleton'])
     extra = build_coat(rig, base, H, spec['coat']) if spec.get('coat') else []
     if spec.get('ears'): add_ears(rig, spec['ears'] * H / 1.75, spec['skin'])
     if spec.get('tusks'): add_tusks(rig, H)

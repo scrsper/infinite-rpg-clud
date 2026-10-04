@@ -1,5 +1,5 @@
 import '@babylonjs/loaders/glTF';
-import { AssetContainer, Matrix, Mesh, PBRMaterial, Quaternion, SceneLoader, TransformNode, Vector3, type AbstractMesh, type AnimationGroup, type Scene } from '@babylonjs/core';
+import { Animation, AssetContainer, Matrix, Mesh, PBRMaterial, Quaternion, SceneLoader, TransformNode, Vector3, type AbstractMesh, type AnimationGroup, type Scene } from '@babylonjs/core';
 import { MIXAMO, UE, Retargeter, instantiateClips, type ClipTemplate, type Grip } from './retarget';
 import type { LookId } from './looks';
 import { SpringBones } from './springs';
@@ -103,6 +103,7 @@ export class ArenaAssets {
     progress('Teaching the fighters to fight');
     const src = this.character('skeleton_warrior');
     const ref = this.person('ranger');
+    this.refPelvis = ref.nodes.get('pelvis')!.position.length();
     const srcNodes = new Map(src.root.getChildTransformNodes(false).map(x => [x.name.slice(x.name.indexOf('.') + 1), x] as const));
     const rt = new Retargeter({ space: src.root, nodes: srcNodes }, { space: ref.holder, nodes: ref.nodes });
     const fallbacks = new Set(this.used ? [...this.used].map(kaykitFallback) : []);
@@ -175,6 +176,21 @@ export class ArenaAssets {
     }));
   }
 
+  private refPelvis = 1;
+  private fitCache = new Map<string, Map<string, ClipTemplate>>();
+  private fitted(look: string, ratio: number, clips: Map<string, ClipTemplate>, kind: string): Map<string, ClipTemplate> {
+    if (Math.abs(ratio - 1) < .015) return clips;
+    const key = `${look}:${kind}`; let m = this.fitCache.get(key);
+    if (!m) {
+      m = new Map();
+      for (const [n, c] of clips) m.set(n, { ...c, tracks: c.tracks.map(t => {
+        if (t.bone !== 'pelvis' || t.anim.dataType !== Animation.ANIMATIONTYPE_VECTOR3) return t;
+        const a = t.anim.clone(); a.setKeys(t.anim.getKeys().map(k => ({ ...k, value: (k.value as Vector3).scale(ratio) }))); return { ...t, anim: a };
+      }) });
+      this.fitCache.set(key, m);
+    }
+    return m;
+  }
   private legCache: Map<string, ClipTemplate> | null = null;
   /** Lower-body-only versions of the directional walk clips (pelvis and legs). */
   legClips(): Map<string, ClipTemplate> {
@@ -188,8 +204,10 @@ export class ArenaAssets {
   human(look: LookId, _id: string): CharacterInstance {
     const p = this.person(look);
     p.holder.scaling.setAll(HUMAN_SCALE);
-    const anims = instantiateClips(p.tag, this.clips, p.nodes, this.scene);
-    for (const [k, g] of instantiateClips(p.tag + '.legs', this.legClips(), p.nodes, this.scene)) anims.set(`legs:${k}`, g);
+    // Clips are baked on the reference rig; a body with other leg lengths (goblins, orcs, skeletons) gets its pelvis track rescaled.
+    const ratio = (p.nodes.get('pelvis')?.position.length() ?? this.refPelvis) / this.refPelvis;
+    const anims = instantiateClips(p.tag, this.fitted(look, ratio, this.clips, ''), p.nodes, this.scene);
+    for (const [k, g] of instantiateClips(p.tag + '.legs', this.fitted(look, ratio, this.legClips(), 'legs'), p.nodes, this.scene)) anims.set(`legs:${k}`, g);
     const slot = (hand: string, g: Grip) => {
       const s = new TransformNode(`${p.tag}.slot.${hand}`, this.scene); s.parent = p.nodes.get(hand)!;
       s.rotationQuaternion = g.rot.clone(); s.position.copyFrom(g.pos); s.scaling.setAll(1 / g.scale);

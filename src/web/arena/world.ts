@@ -55,6 +55,8 @@ export interface HeroInput {
   weapon: WeaponId | null;
 }
 
+const POSTURE = new WeakMap<TransformNode, { pre: Quaternion; post: Quaternion }>();
+
 export class Fighter {
   pos = new Vector3(); yaw = 0; vel = new Vector3(); y = 0; vy = 0;
   state: FState = 'idle'; st = 0;
@@ -154,6 +156,8 @@ export class ArenaWorld {
   onCast: ((s: SkillDef) => boolean | void) | null = null;
   onParry: (() => void) | null = null;
   parries = 0;
+  /** Review aids: hold foes still (lineups), switch the creature posture layer. */
+  freezeFoes = false; postureOn = true;
   /** Last cursor bearing from the hero (scrolls cast toward it). */
   aimYaw = 0;
   get atkSpeed(): number { return this.mods.atkSpeed * this.bonus.atkSpeed * (this.frenzyT > 0 ? 1 + .2 * this.frenzyP : 1); }
@@ -380,7 +384,7 @@ export class ArenaWorld {
     if (this.combo.hits && (this.combo.timer -= dt) <= 0) this.combo.hits = 0;
 
     this.stepHero(dt, input);
-    for (const f of this.fighters) if (f.role !== 'hero') f.role === 'foe' ? this.stepFoe(f, dt) : this.stepAlly(f, dt);
+    for (const f of this.fighters) if (f.role !== 'hero') f.role === 'foe' ? (this.freezeFoes || this.stepFoe(f, dt)) : this.stepAlly(f, dt);
     for (const f of this.fighters) this.integrate(f, dt);
     for (const g of this.sigils) {
       g.t -= dt;
@@ -431,6 +435,7 @@ export class ArenaWorld {
 
   /** Run after animations: planted feet, coat tails and hair (springs), then two-handed grips. */
   solveGrips(dt: number): void {
+    for (const f of this.fighters) this.posture(f);
     if (this.footLock && dt > 0) for (const f of this.fighters) this.plantFeet(f, dt);
     for (const f of this.fighters) f.inst.springs?.update(dt);
     for (const f of this.fighters) {
@@ -442,6 +447,34 @@ export class ArenaWorld {
       const target = Vector3.TransformCoordinates(new Vector3(0, -.26, 0), slot.getWorldMatrix());
       reach(b.get('upperarm_l')!, b.get('lowerarm_l')!, b.get('hand_l')!, target, f.ikW);
     }
+  }
+
+  /**
+   * Creature posture, layered after animation: the spine curls forward, the neck and head lift back to the
+   * horizon, the shoulders roll in. Same motion capture, a different animal.
+   */
+  private posture(f: Fighter): void {
+    const k = f.foe?.hunch; if (!k || !f.alive || !this.postureOn) return;
+    const b = f.inst.bones; if (!b) return;
+    // Running clips already lean into the stride; ease the curl there so the two don't stack.
+    const run = /run|sprint|jog/i.test(f.anim.dominant()?.name ?? '');
+    const w = (f.standing ? k : k * .3) * (run ? .45 : 1);
+    const axis = new Vector3(Math.cos(f.yaw), 0, -Math.sin(f.yaw));
+    const turn = (n: string, a: number, ax = axis) => {
+      const node = b.get(n), p = node?.parent as TransformNode | null; if (!node || !p) return;
+      p.computeWorldMatrix(true);
+      // Idempotent: when no clip rewrote this bone since last frame, bend from the animated pose, not our own output.
+      const q = node.rotationQuaternion!, last = POSTURE.get(node);
+      const base = last && Math.abs(Quaternion.Dot(q, last.post)) > .99999 ? last.pre : q.clone();
+      const P = p.absoluteRotationQuaternion, R = Quaternion.RotationAxis(ax, a);
+      const post = Quaternion.Inverse(P).multiply(R).multiply(P).multiply(base).normalize();
+      node.rotationQuaternion = post; POSTURE.set(node, { pre: base, post: post.clone() });
+      node.computeWorldMatrix(true);
+    };
+    turn('spine_01', w * .3); turn('spine_02', w * .35); turn('spine_03', w * .35);
+    turn('neck_01', -w * .5); turn('head', -w * .45);
+    const fwdv = new Vector3(Math.sin(f.yaw), 0, Math.cos(f.yaw));
+    turn('clavicle_l', w * .25, fwdv); turn('clavicle_r', -w * .25, fwdv);
   }
 
   // ------------------------------------------------------------------ hero
@@ -934,6 +967,8 @@ export class ArenaWorld {
     if (t.role === 'ally') { t.state = 'down'; t.st = 0; t.hp = 0; t.label = 'Down'; t.reviveT = 0; t.anim.play(this.pick(this.ms(t).death), { speed: 1.2, fade: .06 }); return; }
     if (t.role === 'hero') { t.alive = false; t.state = 'dead'; t.hp = 0; t.label = 'Dead'; t.anim.play(this.pick(this.ms(t).death), { fade: .05 }); this.ev.heroDown(); return; }
     t.alive = false; t.state = 'dead'; t.hp = 0; t.label = 'Dead'; this.kills++;
+    // The dead come apart: a burst of bone shards and grave dust.
+    if (t.foeKind?.startsWith('skeleton')) { const c = t.pos.add(new Vector3(0, 1.1, 0)); this.fx.sparksAt(c, 34, new Color4(.9, .86, .74, 1)); this.fx.dustAt(t.pos, 22, new Color4(.75, .72, .64, 1)); this.ev.sound('clay', .7); }
     this.ev.kill(t);
     this.gainXp(t.foe!.xp);
     // Violent kills throw the body; the rest fall where they stand. Bodies stay a while, then sink away.
