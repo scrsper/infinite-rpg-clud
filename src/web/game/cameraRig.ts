@@ -1,5 +1,6 @@
 import { Camera, FreeCamera, Vector3 } from '@babylonjs/core';
 import type { Settings } from './bindings';
+import { AdaptiveCamera, CAMERA_LIMITS, marchObstruction, type CameraPresetName, type CameraSituation } from './adaptiveCamera';
 
 /**
  * Fixed isometric, elevated exploration or shoulder perspective camera. Third-person orbits a pivot (the player's head in render space), keeps the player
@@ -21,13 +22,21 @@ export type CameraMode = 'explore' | 'combat' | 'talk';
 export interface CameraFocus { x: number; y: number; z: number }
 
 export const ORBIT_EXPLORATION_PITCH = .5;
+/** Default third-person pitch (about 20 degrees down). */
+export const THIRD_PERSON_PITCH = .35;
 const TAU = Math.PI * 2;
 const wrap = (a: number) => Math.atan2(Math.sin(a), Math.cos(a));
 const lerpAngle = (a: number, b: number, t: number) => a + wrap(b - a) * t;
 const damp = (rate: number, dt: number) => 1 - Math.exp(-rate * dt);
 
 export class CameraRig {
-  yaw = Math.PI; pitch = 0.28; distance = 4.6;
+  yaw = Math.PI; pitch = THIRD_PERSON_PITCH; distance = 6.8;
+  /** The elevated adaptive camera (third-person view); talk, orbit and isometric keep their own framing. */
+  readonly adaptive = new AdaptiveCamera();
+  /** Situation from the app each frame (threats, large creatures, velocity, aiming); presentation only. */
+  situation: Omit<CameraSituation, 'pivot'> = {};
+  private obstruct: ReturnType<typeof marchObstruction>;
+  private lastLookAt = -99; private clock = 0;
   private isoSpan = 10;
   private previousIso = false;
   private previousOrbit = false;
@@ -35,8 +44,8 @@ export class CameraRig {
   get cutaway(): boolean { return this.isometric || this.orbit; }
   aimYaw: number | null = null;
   get isometric(): boolean { return this.settings().viewMode === 'isometric'; }
-  private desiredDistance = 4.6;
-  private currentDistance = 4.6;
+  private desiredDistance = 6.8;
+  private currentDistance = 6.8;
   private shoulder = 0.35;          // metres to the right of the pivot
   private shoulderNow = 0.35;
   private fov = 1.08;
@@ -52,13 +61,18 @@ export class CameraRig {
 
   constructor(readonly camera: FreeCamera, private readonly settings: () => Settings, private readonly world: CameraObstruction) {
     camera.minZ = 0.12; camera.maxZ = 3200; camera.inertia = 0; camera.fov = this.fov;
+    this.obstruct = marchObstruction((x, y, z) => this.world.blocked(x, y, z));
   }
+  /** Development presets (Default Exploration, Close, Wide, Group Combat, Large Creature, Interior). */
+  preset(name: CameraPresetName | 'off'): void { if (name === 'off') { this.adaptive.forced = null; return; } this.adaptive.preset(name); this.pitch = this.adaptive.pitch; this.desiredDistance = this.adaptive.preferred; }
+  private get adaptiveActive(): boolean { return !this.isometric && !this.orbit && this.mode !== 'talk'; }
 
   addLook(dx: number, dy: number): void {
     if (this.isometric || this.mode === 'talk') return;
-    this.yaw = wrap(this.yaw - dx); this.pitch = Math.max(this.orbit ? 0.32 : -0.35, Math.min(this.orbit ? 1.05 : 1.25, this.pitch + dy));
+    this.yaw = wrap(this.yaw - dx); this.lastLookAt = this.clock;
+    this.pitch = this.orbit ? Math.max(0.32, Math.min(1.05, this.pitch + dy)) : Math.max(CAMERA_LIMITS.minPitch, Math.min(CAMERA_LIMITS.maxPitch, this.pitch + dy));
   }
-  zoom(delta: number): void { if (this.isometric) { this.isoSpan = Math.max(6, Math.min(18, this.isoSpan * (1 + delta * 0.08))); return; } this.desiredDistance = Math.max(this.orbit ? 4 : 1.8, Math.min(this.orbit ? 14 : 9, this.desiredDistance * (1 + delta * 0.08))); }
+  zoom(delta: number): void { if (this.isometric) { this.isoSpan = Math.max(6, Math.min(18, this.isoSpan * (1 + delta * 0.08))); return; } this.desiredDistance = Math.max(this.orbit ? 4 : CAMERA_LIMITS.minDistance, Math.min(this.orbit ? 14 : CAMERA_LIMITS.maxDistance, this.desiredDistance * (1 + delta * 0.08))); }
   /** A short impulse (metres of shove, seconds of shake), scaled by the reduced-motion/shake settings. */
   impact(strength: number): void { const s = this.settings(); if (s.reducedMotion) return; this.shake = Math.min(1, this.shake + strength * s.cameraShake); this.kick = Math.min(0.5, this.kick + strength * 0.25 * s.cameraShake); }
   setMode(mode: CameraMode): void { if (this.orbit && this.mode === 'talk' && mode !== 'talk') this.pitch = ORBIT_EXPLORATION_PITCH; this.mode = mode; }
@@ -82,13 +96,14 @@ export class CameraRig {
       this.forward.copyFrom(target.subtract(this.position).normalize()); this.previousIso = true;
       return;
     }
-    this.camera.mode = Camera.PERSPECTIVE_CAMERA;
+    this.camera.mode = Camera.PERSPECTIVE_CAMERA; this.clock += t;
     if (this.orbit !== this.previousOrbit) {
-      this.pitch = this.orbit ? ORBIT_EXPLORATION_PITCH : .3;
-      this.desiredDistance = this.orbit ? 8 : 4.6;
+      this.pitch = this.orbit ? ORBIT_EXPLORATION_PITCH : THIRD_PERSON_PITCH;
+      this.desiredDistance = this.orbit ? 8 : 6.8;
       this.previousOrbit = this.orbit;
     }
-    if (this.previousIso) { this.yaw = playerYaw; this.pitch = this.orbit ? ORBIT_EXPLORATION_PITCH : .3; this.previousIso = false; this.aimYaw = null; }
+    if (this.previousIso) { this.yaw = playerYaw; this.pitch = this.orbit ? ORBIT_EXPLORATION_PITCH : THIRD_PERSON_PITCH; this.previousIso = false; this.aimYaw = null; this.adaptive.snap(); }
+    if (this.adaptiveActive) { this.updateAdaptive(t, pivot); return; }
 
     // Mode targets.
     let targetShoulder = this.orbit ? 0 : 0.35, targetDist = this.desiredDistance, targetFov = (s.fov * Math.PI) / 180 * 1.0;
@@ -149,5 +164,32 @@ export class CameraRig {
     this.camera.setTarget(new Vector3(tx, ty, tz));
     this.forward.set(tx - cx, ty - cyv, tz - cz).normalize();
     void playerYaw; void TAU;
+    this.adaptive.snap();   // talk/orbit framing owns the camera; resume cleanly afterwards
+  }
+
+  /** Third-person: the shared adaptive camera, plus a gentle lock assist that never fights recent look input. */
+  private updateAdaptive(t: number, pivot: CameraFocus): void {
+    const s = this.settings(), a = this.adaptive;
+    if (this.mode === 'combat' && this.lockPivot && this.clock - this.lastLookAt > .8) {
+      const lockYaw = Math.atan2(-(this.lockPivot.x - pivot.x), -(this.lockPivot.z - pivot.z));
+      this.yaw = lerpAngle(this.yaw, lockYaw, damp(1.6, t));
+    }
+    a.yaw = this.yaw; a.pitch = this.pitch; a.preferred = this.desiredDistance; a.baseFov = (s.fov + 3) * Math.PI / 180;
+    // Chest, not the eyes: the pivot handed in is head height.
+    const chest = { x: pivot.x, y: pivot.y - this.pivotDrop - .3, z: pivot.z };
+    // Interior probe: free height above the head (built structure only).
+    let ceiling: number | null = null;
+    for (let k = .5; k <= 4.5; k += .5) if (this.world.blocked(pivot.x, pivot.y + k, pivot.z)) { ceiling = k + .3; break; }
+    const pose = a.update(t, { ...this.situation, pivot: chest, ceiling, engaged: this.mode === 'combat' || this.situation.engaged,
+      focus: this.mode === 'combat' && this.lockPivot ? { point: this.lockPivot, weight: .3 } : null }, this.obstruct, (x, z) => this.world.ground(x, z));
+    let { x: cx, y: cyv, z: cz } = pose.position;
+    const fx = -Math.sin(a.renderedYaw), fz = -Math.cos(a.renderedYaw);
+    if (this.shake > 0.001) { this.shakeT += t * 38; const k = this.shake * 0.06; cx += Math.sin(this.shakeT * 1.3) * k; cyv += Math.sin(this.shakeT * 1.7 + 1) * k * 0.8; cz += Math.cos(this.shakeT * 1.1) * k; this.shake *= Math.exp(-9 * t); }
+    if (this.kick > 0.001) { cx += fx * this.kick * 0.5; cz += fz * this.kick * 0.5; this.kick *= Math.exp(-11 * t); }
+    this.position.set(cx, cyv, cz); this.camera.position.copyFrom(this.position);
+    this.fov = pose.fov; this.camera.fov = pose.fov; this.currentDistance = a.debug.dist;
+    const tg = new Vector3(pose.target.x, pose.target.y, pose.target.z);
+    this.camera.setTarget(tg);
+    this.forward.copyFrom(tg.subtract(this.position).normalize());
   }
 }

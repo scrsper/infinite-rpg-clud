@@ -13,7 +13,8 @@ import { ReplayConnection } from './net/replay';
 import { ObservatoryConnection } from './net/observatory';
 import type { BodyState, DialogueProjection, InteractionTarget, SnapshotMessage, Vec3 } from './net/messages';
 import { LocalPredictor } from './game/predictor';
-import { CameraRig, ORBIT_EXPLORATION_PITCH } from './game/cameraRig';
+import { CameraRig, ORBIT_EXPLORATION_PITCH, THIRD_PERSON_PITCH } from './game/cameraRig';
+import type { CameraPresetName } from './game/adaptiveCamera';
 import { InputManager } from './game/input';
 import { PlayerController, candidatesFrom, type CombatIntent } from './game/controller';
 import { DEFAULT_SETTINGS, codeLabel, loadSettings, saveSettings, type Settings } from './game/bindings';
@@ -300,6 +301,21 @@ export class App {
 
   // ── snapshot handling ────────────────────────────────────────────────────────────────────────
   own(): BodyState | null { const s = this.snapshot; return s ? s.bodies.find(b => b.bodyId === s.controlledBodyId) ?? null : null; }
+  private camPrev: { x: number; z: number } | null = null; private camVel = { x: 0, z: 0 };
+  /** What the camera should know about the surroundings (presentation only; read from the snapshot). */
+  private cameraSituation(dt: number, pos: { x: number; y: number; z: number }) {
+    if (this.camPrev && dt > 0) { const k = Math.min(1, dt * 8); this.camVel.x += ((pos.x - this.camPrev.x) / dt - this.camVel.x) * k; this.camVel.z += ((pos.z - this.camPrev.z) / dt - this.camVel.z) * k; }
+    this.camPrev = { x: pos.x, z: pos.z };
+    const engaged = this.rig.mode === 'combat';
+    let threats = 0, largest = 0; const head = new Vector3();
+    for (const c of this.candidates()) {
+      if (c.dead) continue;
+      const d = Math.hypot(c.pos.x - pos.x, c.pos.z - pos.z);
+      if (engaged && d < 12 && (c.hostile || d < 7)) threats++;
+      if (d < 20 && c.kind === 'wildlife' && this.actors.headPoint(c.bodyId, head)) largest = Math.max(largest, head.y + this.regions.origin.y - c.pos.y);
+    }
+    return { velocity: { x: this.camVel.x, z: this.camVel.z }, threats, engaged, largest: largest >= 2.6 ? largest : 0 };
+  }
   private candidates() { const s = this.snapshot; return s ? candidatesFrom(s.bodies, s.wildlife.bodies, s.controlledBodyId) : []; }
   private speakerPos(): Vec3 | null { const s = this.snapshot; if (!s?.dialogue?.speakerBodyId) return null; return s.bodies.find(b => b.bodyId === s.dialogue!.speakerBodyId)?.pos ?? null; }
 
@@ -333,7 +349,8 @@ export class App {
   }
   private enterGame(): void {
     this.phase = 'playing'; this.clearScreen(); this.loading = null; this.hud.show(true);
-    const p = this.predictor.predicted; if (p) this.rig.yaw = this.params.has('gym') && this.params.get('scenario') !== 'town' ? -Math.PI / 4 : p.yaw; this.rig.pitch = this.rig.orbit ? ORBIT_EXPLORATION_PITCH : .3;
+    const p = this.predictor.predicted; if (p) this.rig.yaw = this.params.has('gym') && this.params.get('scenario') !== 'town' ? -Math.PI / 4 : p.yaw; this.rig.pitch = this.rig.orbit ? ORBIT_EXPLORATION_PITCH : THIRD_PERSON_PITCH; this.rig.adaptive.snap();
+    const cam = this.params.get('cam'); if (cam) this.rig.preset(cam as CameraPresetName);
     this.hud.toast(`Welcome, ${this.link.hello?.character.name ?? 'traveller'}.`, 'info', 5000);
     if (this.input.device === 'keyboard') this.input.requestLock();
     this.updateHints();
@@ -537,6 +554,7 @@ export class App {
       this.rig.pivotDrop = (INTERACTION_SPEC.height - INTERACTION_SPEC.duckHeight) * vis.crouch * 0.9;
       // Decorative plants are not collision in the simulation, so the player can stand inside one; the camera then ignores plants this frame instead of collapsing onto the head.
       this.pivotInPlant = this.regions.plantAt(vis.pos.x, vis.pos.y + 0.5, vis.pos.z) || this.regions.plantAt(vis.pos.x, vis.pos.y + eye, vis.pos.z);
+      this.rig.situation = this.cameraSituation(dt, vis.pos);
       this.rig.update(dt, { x: vis.pos.x - this.regions.origin.x, y: vis.pos.y - this.regions.origin.y + eye, z: vis.pos.z - this.regions.origin.z }, vis.yaw);
     }
     this.regions.updateCutaway(this.rig.cutaway ? vis?.pos ?? null : null, this.camera.position);

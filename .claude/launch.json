@@ -1,7 +1,42 @@
 {
   "version": "0.0.1",
   "configurations": [
-    { "name": "dev", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev"], "port": 5173 },
-    { "name": "web", "runtimeExecutable": "npx", "runtimeArgs": ["vite", "--config", "vite.web.config.ts"], "port": 5180 }
+    {
+      "name": "dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
+      "port": 5173
+    },
+    {
+      "name": "web",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "vite.web.config.ts"
+      ],
+      "port": 5180
+    },
+    {
+      "name": "gym-server",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "set TV_GYM_PORT=7506&& node --import tsx scripts/web/combat-gym-server.ts"
+      ],
+      "port": 7506
+    },
+    {
+      "name": "web-gym",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "set TV_WEB_GATEWAY_PORT=7505&& npx vite --config vite.web.config.ts"
+      ],
+      "port": 5180
+    }
   ]
 }

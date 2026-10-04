@@ -17,7 +17,7 @@ const ctx = await browser.newContext({ viewport: { width: W, height: H }, record
 const page = await ctx.newPage();
 const errors: string[] = []; page.on('pageerror', e => errors.push(String(e))); page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
 await page.addInitScript(() => { (window as any).__name = (f: unknown) => f; try { localStorage.removeItem('tv.tower.codex.v1'); } catch { /* */ } });
-await page.goto(`http://127.0.0.1:5180/?arena=1&tower=1&seed=${seed}&floor=${arg('floor', '1')}`);
+await page.goto(`${process.env.ARENA_HOST ?? 'http://127.0.0.1:5180'}/?arena=1&tower=1&seed=${seed}&floor=${arg('floor', '1')}`);
 await page.waitForFunction(() => !!(window as any).__arena?.tower, null, { timeout: 240_000 });
 await page.evaluate(() => (window as any).__arena.hud.toggleHelp());
 await page.mouse.click(W / 2, H / 2 - 100);

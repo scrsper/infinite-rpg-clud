@@ -10,6 +10,7 @@ import { strikeWindow } from './retarget';
 import { usedClips } from './combat';
 import { ArenaAudio } from './sfx';
 import { ARENA, ArenaWorld, setArenaHalf, type HeroInput } from './world';
+import { AdaptiveCamera, CAMERA_PRESETS, marchObstruction, type CameraPresetName } from '../game/adaptiveCamera';
 import { TowerRun } from './tower/tower';
 import { ARSENAL_KEYS } from './tower/items';
 import { loadCodex } from './tower/capability';
@@ -40,7 +41,7 @@ export async function startArena(): Promise<void> {
   scene.clearColor = new Color4(.06, .07, .09, 1);
   scene.environmentIntensity = .35;   // low ambient so the faceted low-poly forms read
   const camera = new FreeCamera('arena-cam', new Vector3(0, 20, 16), scene);
-  camera.fov = .72; camera.minZ = .5; camera.maxZ = 260; camera.inputs.clear();
+  camera.fov = 65 * Math.PI / 180; camera.minZ = .15; camera.maxZ = 260; camera.inputs.clear();
   const pipeline = attachPipeline(ctx, camera);
   pipeline.imageProcessing.vignetteWeight = 1.1; pipeline.imageProcessing.exposure = 1.0; pipeline.bloomThreshold = .82; pipeline.bloomWeight = .22;
 
@@ -74,7 +75,12 @@ export async function startArena(): Promise<void> {
   if (towerMode) { tower = new TowerRun(scene, world, hud, assets, stage, seed); tower.startFloor = Math.max(1, Math.min(100, Number(params.get('floor') ?? 1) || 1)); hud.tower = tower as never; tower.start(); }
   document.title = towerMode ? 'Tower of Chrysanthus' : document.title;
   // Classic isometric framing (~35 deg elevation), orbitable with the middle mouse button.
-  let zoom = 15, paused = false, camYaw = Math.PI * .25, camPitch = .64, orbiting = false;
+  // The shared elevated, freely orbitable third-person camera (src/web/game/adaptiveCamera.ts).
+  // The arena's people are drawn 1.22x, so the default sits proportionally farther back.
+  const cam = new AdaptiveCamera(); cam.yaw = Math.PI * .25; cam.preferred = 7.6;
+  const camPreset = params.get('cam'); if (camPreset && camPreset in CAMERA_PRESETS) cam.preset(camPreset as CameraPresetName);
+  const camObstruct = marchObstruction((x, y, z) => world.cameraBlocked(x, y, z));
+  let paused = false, orbiting = false;
   // Automation hooks (scripts/web/arena-play.ts): read-only views plus a projector for aiming real mouse input.
   (window as unknown as { __arena: unknown }).__arena = {
     world, hud, scene, camera, get tower() { return tower; },
@@ -88,9 +94,9 @@ export async function startArena(): Promise<void> {
       const g = h.inst.anims.get(clip); if (!g) return false;
       g.start(false, 1, g.from, g.to); g.setWeightForAllAnimatables(1); g.goToFrame(g.from + frac * (g.to - g.from)); g.pause(); return true;
     },
-    zoom: (z: number) => { zoom = z; },
+    zoom: (z: number) => { cam.preferred = z; }, cam, camPreset: (n: CameraPresetName) => cam.preset(n),
     clipInfo: () => [...assets.clips.values()].map(c => ({ name: c.name, dur: +(c.frames / c.fps).toFixed(2), stance: +c.stance.toFixed(2), win: strikeWindow(c).map(v => +v.toFixed(2)), peak: +Math.max(...c.swing).toFixed(1) })),
-    view: (pitch: number, yaw: number) => { camPitch = pitch; camYaw = yaw; },
+    view: (pitch: number, yaw: number) => { cam.pitch = pitch; cam.yaw = yaw; },
     summary: () => ({ time: world.time, wave: world.wave, kills: world.kills, smashed: world.smashed, level: world.level, combo: world.combo.hits, hp: world.hero.hp, heroState: world.hero.state,
       foes: world.fighters.filter(f => f.role === 'foe' && f.alive).map(f => ({ x: f.pos.x, z: f.pos.z, state: f.state, kind: f.foeKind })), hero: { x: world.hero.pos.x, z: world.hero.pos.z },
       debris: world.debris.count, props: world.props.filter(p => !p.broken && !p.loose).map(p => ({ x: p.pos.x, z: p.pos.z, key: p.key })) }),
@@ -106,16 +112,17 @@ export async function startArena(): Promise<void> {
   let rmbPressed = false, rmbReleased = false;
   canvas.addEventListener('pointerdown', e => { audio.unlock(); canvas.focus(); if (e.button === 0) { lmb = true; lmbPressed = true; } if (e.button === 2) { rmb = true; rmbPressed = true; } if (e.button === 1) { orbiting = true; e.preventDefault(); } });
   window.addEventListener('pointerup', e => { if (e.button === 0) lmb = false; if (e.button === 2) { rmb = false; rmbReleased = true; } if (e.button === 1) orbiting = false; });
-  window.addEventListener('pointermove', e => { if (!orbiting) return; camYaw -= e.movementX * .006; camPitch = Math.max(.32, Math.min(1.25, camPitch + e.movementY * .004)); });
+  window.addEventListener('pointermove', e => { if (!orbiting) return; cam.addLook(e.movementX * .006, e.movementY * .004); });
   canvas.addEventListener('auxclick', e => e.preventDefault());
   window.addEventListener('keydown', () => audio.unlock(), { once: true });
-  canvas.addEventListener('wheel', e => { zoom = Math.max(7, Math.min(32, zoom + Math.sign(e.deltaY) * 1.2)); e.preventDefault(); }, { passive: false });
+  canvas.addEventListener('wheel', e => { cam.zoom(Math.sign(e.deltaY)); e.preventDefault(); }, { passive: false });
 
   const camFocus = new Vector3();
+  let camPrev: { x: number; z: number } | null = null; const camVel = { x: 0, z: 0 };
   let padWeapon = 0, padPrev: boolean[] = [];
 
   const readInput = (): HeroInput => {
-    const fwd = new Vector3(-Math.sin(camYaw), 0, -Math.cos(camYaw)), right = new Vector3(-fwd.z, 0, fwd.x);
+    const fwd = new Vector3(-Math.sin(cam.yaw), 0, -Math.cos(cam.yaw)), right = new Vector3(-fwd.z, 0, fwd.x);
     let mx = 0, mz = 0;
     if (keys.has('KeyW') || keys.has('ArrowUp')) { mx += fwd.x; mz += fwd.z; }
     if (keys.has('KeyS') || keys.has('ArrowDown')) { mx -= fwd.x; mz -= fwd.z; }
@@ -185,15 +192,24 @@ export async function startArena(): Promise<void> {
       heroDown = false;
       setTimeout(() => hud.message('You fell', `Wave ${world.wave} · ${world.kills} kills · ${world.smashed} smashed`, 'Get up and keep fighting', () => world.respawnHero()), 900);
     }
-    // Camera: fixed high three-quarter view that follows the hero, like the reference.
-    const h = world.hero.pos;
-    const la = Math.min(3, Math.hypot(input.aim.x - h.x, input.aim.z - h.z) * .12), ld = Math.atan2(input.aim.x - h.x, input.aim.z - h.z);
-    const fx = h.x + Math.sin(ld) * la, fz = h.z + Math.cos(ld) * la;
-    camFocus.x += (fx - camFocus.x) * Math.min(1, dt * 5); camFocus.z += (fz - camFocus.z) * Math.min(1, dt * 5); camFocus.y = 1.1;
+    // Camera: elevated adaptive third person around the hero's chest; pulls back for crowds and big foes, in for aiming.
+    const hero = world.hero, h = hero.pos, sc = hero.inst.root.scaling.x;
+    let threats = 0, largest = 0;
+    for (const f of world.fighters) if (f.role === 'foe' && f.alive) {
+      const d = Math.hypot(f.pos.x - h.x, f.pos.z - h.z);
+      if (d < 12) threats++;
+      if (d < 18) largest = Math.max(largest, 1.75 * f.inst.root.scaling.x * (f.boss ? 1.25 : 1));
+    }
+    if (camPrev && dt > 0) { const k = Math.min(1, dt * 8); camVel.x += ((h.x - camPrev.x) / dt - camVel.x) * k; camVel.z += ((h.z - camPrev.z) / dt - camVel.z) * k; }
+    camPrev = { x: h.x, z: h.z };
+    // Aiming follows the cursor, so the camera does not swing after the hero (that would feed back into the aim).
+    world.refreshCameraProps();
+    const pose = cam.update(dt, { pivot: { x: h.x, y: h.y + 1.32 * sc / 1.22, z: h.z }, velocity: camVel, threats, engaged: threats > 0, largest: largest >= 3 ? largest : 0, aiming: hero.state === 'aim' }, camObstruct, () => 0);
+    camFocus.set(pose.target.x, pose.target.y, pose.target.z);
     shakeT += dt * 60;
-    const s = world.fx.shake * world.fx.shake * .9;
-    const off = new Vector3(Math.sin(camYaw) * Math.cos(camPitch), Math.sin(camPitch), Math.cos(camYaw) * Math.cos(camPitch)).scale(zoom);
-    camera.position.set(camFocus.x + off.x + Math.sin(shakeT * 1.7) * s, camFocus.y + off.y + Math.sin(shakeT * 2.3) * s, camFocus.z + off.z + Math.cos(shakeT * 1.9) * s);
+    const s = world.fx.shake * world.fx.shake * .5;
+    camera.fov = pose.fov;
+    camera.position.set(pose.position.x + Math.sin(shakeT * 1.7) * s, pose.position.y + Math.sin(shakeT * 2.3) * s, pose.position.z + Math.cos(shakeT * 1.9) * s);
     camera.setTarget(camFocus);
     hud.update(dt, world, scene, camera);
   });

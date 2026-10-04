@@ -8,7 +8,7 @@ import { chromium, type Page } from 'playwright';
 const browser = await chromium.launch({ channel: 'chrome', headless: false, args: ['--disable-renderer-backgrounding', '--disable-background-timer-throttling'] });
 const page = await (await browser.newContext({ viewport: { width: 1280, height: 720 } })).newPage();
 await page.addInitScript(() => { (window as any).__name = (f: unknown) => f; });
-await page.goto('http://127.0.0.1:5180/?arena=1&seed=3');
+await page.goto(`${process.env.ARENA_HOST ?? 'http://127.0.0.1:5180'}/?arena=1&seed=3`);
 await page.waitForFunction(() => !!(window as any).__arena, null, { timeout: 240_000 });
 await page.mouse.click(640, 200);
 await page.waitForTimeout(500);

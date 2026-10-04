@@ -477,6 +477,18 @@ export class ArenaWorld {
     turn('clavicle_l', w * .25, fwdv); turn('clavicle_r', -w * .25, fwdv);
   }
 
+  private camProps: Prop[] = [];
+  /** Camera obstruction (presentation only): standing walls and tall props near the hero, as their collision boxes. */
+  refreshCameraProps(): void { const h = this.hero.pos; this.camProps = this.props.filter(p => !p.broken && !p.loose && p.h > .9 && Math.hypot(p.pos.x - h.x, p.pos.z - h.z) < 16 + Math.max(p.hx, p.hz)); }
+  cameraBlocked(x: number, y: number, z: number): boolean {
+    for (const p of this.camProps) {
+      if (y > p.h + .15 || y < 0) continue;
+      const c = Math.cos(p.yaw), s = Math.sin(p.yaw), lx = (x - p.pos.x) * c - (z - p.pos.z) * s, lz = (x - p.pos.x) * s + (z - p.pos.z) * c;
+      if (Math.abs(lx) < p.hx + .12 && Math.abs(lz) < p.hz + .12) return true;
+    }
+    return false;
+  }
+
   // ------------------------------------------------------------------ hero
   private stepHero(dt: number, i: HeroInput): void {
     const h = this.hero, w = WEAPONS[this.weapon];

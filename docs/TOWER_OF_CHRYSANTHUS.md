@@ -10,7 +10,7 @@ The Combat Gym panel has an **Enter the Tower of Chrysanthus** button.
 
 ## Controls (Diablo 4 layout, Witcher 3 / Elden Ring combat)
 
-- **Camera:** classic isometric (about 35°). Drag with the middle mouse button to orbit and tilt; the wheel zooms. The view leads slightly toward your aim.
+- **Camera:** an elevated third-person camera aimed at the chest (about 7.6 m back and 20° down). It pulls back for crowds and big foes, rises over ruin walls, and goes over the shoulder while aiming the bow. Drag with the middle mouse button to orbit; the wheel zooms. See docs/web/CAMERA.md.
 - **Move:** WASD (camera-relative), Shift sprint, mouse aim.
 - **Attacks:** LMB light chain. RMB heavy: hold to charge at the wind-up and release for scaled damage, knockback and hit-stop. A heavy also finishes a light combo, and heavies chain into each other.
 - **Defence:** Space dodges (a roll when moving forward). F guards; raising the guard just before a hit parries, staggering the attacker and refunding stamina.
