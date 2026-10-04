@@ -1,3 +1,4 @@
+import { itemDesign } from '../content/itemCollection';
 import type { Person, Body, Item, Place, Faction, Creature, Occupation, Traits, Appearance, Vec3, PlaceType, Anchor, ItemType, EntityId, Attributes } from '../core/types';
 import { World } from '../core/world';
 import { ATTRIBUTE_IDS, attributeProfile, defaultDevelopment, generatedHuman, physicalAttribute } from '../core/human';
@@ -72,7 +73,11 @@ export function makePerson(world: World, s: PersonSpec): Person {
   world.add(p); return p;
 }
 
-export function makeItem(world: World, type: ItemType, name: string, o: { owner?: EntityId | null; holder?: EntityId | null; container?: EntityId | null; pos?: Vec3 | null; placeId?: EntityId | null; value?: number; damage?: number; quantity?: number; description?: string; named?: boolean; tags?: string[]; condition?: number } = {}): Item {
+export function makeItem(world: World, type: ItemType, name: string, o: { owner?: EntityId | null; holder?: EntityId | null; container?: EntityId | null; pos?: Vec3 | null; placeId?: EntityId | null; value?: number; damage?: number; quantity?: number; description?: string; named?: boolean; tags?: string[]; condition?: number; catalogId?: string } = {}): Item {
+  if (o.catalogId) {
+    const design = itemDesign(o.catalogId);
+    if (!design || design.mechanicalType !== type) throw new Error(`Unsupported or mismatched item design ${o.catalogId} for ${type}`);
+  }
   if (o.holder && o.container) throw new Error('An item cannot be created in both an inventory and a container');
   const container = o.container ? world.container(o.container) : undefined;
   if (o.container && !container) throw new Error(`Unknown container ${o.container}`);
@@ -80,6 +85,7 @@ export function makeItem(world: World, type: ItemType, name: string, o: { owner?
     id: world.nextId('i'), kind: 'item', name, createdAt: world.now, tags: o.tags ?? [], type, ownerId: o.owner ?? null, holderId: o.holder ?? null,
     pos: o.container ? null : o.pos ? { ...o.pos } : null, placeId: o.placeId ?? container?.placeId ?? null, containerId: o.container ?? null, provenance: [], value: o.value ?? ITEM_VALUE[type], damage: o.damage ?? ITEM_DAMAGE[type] ?? 0, quantity: o.quantity ?? 1,
     description: o.description ?? '', named: !!o.named,
+    ...(o.catalogId ? { catalogId: o.catalogId } : {}),
     condition: o.condition ?? (TOOL_TYPES.has(type) ? 1 : undefined),
   };
   if (it.holderId) { const h = world.person(it.holderId); if (h) h.inventory.push(it.id); }
@@ -141,4 +147,12 @@ export function makeFaction(world: World, name: string, description: string, o: 
 export function makeCreature(world: World, species: Creature['species'], name: string, homeId: EntityId | null, ownerId: EntityId | null): Creature {
   const c: Creature = { id: world.nextId('c'), kind: 'creature', name, createdAt: world.now, tags: [], species, bodies: [], homeId, wanderTimer: 0, ownerId };
   world.add(c); return c;
+}
+
+/** Create only designs matching an existing canonical ItemType. Existing damage/value/tool
+ * behavior applies equally to NPCs and players; abilities and set bonuses remain design text. */
+export function makeCatalogItem(world: World, catalogId: string, options: Omit<NonNullable<Parameters<typeof makeItem>[3]>, 'catalogId'> = {}): Item {
+  const design = itemDesign(catalogId);
+  if (!design?.mechanicalType) throw new Error(`No canonical mechanics for item design ${catalogId}`);
+  return makeItem(world, design.mechanicalType, design.name, { ...options, description: options.description ?? design.description, catalogId });
 }

@@ -1387,6 +1387,8 @@ export type ResourceCategory = 'food' | 'material' | 'crop_yield' | 'tool' | 'va
 export interface ProvenanceEntry { tick: Tick; eventId?: EventId; from: EntityId | null; to: EntityId | null; how: string; }
 export interface Item extends Entity {
   kind: 'item';
+  /** Optional authored physical design identity; no new mechanics or rarity-derived power. */
+  catalogId?: string;
   type: ItemType;
   ownerId: EntityId | null;         // rightful owner (as the world has it)
   holderId: EntityId | null;        // person carrying it
