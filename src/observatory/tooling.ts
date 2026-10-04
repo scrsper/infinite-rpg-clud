@@ -40,10 +40,11 @@ export class Tooling {
    if(!reference){res.writeHead(404,headers);res.end('Unknown reference');return true;}
    roots=[resolve(this.ontologyRoot,'references')];names=[reference.localPath.replace(/^references\//,'')];
   }
+  if(path.startsWith('/ontology/assets/shared/')){roots=[resolve(this.gameRoot,'web/public')];names=[path.slice('/ontology/assets/shared/'.length)];}
   for(const root of roots)for(const name of names){
    const file=resolve(root,name);if(!file.startsWith(root+sep)){res.writeHead(403,headers);res.end('Invalid asset path');return true;}
    try{const actual=await realpath(file),actualRoot=await realpath(root);if(!actual.startsWith(actualRoot+sep))continue;
-    const types:Record<string,string>={'.html':'text/html; charset=utf-8','.js':'text/javascript','.css':'text/css','.glb':'model/gltf-binary','.png':'image/png','.jpg':'image/jpeg','.hdr':'application/octet-stream','.json':'application/json'};
+    const types:Record<string,string>={'.html':'text/html; charset=utf-8','.js':'text/javascript','.css':'text/css','.glb':'model/gltf-binary','.gltf':'model/gltf+json','.bin':'application/octet-stream','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.hdr':'application/octet-stream','.json':'application/json'};
     const mime=types[extname(actual)];if(!mime)continue;const bytes=await readFile(actual);res.writeHead(200,{...headers,'Content-Type':mime});res.end(bytes);return true;
    }catch{/* Try the explicit local public root after build assets. */}
   }

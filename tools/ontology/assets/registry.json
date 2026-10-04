@@ -227,5 +227,176 @@
       "Culture/profession/equipment assembly unresolved"
     ],
     "lods": []
+  },
+  {
+    "id": "shared-ranger",
+    "provider": "mpfb",
+    "kind": "body",
+    "url": "/assets/shared/arena/people/hero.glb",
+    "sourcePath": "web/public/arena/people/hero.glb",
+    "provenanceId": "shared-ranger",
+    "status": "PROTOTYPE",
+    "rigFamily": "humanoid_standard",
+    "tags": [
+      "shared",
+      "claude-cast"
+    ],
+    "limitations": [
+      "Existing authored cast identity; not a new reference-approved Omni likeness",
+      "CC0 base and credited CC-BY clothing; see game web/public/arena/people/CREDITS.md"
+    ],
+    "lods": []
+  },
+  {
+    "id": "shared-brann",
+    "provider": "mpfb",
+    "kind": "body",
+    "url": "/assets/shared/arena/people/brann.glb",
+    "sourcePath": "web/public/arena/people/brann.glb",
+    "provenanceId": "shared-brann",
+    "status": "PROTOTYPE",
+    "rigFamily": "humanoid_standard",
+    "tags": [
+      "shared",
+      "claude-cast"
+    ],
+    "limitations": [
+      "Existing authored cast identity; not a new reference-approved Omni likeness",
+      "CC0 base and credited CC-BY clothing; see game web/public/arena/people/CREDITS.md"
+    ],
+    "lods": []
+  },
+  {
+    "id": "shared-wren",
+    "provider": "mpfb",
+    "kind": "body",
+    "url": "/assets/shared/arena/people/wren.glb",
+    "sourcePath": "web/public/arena/people/wren.glb",
+    "provenanceId": "shared-wren",
+    "status": "PROTOTYPE",
+    "rigFamily": "humanoid_standard",
+    "tags": [
+      "shared",
+      "claude-cast"
+    ],
+    "limitations": [
+      "Existing authored cast identity; not a new reference-approved Omni likeness",
+      "CC0 base and credited CC-BY clothing; see game web/public/arena/people/CREDITS.md"
+    ],
+    "lods": []
+  },
+  {
+    "id": "shared-raider",
+    "provider": "mpfb",
+    "kind": "body",
+    "url": "/assets/shared/arena/people/raider.glb",
+    "sourcePath": "web/public/arena/people/raider.glb",
+    "provenanceId": "shared-raider",
+    "status": "PROTOTYPE",
+    "rigFamily": "humanoid_standard",
+    "tags": [
+      "shared",
+      "claude-cast"
+    ],
+    "limitations": [
+      "Existing authored cast identity; not a new reference-approved Omni likeness",
+      "CC0 base and credited CC-BY clothing; see game web/public/arena/people/CREDITS.md"
+    ],
+    "lods": []
+  },
+  {
+    "id": "shared-raider_f",
+    "provider": "mpfb",
+    "kind": "body",
+    "url": "/assets/shared/arena/people/raider_f.glb",
+    "sourcePath": "web/public/arena/people/raider_f.glb",
+    "provenanceId": "shared-raider_f",
+    "status": "PROTOTYPE",
+    "rigFamily": "humanoid_standard",
+    "tags": [
+      "shared",
+      "claude-cast"
+    ],
+    "limitations": [
+      "Existing authored cast identity; not a new reference-approved Omni likeness",
+      "CC0 base and credited CC-BY clothing; see game web/public/arena/people/CREDITS.md"
+    ],
+    "lods": []
+  },
+  {
+    "id": "shared-soldier",
+    "provider": "mpfb",
+    "kind": "body",
+    "url": "/assets/shared/arena/people/soldier.glb",
+    "sourcePath": "web/public/arena/people/soldier.glb",
+    "provenanceId": "shared-soldier",
+    "status": "PROTOTYPE",
+    "rigFamily": "humanoid_standard",
+    "tags": [
+      "shared",
+      "claude-cast"
+    ],
+    "limitations": [
+      "Existing authored cast identity; not a new reference-approved Omni likeness",
+      "CC0 base and credited CC-BY clothing; see game web/public/arena/people/CREDITS.md"
+    ],
+    "lods": []
+  },
+  {
+    "id": "shared-knight",
+    "provider": "mpfb",
+    "kind": "body",
+    "url": "/assets/shared/arena/people/knight.glb",
+    "sourcePath": "web/public/arena/people/knight.glb",
+    "provenanceId": "shared-knight",
+    "status": "PROTOTYPE",
+    "rigFamily": "humanoid_standard",
+    "tags": [
+      "shared",
+      "claude-cast"
+    ],
+    "limitations": [
+      "Existing authored cast identity; not a new reference-approved Omni likeness",
+      "CC0 base and credited CC-BY clothing; see game web/public/arena/people/CREDITS.md"
+    ],
+    "lods": []
+  },
+  {
+    "id": "shared-archer",
+    "provider": "mpfb",
+    "kind": "body",
+    "url": "/assets/shared/arena/people/archer.glb",
+    "sourcePath": "web/public/arena/people/archer.glb",
+    "provenanceId": "shared-archer",
+    "status": "PROTOTYPE",
+    "rigFamily": "humanoid_standard",
+    "tags": [
+      "shared",
+      "claude-cast"
+    ],
+    "limitations": [
+      "Existing authored cast identity; not a new reference-approved Omni likeness",
+      "CC0 base and credited CC-BY clothing; see game web/public/arena/people/CREDITS.md"
+    ],
+    "lods": []
+  },
+  {
+    "id": "shared-mystic",
+    "provider": "mpfb",
+    "kind": "body",
+    "url": "/assets/shared/arena/people/mystic.glb",
+    "sourcePath": "web/public/arena/people/mystic.glb",
+    "provenanceId": "shared-mystic",
+    "status": "PROTOTYPE",
+    "rigFamily": "humanoid_standard",
+    "tags": [
+      "shared",
+      "claude-cast"
+    ],
+    "limitations": [
+      "Existing authored cast identity; not a new reference-approved Omni likeness",
+      "CC0 base and credited CC-BY clothing; see game web/public/arena/people/CREDITS.md"
+    ],
+    "lods": []
   }
 ]

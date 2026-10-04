@@ -1,6 +1,7 @@
 import {RigReview} from './rigReview';
 import {Quaternion} from '@babylonjs/core/Maths/math.vector';
 import {PBRMaterial} from '@babylonjs/core/Materials/PBR/pbrMaterial';
+import {attachSharedMotion} from './sharedMotion';
 import {attachReviewMotion} from './motion';
 import type {appearancePlan} from '../visual/appearance';
 import {Engine} from '@babylonjs/core/Engines/engine';
@@ -83,6 +84,7 @@ export class Viewport {
    this.dimensions=size.scale(scale).asArray();const h=this.dimensions[1];this.home={radius:Math.max(...this.dimensions)*2.1,target:new Vector3(0,h*.5,0)};this.resetCamera();
    this.rigReview=new RigReview(container,this.scene);
    this.setWireframe(this.wire);this.setSkeleton(this.skeleton);
+   if(url.includes('/assets/shared/')){try{this.motionReport=await attachSharedMotion(container,this.scene,()=>request===this.request);}catch(e){this.motionError=String(e);}}
    if(url.includes('tv-human-male-v2')){try{this.motionReport=await attachReviewMotion(container,this.scene,()=>request===this.request);if(request!==this.request)return;this.pelvisBase=container.skeletons[0].bones.find(b=>b.name==='pelvis')!.getTransformNode()!.getAbsolutePosition().clone();}catch(e){this.motionError=String(e);}}
   }catch(err){if(request!==this.request)return;this.clear();this.loadError=String(err);throw err;}
  }
