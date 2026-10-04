@@ -7,6 +7,7 @@ import { Debris } from './debris';
 import { BlobShadows, Fx, SlashTrail } from './fx';
 import { mulberry } from '../render/noise';
 import { reach } from './ik';
+import { NavGrid } from './nav';
 import type { Sfx } from './sfx';
 
 /**
@@ -20,7 +21,9 @@ const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 const turnTo = (from: number, to: number, rate: number) => { const d = wrap(to - from); return from + clamp(d, -rate, rate); };
 const fwd = (yaw: number) => new Vector3(Math.sin(yaw), 0, Math.cos(yaw));
 /** Half-size of the playable floor; the perimeter walls' inner faces sit at ARENA + 1. */
-export const ARENA = 34;
+export let ARENA = 34;
+/** Resize the playable floor (tower floors grow every 25 levels). */
+export function setArenaHalf(h: number): void { ARENA = h; }
 /** Seconds a dodge lasts (clip is played to fit). */
 const DODGE_TIME = .55, ROLL_TIME = .82;
 
@@ -51,6 +54,8 @@ export class Fighter {
   twoHand = false; ikW = 0;
   /** Smoothed locomotion velocity, turn rate and body lean (presentation of weight). */
   mvel = new Vector3(); turnRate = 0; lean = 0; pitch = 0; dodgeTime = .55;
+  /** Tower: per-fighter outgoing damage scale, boss identity, burning and chill. */
+  dmgMul = 1; boss: { name: string } | null = null; burnT = 0; burnDps = 0; slowT = 0;
   trail: SlashTrail | null = null; extra: InstancedMesh[] = [];
   label = 'Idle';
   constructor(readonly id: number, readonly role: Role, readonly name: string, readonly inst: CharacterInstance, readonly anim: Animator,
@@ -64,6 +69,8 @@ export interface Prop {
   key: string; mesh: InstancedMesh; pos: Vector3; yaw: number; scale: number;
   hx: number; hz: number; h: number; round: boolean;
   hp: number; broken: boolean; wobble: number; loose: boolean; on: Prop[]; blob: InstancedMesh | null;
+  /** Unbreakable structure (ruin walls). */ solid?: boolean;
+  /** Drops loot when broken open. */ chest?: boolean;
 }
 interface Shot { mesh: AbstractMesh; pos: Vector3; vel: Vector3; owner: Fighter; dmg: number; knock: number; life: number; kind: 'bolt' | 'orb'; pierce: number; hit: Set<object> }
 
@@ -102,7 +109,22 @@ export class ArenaWorld {
   autoWaves = false;
   /** Upgrades chosen on level-up. */
   mods = { damage: 1, atkSpeed: 1, move: 1, regen: 1, range: 1 };
+  /** Passive multipliers from capability (affinities, emerged class); kept apart from level-up choices. */
+  bonus = { damage: 1, atkSpeed: 1, move: 1, maxHpUpgrades: 1 };
   showLabels = false;
+  /** Weapon slots the hero can draw (the tower starts with fists only). */
+  unlocked = new Set<WeaponId>(['fists', 'greatsword', 'axe', 'bow']);
+  /** Tower overrides: the mesh drawn for a slot, its damage scale, hero armour. */
+  weaponMesh: Partial<Record<WeaponId, { mesh: string; hand: 'l' | 'r' }>> = {};
+  weaponMul: Partial<Record<WeaponId, number>> = {};
+  armor = 0;
+  /** Foe scaling for the current floor. */
+  foeHpMul = 1; foeDmgMul = 1;
+  onHeroHit: ((t: Fighter, dmg: number, crit: boolean) => void) | null = null;
+  onChest: ((p: Vector3) => void) | null = null;
+  /** Walkable-grid navigation around ruin walls (tower floors); null when the floor is open. */
+  nav: NavGrid | null = null;
+  private wallSrc: Mesh | null = null; private wallMat: StandardMaterial | null = null;
   private serial = 0;
   private rnd = mulberry(918271);
   private boltMat: StandardMaterial; private orbMat: StandardMaterial; private lineMat: StandardMaterial;
@@ -126,6 +148,43 @@ export class ArenaWorld {
     this.layoutProps();
     this.hero = this.spawnHero();
     if (this.companions) this.spawnCompanions();
+  }
+
+  /** Tower floor: clear everything but the hero (and companions), then build the floor plan. */
+  loadFloor(spec: { seed: number; half: number; wallColor: [number, number, number]; walls: { x: number; z: number; len: number; yaw: number }[];
+    props: { key: string; x: number; z: number; yaw: number }[]; chests: { x: number; z: number; yaw: number }[]; start: { x: number; z: number };
+    foes: { kind: FoeKind; x: number; z: number }[]; boss?: { kind: FoeKind; name: string; x: number; z: number; hpMul: number; dmgMul: number; scale: number } }): void {
+    for (const f of this.fighters) if (f.role === 'foe') this.removeFighter(f);
+    this.fighters = this.fighters.filter(f => f.role !== 'foe');
+    for (const p of this.props) { p.mesh.dispose(); p.blob?.dispose(); }
+    for (const sh of this.shots) sh.mesh.dispose();
+    this.props = []; this.shots = []; this.debris.clear();
+    setArenaHalf(spec.half); this.rnd = mulberry(spec.seed); this.wave = 0; this.combo = { hits: 0, timer: 0 };
+    this.wallMaterial().diffuseColor.set(...spec.wallColor);
+    for (const w of spec.walls) this.placeWall(w.x, w.z, w.len, w.yaw);
+    this.nav = spec.walls.length ? new NavGrid(spec.half, this.props.filter(p => p.solid).map(p => ({ x: p.pos.x, z: p.pos.z, hx: p.hx, hz: p.hz, yaw: p.yaw }))) : null;
+    for (const p of spec.props) if (PROP_DEF[p.key]) this.place(p.key, p.x, p.z, p.yaw);
+    for (const c of spec.chests) { const p = this.place('trunk', c.x, c.z, c.yaw); p.chest = true; p.hp = 2; }
+    const h = this.hero; h.pos.set(spec.start.x, 0, spec.start.z); h.vel.setAll(0); h.mvel.setAll(0); h.yaw = Math.PI; h.inst.springs?.reset();
+    this.fighters.filter(f => f.role === 'ally').forEach((a, i) => { a.pos.set(spec.start.x + (i ? 2.5 : -2.5), 0, spec.start.z + 1.5); a.inst.springs?.reset(); });
+    for (const e of spec.foes) this.spawnFoe(e.kind, e.x, e.z);
+    if (spec.boss) {
+      const b = spec.boss, f = this.spawnFoe(b.kind, b.x, b.z);
+      f.maxHp = f.hp = Math.round(f.hp * b.hpMul); f.hpShown = f.hp; f.dmgMul *= b.dmgMul; f.boss = { name: b.name };
+      f.inst.root.scaling.scaleInPlace(b.scale); f.radius *= b.scale; f.speed *= .9;
+    }
+  }
+
+  private wallMaterial(): StandardMaterial {
+    if (!this.wallMat) { this.wallMat = new StandardMaterial('ruin-wall', this.scene); this.wallMat.specularColor = Color3.Black(); }
+    return this.wallMat;
+  }
+  /** A low ruined wall segment: blocks movement and shots, cannot be smashed. */
+  private placeWall(x: number, z: number, len: number, yaw: number): void {
+    if (!this.wallSrc) { this.wallSrc = MeshBuilder.CreateBox('ruin-wall', { size: 1 }, this.scene); this.wallSrc.material = this.wallMaterial(); this.wallSrc.position.y = -50; this.wallSrc.isPickable = false; }
+    const H = 1.5, T = .7;
+    const mesh = this.wallSrc.createInstance('wall'); mesh.position.set(x, H / 2, z); mesh.rotation.y = yaw; mesh.scaling.set(T, H, len + T * .5); mesh.isPickable = false;
+    this.props.push({ key: 'wall', mesh, pos: new Vector3(x, 0, z), yaw, scale: 1, hx: T / 2, hz: len / 2 + T * .25, h: H, round: false, hp: Infinity, broken: false, wobble: 0, loose: false, on: [], blob: null, solid: true });
   }
 
   private place(key: string, x: number, z: number, yaw: number, y = 0, loose = false): Prop {
@@ -200,8 +259,9 @@ export class ArenaWorld {
   }
 
   setWeapon(h: Fighter, id: WeaponId): void {
-    this.weapon = id; const w = WEAPONS[id];
-    this.equip(h, [], w.attach);
+    if (!this.unlocked.has(id)) return;
+    this.weapon = id; const w = WEAPONS[id], o = this.weaponMesh[id];
+    this.equip(h, [], o ? { [o.hand]: o.mesh } : w.attach);
     this.bladeBase.position.set(0, w.trail * .3, 0); this.bladeTip.position.set(0, Math.max(.3, w.trail), 0);
     if (!h.busy) { h.state = 'idle'; h.anim.play(this.ms(h).idle, { loop: true }); }
   }
@@ -223,9 +283,9 @@ export class ArenaWorld {
 
   private spawnFoe(k: FoeKind, x: number, z: number): Fighter {
     const d = FOES[k];
-    const hp = Math.round(d.hp * (1 + Math.max(0, this.wave - 1) * .08));
+    const hp = Math.round(d.hp * (1 + Math.max(0, this.wave - 1) * .08) * this.foeHpMul);
     const f = this.makeFighter(d.looks[Math.floor(this.rnd() * d.looks.length)], 'foe', k, hp, d.speed * (.9 + this.rnd() * .2), d, k);
-    this.equip(f, [], { [d.hand ?? 'r']: d.weapon });
+    this.equip(f, [], { [d.hand ?? 'r']: d.weapon }); f.dmgMul = this.foeDmgMul;
     f.pos.set(x, 0, z); f.yaw = Math.atan2(this.hero.pos.x - x, this.hero.pos.z - z);
     f.state = 'spawn'; f.st = 0; f.cd = .6 + this.rnd() * 1.4; f.strafe = this.rnd() < .5 ? 1 : -1;
     f.anim.play(this.ms(f).enter, { speed: 1.6, fade: 0 });
@@ -260,6 +320,15 @@ export class ArenaWorld {
     this.stepHero(dt, input);
     for (const f of this.fighters) if (f.role !== 'hero') f.role === 'foe' ? this.stepFoe(f, dt) : this.stepAlly(f, dt);
     for (const f of this.fighters) this.integrate(f, dt);
+    // Statuses: burning deals damage over time; chill slows (applied in movement).
+    for (const f of this.fighters) {
+      if (f.slowT > 0) f.slowT -= dt;
+      if (f.burnT > 0 && f.standing) {
+        f.burnT -= dt; f.hp -= f.burnDps * dt;
+        if (this.rnd() < dt * 9) this.fx.sparksAt(f.pos.add(new Vector3(0, .6 + this.rnd() * 1.2, 0)), 4, new Color4(1, .45, .1, 1));
+        if (f.hp <= 0) this.kill(f, new Vector3(0, 0, 0), 0, false);
+      }
+    }
     this.separate();
     this.stepShots(dt);
     this.stepWaves(dt);
@@ -314,7 +383,7 @@ export class ArenaWorld {
     const mv = new Vector3(i.move.x, 0, i.move.z); const moving = mv.lengthSquared() > .01;
     if (moving) mv.normalize();
     const aimYaw = Math.atan2(i.aim.x - h.pos.x, i.aim.z - h.pos.z);
-    const speed = h.speed * this.mods.move;
+    const speed = h.speed * (this.mods.move * this.bonus.move);
 
     // Revive a downed companion by holding interact beside them.
     const downed = this.fighters.find(f => f.role === 'ally' && f.state === 'down' && Vector3.Distance(f.pos, h.pos) < 2.6);
@@ -347,7 +416,7 @@ export class ArenaWorld {
       case 'hit': if (h.st > .32) this.toIdle(h); return;
       case 'attack': {
         const a = h.atk!;
-        h.atkT += dt * a.speed * this.mods.atkSpeed;
+        h.atkT += dt * a.speed * (this.mods.atkSpeed * this.bonus.atkSpeed);
         if (h.atkT < a.active[0]) h.yaw = turnTo(h.yaw, this.assist(h, aimYaw, a.range), dt * 14);
         if (a.lunge && h.atkT < a.active[1]) h.pos.addInPlace(fwd(h.yaw).scale(a.lunge / a.active[1] * dt * a.speed * (1 - h.atkT / a.active[1]) * 2));
         if (this.weapon === 'bow') { if (h.atkT >= a.active[0] && !h.atkHits.size) { h.atkHits.set(this, 0); this.fireBolt(h, h.state === 'attack' && i.secondary ? 1.35 : 1); } }
@@ -387,7 +456,7 @@ export class ArenaWorld {
     // idle / move
     if (i.attackPressed || (i.attack && h.st > .05)) { h.combo = 0; this.startAttack(h, w.combo[0], aimYaw); return; }
     if (i.secondary) {
-      if (w.secondary === 'spin' && h.energy > 10) { h.state = 'spin'; h.st = 0; h.atk = w.spin!; h.atkT = 0; h.atkHits.clear(); h.label = 'Whirlwind'; h.anim.play(w.spin!.clip, { loop: true, speed: w.spin!.speed * this.mods.atkSpeed, fade: .1 }); if (h.trail) h.trail.active = true; return; }
+      if (w.secondary === 'spin' && h.energy > 10) { h.state = 'spin'; h.st = 0; h.atk = w.spin!; h.atkT = 0; h.atkHits.clear(); h.label = 'Whirlwind'; h.anim.play(w.spin!.clip, { loop: true, speed: w.spin!.speed * (this.mods.atkSpeed * this.bonus.atkSpeed), fade: .1 }); if (h.trail) h.trail.active = true; return; }
       if (w.secondary === 'guard') { h.state = 'guard'; h.st = 0; h.label = 'Guarding'; h.anim.play(this.ms(h).guard, { loop: true, fade: .08 }); return; }
       if (w.secondary === 'kick' && w.kick) { this.startAttack(h, w.kick, aimYaw); return; }
       if (w.secondary === 'aim') { h.state = 'aim'; h.st = 0; h.label = 'Aiming'; h.anim.play(this.ms(h).guard, { loop: true, fade: .08 }); return; }
@@ -432,7 +501,7 @@ export class ArenaWorld {
   private startAttack(f: Fighter, a: AttackDef, yaw: number): void {
     f.state = 'attack'; f.st = 0; f.atk = a; f.atkT = 0; f.atkHits.clear(); f.queued = false; f.label = a.label ?? 'Attacking';
     f.yaw = turnTo(f.yaw, f.role === 'hero' ? this.assist(f, yaw, a.range) : yaw, Math.PI * .6);
-    f.anim.play(a.clip, { speed: a.speed * (f.role === 'hero' ? this.mods.atkSpeed : 1), fade: .06, restart: true });
+    f.anim.play(a.clip, { speed: a.speed * (f.role === 'hero' ? (this.mods.atkSpeed * this.bonus.atkSpeed) : 1), fade: .06, restart: true });
     if (f.role !== 'foe' && a.arc > 0) this.ev.sound(a.heavy || a.damage > 40 ? 'heavy' : 'whoosh', f.role === 'hero' ? 1 : .5);
   }
 
@@ -493,10 +562,13 @@ export class ArenaWorld {
     let dmg = amount;
     let crit = false;
     if (src?.role === 'hero' || src?.role === 'ally') {
-      dmg *= (src.role === 'hero' ? this.mods.damage * this.comboMul : 1);
+      dmg *= (src.role === 'hero' ? (this.mods.damage * this.bonus.damage) * this.comboMul : 1);
       crit = this.rnd() < .12; if (crit) dmg *= 1.8;
     }
     if (t.state === 'guard' && heavy) { dmg *= .5; }
+    if (src?.role === 'hero') dmg *= this.weaponMul[this.weapon] ?? 1;
+    if (src?.role === 'foe') dmg *= src.dmgMul;
+    if (t.role === 'hero') dmg *= 1 - this.armor;
     if (t.foe) dmg *= 1 - t.foe.armor * (heavy ? .3 : 1) * .5;
     dmg = Math.max(1, Math.round(dmg * (.9 + this.rnd() * .2)));
     t.hp -= dmg; t.lastHurt = this.time; t.flash = .09;
@@ -506,12 +578,13 @@ export class ArenaWorld {
     this.fx.ring(t.pos, heavy ? 3.2 : 2.2, .35);
     this.ev.damage(chest, dmg, t.role === 'hero' ? 'hurt' : crit ? 'crit' : 'hit');
     this.ev.sound(t.role === 'hero' ? 'hurt' : crit ? 'crit' : 'hit', t.role === 'ally' ? .5 : 1);
-    if (src?.role === 'hero') { this.combo.hits++; this.combo.timer = 3.5; }
+    if (src?.role === 'hero') { this.combo.hits++; this.combo.timer = 3.5; this.onHeroHit?.(t, dmg, crit); }
     if (t.role === 'hero') { t.iframe = .45; this.fx.shake = Math.max(this.fx.shake, .45); }
     const kb = knock * (t.role === 'hero' ? .5 : 1) * (t.foe ? 1 - t.foe.armor * .5 : 1);
     t.vel.addInPlace(push.scale(kb));
     if (t.hp <= 0) { this.kill(t, push, knock, heavy || crit); return true; }
-    const stagger = t.role !== 'foe' ? t.state !== 'attack' || heavy : !t.foe?.armor || heavy || this.rnd() > t.foe.armor || t.state === 'tell';
+    const poise = t.boss ? .8 : t.foe?.armor ?? 0;
+    const stagger = t.role !== 'foe' ? t.state !== 'attack' || heavy : (!poise || (heavy && !t.boss) || this.rnd() > poise) && (t.state !== 'attack' || !t.boss);
     if (stagger && t.state !== 'spin') {
       this.endAttack(t); t.aimLine && this.aimLine(t, false);
       t.state = 'hit'; t.st = 0; t.label = 'Hit';
@@ -520,6 +593,12 @@ export class ArenaWorld {
     }
     return true;
   }
+
+  /** Walkable direction around walls toward a point, or null when the straight line is clear. */
+  navDir(x: number, z: number, tx: number, tz: number): { x: number; z: number } | null { return this.nav ? this.nav.dir(x, z, tx, tz, this.time) : null; }
+
+  /** Tower effects: damage from the hero's power without a weapon swing. */
+  effectDamage(t: Fighter, amount: number, push: Vector3, knock = 2): boolean { return this.damage(t, amount, push, knock, false, null); }
 
   private kill(t: Fighter, push: Vector3, knock: number, violent: boolean): void {
     this.endAttack(t); this.aimLine(t, false);
@@ -537,6 +616,7 @@ export class ArenaWorld {
   private hitProp(p: Prop, dir: Vector3, knock: number, dmg: number, byHero: boolean): void {
     if (p.broken) return;
     const top = p.pos.add(new Vector3(0, p.h * .6, 0));
+    if (p.solid) { this.fx.sparksAt(top, 8, new Color4(.8, .8, .8, 1)); return; }
     if (byHero) { this.combo.hits++; this.combo.timer = 3.5; }
     if (p.loose) { this.launchLoose(p, dir.scale(4 + knock * .6)); return; }
     p.hp -= dmg;
@@ -547,6 +627,7 @@ export class ArenaWorld {
 
   private breakProp(p: Prop, dir: Vector3, power: number): void {
     p.broken = true; this.smashed++;
+    if (p.chest) this.onChest?.(p.pos.clone());
     const rot = Quaternion.RotationYawPitchRoll(p.yaw, 0, 0);
     const centre = p.pos.add(new Vector3(0, p.h * .5, 0));
     const clay = p.key === 'pot' || p.key === 'jar';
@@ -708,8 +789,8 @@ export class ArenaWorld {
       if (!d.ranged) f.cancelTell = this.fx.telegraph(() => f.standing ? f.pos : null, () => f.yaw, a.range + 1, a.range * 2.2 * Math.max(.6, Math.sin(Math.min(a.arc, 1.4)) * 1.6), d.tell + .25);
       return;
     }
-    let mx = 0, mz = 0, sp = f.speed;
-    if (dist > want + .6) { mx = dx / dist; mz = dz / dist; }
+    let mx = 0, mz = 0, sp = f.speed * (f.slowT > 0 ? .55 : 1);
+    if (dist > want + .6) { const nd = this.navDir(f.pos.x, f.pos.z, t.pos.x, t.pos.z); mx = nd ? nd.x : dx / dist; mz = nd ? nd.z : dz / dist; }
     else if (d.ranged && dist < want - 3) { mx = -dx / dist; mz = -dz / dist; sp *= .7; }
     else { mx = (-dz / dist) * f.strafe * .6; mz = (dx / dist) * f.strafe * .6; sp *= .45; if (this.rnd() < dt * .3) f.strafe *= -1; }
     if (attackers >= tokens && !d.ranged && dist < 4.5) { mx = -dx / dist * .5 + (-dz / dist) * f.strafe * .5; mz = -dz / dist * .5 + (dx / dist) * f.strafe * .5; sp *= .5; }
@@ -754,7 +835,8 @@ export class ArenaWorld {
       const dx = goal.x - f.pos.x, dz = goal.z - f.pos.z, dist = Math.hypot(dx, dz);
       if (dist > .3) {
         const sp = run ? f.speed : 2.4;
-        f.pos.x += dx / dist * sp * dt; f.pos.z += dz / dist * sp * dt;
+        const nd = this.navDir(f.pos.x, f.pos.z, goal.x, goal.z);
+        f.pos.x += (nd ? nd.x : dx / dist) * sp * dt; f.pos.z += (nd ? nd.z : dz / dist) * sp * dt;
         f.yaw = turnTo(f.yaw, face ?? Math.atan2(dx, dz), dt * 9);
         f.state = 'move'; f.label = 'Moving';
         const m = this.ms(f); f.anim.play(run ? m.run : m.walk, { loop: true, speed: run ? sp / m.runPace : 1.3, fade: .15 });
@@ -779,7 +861,7 @@ export class ArenaWorld {
     const sp = f.vel.length();
     // Bodies thrown hard into furniture smash it.
     if (sp > 5) for (const p of this.props) {
-      if (p.broken || p.loose) continue;
+      if (p.broken || p.loose || p.solid) continue;
       const c = this.closest(p, f.pos.x, f.pos.z);
       if (Math.hypot(c.x - f.pos.x, c.z - f.pos.z) < f.radius + .1) this.hitProp(p, f.vel.clone().normalize(), sp * .5, p.hp, false);
     }

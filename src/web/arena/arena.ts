@@ -9,7 +9,11 @@ import { LOOK_IDS } from './looks';
 import { strikeWindow } from './retarget';
 import { usedClips } from './combat';
 import { ArenaAudio } from './sfx';
-import { ARENA, ArenaWorld, type HeroInput } from './world';
+import { ARENA, ArenaWorld, setArenaHalf, type HeroInput } from './world';
+import { TowerRun } from './tower/tower';
+import { ARSENAL_KEYS } from './tower/items';
+import { loadCodex } from './tower/capability';
+import type { Theme } from './tower/floorgen';
 import type { WeaponId } from './combat';
 
 /**
@@ -17,6 +21,12 @@ import type { WeaponId } from './combat';
  * no gateway, no canonical World. Reference: the user's combat-gym videos (top-down melee against
  * crowds, smashable furniture, combo meter, companions, level-up rewards).
  */
+const TOWER_HELP = `<span class="x">✕</span><b>Tower of Chrysanthus</b><br>
+  Clear each floor, then walk through the door at the far wall.<br>
+  <b>WASD</b> move · <b>Shift</b> sprint · <b>Mouse</b> aim<br><b>LMB</b> attack (hold to chain) · <b>RMB</b> kick / special<br>
+  <b>Space</b> dodge or roll · <b>1-4</b> fists and found weapons<br><b>E</b> use a god's shrine · <b>K</b> Codex of classes<br>
+  Loot drops from foes and chests: walk over it.<br>Every 5th floor a boss, every 10th a god.<br><b>R</b> new climb · <b>P</b> pause · <b>H</b> this help`;
+
 export async function startArena(): Promise<void> {
   const canvas = document.getElementById('game') as HTMLCanvasElement;
   const ui = document.getElementById('ui')!;
@@ -34,7 +44,9 @@ export async function startArena(): Promise<void> {
   const pipeline = attachPipeline(ctx, camera);
   pipeline.imageProcessing.vignetteWeight = 1.1; pipeline.imageProcessing.exposure = 1.0; pipeline.bloomThreshold = .82; pipeline.bloomWeight = .22;
 
-  const { shadow, key } = buildStage(scene);
+  const stage = buildStage(scene);
+  const { shadow } = stage;
+  const towerMode = params.has('tower');
   const assets = new ArenaAssets(scene);
   // The KayKit rig is only the animation source; every fighter is a Torn Veil human.
   const progress = (t: string) => { boot.textContent = t + '…'; };
@@ -42,7 +54,7 @@ export async function startArena(): Promise<void> {
   if (!params.has('allclips')) assets.used = usedClips();
   await assets.loadHumans([...LOOK_IDS], progress);
   progress('Unpacking the arsenal');
-  await assets.loadArsenal(['oathbreaker', 'widow-cleaver', 'raven-mechanism', 'serpent-tooth', 'bell-of-ruin', 'elderroot', 'execution-standard']);
+  await assets.loadArsenal([...new Set(['oathbreaker', 'widow-cleaver', 'raven-mechanism', 'serpent-tooth', 'bell-of-ruin', 'elderroot', 'execution-standard', 'briar-whisper', 'ashwood-sentinel', ...ARSENAL_KEYS])]);
 
   const hud = new ArenaHud();
   const audio = new ArenaAudio();
@@ -50,18 +62,21 @@ export async function startArena(): Promise<void> {
   let heroDown = false;
   const world = new ArenaWorld(scene, assets, shadow, {
     damage: (p, n, kind) => hud.number(p, n, kind),
-    kill: () => {},
+    kill: f => tower?.onKill(f),
     levelUp: l => { levels.push(l); audio.play('level'); },
     wave: (n, count) => hud.announce(`WAVE ${n}`, `${count} raiders attack`),
-    heroDown: () => { heroDown = true; },
+    heroDown: () => { if (tower) tower.onHeroDown(); else heroDown = true; },
     sound: (k, g) => audio.play(k, g),
   });
   let seed = Number(params.get('seed') ?? 918271) || 918271;
   world.reset(seed);
+  let tower: TowerRun | null = null;
+  if (towerMode) { tower = new TowerRun(scene, world, hud, assets, stage, seed); tower.startFloor = Math.max(1, Math.min(100, Number(params.get('floor') ?? 1) || 1)); hud.tower = tower as never; tower.start(); }
+  document.title = towerMode ? 'Tower of Chrysanthus' : document.title;
   let zoom = 13, paused = false, camYaw = Math.PI * .25, camPitch = .9;
   // Automation hooks (scripts/web/arena-play.ts): read-only views plus a projector for aiming real mouse input.
   (window as unknown as { __arena: unknown }).__arena = {
-    world, hud, scene, camera,
+    world, hud, scene, camera, get tower() { return tower; },
     screen: (x: number, y: number, z: number) => {
       const e = scene.getEngine(), v = Vector3.Project(new Vector3(x, y, z), Matrix.IdentityReadOnly, scene.getTransformMatrix(), camera.viewport.toGlobal(e.getRenderWidth(), e.getRenderHeight()));
       return { x: v.x * canvas.clientWidth / e.getRenderWidth(), y: v.y * canvas.clientHeight / e.getRenderHeight() };
@@ -130,11 +145,12 @@ export async function startArena(): Promise<void> {
     return { move: { x: mx, z: mz }, aim, attack, attackPressed, secondary, sprint, dodgePressed: dodge, interact: keys.has('KeyE'), weapon };
   };
 
-  const rebuild = () => { hud.closeModal(); heroDown = false; levels.length = 0; world.reset(++seed); hud.announce('COMBAT GYM', 'rebuilt · seed ' + seed); };
+  const rebuild = () => { if (tower) { hud.closeModal(); levels.length = 0; tower.start(); return; } hud.closeModal(); heroDown = false; levels.length = 0; world.reset(++seed); hud.announce('COMBAT GYM', 'rebuilt · seed ' + seed); };
 
   // ---- loop
   boot.remove(); ui.style.pointerEvents = 'none';
-  hud.announce('COMBAT GYM', 'Sandbox · N spawns enemies · H for controls');
+  if (!tower) hud.announce('COMBAT GYM', 'Sandbox · N spawns enemies · H for controls');
+  else hud.setHelp(TOWER_HELP);
   let shakeT = 0;
   scene.onBeforeRenderObservable.add(() => {
     const dt = Math.min(scene.getEngine().getDeltaTime() / 1000, 1 / 20);
@@ -142,12 +158,13 @@ export async function startArena(): Promise<void> {
     if (pressed.has('KeyP') || pressed.has('Escape')) paused = !paused;
     if (pressed.has('KeyH')) hud.toggleHelp();
     if (pressed.has('KeyL')) world.showLabels = !world.showLabels;
-    if (pressed.has('KeyC')) { world.setCompanions(!world.companions); hud.announce(world.companions ? 'COMPANIONS JOIN' : 'FIGHTING ALONE'); }
-    if (pressed.has('KeyN')) world.spawnNow();
+    if (pressed.has('KeyC') && !tower) { world.setCompanions(!world.companions); hud.announce(world.companions ? 'COMPANIONS JOIN' : 'FIGHTING ALONE'); }
+    if (pressed.has('KeyN') && !tower) world.spawnNow();
+    if (pressed.has('KeyK')) hud.toggleCodex(loadCodex());
     if (pressed.has('KeyM')) { world.autoWaves = !world.autoWaves; hud.announce(world.autoWaves ? 'WAVES ON' : 'SANDBOX', world.autoWaves ? 'enemies keep coming' : 'press N to spawn enemies'); }
     const input = readInput();
     pressed.clear();
-    if (!paused && !hud.modalOpen) world.step(dt, input);
+    if (!paused && !hud.modalOpen) { world.step(dt, input); tower?.update(dt, input.interact); }
     else scene.animationTimeScale = 0;
     if (!hud.modalOpen && levels.length) {
       const l = levels.shift()!;
@@ -171,49 +188,51 @@ export async function startArena(): Promise<void> {
   ctx.engine.runRenderLoop(() => scene.render());
 }
 
-function buildStage(scene: Scene): { shadow: BlobShadows; key: DirectionalLight } {
+function buildStage(scene: Scene): { shadow: BlobShadows; key: DirectionalLight; setFloor: (half: number, theme: Theme | null, floor: number) => void } {
   const hemi = new HemisphericLight('arena-fill', new Vector3(.2, 1, .1), scene);
   hemi.intensity = .5; hemi.groundColor = new Color3(.38, .38, .42); hemi.specular = Color3.Black();
   const key = new DirectionalLight('arena-key', new Vector3(-.55, -1, -.35), scene);
   key.intensity = 2.6;
   const shadow = new BlobShadows(scene);
+  let parts: { dispose(): void }[] = [];
+  const wallMat = new StandardMaterial('gym-wall', scene); wallMat.specularColor = Color3.Black();
 
-  // Light grey gym floor with a faint grid, like a level-blockout room.
-  const size = ARENA * 2 + 8;
-  const tex = new DynamicTexture('gym-floor', { width: 2048, height: 2048 }, scene, true);
-  const c = tex.getContext() as CanvasRenderingContext2D;
-  c.fillStyle = '#cfd1d4'; c.fillRect(0, 0, 2048, 2048);
-  c.strokeStyle = '#c3c6ca'; c.lineWidth = 3;
-  const cell = 2048 / (size / 2);
-  for (let i = 0; i <= 2048; i += cell) { c.beginPath(); c.moveTo(i, 0); c.lineTo(i, 2048); c.stroke(); c.beginPath(); c.moveTo(0, i); c.lineTo(2048, i); c.stroke(); }
-  c.strokeStyle = '#b4b8bd'; c.lineWidth = 6;
-  for (let i = 0; i <= 2048; i += cell * 5) { c.beginPath(); c.moveTo(i, 0); c.lineTo(i, 2048); c.stroke(); c.beginPath(); c.moveTo(0, i); c.lineTo(2048, i); c.stroke(); }
-  tex.update(); tex.anisotropicFilteringLevel = 8;
-  const mat = new StandardMaterial('gym-floor', scene);
-  mat.diffuseTexture = tex; mat.specularColor = new Color3(.05, .05, .05);
-  const floor = MeshBuilder.CreateGround('gym-floor', { width: size, height: size }, scene);
-  floor.material = mat; floor.isPickable = false;
-
-  // Giant floor lettering.
-  const label = (text: string, x: number, z: number, w: number, yaw: number, color = '#25282d') => {
-    const t = new DynamicTexture('label', { width: 2048, height: 256 }, scene, true);
-    t.hasAlpha = true; const g = t.getContext() as CanvasRenderingContext2D; g.clearRect(0, 0, 2048, 256);
-    g.fillStyle = color; g.font = '900 200px "Segoe UI", Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, 1024, 136); t.update(); t.uScale = -1; t.uOffset = 1;
-    const m = new StandardMaterial('label', scene); m.diffuseTexture = t; m.useAlphaFromDiffuseTexture = true; m.specularColor = Color3.Black(); m.zOffset = -2;
-    const p = MeshBuilder.CreateGround('label', { width: w, height: w / 8 }, scene);
-    p.position.set(x, .015, z); p.rotation.y = yaw; p.material = m; p.isPickable = false;
+  /** Build (or rebuild) the floor slab, grid, lettering and perimeter for a given size and tier theme. */
+  const setFloor = (half: number, theme: Theme | null, floor: number) => {
+    for (const p of parts) p.dispose(); parts = [];
+    setArenaHalf(half);
+    const size = half * 2 + 8;
+    const tex = new DynamicTexture('gym-floor', { width: 2048, height: 2048 }, scene, true);
+    const c = tex.getContext() as CanvasRenderingContext2D;
+    c.fillStyle = theme?.floor ?? '#cfd1d4'; c.fillRect(0, 0, 2048, 2048);
+    c.strokeStyle = theme?.line ?? '#c3c6ca'; c.lineWidth = 3;
+    const cell = 2048 / (size / 2);
+    for (let i = 0; i <= 2048; i += cell) { c.beginPath(); c.moveTo(i, 0); c.lineTo(i, 2048); c.stroke(); c.beginPath(); c.moveTo(0, i); c.lineTo(2048, i); c.stroke(); }
+    c.lineWidth = 6; c.globalAlpha = .8;
+    for (let i = 0; i <= 2048; i += cell * 5) { c.beginPath(); c.moveTo(i, 0); c.lineTo(i, 2048); c.stroke(); c.beginPath(); c.moveTo(0, i); c.lineTo(2048, i); c.stroke(); }
+    tex.update(); tex.anisotropicFilteringLevel = 8;
+    const mat = new StandardMaterial('gym-floor', scene); mat.diffuseTexture = tex; mat.specularColor = new Color3(.05, .05, .05);
+    const slab = MeshBuilder.CreateGround('gym-floor', { width: size, height: size }, scene); slab.material = mat; slab.isPickable = false;
+    parts.push(slab, mat, tex);
+    const label = (text: string, x: number, z: number, w: number, yaw: number, color = '#25282d') => {
+      const t = new DynamicTexture('label', { width: 2048, height: 256 }, scene, true);
+      t.hasAlpha = true; const g = t.getContext() as CanvasRenderingContext2D; g.clearRect(0, 0, 2048, 256);
+      g.fillStyle = color; g.font = '900 200px "Segoe UI", Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, 1024, 136); t.update(); t.uScale = -1; t.uOffset = 1;
+      const m = new StandardMaterial('label', scene); m.diffuseTexture = t; m.useAlphaFromDiffuseTexture = true; m.specularColor = Color3.Black(); m.zOffset = -2;
+      const p = MeshBuilder.CreateGround('label', { width: w, height: w / 8 }, scene);
+      p.position.set(x, .015, z); p.rotation.y = yaw; p.material = m; p.isPickable = false; parts.push(p, m, t);
+    };
+    if (theme) { label(`Floor ${floor}`, 0, half - 9, 14, Math.PI, '#00000055'); label(theme.name, 0, half - 12, 18, Math.PI, '#00000033'); }
+    else { label('Combat Gym', -2, 4, 26, Math.PI * .25 + Math.PI); label('Combat Gym', 16, -6, 18, Math.PI * .75, '#2c3036'); label('[Prototype]', -18, -2, 12, Math.PI * 1.5, '#9aa0a8'); }
+    wallMat.diffuseColor = theme ? new Color3(...theme.wall) : new Color3(.93, .94, .95);
+    const wall = (x: number, z: number, w: number, d: number, h = theme ? 1.2 : .8) => {
+      const b = MeshBuilder.CreateBox('wall', { width: w, depth: d, height: h }, scene);
+      b.position.set(x, h / 2, z); b.material = wallMat; b.isPickable = false; parts.push(b);
+    };
+    const e = half + 2.5;
+    wall(0, -e, e * 2 + 3, 3); wall(0, e, e * 2 + 3, 3); wall(-e, 0, 3, e * 2 + 3); wall(e, 0, 3, e * 2 + 3);
+    if (theme) { key.diffuse = new Color3(...theme.light); }
   };
-  label('Combat Gym', -2, 4, 26, Math.PI * .25 + Math.PI);
-  label('Combat Gym', 16, -6, 18, Math.PI * .75, '#2c3036');
-  label('[Prototype]', -18, -2, 12, Math.PI * 1.5, '#9aa0a8');
-
-  // White perimeter walls with a few blockout ramps.
-  const wallMat = new StandardMaterial('gym-wall', scene); wallMat.diffuseColor = new Color3(.93, .94, .95); wallMat.specularColor = Color3.Black();
-  const wall = (x: number, z: number, w: number, d: number, h = .8) => {
-    const b = MeshBuilder.CreateBox('wall', { width: w, depth: d, height: h }, scene);
-    b.position.set(x, h / 2, z); b.material = wallMat; b.isPickable = false;
-  };
-  const e = ARENA + 2.5;
-  wall(0, -e, e * 2 + 3, 3); wall(0, e, e * 2 + 3, 3); wall(-e, 0, 3, e * 2 + 3); wall(e, 0, 3, e * 2 + 3);
-  return { shadow, key };
+  setFloor(ARENA, null, 0);
+  return { shadow, key, setFloor };
 }

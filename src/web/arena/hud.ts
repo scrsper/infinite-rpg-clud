@@ -58,6 +58,15 @@ const css = `
 .ar-card p{margin:0;font:500 12px/1.4 sans-serif;color:#c8cfdb}
 .ar-modal h2{text-align:center;margin:0 0 4px;font:900 28px "Segoe UI",sans-serif;color:#ffd45c}
 .ar-modal .sub{text-align:center;color:#ccc;margin-bottom:22px;font-weight:500}
+.ar-toasts{position:absolute;left:50%;bottom:110px;transform:translateX(-50%);display:flex;flex-direction:column-reverse;gap:6px;align-items:center}
+.ar-toast{padding:6px 14px;background:#0d1118d8;border:1px solid #3b4558;border-radius:4px;font:600 14px "Segoe UI",sans-serif;transition:opacity .4s}
+.ar-fade{position:absolute;inset:0;background:#05070b;opacity:0;display:grid;place-items:center;font:900 40px "Segoe UI",sans-serif;letter-spacing:.14em;color:#ffe6a8;transition:opacity .35s}
+.ar-boss{position:absolute;left:50%;top:70px;transform:translateX(-50%);width:520px;text-align:center;font:800 15px "Segoe UI",sans-serif;letter-spacing:.08em;color:#ffd0c0;text-shadow:0 1px 3px #000;display:none}
+.ar-boss .ar-bar{height:12px;margin-top:4px}
+.ar-codex{position:absolute;inset:8% 18%;background:#0d1118f0;border:1px solid #4b5770;border-radius:8px;padding:18px 22px;overflow:auto;display:none;pointer-events:auto;font:500 13px/1.5 "Segoe UI",sans-serif}
+.ar-codex h2{margin:0 0 6px;color:#ffd45c;font:900 22px "Segoe UI",sans-serif}
+.ar-codex table{width:100%;border-collapse:collapse;margin-top:8px}.ar-codex td,.ar-codex th{padding:4px 6px;border-bottom:1px solid #2a3140;text-align:left}
+.ar-w.locked{opacity:.3}
 .ar-btn{margin-top:20px;padding:10px 22px;font:700 14px sans-serif;background:#ffd45c;color:#1a1300;border:0;border-radius:4px;cursor:pointer}
 `;
 
@@ -69,7 +78,7 @@ export const UPGRADES: Upgrade[] = [
   { id: 'heal', name: 'Full Heal', icon: '✚', text: 'Restore to full health', apply: w => { w.hero.hp = w.hero.maxHp; } },
   { id: 'dmg', name: 'Brute Force', icon: '💪', text: '+15% damage with every weapon', apply: w => { w.mods.damage *= 1.15; } },
   { id: 'spd', name: 'Quick Hands', icon: '⚡', text: '+12% attack speed', apply: w => { w.mods.atkSpeed *= 1.12; } },
-  { id: 'hp', name: 'Vitality', icon: '❤️', text: '+20% max health, healed', apply: w => { const add = w.hero.maxHp * .2; w.hero.maxHp += add; w.hero.hp += add; } },
+  { id: 'hp', name: 'Vitality', icon: '❤️', text: '+20% max health, healed', apply: w => { const add = w.hero.maxHp * .2; w.bonus.maxHpUpgrades *= 1.2; w.hero.maxHp += add; w.hero.hp += add; } },
   { id: 'move', name: 'Fleet Foot', icon: '👟', text: '+10% movement speed', apply: w => { w.mods.move *= 1.1; } },
   { id: 'regen', name: 'Second Wind', icon: '🌀', text: '+30% energy recovery', apply: w => { w.mods.regen *= 1.3; } },
   { id: 'range', name: 'Cleave', icon: '🌙', text: '+15% melee reach', apply: w => { w.mods.range *= 1.15; } },
@@ -89,6 +98,10 @@ export class ArenaHud {
   private nums: { e: HTMLElement; p: Vector3; t: number; vx: number }[] = [];
   private bars = new Map<number, HTMLElement>(); private tags = new Map<number, HTMLElement>(); private revives = new Map<number, HTMLElement>();
   private hurt = 0; private bannerT = 0;
+  private toasts = el('div', 'ar-toasts'); private fadeEl = el('div', 'ar-fade'); private bossEl = el('div', 'ar-boss', '<span></span><div class="ar-bar"><i></i></div>');
+  private codexEl = el('div', 'ar-codex');
+  /** Set by the tower: drives the floor panel, boss bar, tier/class line and weapon locks. */
+  tower: { floor: number; plan: { objective: string; theme: { name: string; tier: string } }; boss: Fighter | null; summary(): { tier: string; cls: string; styles: [string, number][]; affinities: [string, number][] }; gear: Record<string, { name: string; quality: number } | undefined> } | null = null;
   modalOpen = false;
 
   constructor() {
@@ -111,9 +124,49 @@ export class ArenaHud {
       <b>R</b> rebuild the gym · <b>L</b> state labels · <b>P</b> pause · <b>H</b> this help`);
     this.help.querySelector('.x')!.addEventListener('click', () => this.toggleHelp());
     this.layer.style.cssText = 'position:absolute;inset:0;overflow:hidden';
-    this.root.append(this.vignette, this.layer, frame, this.combo, wrow, this.radar, this.waveEl, this.banner, this.help, this.modal);
+    this.root.append(this.vignette, this.layer, frame, this.combo, wrow, this.radar, this.waveEl, this.banner, this.bossEl, this.toasts, this.help, this.codexEl, this.modal, this.fadeEl);
     document.body.append(this.root);
   }
+
+  toast(text: string, color = '#fff'): void {
+    const t = el('div', 'ar-toast'); t.textContent = text; t.style.color = color; this.toasts.prepend(t);
+    setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 450); }, 3200);
+    while (this.toasts.childElementCount > 5) this.toasts.lastElementChild!.remove();
+  }
+  /** Black out for a floor transition, with a caption. */
+  fade(seconds: number, caption: string): void {
+    this.fadeEl.textContent = caption.toUpperCase(); this.fadeEl.style.opacity = '1';
+    setTimeout(() => { this.fadeEl.style.opacity = '0'; }, seconds * 1000 + 250);
+  }
+  /** Generic card choice (god boons); resolves with the picked index. */
+  choose(title: string, sub: string, cards: { icon: string; name: string; text: string }[]): Promise<number> {
+    this.modalOpen = true; this.modal.classList.add('on');
+    this.modal.innerHTML = `<div><h2>${title}</h2><div class="sub">${sub}</div><div class="ar-card-row"></div><div class="sub" style="margin-top:14px">Keys 1 · 2 · 3</div></div>`;
+    const row = this.modal.querySelector('.ar-card-row')!;
+    return new Promise(res => {
+      const pick = (i: number) => { window.removeEventListener('keydown', key, true); this.modal.classList.remove('on'); this.modalOpen = false; res(i); };
+      const key = (e: KeyboardEvent) => { const i = ['Digit1', 'Digit2', 'Digit3'].indexOf(e.code); if (i >= 0 && i < cards.length) { e.stopPropagation(); pick(i); } };
+      window.addEventListener('keydown', key, true);
+      cards.forEach((c, i) => { const b = el('button', 'ar-card', `<div class="ic">${c.icon}</div><h3>${i + 1}. ${c.name}</h3><p>${c.text}</p>`); b.addEventListener('click', () => pick(i)); row.append(b); });
+    });
+  }
+  /** The Codex: every class that has emerged (this browser), plus the current climber's capabilities. */
+  toggleCodex(codex: { name: string; pattern: string; tier: string; floor: number; times: number; firstSeen: string }[]): void {
+    if (this.codexEl.style.display === 'block') { this.codexEl.style.display = 'none'; return; }
+    const sum = this.tower?.summary();
+    const rows = codex.map(c => `<tr><td><b>${c.name}</b></td><td>${c.pattern}</td><td>${c.tier}</td><td>floor ${c.floor}</td><td>×${c.times}</td><td>${c.firstSeen.slice(0, 10)}</td></tr>`).join('');
+    this.codexEl.innerHTML = `<h2>Codex of Emergent Classes</h2>
+      ${sum ? `<div><b>You:</b> ${sum.tier} · ${sum.cls}<br><b>Styles</b> ${sum.styles.map(([k, v]) => `${k} ${v}`).join(' · ')}<br><b>Affinities</b> ${sum.affinities.map(([k, v]) => `${k} ${v}`).join(' · ') || 'none yet'}</div>` : ''}
+      <table><tr><th>Class</th><th>Qualifying pattern</th><th>Tier</th><th>First seen</th><th>Seen</th><th>Date</th></tr>${rows || '<tr><td colspan=6>No class has emerged yet. Fight, learn tomes, accept boons.</td></tr>'}</table>
+      <button class="ar-btn" id="codex-export">Export codex (JSON)</button> <button class="ar-btn" id="codex-close">Close (K)</button>`;
+    this.codexEl.style.display = 'block';
+    this.codexEl.querySelector('#codex-close')!.addEventListener('click', () => { this.codexEl.style.display = 'none'; });
+    this.codexEl.querySelector('#codex-export')!.addEventListener('click', () => {
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(codex, null, 1)], { type: 'application/json' })); a.download = 'chrysanthus-codex.json'; a.click();
+    });
+  }
+
+  setHelp(html: string): void { this.help.innerHTML = html; this.help.querySelector('.x')?.addEventListener('click', () => this.toggleHelp()); }
 
   toggleHelp(): void { this.help.style.display = this.help.style.display === 'none' ? '' : 'none'; }
 
@@ -150,7 +203,7 @@ export class ArenaHud {
 
   update(dt: number, w: ArenaWorld, scene: Scene, camera: Camera): void {
     const h = w.hero;
-    this.lvl.textContent = `LVL ${w.level}  ·  ${w.kills} kills  ·  ${w.smashed} smashed`;
+    if (!this.tower) this.lvl.textContent = `LVL ${w.level}  ·  ${w.kills} kills  ·  ${w.smashed} smashed`;
     this.hp.style.transform = `scaleX(${Math.max(0, h.hp / h.maxHp)})`;
     this.hpLag.style.transform = `scaleX(${Math.max(0, h.hpShown / h.maxHp)})`;
     this.hpText.textContent = `${Math.max(0, Math.ceil(h.hp))} / ${Math.round(h.maxHp)}`;
@@ -166,10 +219,19 @@ export class ArenaHud {
     this.combo.style.opacity = w.combo.hits > 1 ? '1' : '0';
     this.mul.textContent = `x${w.comboMul.toFixed(1)}`;
     this.hits.innerHTML = `${w.combo.hits}<small>hits</small>`;
-    for (const [id, e] of this.weapons) e.classList.toggle('on', id === w.weapon);
-    this.wname.textContent = WEAPONS[w.weapon].name;
+    for (const [id, e] of this.weapons) { e.classList.toggle('on', id === w.weapon); e.classList.toggle('locked', !w.unlocked.has(id)); }
+    const g = this.tower?.gear[w.weapon];
+    this.wname.textContent = g ? g.name : WEAPONS[w.weapon].name;
+    const T = this.tower;
+    if (T) {
+      const sum = T.summary(), foesLeft = w.fighters.filter(f => f.role === 'foe' && f.alive).length;
+      this.lvl.innerHTML = `LVL ${w.level} · <span style="color:#ffd45c">${sum.tier}</span> · ${sum.cls}`;
+      this.waveEl.innerHTML = `<b>FLOOR ${T.floor}</b><span>${T.plan.theme.name} · ${T.plan.objective}${foesLeft ? ` · ${foesLeft} left` : ''}</span>`;
+      const b = T.boss; this.bossEl.style.display = b ? 'block' : 'none';
+      if (b) { (this.bossEl.firstChild as HTMLElement).textContent = b.boss!.name.toUpperCase(); (this.bossEl.querySelector('i') as HTMLElement).style.transform = `scaleX(${Math.max(0, b.hp / b.maxHp)})`; }
+    }
     const foes = w.fighters.filter(f => f.role === 'foe' && f.alive).length;
-    this.waveEl.innerHTML = w.wave ? `<b>WAVE ${w.wave}</b><span>${foes} enemies remain</span>` : `<b>COMBAT GYM</b><span>Sandbox: press N to spawn enemies, M for waves</span>`;
+    if (!this.tower) this.waveEl.innerHTML = w.wave ? `<b>WAVE ${w.wave}</b><span>${foes} enemies remain</span>` : `<b>COMBAT GYM</b><span>Sandbox: press N to spawn enemies, M for waves</span>`;
     if (this.bannerT > 0 && (this.bannerT -= dt) <= 0) this.banner.style.opacity = '0';
     this.hurt = Math.max(0, this.hurt - dt * 1.8);
     const low = h.hp / h.maxHp < .3 ? .35 + Math.sin(performance.now() / 180) * .15 : 0;

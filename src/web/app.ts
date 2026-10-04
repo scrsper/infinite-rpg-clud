@@ -175,6 +175,7 @@ export class App {
     panel.append(button(gym ? 'Switch to Town' : 'Switch to Combat Gym', () => void control('switch', { scenario: gym ? 'town' : 'gym' })));
     // The local action-combat feel lab (src/web/arena): smashable props, crowds, combos. Not canonical simulation.
     panel.append(button('Open Action Arena', () => { location.search = '?arena=1'; }));
+    panel.append(button('Enter the Tower of Chrysanthus', () => { location.search = '?arena=1&tower=1'; }));
     if (gym) {
       const seed = h('input', { type: 'number', value: this.params.get('seed') ?? '918271', min: 0, max: 2147483647, style: 'width:90px;color:#26313c;background:white', aria: { label: 'Gym seed' } });
       panel.append(seed, button('Reset seed', () => void control('reset', { seed: Number(seed.value) })));
