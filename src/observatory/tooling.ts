@@ -4,7 +4,7 @@ import {spawn} from 'node:child_process';
 import type {IncomingMessage,ServerResponse} from 'node:http';
 
 export class Tooling {
- readonly ontologyRoot=resolve(process.env.TORN_VEIL_ONTOLOGY_ROOT??'../ontology');
+ readonly ontologyRoot=resolve(process.env.TORN_VEIL_ONTOLOGY_ROOT??'tools/ontology');
  private job:{id:number;action:string;state:string;exitCode:number|null;output:string}|null=null;
  constructor(private gameRoot:string){}
  async assetLabStatus(){
