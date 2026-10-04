@@ -60,6 +60,7 @@ jobs:
           cache: npm
           cache-dependency-path: tools/ontology/package-lock.json
       - run: npm ci --prefix tools/ontology
+      - run: npm ci
       - run: npm run ontology:check
       - run: npm run assets:verify:shipped --prefix tools/ontology
       - run: npm run ontology:build
