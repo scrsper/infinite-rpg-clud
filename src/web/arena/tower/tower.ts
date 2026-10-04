@@ -43,7 +43,7 @@ export class TowerRun {
     w.companions = false; w.autoWaves = false;
     w.reset(this.seed);
     w.unlocked = new Set<WeaponId>(['fists']); w.weaponMesh = {}; w.weaponMul = {}; w.armor = 0;
-    w.spellUnlocked = new Set(); w.flaskMax = 3; w.flasks = 3;
+    w.spellUnlocked = new Set(); w.flaskMax = 3; w.flasks = 3; w.passiveRegen = false;
     w.setWeapon(w.hero, 'fists');
     w.onHeroHit = (t, dmg, crit) => this.onHit(t, dmg, crit);
     w.onChest = p => this.drop(p, 'chest');

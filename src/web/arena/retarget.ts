@@ -17,7 +17,7 @@ type Pair = [string, string, string | null, string | null];
 export interface RigMap { map: Pair[]; blend: [string, string, string][]; follow: [string, string][]; hips: string; handR: string; handL: string; feet?: [string, string] }
 
 export const KAYKIT: RigMap = {
-  hips: 'hips', handR: 'wrist.r', handL: 'wrist.l',
+  hips: 'hips', handR: 'wrist.r', handL: 'wrist.l', feet: ['foot.l', 'foot.r'],
   map: [
     ['hips', 'pelvis', 'spine', 'spine_01'], ['spine', 'spine_01', 'chest', 'spine_03'], ['chest', 'spine_03', 'head', 'neck_01'], ['head', 'head', null, null],
     ['upperarm.l', 'upperarm_l', 'lowerarm.l', 'lowerarm_l'], ['lowerarm.l', 'lowerarm_l', 'wrist.l', 'hand_l'], ['wrist.l', 'hand_l', 'hand.l', 'middle_01_l'],
@@ -64,6 +64,10 @@ export interface ClipTemplate {
   name: string; frames: number; fps: number; tracks: { bone: string; anim: Animation }[];
   /** Fastest-hand speed per frame (model units/s): attack windows are measured from it. */
   swing: number[];
+  /** Per frame, whether each foot (l, r) is planted (near its lowest height in the clip). */
+  contact: [Uint8Array, Uint8Array] | null;
+  /** Ground speed implied by the planted foot sliding back under the hips (target model units/s at speed 1); 0 for non-locomotion. */
+  stance: number;
 }
 export interface Grip { rot: Quaternion; pos: Vector3; scale: number }
 
@@ -96,6 +100,7 @@ export class Retargeter {
   private hipScale = 1;
   private tParentOfPelvis: TransformNode | null;
   private tParent = new Map<string, string | undefined>();
+  private tPelvisRestPos = new Vector3();
 
   private readonly keyed: string[];
   constructor(private readonly src: Rig, private readonly tgt: Rig, private readonly rm: RigMap = KAYKIT) {
@@ -118,6 +123,7 @@ export class Retargeter {
     for (const [n, node] of tgt.nodes) this.tParent.set(n, node.parent ? byNode.get(node.parent as TransformNode) : undefined);
     this.hipScale = this.tRest.get('pelvis')!.p.y / Math.max(1e-3, this.sRest.get(rm.hips)!.p.y);
     this.tParentOfPelvis = (tgt.nodes.get('pelvis')!.parent as TransformNode) ?? null;
+    this.tPelvisRestPos = tgt.nodes.get('pelvis')!.position.clone();
   }
 
   private resetSource(): void {
@@ -127,7 +133,7 @@ export class Retargeter {
   /** Bake one source clip into target-bone tracks at the source frame rate. */
   /** Bake one source clip. `inPlace` removes the hips' net horizontal travel (linear drift), so loops and strafes stay put. */
   bake(name: string, g: AnimationGroup, inPlace = true): ClipTemplate {
-    const rm = this.rm; const swing: number[] = []; let prevEnds: Vector3[] | null = null;
+    const rm = this.rm; const swing: number[] = []; let prevEnds: Vector3[] | null = null; const footY: [number[], number[]] = [[], []]; const footRel: [Vector3[], Vector3[]] = [[], []];
     const fps = g.targetedAnimations[0]?.animation.framePerSecond ?? 30;
     const frames = Math.max(1, Math.round(g.to - g.from) + 1);
     const keys = new Map<string, { frame: number; value: Quaternion }[]>(this.keyed.map(k => [k, []]));
@@ -165,11 +171,23 @@ export class Retargeter {
       // Fastest limb end (hands, and feet for kicks), measured relative to the hips.
       const ends = [rm.handR, rm.handL, ...(rm.feet ?? [])].map(n => this.src.nodes.get(n)).filter((n): n is TransformNode => !!n);
       const hp = modelPos(this.src, this.src.nodes.get(rm.hips)!);
+
       const cur = ends.map(n => modelPos(this.src, n).subtract(hp));
       swing.push(prevEnds ? Math.max(...cur.map((p, k) => Vector3.Distance(p, prevEnds![k]))) * fps * this.hipScale : 0); prevEnds = cur;
       const hs = modelPos(this.src, this.src.nodes.get(rm.hips)!).subtract(this.sRest.get(rm.hips)!.p).scale(this.hipScale);
       const tp = this.tRest.get('pelvis')!.p.add(hs);
       pelvisKeys.push({ frame: i, value: Vector3.TransformCoordinates(tp, parentInv) });
+      // Forward kinematics on the target: its own feet decide contact and stride (the source's legs differ).
+      const tf = this.tgt.nodes.get('foot_l'), tr = this.tgt.nodes.get('foot_r'), tpel = this.tgt.nodes.get('pelvis')!;
+      if (tf && tr) {
+        for (const [bone, k] of keys) { const v = k[k.length - 1]; const n = this.tgt.nodes.get(bone); if (v && n && v.frame === i) n.rotationQuaternion!.copyFrom(v.value); }
+        tpel.position.copyFrom(pelvisKeys[pelvisKeys.length - 1].value);
+        refresh(this.tgt);
+        const pp = modelPos(this.tgt, tpel);
+        [tf, tr].forEach((fn, k) => { const fp = modelPos(this.tgt, fn); footY[k].push(fp.y); footRel[k].push(fp.subtract(pp)); });
+        for (const [n, r] of this.tRest) { const node = this.tgt.nodes.get(n)!; node.rotationQuaternion!.copyFrom(r.localQ); }
+        tpel.position.copyFrom(this.tPelvisRestPos);
+      }
     }
     this.resetSource(); refresh(this.src);
     const tracks: ClipTemplate['tracks'] = [];
@@ -187,7 +205,22 @@ export class Retargeter {
       const d = m[m.length - 1].subtract(m[0]);
       m.forEach((p, i) => { const t = i / (m.length - 1); p.x -= d.x * t; p.z -= d.z * t; pelvisKeys[i].value = Vector3.TransformCoordinates(p, parentInv); });
     }
-    return { name, frames, fps, tracks, swing };
+    // Contacts: a foot is planted when within a small band (4% of hip height) of its lowest point in the clip.
+    let contact: [Uint8Array, Uint8Array] | null = null;
+    if (footY[0].length === frames && footY[1].length === frames) {
+      const band = .035 * this.tRest.get('pelvis')!.p.y;
+      contact = footY.map(ys => { const lo = Math.min(...ys); return Uint8Array.from(ys, y => (y < lo + band ? 1 : 0)); }) as [Uint8Array, Uint8Array];
+    }
+    // Stride: while planted, the foot slides back under the hips at the clip's implied ground speed.
+    let stance = 0;
+    if (contact) {
+      let sum = 0, n = 0;
+      for (let k = 0; k < 2; k++) for (let i = 1; i < frames; i++) if (contact[k][i] && contact[k][i - 1]) {
+        const a = footRel[k][i - 1], b = footRel[k][i]; sum += Math.hypot(b.x - a.x, b.z - a.z) * fps; n++;
+      }
+      stance = n > 3 ? sum / n : 0;
+    }
+    return { name, frames, fps, tracks, swing, contact, stance };
   }
 
   /** Model-space rest rotation of a target bone's parent (for bones whose parent is outside the map). */

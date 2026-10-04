@@ -68,6 +68,10 @@ export class Fighter {
   dmgMul = 1; boss: { name: string } | null = null; burnT = 0; burnDps = 0; slowT = 0;
   /** Heavy attacks: charging while RMB is held at the wind-up; which heavy in the chain. */
   charging = false; charge = 0; heavyIdx = -1; healT = 0; spell = -1; spellDone = false;
+  /** Foot planting: world-space lock per foot (l, r) and its blend weight. */
+  feet = [{ lock: null as Vector3 | null, w: 0 }, { lock: null as Vector3 | null, w: 0 }];
+  /** Standing ankle height above the fighter's ground (measured once in the rest pose). */
+  ankleY = -1;
   trail: SlashTrail | null = null; extra: InstancedMesh[] = [];
   label = 'Idle';
   constructor(readonly id: number, readonly role: Role, readonly name: string, readonly inst: CharacterInstance, readonly anim: Animator,
@@ -130,6 +134,8 @@ export class ArenaWorld {
   weaponMesh: Partial<Record<WeaponId, { mesh: string; hand: 'l' | 'r' }>> = {};
   weaponMul: Partial<Record<WeaponId, number>> = {};
   armor = 0;
+  /** Slow out-of-combat trickle (sandbox only; the tower turns it off). */
+  passiveRegen = true;
   /** Signs: cooldowns, unlocked slots (tower unlocks via affinities), power per slot, ward pool, sigils on the floor. */
   spellCd = [0, 0, 0, 0]; spellUnlocked = new Set([0, 1, 2, 3]); spellPower = [1, 1, 1, 1];
   wardHp = 0; wardT = 0; sigils: { x: number; z: number; r: number; t: number; p: number }[] = [];
@@ -265,7 +271,7 @@ export class ArenaWorld {
   }
 
   private spawnHero(): Fighter {
-    const h = this.makeFighter('ranger', 'hero', 'You', 1000, 7.2);
+    const h = this.makeFighter('ranger', 'hero', 'You', 1000, 5.4);
     h.pos.set(0, 0, 0); h.yaw = Math.PI * .75;
     this.bladeBase = new TransformNode('blade-base', this.scene); this.bladeTip = new TransformNode('blade-tip', this.scene);
     this.bladeBase.parent = h.inst.slotR; this.bladeTip.parent = h.inst.slotR;
@@ -325,10 +331,13 @@ export class ArenaWorld {
   }
   /** Walk/run blend paced to ground speed (stride matches travel, no hard gait switch). */
   private locoAnim(f: Fighter, sp: number): void {
-    const m = this.ms(f), walkPace = m.walkPace ?? 1.9;
-    const blend = Math.max(0, Math.min(1, (sp - 2.4) / 2.4)), b = blend * blend * (3 - 2 * blend);
+    const m = this.ms(f), sc = f.inst.root.scaling.x;
+    // Pace each gait from its measured stride (planted-foot speed) so travel and footfalls agree.
+    const tw = this.assets.clips.get(m.walk), tr = this.assets.clips.get(m.run);
+    const walkPace = tw?.stance ? tw.stance * sc : (m.walkPace ?? 1.9), runPace = tr?.stance ? tr.stance * sc : m.runPace;
+    const blend = Math.max(0, Math.min(1, (sp - walkPace * 1.15) / Math.max(.5, runPace * .7 - walkPace * 1.15))), b = blend * blend * (3 - 2 * blend);
     const lw = f.anim.length(m.walk), lr = f.anim.length(m.run);
-    const rate = (1 - b) * sp / (walkPace * lw) + b * sp / (m.runPace * lr);
+    const rate = (1 - b) * sp / (walkPace * lw) + b * sp / (runPace * lr);
     f.anim.loco(m.walk, m.run, b, rate, .25);
   }
   private pick<T>(a: T[]): T { return a[Math.floor(this.rnd() * a.length)]; }
@@ -390,8 +399,12 @@ export class ArenaWorld {
     this.fighters = this.fighters.filter(f => f.radius >= 0);
   }
 
-  /** Run after animations: coat tails and hair (springs), then two-handed grips. */
+  /** Foot planting on/off (for A/B measurement). */
+  footLock = true;
+
+  /** Run after animations: planted feet, coat tails and hair (springs), then two-handed grips. */
   solveGrips(dt: number): void {
+    if (this.footLock && dt > 0) for (const f of this.fighters) this.plantFeet(f, dt);
     for (const f of this.fighters) f.inst.springs?.update(dt);
     for (const f of this.fighters) {
       const b = f.inst.bones; if (!b || !f.twoHand) continue;
@@ -417,7 +430,8 @@ export class ArenaWorld {
     h.st += dt; h.iframe = Math.max(0, h.iframe - dt);
     h.energyDelay -= dt;
     if (h.energyDelay <= 0) h.energy = Math.min(100, h.energy + 26 * this.mods.regen * dt);
-    if (h.hp < h.maxHp && this.time - h.lastHurt > 5) h.hp = Math.min(h.maxHp, h.hp + h.maxHp * .02 * dt);
+    // No passive regeneration: health returns through flasks, potions, abilities and boons. (Sandbox keeps a slow trickle.)
+    if (this.passiveRegen && h.hp < h.maxHp && this.time - h.lastHurt > 8) h.hp = Math.min(h.maxHp, h.hp + h.maxHp * .004 * dt);
     const mv = new Vector3(i.move.x, 0, i.move.z); const moving = mv.lengthSquared() > .01;
     if (moving) mv.normalize();
     const aimYaw = Math.atan2(i.aim.x - h.pos.x, i.aim.z - h.pos.z);
@@ -522,7 +536,8 @@ export class ArenaWorld {
     // Weighted locomotion: velocity eases toward the stick (faster to stop than to start), the body
     // turns at a capped rate, and the clip (walk or run) is chosen and paced from actual speed so feet don't skate.
     // Default pace is a jog; Shift sprints.
-    const want = moving ? mv.scale(speed * (i.sprint ? 1.3 : .82)) : Vector3.Zero();
+    // Human pace (world units = 1.22 m): jog ~3.6 m/s, sprint ~5.8 m/s.
+    const want = moving ? mv.scale(speed * (i.sprint ? 1.32 : .82)) : Vector3.Zero();
     const rate = moving ? (Vector3.Dot(want, h.mvel) < 0 ? 18 : 9) : 14;
     h.mvel.addInPlace(want.subtract(h.mvel).scaleInPlace(1 - Math.exp(-rate * dt)));
     const sp = h.mvel.length();
@@ -715,6 +730,41 @@ export class ArenaWorld {
       if (t.role === 'foe') t.cd = Math.max(t.cd, .6 + this.rnd() * .6);
     }
     return true;
+  }
+
+  /**
+   * Keep planted feet still on the ground: when the clip says a foot is in contact, its world position is
+   * locked and the leg is solved (two-bone IK, knee plane from the animation) to stay on it while the body
+   * moves over it; the foot keeps its animated orientation. Locks release as the clip lifts the foot, and
+   * re-plant if the body has drifted too far (that becomes a step instead of a skate).
+   */
+  private plantFeet(f: Fighter, dt: number): void {
+    const b = f.inst.bones; if (!b) return;
+    if (!f.alive || f.state === 'down' || f.state === 'dodge' || f.y > .05) { for (const l of f.feet) { l.lock = null; l.w = 0; } return; }
+    const scale = f.inst.root.scaling.x;
+    if (f.ankleY < 0) { const fl = b.get('foot_l'); if (!fl) return; fl.computeWorldMatrix(true); f.ankleY = Math.max(.02, fl.getAbsolutePosition().y - f.y); }
+    const legs = [['thigh_l', 'calf_l', 'foot_l'], ['thigh_r', 'calf_r', 'foot_r']];
+    for (let k = 0; k < 2; k++) {
+      const [ta, ca, fa] = legs[k], thigh = b.get(ta), calf = b.get(ca), foot = b.get(fa);
+      if (!thigh || !calf || !foot) continue;
+      foot.computeWorldMatrix(true);
+      const animPos = foot.getAbsolutePosition().clone();
+      // Planted when the animated ankle is within ~3 cm (scaled) of its standing height (live pose: works for any clip or blend).
+      const planted = animPos.y - f.y < f.ankleY + .035 * scale;
+      const L = f.feet[k];
+      if (planted) {
+        // Plant at once (a running stance lasts ~150 ms); re-plant only if the body has carried far past it.
+        if (!L.lock || Vector3.Distance(L.lock, animPos) > .6 * scale) L.lock = animPos.clone();
+        L.w = 1;
+      } else { L.w = Math.max(0, L.w - dt * 16); if (L.w === 0) L.lock = null; }
+      if (!L.lock || L.w <= 0) continue;
+      const target = new Vector3(L.lock.x, animPos.y, L.lock.z);
+      const keep = foot.absoluteRotationQuaternion.clone();
+      reach(thigh, calf, foot, target, L.w);
+      const parent = foot.parent as TransformNode;
+      foot.rotationQuaternion = Quaternion.Inverse(parent.absoluteRotationQuaternion).multiply(keep).normalize();
+      foot.computeWorldMatrix(true);
+    }
   }
 
   /** Walkable direction around walls toward a point, or null when the straight line is clear. */

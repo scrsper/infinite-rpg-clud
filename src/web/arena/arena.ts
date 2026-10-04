@@ -89,7 +89,7 @@ export async function startArena(): Promise<void> {
       g.start(false, 1, g.from, g.to); g.setWeightForAllAnimatables(1); g.goToFrame(g.from + frac * (g.to - g.from)); g.pause(); return true;
     },
     zoom: (z: number) => { zoom = z; },
-    clipInfo: () => [...assets.clips.values()].map(c => ({ name: c.name, dur: +(c.frames / c.fps).toFixed(2), win: strikeWindow(c).map(v => +v.toFixed(2)), peak: +Math.max(...c.swing).toFixed(1) })),
+    clipInfo: () => [...assets.clips.values()].map(c => ({ name: c.name, dur: +(c.frames / c.fps).toFixed(2), stance: +c.stance.toFixed(2), win: strikeWindow(c).map(v => +v.toFixed(2)), peak: +Math.max(...c.swing).toFixed(1) })),
     view: (pitch: number, yaw: number) => { camPitch = pitch; camYaw = yaw; },
     summary: () => ({ time: world.time, wave: world.wave, kills: world.kills, smashed: world.smashed, level: world.level, combo: world.combo.hits, hp: world.hero.hp, heroState: world.hero.state,
       foes: world.fighters.filter(f => f.role === 'foe' && f.alive).map(f => ({ x: f.pos.x, z: f.pos.z, state: f.state, kind: f.foeKind })), hero: { x: world.hero.pos.x, z: world.hero.pos.z },
@@ -173,7 +173,10 @@ export async function startArena(): Promise<void> {
     const input = readInput();
     pressed.clear();
     if (!paused && !hud.modalOpen) { world.step(dt, input); tower?.update(dt, input.interact); }
+    // After the step: bodies are at this frame's positions, so planted feet, cloth and grips solve against them
+    // (Babylon animates before onBeforeRender, so solving earlier would lag the root by a frame and skate the feet).
     else scene.animationTimeScale = 0;
+    world.solveGrips(paused || hud.modalOpen ? 0 : dt);
     if (!hud.modalOpen && levels.length) {
       const l = levels.shift()!;
       void hud.chooseUpgrade(l, '+ attack, + health').then(u => { u.apply(world); hud.announce(u.name.toUpperCase()); });
@@ -194,7 +197,6 @@ export async function startArena(): Promise<void> {
     camera.setTarget(camFocus);
     hud.update(dt, world, scene, camera);
   });
-  scene.onAfterAnimationsObservable.add(() => world.solveGrips(Math.min(scene.getEngine().getDeltaTime() / 1000, .05)));
   ctx.engine.runRenderLoop(() => scene.render());
 }
 

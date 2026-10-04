@@ -55,6 +55,16 @@ export class Animator {
     this.current = 'loco';
   }
 
+  /** The most heavily weighted playing clip and its current frame offset (for foot-contact lookup). */
+  dominant(): { name: string; frame: number } | null {
+    let best: { name: string; frame: number } | null = null, bw = 0;
+    for (const [n, a] of this.active) {
+      const m = a.g.animatables[0]?.masterFrame; if (m === undefined || a.w <= bw) continue;
+      bw = a.w; best = { name: n, frame: m - a.g.from };
+    }
+    return best;
+  }
+
   setSpeed(speed: number): void { const a = this.active.get(this.current); if (a) a.g.speedRatio = speed; }
 
   update(dt: number): void {
