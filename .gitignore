@@ -51,3 +51,4 @@ art/source/kaykit/
 # art/tools/arena/build_mixamo_clips.py from your own Mixamo downloads (see docs/COMBAT_ARENA.md).
 web/public/arena/mixamo_clips.glb
 web/public/arena/mixamo_clips.json
+web/public/arena/unarmed_clips.glb

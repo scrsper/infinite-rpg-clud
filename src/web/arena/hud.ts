@@ -62,7 +62,7 @@ const css = `
 `;
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', html = ''): HTMLElementTagNameMap[K] => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; return e; };
-const ICON: Record<WeaponId, string> = { greatsword: '🗡️', axe: '🪓', bow: '🏹' };
+const ICON: Record<WeaponId, string> = { fists: '👊', greatsword: '🗡️', axe: '🪓', bow: '🏹' };
 
 export interface Upgrade { id: string; name: string; icon: string; text: string; apply(w: ArenaWorld): void }
 export const UPGRADES: Upgrade[] = [
@@ -105,9 +105,9 @@ export class ArenaHud {
     wrow.append(this.wname);
     this.radar.width = 132; this.radar.height = 132; this.rctx = this.radar.getContext('2d')!;
     this.help = el('div', 'ar-help', `<span class="x">✕</span><b>Combat Gym</b> · local feel lab<br>
-      <b>WASD</b> move · <b>Mouse</b> aim<br><b>LMB</b> attack (hold to chain combo)<br>
-      <b>RMB</b> hold: whirlwind / shield guard / aim<br><b>Space</b> dodge · <b>1 2 3</b> weapons<br>
-      <b>E</b> hold near a fallen companion to revive<br><b>C</b> companions · <b>N</b> more enemies<br>
+      <b>WASD</b> move · <b>Shift</b> sprint · <b>Mouse</b> aim<br><b>LMB</b> attack (hold to chain combo)<br>
+      <b>RMB</b> kick / whirlwind / guard / draw and aim<br><b>Space</b> dodge or roll · <b>1-4</b> fists, greatsword, axe, bow<br>
+      <b>E</b> hold near a fallen companion to revive<br><b>C</b> companions · <b>N</b> spawn enemies · <b>M</b> auto waves<br>
       <b>R</b> rebuild the gym · <b>L</b> state labels · <b>P</b> pause · <b>H</b> this help`);
     this.help.querySelector('.x')!.addEventListener('click', () => this.toggleHelp());
     this.layer.style.cssText = 'position:absolute;inset:0;overflow:hidden';
@@ -169,7 +169,7 @@ export class ArenaHud {
     for (const [id, e] of this.weapons) e.classList.toggle('on', id === w.weapon);
     this.wname.textContent = WEAPONS[w.weapon].name;
     const foes = w.fighters.filter(f => f.role === 'foe' && f.alive).length;
-    this.waveEl.innerHTML = w.wave ? `<b>WAVE ${w.wave}</b><span>${foes} enemies remain</span>` : `<b>COMBAT GYM</b><span>Smash something — enemies rise shortly</span>`;
+    this.waveEl.innerHTML = w.wave ? `<b>WAVE ${w.wave}</b><span>${foes} enemies remain</span>` : `<b>COMBAT GYM</b><span>Sandbox: press N to spawn enemies, M for waves</span>`;
     if (this.bannerT > 0 && (this.bannerT -= dt) <= 0) this.banner.style.opacity = '0';
     this.hurt = Math.max(0, this.hurt - dt * 1.8);
     const low = h.hp / h.maxHp < .3 ? .35 + Math.sin(performance.now() / 180) * .15 : 0;

@@ -1,0 +1,56 @@
+{
+ "ranger": {
+  "bytes": 6006256,
+  "bones": 67,
+  "faces_pre_decimate": 41988,
+  "height_m": 1.695
+ },
+ "raider": {
+  "bytes": 5033372,
+  "bones": 53,
+  "faces_pre_decimate": 36483,
+  "height_m": 1.695
+ },
+ "raider_f": {
+  "bytes": 4018088,
+  "bones": 53,
+  "faces_pre_decimate": 22784,
+  "height_m": 1.695
+ },
+ "soldier": {
+  "bytes": 6339500,
+  "bones": 65,
+  "faces_pre_decimate": 43249,
+  "height_m": 1.695
+ },
+ "knight": {
+  "bytes": 5498744,
+  "bones": 65,
+  "faces_pre_decimate": 36103,
+  "height_m": 1.695
+ },
+ "archer": {
+  "bytes": 3311248,
+  "bones": 53,
+  "faces_pre_decimate": 20808,
+  "height_m": 1.695
+ },
+ "mystic": {
+  "bytes": 5607044,
+  "bones": 53,
+  "faces_pre_decimate": 41300,
+  "height_m": 1.695
+ },
+ "brann": {
+  "bytes": 5768332,
+  "bones": 65,
+  "faces_pre_decimate": 27244,
+  "height_m": 1.695
+ },
+ "wren": {
+  "bytes": 3510156,
+  "bones": 53,
+  "faces_pre_decimate": 26383,
+  "height_m": 1.695
+ }
+}

@@ -28,11 +28,11 @@ export async function startArena(): Promise<void> {
   const ctx = await createRenderer(canvas, { prefer: params.get('renderer') === 'webgpu' ? 'webgpu' : 'webgl2', quality: (params.get('quality') as 'high' | 'balanced' | 'low') ?? 'high' });
   const scene = ctx.scene;
   scene.clearColor = new Color4(.06, .07, .09, 1);
-  scene.environmentIntensity = .55;
+  scene.environmentIntensity = .35;   // low ambient so the faceted low-poly forms read
   const camera = new FreeCamera('arena-cam', new Vector3(0, 20, 16), scene);
   camera.fov = .72; camera.minZ = .5; camera.maxZ = 260; camera.inputs.clear();
   const pipeline = attachPipeline(ctx, camera);
-  pipeline.imageProcessing.vignetteWeight = 1.1; pipeline.imageProcessing.exposure = 1.08; pipeline.bloomThreshold = .82; pipeline.bloomWeight = .22;
+  pipeline.imageProcessing.vignetteWeight = 1.1; pipeline.imageProcessing.exposure = 1.0; pipeline.bloomThreshold = .82; pipeline.bloomWeight = .22;
 
   const { shadow, key } = buildStage(scene);
   const assets = new ArenaAssets(scene);
@@ -58,7 +58,7 @@ export async function startArena(): Promise<void> {
   });
   let seed = Number(params.get('seed') ?? 918271) || 918271;
   world.reset(seed);
-  let zoom = 17, paused = false, camYaw = Math.PI * .25, camPitch = .9;
+  let zoom = 13, paused = false, camYaw = Math.PI * .25, camPitch = .9;
   // Automation hooks (scripts/web/arena-play.ts): read-only views plus a projector for aiming real mouse input.
   (window as unknown as { __arena: unknown }).__arena = {
     world, hud, scene, camera,
@@ -100,38 +100,41 @@ export async function startArena(): Promise<void> {
     let mx = 0, mz = 0;
     if (keys.has('KeyW') || keys.has('ArrowUp')) { mx += fwd.x; mz += fwd.z; }
     if (keys.has('KeyS') || keys.has('ArrowDown')) { mx -= fwd.x; mz -= fwd.z; }
-    if (keys.has('KeyD') || keys.has('ArrowRight')) { mx -= right.x; mz -= right.z; }
-    if (keys.has('KeyA') || keys.has('ArrowLeft')) { mx += right.x; mz += right.z; }
+    // `right` is screen-right for this right-handed camera (forward x up).
+    if (keys.has('KeyD') || keys.has('ArrowRight')) { mx += right.x; mz += right.z; }
+    if (keys.has('KeyA') || keys.has('ArrowLeft')) { mx -= right.x; mz -= right.z; }
     // Mouse aim on the floor plane.
     const ray = scene.createPickingRay(scene.pointerX, scene.pointerY, null, camera);
     const t = ray.direction.y < -1e-3 ? -ray.origin.y / ray.direction.y : 30;
     const aim = ray.origin.add(ray.direction.scale(t));
-    let attack = lmb, attackPressed = lmbPressed, secondary = rmb || keys.has('ShiftLeft'), dodge = pressed.has('Space');
-    let weapon: WeaponId | null = pressed.has('Digit1') ? 'greatsword' : pressed.has('Digit2') ? 'axe' : pressed.has('Digit3') ? 'bow' : null;
+    let attack = lmb, attackPressed = lmbPressed, secondary = rmb, dodge = pressed.has('Space');
+    let sprint = keys.has('ShiftLeft') || keys.has('ShiftRight');
+    let weapon: WeaponId | null = pressed.has('Digit1') ? 'fists' : pressed.has('Digit2') ? 'greatsword' : pressed.has('Digit3') ? 'axe' : pressed.has('Digit4') ? 'bow' : null;
     const pad = navigator.getGamepads?.().find(p => p);
     if (pad) {
       const dz = (v: number) => Math.abs(v) < .18 ? 0 : v;
       const lx = dz(pad.axes[0]), ly = dz(pad.axes[1]), rx = dz(pad.axes[2]), ry = dz(pad.axes[3]);
-      mx += -fwd.x * ly - right.x * lx; mz += -fwd.z * ly - right.z * lx;
+      mx += -fwd.x * ly + right.x * lx; mz += -fwd.z * ly + right.z * lx;
       const b = pad.buttons.map(x => x.pressed), edge = (i: number) => b[i] && !padPrev[i];
-      if (rx || ry) aim.copyFrom(world.hero.pos.add(fwd.scale(-ry * 6)).add(right.scale(-rx * 6)));
+      sprint ||= !!b[10];
+      if (rx || ry) aim.copyFrom(world.hero.pos.add(fwd.scale(-ry * 6)).add(right.scale(rx * 6)));
       else if (lx || ly) aim.copyFrom(world.hero.pos.add(new Vector3(mx, 0, mz).normalize().scale(5)));
       attack ||= b[2] || b[7]; attackPressed ||= edge(2) || edge(7); secondary ||= b[6] || b[3]; dodge ||= edge(0) || edge(1);
-      if (edge(4) || edge(5)) { padWeapon = (padWeapon + (edge(5) ? 1 : 2)) % 3; weapon = (['greatsword', 'axe', 'bow'] as WeaponId[])[padWeapon]; }
+      if (edge(4) || edge(5)) { padWeapon = (padWeapon + (edge(5) ? 1 : 3)) % 4; weapon = (['fists', 'greatsword', 'axe', 'bow'] as WeaponId[])[padWeapon]; }
       if (edge(9)) paused = !paused;
       padPrev = b;
     }
     const len = Math.hypot(mx, mz);
     if (len > 1) { mx /= len; mz /= len; }
     lmbPressed = false;
-    return { move: { x: mx, z: mz }, aim, attack, attackPressed, secondary, dodgePressed: dodge, interact: keys.has('KeyE'), weapon };
+    return { move: { x: mx, z: mz }, aim, attack, attackPressed, secondary, sprint, dodgePressed: dodge, interact: keys.has('KeyE'), weapon };
   };
 
   const rebuild = () => { hud.closeModal(); heroDown = false; levels.length = 0; world.reset(++seed); hud.announce('COMBAT GYM', 'rebuilt · seed ' + seed); };
 
   // ---- loop
   boot.remove(); ui.style.pointerEvents = 'none';
-  hud.announce('COMBAT GYM', 'Click to fight · H for controls');
+  hud.announce('COMBAT GYM', 'Sandbox · N spawns enemies · H for controls');
   let shakeT = 0;
   scene.onBeforeRenderObservable.add(() => {
     const dt = Math.min(scene.getEngine().getDeltaTime() / 1000, 1 / 20);
@@ -141,6 +144,7 @@ export async function startArena(): Promise<void> {
     if (pressed.has('KeyL')) world.showLabels = !world.showLabels;
     if (pressed.has('KeyC')) { world.setCompanions(!world.companions); hud.announce(world.companions ? 'COMPANIONS JOIN' : 'FIGHTING ALONE'); }
     if (pressed.has('KeyN')) world.spawnNow();
+    if (pressed.has('KeyM')) { world.autoWaves = !world.autoWaves; hud.announce(world.autoWaves ? 'WAVES ON' : 'SANDBOX', world.autoWaves ? 'enemies keep coming' : 'press N to spawn enemies'); }
     const input = readInput();
     pressed.clear();
     if (!paused && !hud.modalOpen) world.step(dt, input);
@@ -169,9 +173,9 @@ export async function startArena(): Promise<void> {
 
 function buildStage(scene: Scene): { shadow: BlobShadows; key: DirectionalLight } {
   const hemi = new HemisphericLight('arena-fill', new Vector3(.2, 1, .1), scene);
-  hemi.intensity = .75; hemi.groundColor = new Color3(.38, .38, .42); hemi.specular = Color3.Black();
+  hemi.intensity = .5; hemi.groundColor = new Color3(.38, .38, .42); hemi.specular = Color3.Black();
   const key = new DirectionalLight('arena-key', new Vector3(-.55, -1, -.35), scene);
-  key.intensity = 2.1;
+  key.intensity = 2.6;
   const shadow = new BlobShadows(scene);
 
   // Light grey gym floor with a faint grid, like a level-blockout room.

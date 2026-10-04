@@ -11,11 +11,23 @@ gateway, save or Observatory. It exists to tune how striking and smashing *feel*
 docs/COMBAT_GYM.md) remains the authority on canonical combat. Porting any of these rules into `src/sim` is a separate,
 deliberate step.
 
+## Purpose and look
+
+A **movement and combat test bench**. It starts as a sandbox: N spawns enemies, M turns endless waves on.
+
+The look follows the user's reference clip (psergiomr, "clothing and hair adding to the motion"):
+
+- Realistic proportions, built as low-poly faceted people with flat painted colours, from `art/tools/arena/build_arena_stylized.py` (MPFB low-poly proxies plus recoloured, decimated MakeHuman garments; output in `web/public/arena/people_flat`).
+- The hero ranger, Brann, the soldier and the knight wear an authored open long coat. Its four tails sit on bone chains (`coat_fl/fr/bl/br_1..3`), and the ranger has hair bones.
+- `src/web/arena/springs.ts` simulates those chains after animation each frame (verlet, pull-back to pose, gravity, inertia, leg/hip capsule collision), so tails and hair lag, swing and settle.
+- Hero locomotion is weighted: velocity eases in and out, turns are rate-limited, the body leans into turns, and walk or run is chosen and paced from actual speed. The default pace is a jog; Shift sprints.
+
 ## Play
 
-WASD move, mouse aim. LMB attack (hold to chain). RMB hold: whirlwind (greatsword) / guard + LMB bash (battleaxe) /
-aimed shot (crossbow). Space dodge (i-frames, costs energy). 1/2/3 weapons. E (hold) revives a downed companion.
-C toggles companions, N spawns more enemies, R rebuilds the gym with a new seed, L shows state labels, P pauses, H help.
+WASD move (screen-relative), Shift sprint, mouse aim. LMB attack (hold to chain).
+RMB: side kick (fists), whirlwind (greatsword), guard + LMB kick (axe), aimed shot (bow). Space dodges (i-frames, costs energy); moving forward makes it a roll.
+1 fists (jab, cross, hook, uppercut, roundhouse), 2 greatsword, 3 axe, 4 longbow. E (hold) revives a downed companion.
+C toggles companions, N spawns enemies, M toggles auto waves, R rebuilds the gym with a new seed, L shows state labels, P pauses, H help.
 Gamepad: left stick move, right stick aim, X/RT attack, LT/Y secondary, A/B dodge, LB/RB weapons, Start pause.
 
 Waves of raiders run in: knife raiders, lamellar soldiers who parry frontal light hits (heavy attacks break the guard),
@@ -58,6 +70,10 @@ Weapon grips come from the hand's own geometry (`handGrip`: haft from little-fin
 knuckles). The bow sits in the left hand. Two-bone arm IK (`ik.ts`) remains available but is off, since the mocap
 already has both hands on two-handed hilts. Use `npx tsx scripts/web/arena-poses.ts` to capture close-up
 pose sheets of any clip.
+
+Unarmed moves come from the Motifect set in the TRELLIS review rig (`art/tools/arena/build_unarmed_clips.py`, output
+gitignored like the Mixamo file), retargeted with the `UE` map. `scripts/web/arena-controls.ts` verifies key directions,
+and `scripts/web/arena-showcase.ts` records a scripted movement and combat reel.
 
 ## Weapons and props
 

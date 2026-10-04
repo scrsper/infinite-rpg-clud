@@ -37,9 +37,12 @@ export interface AttackDef {
 }
 
 /** The clips one way of fighting moves with. */
-export interface Moveset { idle: string; walk: string; run: string; hit: string[]; death: string[]; block: string; guard: string; enter: string; runPace: number }
+export interface Moveset { idle: string; walk: string; run: string; hit: string[]; death: string[]; block: string; guard: string; enter: string; runPace: number; walkPace?: number }
 const GS = (n: string) => `great_sword/great sword ${n}`, SS = (n: string) => `sword_and_shield/sword and shield ${n}`, BOW = (n: string) => `pro_longbow/standing ${n}`;
-export const MOVESETS: Record<'greatsword' | 'sword' | 'bow' | 'caster', Moveset> = {
+const U = (n: string) => `unarmed/${n}`;
+export const MOVESETS: Record<'fists' | 'greatsword' | 'sword' | 'bow' | 'caster', Moveset> = {
+  fists: { idle: U('combat_idle'), walk: U('walk_forward'), run: U('run_sprint'), hit: [BOW('react small from front'), BOW('react small from headshot')], death: [BOW('death backward 01'), BOW('death forward 01')],
+    block: U('slip_left'), guard: U('combat_idle'), enter: U('idle_neutral'), runPace: 7.4, walkPace: 1.9 },
   greatsword: { idle: GS('idle'), walk: GS('walk'), run: GS('run'), hit: [GS('impact'), GS('impact (3)'), GS('impact (5)')], death: ['great_sword/two handed sword death', 'great_sword/two handed sword death (2)'],
     block: GS('blocking'), guard: GS('idle (2)'), enter: GS('power up'), runPace: 6.2 },
   sword: { idle: SS('idle'), walk: SS('walk'), run: SS('run'), hit: [SS('impact'), SS('impact (2)'), SS('impact (3)')], death: [SS('death'), SS('death (2)')],
@@ -50,14 +53,15 @@ export const MOVESETS: Record<'greatsword' | 'sword' | 'bow' | 'caster', Moveset
     block: BOW('block'), guard: 'great_sword/spell cast', enter: 'sword_and_shield/sword and shield casting (2)', runPace: 6 },
 };
 /** Evasive rolls/steps for anyone, by direction relative to facing. */
-export const DODGES = { forward: BOW('dodge forward'), back: BOW('dodge backward'), left: BOW('dodge left'), right: BOW('dodge right') };
+export const DODGES = { forward: BOW('dodge forward'), back: BOW('dodge backward'), left: BOW('dodge left'), right: BOW('dodge right'), roll: U('roll_forward') };
 
-export type WeaponId = 'greatsword' | 'axe' | 'bow';
+export type WeaponId = 'fists' | 'greatsword' | 'axe' | 'bow';
 export interface WeaponDef {
   id: WeaponId; name: string; key: string; set: keyof typeof MOVESETS;
   combo: AttackDef[];
   /** Held secondary: whirlwind, guard, or aimed shot. */
-  secondary: 'spin' | 'guard' | 'aim';
+  secondary: 'spin' | 'guard' | 'aim' | 'kick';
+  kick?: AttackDef;
   spin?: AttackDef;
   bash?: AttackDef;
   aimed?: AttackDef;
@@ -67,8 +71,19 @@ export interface WeaponDef {
 
 const D = Math.PI / 180;
 export const WEAPONS: Record<WeaponId, WeaponDef> = {
+  fists: {
+    id: 'fists', name: 'Bare hands', key: '1', set: 'fists', secondary: 'kick', trail: 0,
+    combo: [
+      { clip: U('jab_left'), speed: 1.7, active: [0.48, 0.68], cancel: 0.7, end: 0.95, range: 2.4, arc: 40 * D, damage: 14, knock: 1.5, lunge: .6, hitstop: .045, shake: .08, label: 'Jab' },
+      { clip: U('cross_right'), speed: 1.7, active: [0.36, 0.62], cancel: 0.66, end: 0.95, range: 2.5, arc: 40 * D, damage: 18, knock: 2.5, lunge: .8, hitstop: .05, shake: .12, label: 'Cross' },
+      { clip: U('hook_left'), speed: 1.6, active: [0.44, 0.7], cancel: 0.74, end: 1.0, range: 2.4, arc: 70 * D, damage: 20, knock: 3, lunge: .7, hitstop: .055, shake: .14, label: 'Hook' },
+      { clip: U('uppercut_right'), speed: 1.55, active: [0.28, 0.5], cancel: 0.56, end: 0.9, range: 2.3, arc: 45 * D, damage: 24, knock: 4, lunge: .6, hitstop: .07, shake: .2, label: 'Uppercut' },
+      { clip: U('roundhouse_right'), speed: 1.45, active: [0.2, 0.56], cancel: 0.9, end: 1.1, range: 2.9, arc: 110 * D, damage: 34, knock: 9, lunge: 1, heavy: true, hitstop: .09, shake: .35, label: 'Roundhouse' },
+    ],
+    kick: { clip: U('side_kick'), speed: 1.45, active: [0.12, 0.54], cancel: 0.85, end: 1.05, range: 3, arc: 40 * D, damage: 30, knock: 12, lunge: 1.2, heavy: true, hitstop: .09, shake: .35, label: 'Side kick' },
+  },
   greatsword: {
-    id: 'greatsword', name: 'Oathbreaker', key: '1', set: 'greatsword', secondary: 'spin', attach: { r: 'W_oathbreaker' }, trail: 1.75,
+    id: 'greatsword', name: 'Oathbreaker', key: '2', set: 'greatsword', secondary: 'spin', attach: { r: 'W_oathbreaker' }, trail: 1.75,
     combo: [
       { clip: GS('slash'), speed: 1.3, active: [0.42, 0.84], cancel: 0.86, end: 1.12, range: 3.6, arc: 95 * D, damage: 32, knock: 4, lunge: 1.2, hitstop: .06, shake: .2, label: 'Attacking' },
       { clip: GS('slash (4)'), speed: 1.4, active: [0.26, 0.86], cancel: 0.9, end: 1.3, range: 3.6, arc: 100 * D, damage: 36, knock: 5, lunge: 1.4, hitstop: .065, shake: .25, label: 'Attacking' },
@@ -79,7 +94,7 @@ export const WEAPONS: Record<WeaponId, WeaponDef> = {
     spin: { clip: '2H_Melee_Attack_Spinning', speed: 1.25, active: [0, 99], cancel: 0, range: 3.5, arc: 180 * D, damage: 15, knock: 5, lunge: 0, multi: .19, heavy: true, hitstop: .03, shake: .14, move: 4.2, label: 'Whirlwind' },
   },
   axe: {
-    id: 'axe', name: 'Widow Cleaver', key: '2', set: 'sword', secondary: 'guard', attach: { r: 'W_widow-cleaver' }, trail: 1.1,
+    id: 'axe', name: 'Widow Cleaver', key: '3', set: 'sword', secondary: 'guard', attach: { r: 'W_widow-cleaver' }, trail: 1.1,
     combo: [
       { clip: SS('slash'), speed: 1.35, active: [0.48, 0.76], cancel: 0.8, end: 1.05, range: 3, arc: 80 * D, damage: 24, knock: 2.5, lunge: 1, hitstop: .05, shake: .12, label: 'Attacking' },
       { clip: SS('attack (4)'), speed: 1.25, active: [0.36, 0.6], cancel: 0.64, end: 0.9, range: 3, arc: 90 * D, damage: 26, knock: 3, lunge: 1, hitstop: .05, shake: .14, label: 'Attacking' },
@@ -89,7 +104,7 @@ export const WEAPONS: Record<WeaponId, WeaponDef> = {
     bash: { clip: SS('kick'), speed: 1.4, active: [0.08, 0.34], cancel: .7, end: .95, range: 2.6, arc: 60 * D, damage: 12, knock: 11, lunge: 1.2, heavy: true, hitstop: .08, shake: .3, label: 'Kick' },
   },
   bow: {
-    id: 'bow', name: 'Ashwood Sentinel', key: '3', set: 'bow', secondary: 'aim', attach: { l: 'W_ashwood-sentinel' }, trail: 0,
+    id: 'bow', name: 'Ashwood Sentinel', key: '4', set: 'bow', secondary: 'aim', attach: { l: 'W_ashwood-sentinel' }, trail: 0,
     combo: [
       { clip: BOW('draw arrow'), speed: 1.5, active: [0.8, 0.81], cancel: 0.95, end: 1.05, range: 40, arc: 0, damage: 34, knock: 4, lunge: 0, hitstop: .03, shake: .08, label: 'Shooting' },
     ],
@@ -149,7 +164,7 @@ export function usedClips(): Set<string> {
   const out = new Set<string>(['Lie_StandUp', ...Object.values(DODGES)]);
   const add = (a?: AttackDef) => a && out.add(a.clip);
   for (const m of Object.values(MOVESETS)) for (const c of [m.idle, m.walk, m.run, m.block, m.guard, m.enter, ...m.hit, ...m.death]) out.add(c);
-  for (const w of Object.values(WEAPONS)) { w.combo.forEach(add); add(w.spin); add(w.bash); add(w.aimed); }
+  for (const w of Object.values(WEAPONS)) { w.combo.forEach(add); add(w.spin); add(w.bash); add(w.aimed); add(w.kick); }
   for (const f of Object.values(FOES)) f.attacks.forEach(add);
   for (const a of Object.values(ALLIES)) a.attacks.forEach(add);
   return out;

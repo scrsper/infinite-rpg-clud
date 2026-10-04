@@ -9,6 +9,6 @@ await page.goto('http://127.0.0.1:5180/?arena=1&allclips=1');
 await page.waitForFunction(() => !!(window as any).__arena, null, { timeout: 240_000 });
 const info = await page.evaluate(() => (window as any).__arena.clipInfo());
 mkdirSync('.debug/arena', { recursive: true }); writeFileSync('.debug/arena/clipinfo.json', JSON.stringify(info, null, 1));
-for (const c of info) if (!/^[A-Z0-9]/.test(c.name)) console.log(c.name.padEnd(52), String(c.dur).padStart(5), JSON.stringify(c.win), c.peak);
+for (const c of info) if (c.name.startsWith(process.env.CLIPS ?? '')) console.log(c.name.padEnd(52), String(c.dur).padStart(5), JSON.stringify(c.win), c.peak);
 console.log('errors', errors);
 await browser.close();

@@ -22,7 +22,10 @@ const errors: string[] = [];
 page.on('pageerror', e => errors.push(String(e)));
 page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
 await page.goto(url);
-await page.waitForFunction(() => !!(window as unknown as { __arena?: unknown }).__arena, null, { timeout: 90_000 });
+await page.waitForFunction(() => !!(window as unknown as { __arena?: unknown }).__arena, null, { timeout: 240_000 });
+const zoomArg = Number(arg('zoom', '0'));
+if (zoomArg) await page.evaluate(z => (window as any).__arena.zoom(z), zoomArg);
+if (process.argv.includes('--nohelp')) await page.evaluate(() => (window as any).__arena.hud.toggleHelp());
 
 type Summary = { time: number; wave: number; kills: number; smashed: number; level: number; combo: number; hp: number; heroState: string; debris: number;
   foes: { x: number; z: number; state: string; kind: string }[]; hero: { x: number; z: number }; props: { x: number; z: number; key: string }[] };
@@ -40,6 +43,7 @@ const modals = async () => {
 
 await page.mouse.move(W * .62, H * .5);
 await page.mouse.click(W * .62, H * .5);
+await page.keyboard.press('KeyM');   // auto waves on (the arena starts as a sandbox)
 await page.waitForTimeout(800);
 await still('start');
 
@@ -49,7 +53,7 @@ const t0 = Date.now(); const samples: number[] = [];
 const held = new Set<string>();
 const hold = async (k: string, on: boolean) => { if (on && !held.has(k)) { await page.keyboard.down(k); held.add(k); } if (!on && held.has(k)) { await page.keyboard.up(k); held.delete(k); } };
 const steer = async (dx: number, dz: number) => {
-  // Camera looks from +x+z towards -x-z (yaw 45°): W = (-.71, -.71), D = (.71, -.71) on screen-right.
+  // Camera looks from +x+z towards -x-z (yaw 45 deg): W = (-.71, -.71), D = screen-right = (.71, -.71).
   const f = -(dx + dz) / Math.SQRT2, r = (dx - dz) / Math.SQRT2;
   await hold('KeyW', f > .3); await hold('KeyS', f < -.3); await hold('KeyD', r > .3); await hold('KeyA', r < -.3);
 };
@@ -63,7 +67,7 @@ while ((Date.now() - t0) / 1000 < seconds) {
   maxCombo = Math.max(maxCombo, s.combo); maxDebris = Math.max(maxDebris, s.debris);
   samples.push(await fps());
   // Weapon plan: greatsword, then axe & shield, then crossbow, then greatsword whirlwind.
-  const want = el < seconds * .45 ? '1' : el < seconds * .65 ? '2' : el < seconds * .8 ? '3' : '1';
+  const want = el < seconds * .3 ? '1' : el < seconds * .5 ? '2' : el < seconds * .65 ? '3' : el < seconds * .8 ? '4' : '2';
   if (want !== String(phase)) { await setMouse(false); await page.keyboard.press(`Digit${want}`); phase = Number(want); }
   const targets = s.foes.length ? s.foes.filter(f => f.state !== 'spawn').map(f => ({ x: f.x, z: f.z })) : s.props;
   let best = null as null | { x: number; z: number }, bd = 1e9;
@@ -71,11 +75,11 @@ while ((Date.now() - t0) / 1000 < seconds) {
   if (best) {
     const p = await screen(page, best.x, best.z);
     await page.mouse.move(Math.max(5, Math.min(W - 5, p.x)), Math.max(5, Math.min(H - 5, p.y)));
-    const reach = phase === 3 ? 12 : 2.8;
+    const reach = phase === 4 ? 12 : phase === 1 ? 2.2 : 2.8;
     if (bd > reach) await steer(best.x - s.hero.x, best.z - s.hero.z); else await steer(0, 0);
     const tells = s.foes.filter(f => f.state === 'tell' && Math.hypot(f.x - s.hero.x, f.z - s.hero.z) < 4).length;
     if (tells && Math.random() < .35) { await page.keyboard.press('Space'); }
-    if (phase === 1 && el > seconds * .8 && s.foes.length > 2 && bd < 5) { await setMouse(false); await page.mouse.down({ button: 'right' }); await page.waitForTimeout(900); await page.mouse.up({ button: 'right' }); }
+    if (phase === 2 && el > seconds * .8 && s.foes.length > 2 && bd < 5) { await setMouse(false); await page.mouse.down({ button: 'right' }); await page.waitForTimeout(900); await page.mouse.up({ button: 'right' }); }
     else await setMouse(bd < reach + 1.5);
   }
   if (el - lastStill > 4) { lastStill = el; await still(`t${Math.round(el)}-w${phase}`); }

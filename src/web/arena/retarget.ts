@@ -14,7 +14,7 @@ type Rig = { space: TransformNode; nodes: Map<string, TransformNode> };
 
 type Pair = [string, string, string | null, string | null];
 /** How one source rig maps onto the UE-named target: [source bone, target bone, source child, target child] (children give rest directions). */
-export interface RigMap { map: Pair[]; blend: [string, string, string][]; follow: [string, string][]; hips: string; handR: string; handL: string }
+export interface RigMap { map: Pair[]; blend: [string, string, string][]; follow: [string, string][]; hips: string; handR: string; handL: string; feet?: [string, string] }
 
 export const KAYKIT: RigMap = {
   hips: 'hips', handR: 'wrist.r', handL: 'wrist.l',
@@ -44,7 +44,20 @@ export const MIXAMO: RigMap = (() => {
     for (const [F, f] of [['Index', 'index'], ['Middle', 'middle'], ['Ring', 'ring'], ['Pinky', 'pinky'], ['Thumb', 'thumb']] as const)
       for (let j = 1; j <= 3; j++) map.push([m(`${S}Hand${F}${j}`), `${f}_0${j}_${s}`, j < 3 ? m(`${S}Hand${F}${j + 1}`) : null, j < 3 ? `${f}_0${j + 1}_${s}` : null]);
   }
-  return { map, blend: [], follow: [], hips: m('Hips'), handR: m('RightHand'), handL: m('LeftHand') };
+  return { map, blend: [], follow: [], hips: m('Hips'), handR: m('RightHand'), handL: m('LeftHand'), feet: [m('LeftFoot'), m('RightFoot')] };
+})();
+
+/** UE-mannequin names (the TRELLIS/Motifect unarmed set): same body names; grouped fingers fan out to all four fingers. */
+export const UE: RigMap = (() => {
+  const chain = [['pelvis', 'spine_01'], ['spine_01', 'spine_02'], ['spine_02', 'spine_03'], ['spine_03', 'neck_01'], ['neck_01', 'head'], ['head', null]] as const;
+  const map: Pair[] = chain.map(([a, b]) => [a, a, b, b]);
+  for (const s of ['l', 'r']) {
+    for (const [a, b] of [['clavicle', 'upperarm'], ['upperarm', 'lowerarm'], ['lowerarm', 'hand'], ['thigh', 'calf'], ['calf', 'foot'], ['foot', 'ball']]) map.push([`${a}_${s}`, `${a}_${s}`, `${b}_${s}`, `${b}_${s}`]);
+    map.push([`hand_${s}`, `hand_${s}`, `fingers_01_${s}`, `middle_01_${s}`], [`ball_${s}`, `ball_${s}`, null, null]);
+    for (const f of ['index', 'middle', 'ring', 'pinky']) map.push([`fingers_01_${s}`, `${f}_01_${s}`, `fingers_02_${s}`, `${f}_02_${s}`], [`fingers_02_${s}`, `${f}_02_${s}`, null, null]);
+    map.push([`thumb_01_${s}`, `thumb_01_${s}`, `thumb_02_${s}`, `thumb_02_${s}`], [`thumb_02_${s}`, `thumb_02_${s}`, null, null]);
+  }
+  return { map, blend: [], follow: [], hips: 'pelvis', handR: 'hand_r', handL: 'hand_l', feet: ['foot_l', 'foot_r'] };
 })();
 
 export interface ClipTemplate {
@@ -114,7 +127,7 @@ export class Retargeter {
   /** Bake one source clip into target-bone tracks at the source frame rate. */
   /** Bake one source clip. `inPlace` removes the hips' net horizontal travel (linear drift), so loops and strafes stay put. */
   bake(name: string, g: AnimationGroup, inPlace = true): ClipTemplate {
-    const rm = this.rm; const swing: number[] = []; let prevR: Vector3 | null = null, prevL: Vector3 | null = null;
+    const rm = this.rm; const swing: number[] = []; let prevEnds: Vector3[] | null = null;
     const fps = g.targetedAnimations[0]?.animation.framePerSecond ?? 30;
     const frames = Math.max(1, Math.round(g.to - g.from) + 1);
     const keys = new Map<string, { frame: number; value: Quaternion }[]>(this.keyed.map(k => [k, []]));
@@ -149,8 +162,11 @@ export class Retargeter {
         const pw = pn ? want(pn) : this.parentRest(bone);
         keys.get(bone)!.push({ frame: i, value: conj(pw).multiply(want(bone)).normalize() });
       }
-      const hr = this.src.nodes.get(rm.handR), hl = this.src.nodes.get(rm.handL);
-      if (hr && hl) { const pr = modelPos(this.src, hr), pl = modelPos(this.src, hl); swing.push(prevR ? Math.max(Vector3.Distance(pr, prevR), Vector3.Distance(pl, prevL!)) * fps * this.hipScale : 0); prevR = pr; prevL = pl; }
+      // Fastest limb end (hands, and feet for kicks), measured relative to the hips.
+      const ends = [rm.handR, rm.handL, ...(rm.feet ?? [])].map(n => this.src.nodes.get(n)).filter((n): n is TransformNode => !!n);
+      const hp = modelPos(this.src, this.src.nodes.get(rm.hips)!);
+      const cur = ends.map(n => modelPos(this.src, n).subtract(hp));
+      swing.push(prevEnds ? Math.max(...cur.map((p, k) => Vector3.Distance(p, prevEnds![k]))) * fps * this.hipScale : 0); prevEnds = cur;
       const hs = modelPos(this.src, this.src.nodes.get(rm.hips)!).subtract(this.sRest.get(rm.hips)!.p).scale(this.hipScale);
       const tp = this.tRest.get('pelvis')!.p.add(hs);
       pelvisKeys.push({ frame: i, value: Vector3.TransformCoordinates(tp, parentInv) });

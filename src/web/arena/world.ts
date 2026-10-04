@@ -22,7 +22,7 @@ const fwd = (yaw: number) => new Vector3(Math.sin(yaw), 0, Math.cos(yaw));
 /** Half-size of the playable floor; the perimeter walls' inner faces sit at ARENA + 1. */
 export const ARENA = 34;
 /** Seconds a dodge lasts (clip is played to fit). */
-const DODGE_TIME = .55;
+const DODGE_TIME = .55, ROLL_TIME = .82;
 
 export type FState = 'spawn' | 'idle' | 'move' | 'tell' | 'attack' | 'spin' | 'guard' | 'aim' | 'dodge' | 'hit' | 'down' | 'revive' | 'dead';
 export type Role = 'hero' | 'ally' | 'foe';
@@ -32,6 +32,8 @@ export interface HeroInput {
   aim: Vector3;
   attack: boolean; attackPressed: boolean;
   secondary: boolean;
+  /** Hold to sprint (Shift / left stick click). */
+  sprint: boolean;
   dodgePressed: boolean;
   interact: boolean;
   weapon: WeaponId | null;
@@ -47,6 +49,8 @@ export class Fighter {
   energy = 100; energyDelay = 0;
   /** Off hand pulled onto the grip of a two-handed weapon. */
   twoHand = false; ikW = 0;
+  /** Smoothed locomotion velocity, turn rate and body lean (presentation of weight). */
+  mvel = new Vector3(); turnRate = 0; lean = 0; pitch = 0; dodgeTime = .55;
   trail: SlashTrail | null = null; extra: InstancedMesh[] = [];
   label = 'Idle';
   constructor(readonly id: number, readonly role: Role, readonly name: string, readonly inst: CharacterInstance, readonly anim: Animator,
@@ -92,8 +96,10 @@ export class ArenaWorld {
   get comboMul(): number { return Math.min(2, 1 + Math.floor(this.combo.hits / 10) * .1); }
   xp = 0; level = 1; nextXp = 100;
   wave = 0; waveTimer = 3; kills = 0; smashed = 0;
-  weapon: WeaponId = 'greatsword';
+  weapon: WeaponId = 'fists';
   companions = true;
+  /** Sandbox by default (a movement/combat test bench): enemies come only when asked (N), unless auto waves are on (M). */
+  autoWaves = false;
   /** Upgrades chosen on level-up. */
   mods = { damage: 1, atkSpeed: 1, move: 1, regen: 1, range: 1 };
   showLabels = false;
@@ -183,7 +189,7 @@ export class ArenaWorld {
   }
 
   private spawnHero(): Fighter {
-    const h = this.makeFighter('hero', 'hero', 'You', 1000, 7.2);
+    const h = this.makeFighter('ranger', 'hero', 'You', 1000, 7.2);
     h.pos.set(0, 0, 0); h.yaw = Math.PI * .75;
     this.bladeBase = new TransformNode('blade-base', this.scene); this.bladeTip = new TransformNode('blade-tip', this.scene);
     this.bladeBase.parent = h.inst.slotR; this.bladeTip.parent = h.inst.slotR;
@@ -266,7 +272,12 @@ export class ArenaWorld {
     for (const f of this.fighters) {
       f.anim.update(dt); f.trail?.update(dt);
       if (!f.alive) { if (f.y > 0 || f.vy > 0) { f.vy -= 22 * dt; f.y = Math.max(0, f.y + f.vy * dt); if (f.y === 0) f.vy = 0; } if (f.deadT > 4.5) f.y -= dt * .7; }
-      f.inst.root.position.set(f.pos.x, f.y, f.pos.z); f.inst.root.rotation.y = f.yaw;
+      // Lean into turns and accelerations (cosmetic weight shift on the whole body).
+      const prevYaw = f.inst.root.rotation.y, turn = dt > 0 ? wrap(f.yaw - prevYaw) / dt : 0;
+      f.turnRate += (turn - f.turnRate) * Math.min(1, dt * 10);
+      const spd = f.role === 'hero' ? f.mvel.length() : 0;
+      f.lean += (Math.max(-.2, Math.min(.2, -f.turnRate * spd * .012)) - f.lean) * Math.min(1, dt * 8);
+      f.inst.root.position.set(f.pos.x, f.y, f.pos.z); f.inst.root.rotation.set(0, f.yaw, f.state === 'move' ? f.lean : f.lean * .5);
       if (f.flash > 0) f.flash -= dt;
       const on = f.flash > 0;
       for (const m of f.inst.meshes) { m.renderOverlay = on; if (on) { m.overlayColor = f.role === 'hero' ? new Color3(1, .2, .15) : Color3.White(); m.overlayAlpha = .65; } }
@@ -277,8 +288,9 @@ export class ArenaWorld {
     this.fighters = this.fighters.filter(f => f.radius >= 0);
   }
 
-  /** Run after animations: seat the off hand on two-handed hafts, below the leading hand. */
+  /** Run after animations: coat tails and hair (springs), then two-handed grips. */
   solveGrips(dt: number): void {
+    for (const f of this.fighters) f.inst.springs?.update(dt);
     for (const f of this.fighters) {
       const b = f.inst.bones; if (!b || !f.twoHand) continue;
       const free = f.standing && f.state !== 'dodge' && f.state !== 'hit' && f.state !== 'spawn' && f.state !== 'revive';
@@ -313,20 +325,23 @@ export class ArenaWorld {
       this.endAttack(h);
       const dir = moving ? Math.atan2(mv.x, mv.z) : h.yaw;
       const rel = wrap(dir - h.yaw);
-      const clip = Math.abs(rel) < Math.PI / 4 ? DODGES.forward : Math.abs(rel) > Math.PI * .75 ? DODGES.back : rel > 0 ? DODGES.left : DODGES.right;
+      const roll = Math.abs(rel) < Math.PI / 4 && moving;
+      const clip = roll ? DODGES.roll : Math.abs(rel) < Math.PI / 4 ? DODGES.forward : Math.abs(rel) > Math.PI * .75 ? DODGES.back : rel > 0 ? DODGES.left : DODGES.right;
+      h.dodgeTime = roll ? ROLL_TIME : DODGE_TIME; if (roll) h.yaw = dir;
       h.state = 'dodge'; h.st = 0; h.atkDir = dir; h.iframe = .4; h.energy -= 18; h.energyDelay = .6; h.label = 'Evading';
-      h.anim.play(clip, { speed: h.anim.length(clip) * .8 / DODGE_TIME, fade: .05, restart: true });
+      h.anim.play(clip, { speed: h.anim.length(clip) * (roll ? .92 : .8) / h.dodgeTime, fade: .05, restart: true });
       this.fx.dustAt(h.pos.add(new Vector3(0, .1, 0)), 8);
       return;
     }
 
     switch (h.state) {
       case 'dodge': {
-        const k = h.st / DODGE_TIME;
-        const v = 15 * (1 - k) * (1 - k) + 2;
+        const k = Math.min(1, h.st / h.dodgeTime);
+        const v = (h.dodgeTime > DODGE_TIME ? 11 : 15) * (1 - k) * (1 - k) + 2;
+        h.mvel.copyFrom(fwd(h.atkDir).scale(v * .4));
         h.pos.addInPlace(fwd(h.atkDir).scale(v * dt));
         this.debris.stir(h.pos.x, h.pos.z, 1.4, 2.5);
-        if (h.st >= DODGE_TIME) this.toIdle(h);
+        if (h.st >= h.dodgeTime) this.toIdle(h);
         return;
       }
       case 'hit': if (h.st > .32) this.toIdle(h); return;
@@ -374,14 +389,24 @@ export class ArenaWorld {
     if (i.secondary) {
       if (w.secondary === 'spin' && h.energy > 10) { h.state = 'spin'; h.st = 0; h.atk = w.spin!; h.atkT = 0; h.atkHits.clear(); h.label = 'Whirlwind'; h.anim.play(w.spin!.clip, { loop: true, speed: w.spin!.speed * this.mods.atkSpeed, fade: .1 }); if (h.trail) h.trail.active = true; return; }
       if (w.secondary === 'guard') { h.state = 'guard'; h.st = 0; h.label = 'Guarding'; h.anim.play(this.ms(h).guard, { loop: true, fade: .08 }); return; }
+      if (w.secondary === 'kick' && w.kick) { this.startAttack(h, w.kick, aimYaw); return; }
       if (w.secondary === 'aim') { h.state = 'aim'; h.st = 0; h.label = 'Aiming'; h.anim.play(this.ms(h).guard, { loop: true, fade: .08 }); return; }
     }
-    if (moving) {
-      h.pos.addInPlace(mv.scale(speed * dt));
-      h.yaw = turnTo(h.yaw, Math.atan2(mv.x, mv.z), dt * 14);
-      if (h.state !== 'move') { h.state = 'move'; h.st = 0; h.label = 'Running'; }
-      h.anim.play(this.ms(h).run, { loop: true, speed: speed / this.ms(h).runPace, fade: .12 });
-      this.debris.stir(h.pos.x, h.pos.z, 1.1, 1.6, mv.x * speed * .5, mv.z * speed * .5);
+    // Weighted locomotion: velocity eases toward the stick (faster to stop than to start), the body
+    // turns at a capped rate, and the clip (walk or run) is chosen and paced from actual speed so feet don't skate.
+    // Default pace is a jog; Shift sprints.
+    const want = moving ? mv.scale(speed * (i.sprint ? 1.3 : .82)) : Vector3.Zero();
+    const rate = moving ? (Vector3.Dot(want, h.mvel) < 0 ? 18 : 9) : 14;
+    h.mvel.addInPlace(want.subtract(h.mvel).scaleInPlace(1 - Math.exp(-rate * dt)));
+    const sp = h.mvel.length();
+    h.pos.addInPlace(h.mvel.scale(dt));
+    if (sp > .35) {
+      h.yaw = turnTo(h.yaw, Math.atan2(h.mvel.x, h.mvel.z), dt * (sp > 4 ? 9 : 12));
+      const m = this.ms(h), walk = sp < 3.6;
+      if (h.state !== 'move') { h.state = 'move'; h.st = 0; }
+      h.label = walk ? 'Walking' : 'Running';
+      h.anim.play(walk ? m.walk : m.run, { loop: true, speed: Math.max(.5, walk ? sp / (m.walkPace ?? 1.9) : sp / m.runPace), fade: .22 });
+      this.debris.stir(h.pos.x, h.pos.z, 1.1, 1.6, h.mvel.x * .5, h.mvel.z * .5);
     } else if (h.state !== 'idle') this.toIdle(h);
   }
 
@@ -787,6 +812,7 @@ export class ArenaWorld {
   }
 
   private stepWaves(dt: number): void {
+    if (!this.autoWaves) return;
     const alive = this.fighters.filter(f => f.role === 'foe' && f.alive).length;
     if (alive > 0 || !this.hero.alive) return;
     this.waveTimer -= dt;
@@ -808,6 +834,7 @@ export class ArenaWorld {
 
   /** Throw six more foes at the hero right now (repeatable crowd testing). */
   spawnNow(): void {
+    if (!this.wave) this.wave = 1;
     for (const k of waveRoster(Math.max(1, this.wave), this.rnd).slice(0, 6)) { const a = this.rnd() * TAU; this.spawnFoe(k, clamp(this.hero.pos.x + Math.cos(a) * 11, -ARENA + 2, ARENA - 2), clamp(this.hero.pos.z + Math.sin(a) * 11, -ARENA + 2, ARENA - 2)); }
   }
 

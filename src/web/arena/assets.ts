@@ -1,8 +1,12 @@
 import '@babylonjs/loaders/glTF';
 import { AssetContainer, Matrix, Mesh, PBRMaterial, Quaternion, SceneLoader, TransformNode, Vector3, type AbstractMesh, type AnimationGroup, type Scene } from '@babylonjs/core';
-import { MIXAMO, Retargeter, instantiateClips, type ClipTemplate, type Grip } from './retarget';
+import { MIXAMO, UE, Retargeter, instantiateClips, type ClipTemplate, type Grip } from './retarget';
 import type { LookId } from './looks';
+import { SpringBones } from './springs';
 
+/** Cast folder: stylised low-poly people (art/tools/arena/build_arena_stylized.py). */
+const PEOPLE_DIR = 'people_flat/';
+const springsFor = (nodes: Map<string, TransformNode>) => { const s = new SpringBones(nodes, HUMAN_SCALE); return s.active ? s : undefined; };
 /** MPFB people are ~1.75 m; the arena was laid out around 2.2-unit fighters, so people are scaled to match. */
 export const HUMAN_SCALE = 1.22;
 
@@ -25,6 +29,8 @@ export interface CharacterInstance {
   gear: Map<string, AbstractMesh>;
   /** Skeleton nodes by bone name (humans only), for IK touch-ups. */
   bones?: Map<string, TransformNode>;
+  /** Coat-tail and hair secondary motion (stylised people). */
+  springs?: SpringBones;
   dispose(): void;
 }
 
@@ -85,7 +91,7 @@ export class ArenaAssets {
   async loadHumans(looks: LookId[], progress: (t: string) => void): Promise<void> {
     let n = 0;
     await Promise.all(looks.map(async l => {
-      const c = await SceneLoader.LoadAssetContainerAsync(BASE + 'people/', `${l}.glb`, this.scene);
+      const c = await SceneLoader.LoadAssetContainerAsync(BASE + PEOPLE_DIR, `${l}.glb`, this.scene);
       // Hair, brows and lashes export as BLEND; alpha-test them so they sort with the head.
       for (const m of c.materials) if (m instanceof PBRMaterial && m.transparencyMode === PBRMaterial.PBRMATERIAL_ALPHABLEND) {
         m.transparencyMode = PBRMaterial.PBRMATERIAL_ALPHATEST; m.alphaCutOff = .45; m.backFaceCulling = false;
@@ -94,7 +100,7 @@ export class ArenaAssets {
     }));
     progress('Teaching the fighters to fight');
     const src = this.character('skeleton_warrior');
-    const ref = this.person('hero');
+    const ref = this.person('ranger');
     const srcNodes = new Map(src.root.getChildTransformNodes(false).map(x => [x.name.slice(x.name.indexOf('.') + 1), x] as const));
     const rt = new Retargeter({ space: src.root, nodes: srcNodes }, { space: ref.holder, nodes: ref.nodes });
     const fallbacks = new Set(this.used ? [...this.used].map(kaykitFallback) : []);
@@ -113,6 +119,19 @@ export class ArenaAssets {
     const mrt = new Retargeter({ space: mh, nodes: mNodes }, { space: ref.holder, nodes: ref.nodes }, MIXAMO);
     for (const g of me.animationGroups) { const name = g.name.slice(3); if (!this.used || this.used.has(name)) this.clips.set(name, mrt.bake(name, g)); }
     for (const g of me.animationGroups) g.dispose(); mh.dispose(); mc.dispose();
+    }
+    // Unarmed brawling set (Motifect via the TRELLIS review rig): build_unarmed_clips.py -> unarmed_clips.glb.
+    progress('Learning to brawl');
+    let uc: AssetContainer | null = null;
+    try { uc = await SceneLoader.LoadAssetContainerAsync(BASE, 'unarmed_clips.glb', this.scene); } catch { console.warn('[arena] unarmed_clips.glb missing: unarmed moves use stand-ins'); }
+    if (uc) {
+      const ue = uc.instantiateModelsToScene(n => `ua.${n}`, false, { doNotInstantiate: true });
+      const uh = new TransformNode('ua', this.scene); for (const r of ue.rootNodes) r.parent = uh;
+      for (const g of ue.animationGroups) g.stop();
+      const uNodes = new Map(uh.getChildTransformNodes(false).map(x => [x.name.slice(3), x] as const));
+      const urt = new Retargeter({ space: uh, nodes: uNodes }, { space: ref.holder, nodes: ref.nodes }, UE);
+      for (const g of ue.animationGroups) { const name = 'unarmed/' + g.name.slice(3); if (!this.used || this.used.has(name)) this.clips.set(name, urt.bake(name, g)); }
+      for (const g of ue.animationGroups) g.dispose(); uh.dispose(); uc.dispose();
     }
     // Any mocap clip that is unavailable plays its nearest KayKit equivalent.
     if (this.used) for (const n of this.used) if (!this.clips.has(n)) { const fb = this.clips.get(kaykitFallback(n)); if (fb) this.clips.set(n, fb); }
@@ -165,7 +184,7 @@ export class ArenaAssets {
     };
     // Fingers come from the captured Mixamo grips.
     return {
-      root: p.holder, anims, meshes: p.meshes, gear: new Map(), bones: p.nodes, chest: p.nodes.get('spine_03') ?? null,
+      root: p.holder, anims, meshes: p.meshes, gear: new Map(), bones: p.nodes, springs: springsFor(p.nodes), chest: p.nodes.get('spine_03') ?? null,
       slotR: slot('hand_r', this.gripR), slotL: slot('hand_l', this.gripL),
       dispose: () => { for (const g of anims.values()) g.dispose(); p.dispose(); },
     };
