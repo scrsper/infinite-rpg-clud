@@ -46,7 +46,7 @@ Plug it in over USB or Bluetooth (Chrome and Edge present it as a standard gamep
 - **Menus:** every card choice, dialogue, Spellbook page and message works with the D-pad (or a flick of the left stick), ✕ to confirm and ○ to back out.
 - **Aiming:** attacks and spells aim at the foe you are facing or moving toward.
 - **Rumble:** on hits taken, blocks and critical hits.
-- **Checking:**  drives a virtual DualSense through every binding (19/19 pass). It hasn't been tried on a physical pad yet.
+- **Checking:** `scripts/web/arena-pad.ts` drives a virtual DualSense through every binding (19/19 pass). It hasn't been tried on a physical pad yet.
 
 ## Movement at ease
 
