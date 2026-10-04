@@ -23,7 +23,7 @@ export function createObservatoryServer(runtime = new Observatory()) {
       if (req.headers['sec-fetch-site'] === 'cross-site') return send({ error: 'Cross-site request rejected' }, 403);
       const url = new URL(req.url ?? '/', origin), path = url.pathname;
       if (req.method === 'GET' && await tooling.serve(path,res,headers)) return;
-      if (req.method === 'GET' && path === '/health') return send({ service: 'torn-veil-observatory', isolated: true, diagnosticVersion: 3, toolingVersion: 2 });
+      if (req.method === 'GET' && path === '/health') return send({ service: 'torn-veil-observatory', isolated: true, diagnosticVersion: 3, toolingVersion: 3 });
       if (req.method === 'GET' && path === '/favicon.ico') { res.writeHead(204, headers); res.end(); return; }
       if (req.method === 'GET' && (path.startsWith('/game/') || path.startsWith('/textures/'))) {
         const root = fileURLToPath(new URL('../../dist-web/', import.meta.url));

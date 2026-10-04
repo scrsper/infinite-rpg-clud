@@ -7,7 +7,12 @@ export class Tooling {
  readonly ontologyRoot=resolve(process.env.TORN_VEIL_ONTOLOGY_ROOT??'../ontology');
  private job:{id:number;action:string;state:string;exitCode:number|null;output:string}|null=null;
  constructor(private gameRoot:string){}
- async status(){const exists=async(p:string)=>{try{return(await stat(p)).isFile();}catch{return false;}};return {ontology:{ready:await exists(resolve(this.ontologyRoot,'dist/index.html')),root:this.ontologyRoot},game:{ready:await exists(resolve(this.gameRoot,'dist-web/index.html'))},arena:{ready:await exists(resolve(this.gameRoot,'dist-web/arena/people_flat/ranger.glb')),note:'Claude action Arena/Tower: browser-only presentation lab, separate from canonical simulation'},job:this.job};}
+ async assetLabStatus(){
+  // Fixed read-only loopback endpoint; Asset Lab remains owner of submissions/cancellation.
+  try{const response=await fetch('http://127.0.0.1:8192/api/state',{signal:AbortSignal.timeout(1500)});if(!response.ok)throw Error('Unavailable');const value=await response.json();if(value.app!=='Torn Veil Asset Lab')throw Error('Unexpected service');return {ready:true,url:'http://127.0.0.1:8192',backend:value.backend,activeJobs:Array.isArray(value.jobs)?value.jobs.filter((j:{state:string})=>['queued','submitting','running','cancelling'].includes(j.state)).length:0};}
+  catch{return {ready:false,url:'http://127.0.0.1:8192',backend:'unavailable',activeJobs:null};}
+ }
+ async status(){const exists=async(p:string)=>{try{return(await stat(p)).isFile();}catch{return false;}};return {assetLab:await this.assetLabStatus(),ontology:{ready:await exists(resolve(this.ontologyRoot,'dist/index.html')),root:this.ontologyRoot},game:{ready:await exists(resolve(this.gameRoot,'dist-web/index.html'))},arena:{ready:await exists(resolve(this.gameRoot,'dist-web/arena/people_flat/ranger.glb')),note:'Claude action Arena/Tower: browser-only presentation lab, separate from canonical simulation'},job:this.job};}
  run(action:string){
   if(this.job?.state==='running')throw Error('A tooling task is already running');
   const actions:Record<string,{root:string;args:string[]}>= {
