@@ -46,3 +46,8 @@ web/public/models/manifest.json
 
 # CC0 KayKit sources for the Combat Arena; re-fetch with scripts/web/arena/fetch-kaykit.mjs
 art/source/kaykit/
+
+# Mixamo motion is used under Adobe terms but not redistributed as raw files: rebuild locally with
+# art/tools/arena/build_mixamo_clips.py from your own Mixamo downloads (see docs/COMBAT_ARENA.md).
+web/public/arena/mixamo_clips.glb
+web/public/arena/mixamo_clips.json

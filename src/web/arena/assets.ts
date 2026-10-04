@@ -1,13 +1,10 @@
 import '@babylonjs/loaders/glTF';
 import { AssetContainer, Matrix, Mesh, PBRMaterial, Quaternion, SceneLoader, TransformNode, Vector3, type AbstractMesh, type AnimationGroup, type Scene } from '@babylonjs/core';
-import { Retargeter, instantiateClips, type ClipTemplate, type Grip } from './retarget';
+import { MIXAMO, Retargeter, instantiateClips, type ClipTemplate, type Grip } from './retarget';
 import type { LookId } from './looks';
 
 /** MPFB people are ~1.75 m; the arena was laid out around 2.2-unit fighters, so people are scaled to match. */
 export const HUMAN_SCALE = 1.22;
-/** Finger curl axis in the MPFB finger-bone frame (tuned by eye on pose sheets). */
-const GRIP_AXIS = new Vector3(1, 0, 0);
-const curl = (n: TransformNode | undefined, a: number) => { if (n?.rotationQuaternion) n.rotationQuaternion = n.rotationQuaternion.multiply(Quaternion.RotationAxis(GRIP_AXIS, a)); };
 
 /**
  * Combat Arena assets: CC0 KayKit characters, weapons and dungeon props (Kay Lousberg), built by
@@ -80,6 +77,11 @@ export class ArenaAssets {
   private gripR!: Grip; private gripL!: Grip;
 
   /** Load the people (art/tools/arena/build_arena_people.py) and bake every combat clip onto their skeleton. */
+  /** Clip names fighters need; null = bake and instantiate everything (measurement mode). */
+  used: Set<string> | null = null;
+  /** False when the local Mixamo clip file is absent and KayKit stand-ins are playing. */
+  mocap = true;
+
   async loadHumans(looks: LookId[], progress: (t: string) => void): Promise<void> {
     let n = 0;
     await Promise.all(looks.map(async l => {
@@ -95,10 +97,27 @@ export class ArenaAssets {
     const ref = this.person('hero');
     const srcNodes = new Map(src.root.getChildTransformNodes(false).map(x => [x.name.slice(x.name.indexOf('.') + 1), x] as const));
     const rt = new Retargeter({ space: src.root, nodes: srcNodes }, { space: ref.holder, nodes: ref.nodes });
-    for (const [name, g] of src.anims) this.clips.set(name, rt.bake(name, g));
-    this.gripR = rt.grip('wrist.r', 'handslot.r', 'hand_r', 'middle_01_r');
-    this.gripL = rt.grip('wrist.l', 'handslot.l', 'hand_l', 'middle_01_l');
-    src.dispose(); ref.dispose();
+    const fallbacks = new Set(this.used ? [...this.used].map(kaykitFallback) : []);
+    for (const [name, g] of src.anims) if (!this.used || this.used.has(name) || fallbacks.has(name)) this.clips.set(name, rt.bake(name, g));
+    src.dispose();
+    // Real motion capture: the user's Mixamo packs (art/tools/arena/build_mixamo_clips.py -> mixamo_clips.glb).
+    progress('Learning motion capture');
+    let mc: AssetContainer | null = null;
+    try { mc = await SceneLoader.LoadAssetContainerAsync(BASE, 'mixamo_clips.glb', this.scene); }
+    catch { console.warn('[arena] mixamo_clips.glb missing: using KayKit stand-in motion (see docs/COMBAT_ARENA.md)'); this.mocap = false; }
+    if (mc) {
+    const me = mc.instantiateModelsToScene(n => `mx.${n}`, false, { doNotInstantiate: true });
+    const mh = new TransformNode('mx', this.scene); for (const r of me.rootNodes) r.parent = mh;
+    for (const g of me.animationGroups) g.stop();
+    const mNodes = new Map(mh.getChildTransformNodes(false).map(x => [x.name.slice(3), x] as const));
+    const mrt = new Retargeter({ space: mh, nodes: mNodes }, { space: ref.holder, nodes: ref.nodes }, MIXAMO);
+    for (const g of me.animationGroups) { const name = g.name.slice(3); if (!this.used || this.used.has(name)) this.clips.set(name, mrt.bake(name, g)); }
+    for (const g of me.animationGroups) g.dispose(); mh.dispose(); mc.dispose();
+    }
+    // Any mocap clip that is unavailable plays its nearest KayKit equivalent.
+    if (this.used) for (const n of this.used) if (!this.clips.has(n)) { const fb = this.clips.get(kaykitFallback(n)); if (fb) this.clips.set(n, fb); }
+    this.gripR = handGrip(ref.holder, ref.nodes, 'r'); this.gripL = handGrip(ref.holder, ref.nodes, 'l');
+    ref.dispose();
   }
 
   private person(look: LookId) {
@@ -144,11 +163,7 @@ export class ArenaAssets {
       s.rotationQuaternion = g.rot.clone(); s.position.copyFrom(g.pos); s.scaling.setAll(1 / g.scale);
       return s;
     };
-    // A closed grip so hands wrap the haft instead of splaying flat.
-    for (const side of ['l', 'r']) {
-      for (const f of ['index', 'middle', 'ring', 'pinky']) for (const [j, ang] of [[1, .85], [2, 1.0], [3, .7]] as const) curl(p.nodes.get(`${f}_0${j}_${side}`), ang);
-      curl(p.nodes.get(`thumb_02_${side}`), .4); curl(p.nodes.get(`thumb_03_${side}`), .4);
-    }
+    // Fingers come from the captured Mixamo grips.
     return {
       root: p.holder, anims, meshes: p.meshes, gear: new Map(), bones: p.nodes, chest: p.nodes.get('spine_03') ?? null,
       slotR: slot('hand_r', this.gripR), slotL: slot('hand_l', this.gripL),
@@ -182,4 +197,50 @@ export class ArenaAssets {
       dispose: () => { for (const g of e.animationGroups) g.dispose(); holder.dispose(false, false); },
     };
   }
+}
+
+/**
+ * A fist grip from the hand's own geometry (Mixamo clips carry no weapon slot): the haft runs from
+ * the little-finger knuckle to the index knuckle, the blade edge follows the knuckles, and the grip
+ * sits in the palm. Returned in the hand bone's local frame.
+ */
+function handGrip(space: TransformNode, nodes: Map<string, TransformNode>, side: 'l' | 'r'): Grip {
+  space.computeWorldMatrix(true);
+  const inv = space.getWorldMatrix().clone().invert();
+  const P = (n: string) => { const x = nodes.get(n)!; x.computeWorldMatrix(true); return Vector3.TransformCoordinates(x.getAbsolutePosition(), inv); };
+  const hand = P(`hand_${side}`), mid = P(`middle_01_${side}`), idx = P(`index_01_${side}`), pky = P(`pinky_01_${side}`);
+  const y = idx.subtract(pky).normalize();
+  const k = mid.subtract(hand); const x = k.subtract(y.scale(Vector3.Dot(k, y))).normalize();
+  const z = Vector3.Cross(x, y).normalize();
+  const palm = side === 'r' ? -1 : 1;
+  const pos = hand.add(mid.subtract(hand).scale(GRIP_ALONG)).add(z.scale(GRIP_PALM * palm));
+  const m = Matrix.Identity(); Matrix.FromXYZAxesToRef(x, y, z, m);
+  const q = Quaternion.FromRotationMatrix(m);
+  const hn = nodes.get(`hand_${side}`)!;
+  const handModel = hn.getWorldMatrix().multiply(inv);
+  const hq = new Quaternion(), hs = new Vector3(); handModel.decompose(hs, hq);
+  const local = Vector3.TransformCoordinates(pos, Matrix.Invert(handModel));
+  return { rot: Quaternion.Inverse(hq).multiply(q).normalize(), pos: local, scale: hs.x };
+}
+/** Grip placement along wrist->middle knuckle, and toward the palm (model metres); tuned on pose sheets. */
+const GRIP_ALONG = .55, GRIP_PALM = .028;
+
+/** Nearest KayKit clip for a Mixamo clip name (used when mixamo_clips.glb has not been built locally). */
+export function kaykitFallback(n: string): string {
+  if (!n.includes('/')) return n;
+  const k = n.toLowerCase();
+  if (k.includes('dodge')) return k.includes('back') ? 'Dodge_Backward' : k.includes('left') ? 'Dodge_Left' : k.includes('right') ? 'Dodge_Right' : 'Dodge_Forward';
+  if (k.includes('death')) return k.includes('(2)') || k.includes('forward') ? 'Death_B' : 'Death_A';
+  if (k.includes('impact') || k.includes('react')) return k.includes('(3)') ? 'Hit_B' : 'Hit_A';
+  if (k.includes('block idle') || k.includes('overdraw') || k.includes('idle (2)')) return k.includes('overdraw') ? '2H_Ranged_Aiming' : 'Blocking';
+  if (k.includes('block')) return 'Block_Hit';
+  if (k.includes('power up') || k.includes('equip') || k.includes('casting')) return 'Taunt';
+  if (k.includes('spell')) return 'Spellcast_Shoot';
+  if (k.includes('draw arrow') || k.includes('recoil')) return '2H_Ranged_Shoot';
+  if (k.includes('kick')) return 'Unarmed_Melee_Attack_Kick';
+  if (k.includes('spin')) return '2H_Melee_Attack_Spin';
+  if (k.includes('slash') || k.includes('attack')) return k.startsWith('great') ? (k.includes('(3)') || k.endsWith('attack') ? '2H_Melee_Attack_Chop' : '2H_Melee_Attack_Slice') : (k.includes('(2)') ? '1H_Melee_Attack_Chop' : '1H_Melee_Attack_Slice_Diagonal');
+  if (k.includes('run')) return 'Running_A';
+  if (k.includes('walk')) return 'Walking_A';
+  return 'Idle_Combat';
 }

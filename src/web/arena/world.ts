@@ -2,7 +2,7 @@ import { Color3, Color4, Matrix, Mesh, MeshBuilder, Quaternion, StandardMaterial
 import type { ArenaAssets, CharacterInstance } from './assets';
 import type { LookId } from './looks';
 import { Animator } from './anim';
-import { ALLIES, FOES, WEAPONS, waveRoster, type AttackDef, type FoeDef, type FoeKind, type WeaponId } from './combat';
+import { ALLIES, DODGES, FOES, MOVESETS, WEAPONS, waveRoster, type AttackDef, type FoeDef, type FoeKind, type Moveset, type WeaponId } from './combat';
 import { Debris } from './debris';
 import { BlobShadows, Fx, SlashTrail } from './fx';
 import { mulberry } from '../render/noise';
@@ -21,6 +21,8 @@ const turnTo = (from: number, to: number, rate: number) => { const d = wrap(to -
 const fwd = (yaw: number) => new Vector3(Math.sin(yaw), 0, Math.cos(yaw));
 /** Half-size of the playable floor; the perimeter walls' inner faces sit at ARENA + 1. */
 export const ARENA = 34;
+/** Seconds a dodge lasts (clip is played to fit). */
+const DODGE_TIME = .55;
 
 export type FState = 'spawn' | 'idle' | 'move' | 'tell' | 'attack' | 'spin' | 'guard' | 'aim' | 'dodge' | 'hit' | 'down' | 'revive' | 'dead';
 export type Role = 'hero' | 'ally' | 'foe';
@@ -187,22 +189,22 @@ export class ArenaWorld {
     this.bladeBase.parent = h.inst.slotR; this.bladeTip.parent = h.inst.slotR;
     h.trail = new SlashTrail(this.scene, this.bladeBase, this.bladeTip, new Color3(1, .97, .9));
     this.setWeapon(h, this.weapon);
-    h.anim.play(WEAPONS[this.weapon].idle, { loop: true, fade: 0 });
+    h.anim.play(this.ms(h).idle, { loop: true, fade: 0 });
     return h;
   }
 
   setWeapon(h: Fighter, id: WeaponId): void {
-    this.weapon = id; const w = WEAPONS[id]; h.twoHand = id === 'greatsword';
-    this.equip(h, w.show, w.attach);
+    this.weapon = id; const w = WEAPONS[id];
+    this.equip(h, [], w.attach);
     this.bladeBase.position.set(0, w.trail * .3, 0); this.bladeTip.position.set(0, Math.max(.3, w.trail), 0);
-    if (!h.busy) { h.state = 'idle'; h.anim.play(w.idle, { loop: true }); }
+    if (!h.busy) { h.state = 'idle'; h.anim.play(this.ms(h).idle, { loop: true }); }
   }
 
   private spawnCompanions(): void {
     const b = this.makeFighter(ALLIES.barbarian.look, 'ally', ALLIES.barbarian.name, ALLIES.barbarian.hp, ALLIES.barbarian.speed);
-    this.equip(b, [], { r: ALLIES.barbarian.weapon }); b.twoHand = true; b.pos.set(-3, 0, 2);
+    this.equip(b, [], { [ALLIES.barbarian.hand]: ALLIES.barbarian.weapon }); b.pos.set(-3, 0, 2);
     const w = this.makeFighter(ALLIES.rogue.look, 'ally', ALLIES.rogue.name, ALLIES.rogue.hp, ALLIES.rogue.speed);
-    this.equip(w, [], { r: ALLIES.rogue.weapon }); w.pos.set(3, 0, 2);
+    this.equip(w, [], { [ALLIES.rogue.hand]: ALLIES.rogue.weapon }); w.pos.set(3, 0, 2);
     for (const f of [b, w]) f.anim.play(this.idleOf(f), { loop: true, fade: 0 });
   }
 
@@ -217,10 +219,10 @@ export class ArenaWorld {
     const d = FOES[k];
     const hp = Math.round(d.hp * (1 + Math.max(0, this.wave - 1) * .08));
     const f = this.makeFighter(d.looks[Math.floor(this.rnd() * d.looks.length)], 'foe', k, hp, d.speed * (.9 + this.rnd() * .2), d, k);
-    this.equip(f, [], { r: d.weapon });
+    this.equip(f, [], { [d.hand ?? 'r']: d.weapon });
     f.pos.set(x, 0, z); f.yaw = Math.atan2(this.hero.pos.x - x, this.hero.pos.z - z);
     f.state = 'spawn'; f.st = 0; f.cd = .6 + this.rnd() * 1.4; f.strafe = this.rnd() < .5 ? 1 : -1;
-    f.anim.play('Taunt', { speed: 1.3, fade: 0 });
+    f.anim.play(this.ms(f).enter, { speed: 1.6, fade: 0 });
     this.fx.dustAt(new Vector3(x, .2, z), 16); this.ev.sound('spawn', .4); this.fx.ring(new Vector3(x, 0, z), 3, .6, new Color3(.85, .9, 1));
     return f;
   }
@@ -231,10 +233,15 @@ export class ArenaWorld {
     f.inst.dispose();
   }
 
+  /** The moveset a fighter currently moves with (the hero's follows the drawn weapon). */
+  ms(f: Fighter): Moveset {
+    if (f.role === 'hero') return MOVESETS[WEAPONS[this.weapon].set];
+    if (f.role === 'ally') return MOVESETS[f.name === ALLIES.barbarian.name ? ALLIES.barbarian.set : ALLIES.rogue.set];
+    return MOVESETS[f.foe!.set];
+  }
+  private pick<T>(a: T[]): T { return a[Math.floor(this.rnd() * a.length)]; }
   private idleOf(f: Fighter): string {
-    if (f.role === 'hero') return WEAPONS[this.weapon].idle;
-    if (f.role === 'ally') return f.name === ALLIES.barbarian.name ? ALLIES.barbarian.idle : ALLIES.rogue.idle;
-    return f.anim.has('Idle_Combat') ? 'Idle_Combat' : 'Idle';
+    return this.ms(f).idle;
   }
 
   // ------------------------------------------------------------------ frame
@@ -306,20 +313,20 @@ export class ArenaWorld {
       this.endAttack(h);
       const dir = moving ? Math.atan2(mv.x, mv.z) : h.yaw;
       const rel = wrap(dir - h.yaw);
-      const clip = Math.abs(rel) < Math.PI / 4 ? 'Dodge_Forward' : Math.abs(rel) > Math.PI * .75 ? 'Dodge_Backward' : rel > 0 ? 'Dodge_Left' : 'Dodge_Right';
-      h.state = 'dodge'; h.st = 0; h.atkDir = dir; h.iframe = .34; h.energy -= 18; h.energyDelay = .6; h.label = 'Evading';
-      h.anim.play(clip, { speed: 1.1, fade: .05, restart: true });
+      const clip = Math.abs(rel) < Math.PI / 4 ? DODGES.forward : Math.abs(rel) > Math.PI * .75 ? DODGES.back : rel > 0 ? DODGES.left : DODGES.right;
+      h.state = 'dodge'; h.st = 0; h.atkDir = dir; h.iframe = .4; h.energy -= 18; h.energyDelay = .6; h.label = 'Evading';
+      h.anim.play(clip, { speed: h.anim.length(clip) * .8 / DODGE_TIME, fade: .05, restart: true });
       this.fx.dustAt(h.pos.add(new Vector3(0, .1, 0)), 8);
       return;
     }
 
     switch (h.state) {
       case 'dodge': {
-        const k = h.st / .42;
+        const k = h.st / DODGE_TIME;
         const v = 15 * (1 - k) * (1 - k) + 2;
         h.pos.addInPlace(fwd(h.atkDir).scale(v * dt));
         this.debris.stir(h.pos.x, h.pos.z, 1.4, 2.5);
-        if (h.st >= .42) this.toIdle(h);
+        if (h.st >= DODGE_TIME) this.toIdle(h);
         return;
       }
       case 'hit': if (h.st > .32) this.toIdle(h); return;
@@ -328,11 +335,11 @@ export class ArenaWorld {
         h.atkT += dt * a.speed * this.mods.atkSpeed;
         if (h.atkT < a.active[0]) h.yaw = turnTo(h.yaw, this.assist(h, aimYaw, a.range), dt * 14);
         if (a.lunge && h.atkT < a.active[1]) h.pos.addInPlace(fwd(h.yaw).scale(a.lunge / a.active[1] * dt * a.speed * (1 - h.atkT / a.active[1]) * 2));
-        if (this.weapon === 'crossbow') { if (h.atkT >= a.active[0] && !h.atkHits.size) { h.atkHits.set(this, 0); this.fireBolt(h, h.state === 'attack' && i.secondary ? 1.35 : 1); } }
+        if (this.weapon === 'bow') { if (h.atkT >= a.active[0] && !h.atkHits.size) { h.atkHits.set(this, 0); this.fireBolt(h, h.state === 'attack' && i.secondary ? 1.35 : 1); } }
         else this.swing(h, a);
         if (i.attackPressed && h.atkT > a.cancel - .35) h.queued = true;
-        if (h.atkT >= a.cancel && (h.queued || (i.attack && this.weapon !== 'crossbow')) && h.combo + 1 < w.combo.length) { this.startAttack(h, w.combo[++h.combo], aimYaw); return; }
-        if (this.weapon === 'crossbow' && h.atkT >= a.cancel && (h.queued || i.attack)) { this.startAttack(h, w.combo[0], aimYaw); return; }
+        if (h.atkT >= a.cancel && (h.queued || (i.attack && this.weapon !== 'bow')) && h.combo + 1 < w.combo.length) { this.startAttack(h, w.combo[++h.combo], aimYaw); return; }
+        if (this.weapon === 'bow' && h.atkT >= a.cancel && (h.queued || i.attack)) { this.startAttack(h, w.combo[0], aimYaw); return; }
         if (h.atkT >= (a.end ?? a.cancel)) { this.endAttack(h); h.combo = 0; this.toIdle(h); }
         return;
       }
@@ -357,7 +364,7 @@ export class ArenaWorld {
         h.yaw = turnTo(h.yaw, aimYaw, dt * 16);
         if (moving) h.pos.addInPlace(mv.scale(2.8 * dt));
         this.aimLine(h, true, i.aim);
-        if (i.attackPressed) { this.aimLine(h, false); this.startAttack(h, w.combo[0], aimYaw); h.atk = { ...w.combo[0], damage: w.combo[0].damage * 1.5 }; h.state = 'attack'; return; }
+        if (i.attackPressed) { this.aimLine(h, false); this.startAttack(h, w.aimed!, aimYaw); return; }
         if (!i.secondary) { this.aimLine(h, false); this.toIdle(h); }
         return;
       }
@@ -366,14 +373,14 @@ export class ArenaWorld {
     if (i.attackPressed || (i.attack && h.st > .05)) { h.combo = 0; this.startAttack(h, w.combo[0], aimYaw); return; }
     if (i.secondary) {
       if (w.secondary === 'spin' && h.energy > 10) { h.state = 'spin'; h.st = 0; h.atk = w.spin!; h.atkT = 0; h.atkHits.clear(); h.label = 'Whirlwind'; h.anim.play(w.spin!.clip, { loop: true, speed: w.spin!.speed * this.mods.atkSpeed, fade: .1 }); if (h.trail) h.trail.active = true; return; }
-      if (w.secondary === 'guard') { h.state = 'guard'; h.st = 0; h.label = 'Guarding'; h.anim.play('Blocking', { loop: true, fade: .08 }); return; }
-      if (w.secondary === 'aim') { h.state = 'aim'; h.st = 0; h.label = 'Aiming'; h.anim.play('2H_Ranged_Aiming', { loop: true, fade: .08 }); return; }
+      if (w.secondary === 'guard') { h.state = 'guard'; h.st = 0; h.label = 'Guarding'; h.anim.play(this.ms(h).guard, { loop: true, fade: .08 }); return; }
+      if (w.secondary === 'aim') { h.state = 'aim'; h.st = 0; h.label = 'Aiming'; h.anim.play(this.ms(h).guard, { loop: true, fade: .08 }); return; }
     }
     if (moving) {
       h.pos.addInPlace(mv.scale(speed * dt));
       h.yaw = turnTo(h.yaw, Math.atan2(mv.x, mv.z), dt * 14);
       if (h.state !== 'move') { h.state = 'move'; h.st = 0; h.label = 'Running'; }
-      h.anim.play(w.run, { loop: true, speed: speed / 6.4, fade: .12 });
+      h.anim.play(this.ms(h).run, { loop: true, speed: speed / this.ms(h).runPace, fade: .12 });
       this.debris.stir(h.pos.x, h.pos.z, 1.1, 1.6, mv.x * speed * .5, mv.z * speed * .5);
     } else if (h.state !== 'idle') this.toIdle(h);
   }
@@ -452,8 +459,8 @@ export class ArenaWorld {
     if (shieldUp && !heavy) {
       this.fx.sparksAt(chest.add(push.scale(-.5)), 18, new Color4(.8, .9, 1, 1)); this.fx.flash(chest.add(push.scale(-.5)), 1, new Color3(.7, .85, 1));
       t.vel.addInPlace(push.scale(knock * .35));
-      if (t.role !== 'hero' || t.state !== 'guard') { t.state = 'hit'; t.st = 0; t.label = 'Blocking'; t.anim.play('Block_Hit', { speed: 1.6, fade: .05, restart: true }); }
-      else t.anim.play('Block_Hit', { speed: 1.8, fade: .04, restart: true });
+      if (t.role !== 'hero' || t.state !== 'guard') { t.state = 'hit'; t.st = 0; t.label = 'Blocking'; t.anim.play(this.ms(t).block, { speed: 1.6, fade: .05, restart: true }); }
+      else t.anim.play(this.ms(t).block, { speed: 1.8, fade: .04, restart: true });
       this.ev.damage(chest, 0, 'block'); this.ev.sound('block');
       if (src?.role === 'hero') { this.hitstop = Math.max(this.hitstop, .05); this.fx.shake = Math.max(this.fx.shake, .12); }
       return false;
@@ -483,7 +490,7 @@ export class ArenaWorld {
     if (stagger && t.state !== 'spin') {
       this.endAttack(t); t.aimLine && this.aimLine(t, false);
       t.state = 'hit'; t.st = 0; t.label = 'Hit';
-      t.anim.play(this.rnd() < .5 ? 'Hit_A' : 'Hit_B', { speed: 1.5, fade: .04, restart: true });
+      t.anim.play(this.pick(this.ms(t).hit), { speed: 1.4, fade: .04, restart: true });
       if (t.role === 'foe') t.cd = Math.max(t.cd, .6 + this.rnd() * .6);
     }
     return true;
@@ -491,13 +498,13 @@ export class ArenaWorld {
 
   private kill(t: Fighter, push: Vector3, knock: number, violent: boolean): void {
     this.endAttack(t); this.aimLine(t, false);
-    if (t.role === 'ally') { t.state = 'down'; t.st = 0; t.hp = 0; t.label = 'Down'; t.reviveT = 0; t.anim.play('Death_B', { speed: 1.2, fade: .06 }); return; }
-    if (t.role === 'hero') { t.alive = false; t.state = 'dead'; t.hp = 0; t.label = 'Dead'; t.anim.play('Death_A', { fade: .05 }); this.ev.heroDown(); return; }
+    if (t.role === 'ally') { t.state = 'down'; t.st = 0; t.hp = 0; t.label = 'Down'; t.reviveT = 0; t.anim.play(this.pick(this.ms(t).death), { speed: 1.2, fade: .06 }); return; }
+    if (t.role === 'hero') { t.alive = false; t.state = 'dead'; t.hp = 0; t.label = 'Dead'; t.anim.play(this.pick(this.ms(t).death), { fade: .05 }); this.ev.heroDown(); return; }
     t.alive = false; t.state = 'dead'; t.hp = 0; t.label = 'Dead'; this.kills++;
     this.ev.kill(t);
     this.gainXp(t.foe!.xp);
     // Violent kills throw the body; the rest fall where they stand. Bodies stay a while, then sink away.
-    t.anim.play(this.rnd() < .5 ? 'Death_A' : 'Death_B', { speed: 1.25, fade: .05 });
+    t.anim.play(this.pick(this.ms(t).death), { speed: 1.25, fade: .05 });
     t.vel.addInPlace(push.scale(violent ? knock * 1.5 + 6 : knock * .6));
     if (violent) { t.vy = 5 + this.rnd() * 3; this.fx.dustAt(t.pos.add(new Vector3(0, .3, 0)), 8); }
   }
@@ -686,7 +693,7 @@ export class ArenaWorld {
       f.yaw = turnTo(f.yaw, dist < 7 ? toT : Math.atan2(mx, mz), dt * 8);
       f.state = 'move'; f.label = 'Moving';
       const fast = sp > 3.5;
-      f.anim.play(fast ? 'Running_A' : 'Walking_A', { loop: true, speed: fast ? sp / 6 : Math.max(.6, sp / 2.2), fade: .15 });
+      const m = this.ms(f); f.anim.play(fast ? m.run : m.walk, { loop: true, speed: fast ? sp / m.runPace : Math.max(.6, sp / 1.6), fade: .15 });
       this.debris.stir(f.pos.x, f.pos.z, .9, 1);
     } else if (f.state !== 'idle') this.toIdle(f);
     else f.yaw = turnTo(f.yaw, toT, dt * 6);
@@ -725,7 +732,7 @@ export class ArenaWorld {
         f.pos.x += dx / dist * sp * dt; f.pos.z += dz / dist * sp * dt;
         f.yaw = turnTo(f.yaw, face ?? Math.atan2(dx, dz), dt * 9);
         f.state = 'move'; f.label = 'Moving';
-        f.anim.play(run ? 'Running_A' : 'Walking_A', { loop: true, speed: run ? sp / 6.2 : 1, fade: .15 });
+        const m = this.ms(f); f.anim.play(run ? m.run : m.walk, { loop: true, speed: run ? sp / m.runPace : 1.3, fade: .15 });
         this.debris.stir(f.pos.x, f.pos.z, 1, 1.2);
         return;
       }

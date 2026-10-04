@@ -12,22 +12,46 @@ import { Animation, AnimationGroup, Matrix, Quaternion, Vector3, type TransformN
  */
 type Rig = { space: TransformNode; nodes: Map<string, TransformNode> };
 
-// [source bone, target bone, source child (direction), target child (direction)]
-const MAP: [string, string, string | null, string | null][] = [
-  ['hips', 'pelvis', 'spine', 'spine_01'],
-  ['spine', 'spine_01', 'chest', 'spine_03'],
-  ['chest', 'spine_03', 'head', 'neck_01'],
-  ['head', 'head', null, null],
-  ['upperarm.l', 'upperarm_l', 'lowerarm.l', 'lowerarm_l'], ['lowerarm.l', 'lowerarm_l', 'wrist.l', 'hand_l'], ['wrist.l', 'hand_l', 'hand.l', 'middle_01_l'],
-  ['upperarm.r', 'upperarm_r', 'lowerarm.r', 'lowerarm_r'], ['lowerarm.r', 'lowerarm_r', 'wrist.r', 'hand_r'], ['wrist.r', 'hand_r', 'hand.r', 'middle_01_r'],
-  ['upperleg.l', 'thigh_l', 'lowerleg.l', 'calf_l'], ['lowerleg.l', 'calf_l', 'foot.l', 'foot_l'], ['foot.l', 'foot_l', 'toes.l', 'ball_l'],
-  ['upperleg.r', 'thigh_r', 'lowerleg.r', 'calf_r'], ['lowerleg.r', 'calf_r', 'foot.r', 'foot_r'], ['foot.r', 'foot_r', 'toes.r', 'ball_r'],
-];
-const BLEND: [string, string, string][] = [['spine_02', 'spine_01', 'spine_03'], ['neck_01', 'spine_03', 'head']];
-const FOLLOW: [string, string][] = [['clavicle_l', 'spine_03'], ['clavicle_r', 'spine_03']];
-export const KEYED = [...MAP.map(m => m[1]), ...BLEND.map(b => b[0]), ...FOLLOW.map(f => f[0])];
+type Pair = [string, string, string | null, string | null];
+/** How one source rig maps onto the UE-named target: [source bone, target bone, source child, target child] (children give rest directions). */
+export interface RigMap { map: Pair[]; blend: [string, string, string][]; follow: [string, string][]; hips: string; handR: string; handL: string }
 
-export interface ClipTemplate { name: string; frames: number; tracks: { bone: string; anim: Animation }[] }
+export const KAYKIT: RigMap = {
+  hips: 'hips', handR: 'wrist.r', handL: 'wrist.l',
+  map: [
+    ['hips', 'pelvis', 'spine', 'spine_01'], ['spine', 'spine_01', 'chest', 'spine_03'], ['chest', 'spine_03', 'head', 'neck_01'], ['head', 'head', null, null],
+    ['upperarm.l', 'upperarm_l', 'lowerarm.l', 'lowerarm_l'], ['lowerarm.l', 'lowerarm_l', 'wrist.l', 'hand_l'], ['wrist.l', 'hand_l', 'hand.l', 'middle_01_l'],
+    ['upperarm.r', 'upperarm_r', 'lowerarm.r', 'lowerarm_r'], ['lowerarm.r', 'lowerarm_r', 'wrist.r', 'hand_r'], ['wrist.r', 'hand_r', 'hand.r', 'middle_01_r'],
+    ['upperleg.l', 'thigh_l', 'lowerleg.l', 'calf_l'], ['lowerleg.l', 'calf_l', 'foot.l', 'foot_l'], ['foot.l', 'foot_l', 'toes.l', 'ball_l'],
+    ['upperleg.r', 'thigh_r', 'lowerleg.r', 'calf_r'], ['lowerleg.r', 'calf_r', 'foot.r', 'foot_r'], ['foot.r', 'foot_r', 'toes.r', 'ball_r'],
+  ],
+  blend: [['spine_02', 'spine_01', 'spine_03'], ['neck_01', 'spine_03', 'head']],
+  follow: [['clavicle_l', 'spine_03'], ['clavicle_r', 'spine_03']],
+};
+
+/** Mixamo (mixamorig:*) including all finger joints, so captured grips transfer. */
+export const MIXAMO: RigMap = (() => {
+  const m = (n: string) => `mixamorig:${n}`;
+  const map: Pair[] = [
+    [m('Hips'), 'pelvis', m('Spine'), 'spine_01'], [m('Spine'), 'spine_01', m('Spine1'), 'spine_02'], [m('Spine1'), 'spine_02', m('Spine2'), 'spine_03'],
+    [m('Spine2'), 'spine_03', m('Neck'), 'neck_01'], [m('Neck'), 'neck_01', m('Head'), 'head'], [m('Head'), 'head', null, null],
+  ];
+  for (const [S, s] of [['Left', 'l'], ['Right', 'r']] as const) {
+    map.push([m(S + 'Shoulder'), `clavicle_${s}`, m(S + 'Arm'), `upperarm_${s}`], [m(S + 'Arm'), `upperarm_${s}`, m(S + 'ForeArm'), `lowerarm_${s}`],
+      [m(S + 'ForeArm'), `lowerarm_${s}`, m(S + 'Hand'), `hand_${s}`], [m(S + 'Hand'), `hand_${s}`, m(S + 'HandMiddle1'), `middle_01_${s}`],
+      [m(S + 'UpLeg'), `thigh_${s}`, m(S + 'Leg'), `calf_${s}`], [m(S + 'Leg'), `calf_${s}`, m(S + 'Foot'), `foot_${s}`],
+      [m(S + 'Foot'), `foot_${s}`, m(S + 'ToeBase'), `ball_${s}`], [m(S + 'ToeBase'), `ball_${s}`, null, null]);
+    for (const [F, f] of [['Index', 'index'], ['Middle', 'middle'], ['Ring', 'ring'], ['Pinky', 'pinky'], ['Thumb', 'thumb']] as const)
+      for (let j = 1; j <= 3; j++) map.push([m(`${S}Hand${F}${j}`), `${f}_0${j}_${s}`, j < 3 ? m(`${S}Hand${F}${j + 1}`) : null, j < 3 ? `${f}_0${j + 1}_${s}` : null]);
+  }
+  return { map, blend: [], follow: [], hips: m('Hips'), handR: m('RightHand'), handL: m('LeftHand') };
+})();
+
+export interface ClipTemplate {
+  name: string; frames: number; fps: number; tracks: { bone: string; anim: Animation }[];
+  /** Fastest-hand speed per frame (model units/s): attack windows are measured from it. */
+  swing: number[];
+}
 export interface Grip { rot: Quaternion; pos: Vector3; scale: number }
 
 const conj = (q: Quaternion) => Quaternion.Inverse(q);
@@ -60,7 +84,9 @@ export class Retargeter {
   private tParentOfPelvis: TransformNode | null;
   private tParent = new Map<string, string | undefined>();
 
-  constructor(private readonly src: Rig, private readonly tgt: Rig) {
+  private readonly keyed: string[];
+  constructor(private readonly src: Rig, private readonly tgt: Rig, private readonly rm: RigMap = KAYKIT) {
+    this.keyed = [...rm.map.map(m => m[1]), ...rm.blend.map(b => b[0]), ...rm.follow.map(f => f[0])].filter(b => tgt.nodes.has(b));
     refresh(src); refresh(tgt);
     for (const [n, node] of src.nodes) {
       node.rotationQuaternion ??= Quaternion.FromEulerVector(node.rotation);
@@ -70,14 +96,14 @@ export class Retargeter {
       node.rotationQuaternion ??= Quaternion.FromEulerVector(node.rotation);
       this.tRest.set(n, { q: modelRot(tgt, node), p: modelPos(tgt, node), localQ: node.rotationQuaternion.clone() });
     }
-    for (const [s, t, sc, tc] of MAP) {
+    for (const [s, t, sc, tc] of rm.map) {
       if (!sc || !tc || !src.nodes.has(sc) || !tgt.nodes.has(tc)) { this.corr.set(t, Quaternion.Identity()); continue; }
       const ds = this.sRest.get(sc)!.p.subtract(this.sRest.get(s)!.p), dt = this.tRest.get(tc)!.p.subtract(this.tRest.get(t)!.p);
       this.corr.set(t, rotFromTo(dt, ds));
     }
     const byNode = new Map([...tgt.nodes].map(([k, v]) => [v, k] as const));
     for (const [n, node] of tgt.nodes) this.tParent.set(n, node.parent ? byNode.get(node.parent as TransformNode) : undefined);
-    this.hipScale = this.tRest.get('pelvis')!.p.y / Math.max(1e-3, this.sRest.get('hips')!.p.y);
+    this.hipScale = this.tRest.get('pelvis')!.p.y / Math.max(1e-3, this.sRest.get(rm.hips)!.p.y);
     this.tParentOfPelvis = (tgt.nodes.get('pelvis')!.parent as TransformNode) ?? null;
   }
 
@@ -86,10 +112,12 @@ export class Retargeter {
   }
 
   /** Bake one source clip into target-bone tracks at the source frame rate. */
-  bake(name: string, g: AnimationGroup): ClipTemplate {
+  /** Bake one source clip. `inPlace` removes the hips' net horizontal travel (linear drift), so loops and strafes stay put. */
+  bake(name: string, g: AnimationGroup, inPlace = true): ClipTemplate {
+    const rm = this.rm; const swing: number[] = []; let prevR: Vector3 | null = null, prevL: Vector3 | null = null;
     const fps = g.targetedAnimations[0]?.animation.framePerSecond ?? 30;
     const frames = Math.max(1, Math.round(g.to - g.from) + 1);
-    const keys = new Map<string, { frame: number; value: Quaternion }[]>(KEYED.map(k => [k, []]));
+    const keys = new Map<string, { frame: number; value: Quaternion }[]>(this.keyed.map(k => [k, []]));
     const pelvisKeys: { frame: number; value: Vector3 }[] = [];
     const parentInv = this.tParentOfPelvis ? this.tParentOfPelvis.computeWorldMatrix(true).clone().multiply(this.tgt.space.getWorldMatrix().clone().invert()).invert() : Matrix.Identity();
     for (let i = 0; i < frames; i++) {
@@ -98,12 +126,12 @@ export class Retargeter {
       for (const ta of g.targetedAnimations) { const t = ta.target as Record<string, unknown>; t[ta.animation.targetProperty] = ta.animation.evaluate(f); }
       refresh(this.src);
       const delta = new Map<string, Quaternion>();
-      for (const [s, t] of MAP) {
+      for (const [s, t] of rm.map) {
         const sn = this.src.nodes.get(s); if (!sn || !this.tgt.nodes.has(t)) continue;
         delta.set(t, modelRot(this.src, sn).multiply(conj(this.sRest.get(s)!.q)));
       }
-      for (const [b, a, c] of BLEND) if (delta.has(a) && delta.has(c)) delta.set(b, Quaternion.Slerp(delta.get(a)!, delta.get(c)!, .5));
-      for (const [b, p] of FOLLOW) if (delta.has(p)) delta.set(b, delta.get(p)!.clone());
+      for (const [b, a, c] of rm.blend) if (delta.has(a) && delta.has(c)) delta.set(b, Quaternion.Slerp(delta.get(a)!, delta.get(c)!, .5));
+      for (const [b, p] of rm.follow) if (delta.has(p)) delta.set(b, delta.get(p)!.clone());
       // Desired model-space rotations, then locals in hierarchy order.
       const world = new Map<string, Quaternion>();
       const want = (bone: string): Quaternion => {
@@ -115,13 +143,15 @@ export class Retargeter {
         else { const pn = this.tParent.get(bone); w = (pn ? want(pn) : this.parentRest(bone)).multiply(rest.localQ); }
         world.set(bone, w); return w;
       };
-      for (const bone of KEYED) {
+      for (const bone of this.keyed) {
         if (!this.tgt.nodes.has(bone) || !delta.has(bone)) continue;
         const pn = this.tParent.get(bone);
         const pw = pn ? want(pn) : this.parentRest(bone);
         keys.get(bone)!.push({ frame: i, value: conj(pw).multiply(want(bone)).normalize() });
       }
-      const hs = modelPos(this.src, this.src.nodes.get('hips')!).subtract(this.sRest.get('hips')!.p).scale(this.hipScale);
+      const hr = this.src.nodes.get(rm.handR), hl = this.src.nodes.get(rm.handL);
+      if (hr && hl) { const pr = modelPos(this.src, hr), pl = modelPos(this.src, hl); swing.push(prevR ? Math.max(Vector3.Distance(pr, prevR), Vector3.Distance(pl, prevL!)) * fps * this.hipScale : 0); prevR = pr; prevL = pl; }
+      const hs = modelPos(this.src, this.src.nodes.get(rm.hips)!).subtract(this.sRest.get(rm.hips)!.p).scale(this.hipScale);
       const tp = this.tRest.get('pelvis')!.p.add(hs);
       pelvisKeys.push({ frame: i, value: Vector3.TransformCoordinates(tp, parentInv) });
     }
@@ -134,7 +164,14 @@ export class Retargeter {
     }
     const p = new Animation(`${name}.pelvis.pos`, 'position', fps, Animation.ANIMATIONTYPE_VECTOR3, Animation.ANIMATIONLOOPMODE_CYCLE);
     p.setKeys(pelvisKeys); tracks.push({ bone: 'pelvis', anim: p });
-    return { name, frames, tracks };
+    if (inPlace && pelvisKeys.length > 1) {
+      // Remove net horizontal travel in model space, then convert back to the pelvis parent frame.
+      const toModel = Matrix.Invert(parentInv);
+      const m = pelvisKeys.map(k => Vector3.TransformCoordinates(k.value, toModel));
+      const d = m[m.length - 1].subtract(m[0]);
+      m.forEach((p, i) => { const t = i / (m.length - 1); p.x -= d.x * t; p.z -= d.z * t; pelvisKeys[i].value = Vector3.TransformCoordinates(p, parentInv); });
+    }
+    return { name, frames, fps, tracks, swing };
   }
 
   /** Model-space rest rotation of a target bone's parent (for bones whose parent is outside the map). */
@@ -172,4 +209,13 @@ export function instantiateClips(tag: string, clips: Map<string, ClipTemplate>, 
     out.set(name, g);
   }
   return out;
+}
+
+/** Seconds into a clip where the strike is live: the contiguous run around peak hand speed above `k` of peak. */
+export function strikeWindow(c: ClipTemplate, k = .5, from = 0, to = 1): [number, number] {
+  const sw = c.swing, n = sw.length; if (n < 3) return [0, c.frames / c.fps];
+  const a = Math.floor(n * from), b = Math.max(a + 1, Math.floor(n * to));
+  let pk = a; for (let i = a; i < b; i++) if (sw[i] > sw[pk]) pk = i;
+  let i0 = pk, i1 = pk; while (i0 > a && sw[i0 - 1] > sw[pk] * k) i0--; while (i1 < b - 1 && sw[i1 + 1] > sw[pk] * k) i1++;
+  return [i0 / c.fps, (i1 + 1) / c.fps];
 }

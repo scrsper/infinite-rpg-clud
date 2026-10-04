@@ -6,6 +6,8 @@ import { ArenaAssets } from './assets';
 import { ArenaHud } from './hud';
 import { BlobShadows } from './fx';
 import { LOOK_IDS } from './looks';
+import { strikeWindow } from './retarget';
+import { usedClips } from './combat';
 import { ArenaAudio } from './sfx';
 import { ARENA, ArenaWorld, type HeroInput } from './world';
 import type { WeaponId } from './combat';
@@ -37,6 +39,7 @@ export async function startArena(): Promise<void> {
   // The KayKit rig is only the animation source; every fighter is a Torn Veil human.
   const progress = (t: string) => { boot.textContent = t + '…'; };
   await assets.load(['skeleton_warrior'], progress);
+  if (!params.has('allclips')) assets.used = usedClips();
   await assets.loadHumans([...LOOK_IDS], progress);
   progress('Unpacking the arsenal');
   await assets.loadArsenal(['oathbreaker', 'widow-cleaver', 'raven-mechanism', 'serpent-tooth', 'bell-of-ruin', 'elderroot', 'execution-standard']);
@@ -70,6 +73,7 @@ export async function startArena(): Promise<void> {
       g.start(false, 1, g.from, g.to); g.setWeightForAllAnimatables(1); g.goToFrame(g.from + frac * (g.to - g.from)); g.pause(); return true;
     },
     zoom: (z: number) => { zoom = z; },
+    clipInfo: () => [...assets.clips.values()].map(c => ({ name: c.name, dur: +(c.frames / c.fps).toFixed(2), win: strikeWindow(c).map(v => +v.toFixed(2)), peak: +Math.max(...c.swing).toFixed(1) })),
     view: (pitch: number, yaw: number) => { camPitch = pitch; camYaw = yaw; },
     summary: () => ({ time: world.time, wave: world.wave, kills: world.kills, smashed: world.smashed, level: world.level, combo: world.combo.hits, hp: world.hero.hp, heroState: world.hero.state,
       foes: world.fighters.filter(f => f.role === 'foe' && f.alive).map(f => ({ x: f.pos.x, z: f.pos.z, state: f.state, kind: f.foeKind })), hero: { x: world.hero.pos.x, z: world.hero.pos.z },
@@ -103,7 +107,7 @@ export async function startArena(): Promise<void> {
     const t = ray.direction.y < -1e-3 ? -ray.origin.y / ray.direction.y : 30;
     const aim = ray.origin.add(ray.direction.scale(t));
     let attack = lmb, attackPressed = lmbPressed, secondary = rmb || keys.has('ShiftLeft'), dodge = pressed.has('Space');
-    let weapon: WeaponId | null = pressed.has('Digit1') ? 'greatsword' : pressed.has('Digit2') ? 'axe' : pressed.has('Digit3') ? 'crossbow' : null;
+    let weapon: WeaponId | null = pressed.has('Digit1') ? 'greatsword' : pressed.has('Digit2') ? 'axe' : pressed.has('Digit3') ? 'bow' : null;
     const pad = navigator.getGamepads?.().find(p => p);
     if (pad) {
       const dz = (v: number) => Math.abs(v) < .18 ? 0 : v;
@@ -113,7 +117,7 @@ export async function startArena(): Promise<void> {
       if (rx || ry) aim.copyFrom(world.hero.pos.add(fwd.scale(-ry * 6)).add(right.scale(-rx * 6)));
       else if (lx || ly) aim.copyFrom(world.hero.pos.add(new Vector3(mx, 0, mz).normalize().scale(5)));
       attack ||= b[2] || b[7]; attackPressed ||= edge(2) || edge(7); secondary ||= b[6] || b[3]; dodge ||= edge(0) || edge(1);
-      if (edge(4) || edge(5)) { padWeapon = (padWeapon + (edge(5) ? 1 : 2)) % 3; weapon = (['greatsword', 'axe', 'crossbow'] as WeaponId[])[padWeapon]; }
+      if (edge(4) || edge(5)) { padWeapon = (padWeapon + (edge(5) ? 1 : 2)) % 3; weapon = (['greatsword', 'axe', 'bow'] as WeaponId[])[padWeapon]; }
       if (edge(9)) paused = !paused;
       padPrev = b;
     }

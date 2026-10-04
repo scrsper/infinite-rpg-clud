@@ -62,7 +62,7 @@ const css = `
 `;
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', html = ''): HTMLElementTagNameMap[K] => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; return e; };
-const ICON: Record<WeaponId, string> = { greatsword: '🗡️', axe: '🪓', crossbow: '🏹' };
+const ICON: Record<WeaponId, string> = { greatsword: '🗡️', axe: '🪓', bow: '🏹' };
 
 export interface Upgrade { id: string; name: string; icon: string; text: string; apply(w: ArenaWorld): void }
 export const UPGRADES: Upgrade[] = [

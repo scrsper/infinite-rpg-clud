@@ -15,14 +15,15 @@ const out = join(process.cwd(), '.debug/arena', name); mkdirSync(out, { recursiv
 const browser = await chromium.launch({ channel: 'chrome', headless: false, args: ['--disable-renderer-backgrounding', '--disable-background-timer-throttling', '--window-size=900,900'] });
 const page = await (await browser.newContext({ viewport: { width: 760, height: 760 } })).newPage();
 await page.addInitScript(() => { (window as unknown as { __name: (f: unknown) => unknown }).__name = f => f; });
-await page.goto('http://127.0.0.1:5180/?arena=1&seed=5');
+await page.goto('http://127.0.0.1:5180/?arena=1&seed=5&allclips=1');
 await page.waitForFunction(() => !!(window as unknown as { __arena?: unknown }).__arena, null, { timeout: 120_000 });
-await page.evaluate(() => { const a = (window as any).__arena; a.hud.toggleHelp(); a.view(.22, Math.PI * .7); a.zoom(6.5); });
+const cam = [Number(arg('pitch', '.22')), Number(arg('yaw', String(Math.PI * .7))), Number(arg('zoom', '6.5'))];
+await page.evaluate(([p, y, z]) => { const a = (window as any).__arena; a.hud.toggleHelp(); a.view(p, y); a.zoom(z); }, cam);
 for (const c of clips) for (const f of fracs) {
   const ok = await page.evaluate(([c, f]) => (window as any).__arena.pose(c, f, 0), [c, f] as const);
   if (!ok) { console.log('missing', c); break; }
   await page.waitForTimeout(250);
-  await page.screenshot({ path: join(out, `${c}-${String(f).replace('.', '')}.png`) });
+  await page.screenshot({ path: join(out, `${c.replace(/[\/]/g, '_')}-${String(f).replace('.', '')}.png`) });
 }
 await browser.close();
 console.log('poses ->', out);

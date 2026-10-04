@@ -33,16 +33,30 @@ knight, archer and mystic; see `web/public/arena/people/CREDITS.md` for the CC0/
 its header installed into MPFB's user data folder. It makes skin, clothes and eyes opaque (hair, brows and lashes are
 alpha-tested at runtime) and downsizes textures to 1024. `render_people.py` renders turnarounds from the exported GLBs.
 
-The bodies have no clips of their own, so the combat moveset comes from the CC0 KayKit Skeleton Warrior rig (51 clips:
-2H/1H melee, block, dodge, hit, death, ranged, taunt). It is **retargeted at load** (`src/web/arena/retarget.ts`):
+**Motion is real motion capture**: the user's Mixamo packs (Great Sword, Sword and Shield, Pro Longbow, Locomotion,
+Female Locomotion; 161 clips). `art/tools/arena/build_mixamo_clips.py` packs the unzipped FBX folders into
+`web/public/arena/mixamo_clips.glb`:
 
-- Each frame, each mapped bone's model-space rotation change from rest is applied to the matching human bone.
-- Each target bone is first swung to the source rest direction, which handles T-pose versus A-pose rests.
-- spine_02 and the neck blend from their neighbours; the clavicles follow the chest.
-- Hip travel is scaled by hip height.
+    blender -b --python art/tools/arena/build_mixamo_clips.py -- <repo>/web/public/arena/mixamo_clips.glb "<unzipped Great Sword Pack>" "<unzipped Sword and Shield Pack>" ...
 
-Weapon grips are derived from the KayKit hand slots. After animation, two-bone arm IK (`ik.ts`) seats the off hand on
-two-handed hafts, and the fingers get a closed grip. Use `npx tsx scripts/web/arena-poses.ts` to capture close-up
+That file is **gitignored**: Mixamo animations may ship inside the game but are not redistributed as raw files in
+this public repository. Without it the arena falls back to the CC0 KayKit clips (`kaykitFallback` in assets.ts).
+At load, only the clips the game uses (`usedClips()` in combat.ts) are retargeted onto the MPFB skeleton
+(`src/web/arena/retarget.ts`, `MIXAMO` map) by these rules:
+
+- Per frame, each mapped bone's model-space rotation change from rest goes onto the matching human bone.
+- Target rests are first swung to the source rest direction.
+- Hips travel is scaled by hip height, with net horizontal drift removed so clips stay in place.
+- All finger joints are mapped, so the captured grip closes the hand.
+- KayKit is still the source for the held whirlwind loop and the revive stand-up (the `KAYKIT` map).
+
+Each weapon has a moveset of idle, walk, run, hit reactions, deaths, block and guard (`MOVESETS`). Attack windows come
+from the measured hand-speed peak of each clip (`strikeWindow`; dump all of them with
+`npx tsx scripts/web/arena-clipinfo.ts`).
+
+Weapon grips come from the hand's own geometry (`handGrip`: haft from little-finger to index knuckle, edge along the
+knuckles). The bow sits in the left hand. Two-bone arm IK (`ik.ts`) remains available but is off, since the mocap
+already has both hands on two-handed hilts. Use `npx tsx scripts/web/arena-poses.ts` to capture close-up
 pose sheets of any clip.
 
 ## Weapons and props
@@ -69,9 +83,7 @@ This is automation evidence, not a human playtest.
 
 ## Known limits
 
-- Retargeted motion comes from a stylised rig: poses read as human but are broader than mocap; real sword mocap
-  (Mixamo, downloaded by the user) would be the next quality step. Finger curl is constant, and the off-hand IK covers
-  two-handed melee only, not the crossbow. The CC0 wardrobe is small, so several roles share the viking chainmail set.
+- Grip roll and placement are tuned by eye (`GRIP_ALONG`/`GRIP_PALM`). The whirlwind loop and revive are still KayKit motion. The CC0 wardrobe is small, so several roles share the viking chainmail set.
 - People GLBs are 6-12 MB each (79 MB total) at 1024 textures.
 - Props are KayKit's stylised furniture, so they read chunkier than the realistic people.
 - Shadows are soft blob decals. Babylon directional shadow maps rendered casters, but no floor received them in this
