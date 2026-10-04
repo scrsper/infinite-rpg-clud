@@ -1,0 +1,10 @@
+# Workbench verification — 2026-10-03
+
+- Production Babylon build and TypeScript check passed with the final embedded client and canonical clock display correction.
+- Eight focused files cover 61 tests: observatory, observatory-workbench, web-structures, bridge, bridge-humanoid-presence, web-boundary, bridge-streaming and web-client-logic. The aggregate initially found one old diagnostic-version expectation; the required version-3 expectation was updated and all 21 Observatory tests passed on rerun. Final server/style routing changes were checked with the 26 Observatory/workbench tests. No full simulation suite or long-run equivalence claim.
+- Same-world tests prove World/Simulation object identity; dense projection leaves the serialized canonical digest unchanged; ordinary command receipts move the inspected body; paused commands and duplicate controllers are rejected; one hour advances the inspected/rendered clock together; reset and checkpoint restore invalidate old bindings.
+- Loopback API checks cover missing authentication, foreign origins, asset traversal and authenticated viewport access.
+- Real in-app browser on separate port 7482: rendered Babylon village and character; Resume/Pause; +1 hour; ordinary keyboard input and Escape; old viewport rejected after reset; close/reopen; drag reordering; width/collapse persistence through reload; layout reset. No console warning/error messages in the final captured log. Keyboard interaction is a smoke check, not a full combat/trade/gamepad acceptance journey.
+- `workbench.png` is the actual final embedded game and inspector layout. Both clocks show Day 100 07:20. Final test instance was restarted to a fresh paused world for delivery.
+- The user's original server on port 7480 was neither stopped nor reset. New static UI disables viewport controls when served by an older server. Launcher version matching preserves older worlds.
+- Local-only source branch: `codex/observatory-workbench`, built on cleanup commit `968897f`. Cleanup PR #57 is separate and unchanged.

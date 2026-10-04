@@ -20,7 +20,7 @@ for ($candidate = $Port; $candidate -le [Math]::Min($Port + 10, 65535); $candida
   try {
     $health = Invoke-RestMethod "$url/health" -TimeoutSec 2
     if ($health.service -ne 'torn-veil-observatory' -or -not $health.isolated) { continue }
-    if ($health.diagnosticVersion -ne 2) { Write-Host "Preserving older Observatory on port $candidate."; continue }
+    if ($health.diagnosticVersion -ne 3) { Write-Host "Preserving older Observatory on port $candidate."; continue }
     $Port = $candidate; $ready = $true; break
   } catch {
     $listener = Get-NetTCPConnection -LocalPort $candidate -State Listen -ErrorAction SilentlyContinue

@@ -12,6 +12,8 @@ Read only the section relevant to the current task.
 
 # Core simulation
 
+Same-world workbench: `src/observatory/viewport.ts` attaches the shared bridge to the existing isolated World/Simulation; `src/web/net/observatory.ts` adapts the Babylon client. Panel layout is in `src/observatory/public/workbench.*`. Workflow and bounds: `docs/OBSERVATORY_WORKBENCH.md`.
+
 Developer Observatory: `src/observatory/` hosts a loopback-only disposable world, read-only
 inspectors, stored-event causal graph, derived metrics, WorldLab checks and scenario controls.
 `Torn Veil Observatory.cmd` / `scripts/observatory/Launch.ps1` launch it without save-directory

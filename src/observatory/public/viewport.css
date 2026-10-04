@@ -1,0 +1,8 @@
+/* Embedded HUD: leave room for the inspectors and avoid overlapping the clock. */
+@media(max-width:800px){
+  .tv-hints{max-width:42%;font-size:.65rem;white-space:normal}
+  .tv-hints>div{white-space:normal;flex-wrap:wrap}
+  .tv-status{max-width:48%;right:.8rem;top:.8rem}
+  .tv-status .place{font-size:.8rem}.tv-status .time{font-size:.7rem;letter-spacing:0}
+  .tv-vitals{left:.8rem;bottom:.8rem;width:12rem;padding:.5rem .8rem;gap:.3rem}
+}

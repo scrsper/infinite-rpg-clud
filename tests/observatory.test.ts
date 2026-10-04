@@ -54,7 +54,7 @@ describe('Observatory isolated world and readers', () => {
       expect((await fetch(base + '/AGENTS.md', { headers: { 'X-Observatory-Token': token } })).status).toBe(404);
       expect((await fetch(base + '/api/validation?run=../../live', { headers: { 'X-Observatory-Token': token } })).status).toBe(400);
       expect((await fetch(base + '/api/validation-load', { method: 'POST', headers: { 'X-Observatory-Token': token, 'Content-Type': 'application/json' }, body: JSON.stringify({ run: '../../live' }) })).status).toBe(400);
-      expect((await (await fetch(base + '/health')).json()).diagnosticVersion).toBe(2);
+      expect((await (await fetch(base + '/health')).json()).diagnosticVersion).toBe(3);
     } finally { runtime.close(); await new Promise<void>(resolve => server.close(() => resolve())); }
   }, 30000);
 });

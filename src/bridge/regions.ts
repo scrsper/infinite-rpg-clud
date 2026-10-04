@@ -14,7 +14,7 @@ const STRUCTURAL = new Set<number>([B.Planks,B.DarkPlanks,B.Log,B.Log2,B.Thatch,
 export interface RegionProjectionOptions { /** Exact built structure per column as run-length runs: x, z, n, then n triples of (y, length, block). */ structures?: boolean }
 function surface(w: World, x: number, z: number) {
   x = Math.min(w.grid.W-1,x); z = Math.min(w.grid.D-1,z);
-  const c = { ...w.geography!.surface(x,z) };
+  const c = w.geography ? { ...w.geography.surface(x,z) } : { height: 0, block: B.Grass as number, water: null as number | null, forest: 0 };
   for(let y=w.grid.H-1;y>=0;y--) if(ground.has(w.grid.get(x,y,z))) { c.height=y; c.block=w.grid.get(x,y,z); break; }
   c.water=null; for(let y=c.height+1;y<w.grid.H;y++) if(w.grid.get(x,y,z)===B.Water) c.water=y;
   return c;
@@ -22,8 +22,8 @@ function surface(w: World, x: number, z: number) {
 
 const inBounds = (b: { x0: number; z0: number; x1: number; z1: number }, p: { x: number; z: number }) => p.x >= b.x0 && p.z >= b.z0 && p.x < b.x1 && p.z < b.z1;
 export function regionBounds(w: World, rx: number, rz: number) {
-  const size = w.geography!.spec.regionSize;
-  return { x0: rx * size, z0: rz * size, x1: (rx + 1) * size, z1: (rz + 1) * size };
+  const size = w.geography?.spec.regionSize ?? 256;
+  return { x0: rx * size, z0: rz * size, x1: w.geography ? (rx + 1) * size : Math.min((rx + 1) * size, w.grid.W), z1: w.geography ? (rz + 1) * size : Math.min((rz + 1) * size, w.grid.D) };
 }
 /** Geometry facts only. This is not an identity, ownership, inventory, goal or mind API. */
 export function projectRegion(w: World, rx: number, rz: number, options: RegionProjectionOptions = {}) {
@@ -33,8 +33,9 @@ export function projectRegion(w: World, rx: number, rz: number, options: RegionP
 /** Same projection, yielded by small spatial batches so interaction ticks can run between them.
  * The transport discards an unfinished projection when its canonical region revision changes. */
 export function* projectRegionSteps(w: World, rx: number, rz: number, options: RegionProjectionOptions = {}) {
-  if (!w.geography || !Number.isInteger(rx) || !Number.isInteger(rz) || rx < 0 || rz < 0 || rx * 256 >= w.grid.W || rz * 256 >= w.grid.D) throw new Error('Region outside world');
-  const bounds = regionBounds(w, rx, rz), columns: number[][] = [], stride = (w.grid as RegionalGrid).patches.some(p=>p.x<bounds.x1&&p.x+p.grid.W>bounds.x0&&p.z<bounds.z1&&p.z+p.grid.D>bounds.z0)?2:8, openings: number[][] = [], fences: number[][] = [], paths: number[][] = [], furnishings: { role: string; pos: { x: number; y: number; z: number }; yaw: number; support: number }[] = [];
+  if (!Number.isInteger(rx) || !Number.isInteger(rz) || rx < 0 || rz < 0 || rx * 256 >= w.grid.W || rz * 256 >= w.grid.D) throw new Error('Region outside world');
+  const patches = w.grid instanceof RegionalGrid ? w.grid.patches : [{ x: 0, z: 0, grid: w.grid }];
+  const bounds = regionBounds(w, rx, rz), columns: number[][] = [], stride = patches.some(p=>p.x<bounds.x1&&p.x+p.grid.W>bounds.x0&&p.z<bounds.z1&&p.z+p.grid.D>bounds.z0)?2:8, openings: number[][] = [], fences: number[][] = [], paths: number[][] = [], furnishings: { role: string; pos: { x: number; y: number; z: number }; yaw: number; support: number }[] = [];
   const furnishingRoles = new Map<number, string>([[B.Bed, 'bed'], [B.Chair, 'chair'], [B.Table, 'table'], [B.Counter, 'counter'], [B.Bench, 'bench'], [B.Anvil, 'anvil'], [B.Furnace, 'forge'], [B.Altar, 'altar'], [B.Bookshelf, 'shelf'], [B.Barrel, 'barrel'], [B.Crate, 'crate'], [B.Lantern, 'lantern'], [B.Sign, 'sign']]);
   const furnishingSeen = new Set<string>();
   const structureRuns: number[] = [], structureSeen = new Set<number>();
@@ -53,7 +54,7 @@ export function* projectRegionSteps(w: World, rx: number, rz: number, options: R
     wallHeight: Math.min(...[[p.bounds.x0,p.bounds.z0],[p.bounds.x1,p.bounds.z0],[p.bounds.x0,p.bounds.z1],[p.bounds.x1,p.bounds.z1]].map(([x,z])=> { let y=p.bounds.y0; while(y<p.bounds.y1 && w.grid.get(x,y,z)!==B.Air) y++; return Math.max(2,y-p.bounds.y0-1); })),
     family: p.type === 'house' ? 'dwelling' : p.type === 'chapel' ? 'community' : p.type === 'mill' ? 'production' : p.type === 'stall' || p.type === 'tavern' ? 'shop' : p.type === 'farm' || p.type === 'store' ? 'agricultural' : 'workshop' }));
   // Dense geometry exists only in inhabited patches. Never sweep a whole world volume.
-  for (const patch of (w.grid as import('../sim/physical/regionalGrid').RegionalGrid).patches) {
+  for (const patch of patches) {
     // A small read-only path halo lets both neighbouring terrain materials agree at the seam.
     // Doors/fences remain owned by their original region and are never duplicated.
     const x0 = Math.max(bounds.x0 - 3, patch.x), x1 = Math.min(bounds.x1 + 3, patch.x + patch.grid.W), z0 = Math.max(bounds.z0 - 3, patch.z), z1 = Math.min(bounds.z1 + 3, patch.z + patch.grid.D);
@@ -90,11 +91,12 @@ export function* projectRegionSteps(w: World, rx: number, rz: number, options: R
       if (col && col.length) structureRuns.push(x, z, col.length / 3, ...col);
       if((z-z0)%16===15)yield; }
   }
-  return { id: `${rx},${rz}`, seed: w.geography.regionSeed(rx, rz), bounds, terrain: { stride, columns }, openings, fences, paths, furnishings, places,
+  const regionSeed = w.geography?.regionSeed(rx, rz) ?? settlementSeed(w.seed, { id: 'observatory-region', x: rx, z: rz });
+  return { id: `${rx},${rz}`, seed: regionSeed, bounds, terrain: { stride, columns }, openings, fences, paths, furnishings, places,
     dressingExclusions: w.places().filter(p => p.bounds.x0 < bounds.x1 + 4 && p.bounds.x1 >= bounds.x0 - 4 && p.bounds.z0 < bounds.z1 + 4 && p.bounds.z1 >= bounds.z0 - 4).map(p => ({bounds:p.bounds})),
-    roads: w.geography.roads.filter(r => r.points.some(p => inBounds(bounds, p))).map(r => ({ id: r.id, points: r.points.filter(p => p.x >= bounds.x0 - 128 && p.x < bounds.x1 + 128 && p.z >= bounds.z0 - 128 && p.z < bounds.z1 + 128).map(p=>({...p,y:surface(w,Math.floor(p.x),Math.floor(p.z)).height+1})) })),
+    roads: (w.geography?.roads ?? []).filter(r => r.points.some(p => inBounds(bounds, p))).map(r => ({ id: r.id, points: r.points.filter(p => p.x >= bounds.x0 - 128 && p.x < bounds.x1 + 128 && p.z >= bounds.z0 - 128 && p.z < bounds.z1 + 128).map(p=>({...p,y:surface(w,Math.floor(p.x),Math.floor(p.z)).height+1})) })),
     settlements: w.settlements().filter(s => s.bounds.x0 < bounds.x1 && s.bounds.x1 >= bounds.x0 && s.bounds.z0 < bounds.z1 && s.bounds.z1 >= bounds.z0).map(s => ({ id: s.id, bounds: s.bounds })),
-    classification: 'canonical', decoration: { classification: 'decorative', seed: w.geography.regionSeed(rx, rz, 'dressing'), collision: false, gameplay: false },
+    classification: 'canonical', decoration: { classification: 'decorative', seed: w.geography?.regionSeed(rx, rz, 'dressing') ?? regionSeed, collision: false, gameplay: false },
     ...(options.structures ? { structures: { runs: structureRuns } } : {}) };
 }
 
@@ -120,9 +122,9 @@ export function projectVista(w: World, rx: number, rz: number) {
 }
 
 export function regionDynamics(w: World, ids: Set<string>, observerId: string | null = w.playerId) {
-  const geo = w.geography!, inside = (p: { x: number; z: number }) => ids.has(geo.regionId(p.x, p.z));
+  const geo = w.geography, inside = (p: { x: number; z: number }) => ids.has(geo?.regionId(p.x, p.z) ?? `${Math.floor(p.x / 256)},${Math.floor(p.z / 256)}`);
   const nodes = new Map<string, import('../sim/core/types').ResourceNode>();
-  for (const id of ids) { const [rx, rz] = id.split(',').map(Number); for (const n of geo.resources(rx, rz)) nodes.set(n.id, n); }
+  for (const id of ids) { const [rx, rz] = id.split(',').map(Number); for (const n of geo?.resources(rx, rz) ?? []) nodes.set(n.id, n); }
   for (const n of w.resourceNodes) if (inside(n.pos)) nodes.set(n.id, n);
   return { resources: [...nodes.values()].map(n => ({ id: n.id, kind: n.kind, pos: n.blocks[0] ? { x: n.blocks[0].x, y: n.blocks[0].y, z: n.blocks[0].z } : n.pos, state: n.state, remaining: n.remaining, growthStage: n.growthStage,
       ...(n.kind === 'forage' || n.kind === 'surface_water' ? { capacity: n.capacity, unit: n.kind === 'forage' ? 'kg' : 'litres', forage: n.forage, physicallyAvailable: ecologicalResourceAvailable(w, n) } : {}) })),

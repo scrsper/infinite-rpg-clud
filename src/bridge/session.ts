@@ -85,6 +85,8 @@ export class ControllerChannel {
 }
 
 export interface BridgeSessionOptions {
+  /** Attach presentation/control to an already-owned simulation; never generate a second world. */
+  state?: { world: World; sim: Simulation };
   playable?: boolean; arena?: boolean; save?: string; characterCatalogue?: CharacterCatalogue;
   /** Spawn/attach the legacy single-player Traveler on the 'local' channel (default true). */
   defaultPlayer?: boolean;
@@ -118,22 +120,24 @@ export class BridgeSession {
     this.characterCatalogue = options.characterCatalogue ?? EMPTY_CATALOGUE;
     const loaded = options.save ? deserialize(options.save) : null;
     if (options.save && !loaded) throw new Error('Cannot resume incompatible or invalid world save');
-    this.world = loaded?.world ?? new World(seed);
-    if (!loaded) {
+    if (options.state && options.save) throw new Error('Choose an existing state or a save');
+    this.world = options.state?.world ?? loaded?.world ?? new World(seed);
+    if (!loaded && !options.state) {
       if (options.arena) generateCombatArena(this.world);
       else if (options.playable) generatePlayableWorld(this.world);
       else { generateVillage(this.world); initializeWildlife(this.world); }
     }
-    this.sim = new Simulation(this.world);
+    this.sim = options.state?.sim ?? new Simulation(this.world);
+    if (this.sim.world !== this.world) throw new Error('Simulation/world mismatch');
     this.world.onEvent(e=>{if(e.type==='attack'&&e.data.combat?.actionId){this.contactTimes.set(e.data.combat.actionId,performance.now());if(this.contactTimes.size>256)this.contactTimes.delete(this.contactTimes.keys().next().value!);}});
     this.game = new GameSim(this.sim);
     if (options.defaultPlayer !== false) {
       if (!this.world.playerId) this.world.playerId = this.game.spawn(LOCAL_CHANNEL, 'Traveler', this.spawnPoint());
       this.openChannel(LOCAL_CHANNEL, this.world.playerId!);
     }
-    indexWilderness(this.world);
+    if (!options.state) indexWilderness(this.world);
     this.dialogue = new DialogueSystem(this.world, this.sim);
-    initializePractice(this);
+    if (!options.state) initializePractice(this);
   }
   /** Arrival point for a new traveler: the first settlement (stable order) or, in the authored
    * village, the legacy road site. `index` staggers simultaneous arrivals a metre apart. */

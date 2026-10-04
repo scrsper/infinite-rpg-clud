@@ -10,10 +10,12 @@ import type { Observation } from '../headless/worldlab/types';
 import type { ConversationContext } from '../language/parser';
 import { LanguageService } from '../language/service';
 import { RunDiagnostics } from './diagnostics';
+import { ObservatoryViewport } from './viewport';
 
 export const STEP = .15; // Existing headless runner quantum. UI speeds change pacing only.
 export function stepWorld(w: World, sim: Simulation, dt = STEP) { const wd = w.clock.advance(dt); w.physicalTime += dt; sim.step(dt, wd); sim.flushSpeech(); }
 export class Observatory {
+  readonly viewport = new ObservatoryViewport(this);
   state = createScenario();
   diagnostics = new RunDiagnostics(this.state.world);
   readonly language = new LanguageService();
@@ -41,16 +43,18 @@ export class Observatory {
   startLoop() {
     this.interval = setInterval(() => {
       const now = performance.now(), elapsed = Math.max(0, (now - this.wallAt) / 1000); this.wallAt = now;
+      this.viewport.expire();
       if (this.paused || this.job?.active) return;
       this.wallAccum += elapsed * this.speed;
       const end = now + 12;
-      try { while (this.wallAccum >= STEP && performance.now() < end) { this.step(); this.wallAccum -= STEP; } }
+      const quantum = this.viewport.enabled ? 1 / 60 : STEP;
+      try { while (this.wallAccum >= quantum && performance.now() < end) { this.step(quantum); this.wallAccum -= quantum; } }
       catch (e) { this.paused = true; this.job = { active: false, from: this.world.now, to: this.world.now, mode: 'Realtime stepping failed', elapsedMs: 0, error: String(e) }; }
     }, 25);
   }
-  close() { clearInterval(this.interval); this.jobCancel = true; this.askController?.abort(); this.conversationContexts.clear(); }
+  close() { clearInterval(this.interval); this.viewport.reset(); this.jobCancel = true; this.askController?.abort(); this.conversationContexts.clear(); }
   private step(dt = STEP) {
-    const t = performance.now(); stepWorld(this.world, this.sim, dt); this.stepMs = performance.now() - t;
+    const t = performance.now(); if (!this.viewport.step(dt)) stepWorld(this.world, this.sim, dt); this.stepMs = performance.now() - t;
     if (this.world.now - this.healthAt >= 3600) { this.health = this.sampleHealth(); this.healthAt = this.world.now; }
   }
   private sampleHealth() {
@@ -61,22 +65,22 @@ export class Observatory {
     return report;
   }
   snapshot() { return { ...worldOverview(this.world), scenario: this.state.scenario, initialEvents: this.state.initialEvents, paused: this.paused, speed: this.speed, debtSeconds: this.wallAccum, revision: this.revision,
-    job: this.job, health: this.health, report: this.report, language: { mode: 'deterministic' }, checkpoint: !!this.checkpoint,
-    isolation: 'Disposable in-memory development world. No live/staging/save-directory APIs.', clock: 'Fixed headless step 0.15 physical seconds at the existing 60:1 world clock. 1x/6x/60x change pacing, not the quantum.' }; }
+    job: this.job, health: this.health, report: this.report, language: { mode: 'deterministic' }, checkpoint: !!this.checkpoint, workbench: this.viewport.enabled,
+    isolation: 'Disposable in-memory development world. No live/staging/save-directory APIs.', clock: this.viewport.enabled ? 'Gameplay workbench: 60 Hz canonical interaction, shared simulation, 60:1 world clock. Separate from headless validation trajectories.' : 'Fixed headless step 0.15 physical seconds at the existing 60:1 world clock. 1x/6x/60x change pacing, not the quantum.' }; }
   reset(id: string, seed: number) {
-    this.requireIdle(); this.cancelLanguage(); this.paused = true;
+    this.requireIdle(); this.viewport.reset(); this.cancelLanguage(); this.paused = true;
     this.state = createScenario(id, seed); this.revision++; this.start = this.world.now; this.initial = worldOverview(this.world);
     this.diagnostics = new RunDiagnostics(this.world); this.stepMs = undefined;
     this.previous = undefined; this.healthAt = this.start; this.verification = []; this.healthHistory = []; this.health = this.sampleHealth(); this.report = null; this.latestLanguage = null; this.job = null; this.checkpoint = null; this.wallAccum = 0;
   }
-  control(paused: boolean, speed: number) { this.requireIdle(); if (![1, 6, 60].includes(speed) || typeof paused !== 'boolean') throw new Error('Invalid time control'); this.paused = paused; this.speed = speed; this.wallAt = performance.now(); }
-  cancel() { this.jobCancel = true; this.paused = true; this.cancelLanguage(); }
+  control(paused: boolean, speed: number) { this.requireIdle(); if (![1, 6, 60].includes(speed) || typeof paused !== 'boolean') throw new Error('Invalid time control'); this.viewport.stopInput(); this.paused = paused; this.speed = speed; this.wallAccum = 0; this.wallAt = performance.now(); }
+  cancel() { this.viewport.stopInput(); this.jobCancel = true; this.paused = true; this.cancelLanguage(); }
   private cancelLanguage() { this.askController?.abort(); this.conversationContexts.clear(); }
   requireIdle() { if (this.job?.active) throw new Error('A world run is active; cancel it first'); }
   async advance(seconds: number, noPlayer = false) {
     this.requireIdle(); if (![3600, 86400, 604800, 2592000].includes(seconds)) throw new Error('Unsupported horizon');
-    this.cancelLanguage(); this.paused = true; this.wallAccum = 0; this.jobCancel = false;
-    if (noPlayer) for (const p of this.world.persons()) setExternalControl(p, false);
+    this.viewport.stopInput(); this.cancelLanguage(); this.paused = true; this.wallAccum = 0; this.jobCancel = false;
+    if (noPlayer) { this.viewport.release(); for (const p of this.world.persons()) setExternalControl(p, false); }
     const before = worldOverview(this.world), beforeResources = resourceState(this.world), beforeMetrics = settlementMetrics(this.world).map(({ evidence, ...m }) => m);
     const relations = new Map(this.world.persons().flatMap(p => Object.entries(p.relationships).map(([id, r]) => [`${p.id}/${id}`, JSON.stringify(r)] as const)));
     const start = performance.now(), from = this.world.now, to = from + seconds;
@@ -108,7 +112,8 @@ export class Observatory {
   loadCheckpoint() {
     this.requireIdle(); if (!this.checkpoint) throw new Error('No isolated checkpoint');
     const loaded = deserialize(this.checkpoint); if (!loaded) throw new Error('Checkpoint rejected');
-    this.cancelLanguage(); this.paused = true; this.state = { ...this.state, world: loaded.world, sim: new Simulation(loaded.world) }; this.revision++;
+    this.viewport.reset(); this.cancelLanguage(); this.paused = true; this.state = { ...this.state, world: loaded.world, sim: new Simulation(loaded.world) }; this.revision++;
+    for (const p of this.world.persons()) setExternalControl(p, false);
     this.diagnostics = new RunDiagnostics(this.world); this.stepMs = undefined;
     this.previous = undefined; this.healthHistory = []; this.healthAt = this.world.now; this.health = this.sampleHealth(); this.latestLanguage = null; this.wallAccum = 0; this.report = null;
   }
@@ -116,8 +121,9 @@ export class Observatory {
     this.requireIdle();
     // The server supplies only its fixed, isolated audit archive. No client file paths.
     const loaded = deserialize(raw); if (!loaded) throw new Error('Validation save rejected');
-    this.cancelLanguage(); this.paused = true;
+    this.viewport.reset(); this.cancelLanguage(); this.paused = true;
     this.state = { ...this.state, scenario: SCENARIOS.find(s => s.id === 'ordinary')!, initialEvents: [], world: loaded.world, sim: new Simulation(loaded.world) };
+    for (const p of this.world.persons()) setExternalControl(p, false);
     this.revision++; this.start = this.world.now; this.initial = worldOverview(this.world);
     this.diagnostics = new RunDiagnostics(this.world); this.previous = undefined; this.verification = []; this.healthHistory = [];
     this.stepMs = undefined; this.healthAt = this.start; this.health = this.sampleHealth(); this.report = null; this.latestLanguage = null; this.job = null; this.checkpoint = null; this.wallAccum = 0;

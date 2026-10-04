@@ -20,7 +20,8 @@ Use `Play Torn Veil Web.cmd -CheckOnly` for a read-only preflight.
 ## Understand an NPC
 
 Double-click **Torn Veil Observatory.cmd**. This opens a **separate disposable test
-world**, not the world you are playing in Babylon. Closing its tab leaves its
+world**. Its embedded Babylon viewport can now play that same test world;
+it does not attach to the separate standalone Babylon preview or live/staging world. Closing its tab leaves its
 server running; stopping the server loses its in-memory world and in-memory checkpoints.
 
 For your first session, ignore the validation panels:
@@ -33,6 +34,10 @@ For your first session, ignore the validation panels:
 
 An amber indicator means warnings or incomplete evidence; inspect the named finding.
 A passing check is not a claim that the whole simulation is correct or fun.
+To play while inspecting, select a living person and choose **Play selected person**,
+then **Resume** at **1×**. Rearrange panels using their drag handles; widths,
+heights and collapsed state are saved locally. [Workbench guide](docs/OBSERVATORY_WORKBENCH.md)
+
 [Full Observatory guide](docs/OBSERVATORY.md)
 
 ## Current direction
@@ -40,8 +45,8 @@ A passing check is not a claim that the whole simulation is correct or fun.
 Finish a small, visually convincing Babylon experience and make its NPC behavior
 understandable. Judge it in normal gameplay against the supplied visual references.
 Do not restart the simulation or change engines to address an unmeasured problem.
-Live inspection of the same world being played is still a gap; the Observatory
-must not be described as that feature.
+The Observatory workbench supports playing and inspecting the same isolated world.
+Attaching its inspectors to an independently running gameplay service remains outside this slice.
 
 ## Development
 
