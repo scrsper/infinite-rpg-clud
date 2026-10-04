@@ -26,6 +26,13 @@ def body(gender, muscle=.5, weight=.5, height=.5, age=.5, race=(.33, .33, .33)):
 
 
 a = lambda n, ext='mhclo': f'{n}/{n}.{ext}'
+# MPFB shape targets (file stems in mpfb/data/targets) that push faces past human.
+ORC_FACE = [('head-square', 1), ('chin-prognathism-incr', .9), ('chin-width-incr', .9), ('chin-bones-incr', .8), ('forehead-nubian-incr', .7),
+            ('eyebrows-trans-down', .6), ('nose-flaring-incr', 1), ('nose-scale-horiz-incr', .8), ('nose-point-up', .6), ('nose-compression-compress', .5),
+            ('mouth-scale-horiz-incr', .7), ('head-scale-horiz-incr', .4), ('neck-scale-horiz-incr', .8), ('l-ear-shape-pointed', 1), ('r-ear-shape-pointed', 1), ('l-ear-scale-incr', .6), ('r-ear-scale-incr', .6)]
+GOBLIN_FACE = [('head-triangular', .8), ('chin-triangle', .8), ('chin-prominent-incr', .6), ('nose-scale-vert-incr', 1), ('nose-trans-forward', .9),
+               ('nose-point-down', .7), ('nose-hump-incr', .6), ('eyebrows-angle-up', .7), ('mouth-scale-horiz-incr', .5), ('mouth-angles-up', .5),
+               ('l-ear-shape-pointed', 1), ('r-ear-shape-pointed', 1), ('l-ear-wing-incr', 1), ('r-ear-wing-incr', 1)]
 # Palette hex is sRGB (as picked by eye); Blender base colours are linear.
 C = lambda h: tuple((((h >> s) & 255) / 255) ** 2.2 for s in (16, 8, 0))
 # Palette per garment slot; clothes keys match MakeHuman asset names.
@@ -54,6 +61,19 @@ PEOPLE = {
     'brann': dict(phenotype=body(1, .9, .65, .58, .55, (.05, .05, .9)), gender='male', hair='rehmanpolanski_hair_bun_brown',
                   clothes={'rehmanpolanski_viking_tunic': C(0x6a5440), 'rehmanpolanski_viking_pants': C(0x3a3228), 'rehmanpolanski_viking_boots': C(0x3a2618)},
                   skin=C(0xd9a07a), hair_color=C(0x5a3a1c), coat=C(0x4a3a22)),
+    # Monsters: MPFB bodies pushed to non-human proportions, green skins, authored ears and tusks.
+    'orc': dict(phenotype=body(1, 1, .78, .95, .5, (.4, .1, .5)), gender='male', hair=None, tusks=True, targets=ORC_FACE,
+                clothes={'rehmanpolanski_viking_pants': C(0x3a2e22), 'rehmanpolanski_viking_boots': C(0x2a1c12), 'toigo_gloves_short': C(0x4a3020)},
+                skin=C(0x6f8a45), hair_color=C(0x141410)),
+    'orc_chief': dict(phenotype=body(1, 1, .85, 1, .62, (.4, .1, .5)), gender='male', hair=None, tusks=True, targets=ORC_FACE,
+                clothes={'rehmanpolanski_viking_pants': C(0x2a2018), 'rehmanpolanski_viking_boots': C(0x1c140e), 'toigo_gloves_short': C(0x2a1a10), 'culturalibre_warrior_helmet_02': C(0x3a2a20)},
+                skin=C(0x5e7a3a), hair_color=C(0x141410), coat=C(0x5a2a18)),
+    'goblin': dict(phenotype=body(1, .3, .25, 0, .2, (.2, .4, .4)), gender='male', hair=None, ears=.15, targets=GOBLIN_FACE,
+                clothes={'toigo_harem_pants': C(0x5a4a2a), 'culturalibre_male_boots': C(0x3a2a18)},
+                skin=C(0x8fa847), hair_color=C(0x222222)),
+    'goblin_archer': dict(phenotype=body(1, .35, .25, 0, .2, (.2, .4, .4)), gender='male', hair=None, ears=.15, targets=GOBLIN_FACE,
+                clothes={'toigo_harem_pants': C(0x3a4a2a), 'culturalibre_male_boots': C(0x2a2014), 'maciekg_leather_helmet': C(0x5a3a1e)},
+                skin=C(0x7f9a3e), hair_color=C(0x222222)),
     'wren': dict(phenotype=body(0, .55, .45, .52, .4, (.1, .1, .8)), gender='female', hair='elvs_french_braid_variation',
                  clothes={'mindfront_lusekofta': C(0x2a3e5c), 'toigo_wool_pants': C(0x2c2a26), 'punkduck_medieval_boots': C(0x4a2a1a), 'toigo_gloves_short': C(0x3a2418)},
                  skin=C(0xf0c8ae), hair_color=C(0x1a120e)),
@@ -174,6 +194,56 @@ def build_coat(rig, base, H, color):
     return [torso, skirt]
 
 
+def head_frame(rig):
+    hb = rig.data.bones['head']
+    h0 = rig.matrix_world @ hb.head_local; h1 = rig.matrix_world @ hb.tail_local
+    return h0, h1
+
+
+def skinned_part(rig, name, bm, color):
+    me = bpy.data.meshes.new(name); bm.to_mesh(me); bm.free()
+    o = bpy.data.objects.new(name, me); bpy.context.collection.objects.link(o)
+    vg = o.vertex_groups.new(name='head'); vg.add(list(range(len(me.vertices))), 1.0, 'REPLACE')
+    set_material(o, flat_material(name, color, .7)); flat(o)
+    arm = o.modifiers.new('Skin', 'ARMATURE'); arm.object = rig
+    o.parent = rig; o.matrix_parent_inverse = rig.matrix_world.inverted()
+    return o
+
+
+def add_ears(rig, length, color):
+    """Pointed ears: flattened cones at the sides of the head, swept up and back."""
+    h0, h1 = head_frame(rig); hh = (h1 - h0).length
+    mid = h0 + (h1 - h0) * .42
+    for side in (1, -1):
+        bm = bmesh.new()
+        bmesh.ops.create_cone(bm, cap_ends=True, segments=6, radius1=length * .32, radius2=0, depth=length)
+        for v in bm.verts: v.co.y *= .35                         # flatten into a blade
+        # Cone points along +Z: tip out to the side, up and back (+Y is behind the figure).
+        from mathutils import Matrix as M
+        dirv = Vector((side * 1.0, .55, .7)).normalized()
+        rot = Vector((0, 0, 1)).rotation_difference(dirv).to_matrix().to_4x4()
+        base = mid + Vector((side * hh * .42, hh * .05, 0))
+        bmesh.ops.transform(bm, matrix=M.Translation(base + dirv * length * .5) @ rot, verts=bm.verts)
+        skinned_part(rig, f'ear_{"l" if side > 0 else "r"}', bm, color)
+
+
+def add_tusks(rig, H):
+    """Lower-jaw tusks, anchored to the eyes' real position (mouth sits ~9% of head height below them)."""
+    eyes = next((o for o in bpy.data.objects if o.type == 'MESH' and 'low-poly' in o.name.lower()), None)
+    if eyes is None: return
+    pts = [eyes.matrix_world @ v.co for v in eyes.data.vertices]
+    c = sum(pts, Vector()) / len(pts); front = min(p.y for p in pts)     # -Y is the face
+    S = H / 1.75
+    from mathutils import Matrix as M
+    for side in (1, -1):
+        bm = bmesh.new()
+        bmesh.ops.create_cone(bm, cap_ends=True, segments=5, radius1=.017 * S, radius2=0, depth=.075 * S)
+        rot = Vector((0, 0, 1)).rotation_difference(Vector((side * .35, -.45, 1)).normalized()).to_matrix().to_4x4()
+        base = Vector((c.x + side * .022 * S, front - .004 * S, c.z - .085 * S))
+        bmesh.ops.transform(bm, matrix=M.Translation(base + Vector((0, 0, .02 * S))) @ rot, verts=bm.verts)
+        skinned_part(rig, f'tusk_{"l" if side > 0 else "r"}', bm, C(0xece4cc))
+
+
 def hair_bones(rig, hair, head_bone='head'):
     hb = rig.data.bones[head_bone]
     top = rig.matrix_world @ hb.tail_local; neck = rig.matrix_world @ hb.head_local
@@ -201,8 +271,9 @@ for pid, spec in PEOPLE.items():
     info.update({
         'phenotype': spec['phenotype'], 'rig': 'game_engine', 'proxy': a(f"{spec['gender']}_generic", 'proxy'),
         'skin_material_type': 'NONE', 'clothes_material_type': 'GAMEENGINE',
-        'eyes': 'low-poly/low-poly.mhclo', 'hair': a(spec['hair']), 'clothes': [a(c) for c in spec['clothes']],
+        'eyes': 'low-poly/low-poly.mhclo', 'hair': a(spec['hair']) if spec.get('hair') else '', 'clothes': [a(c) for c in spec['clothes']],
         'alternative_materials': {}, 'color_adjustments': {},
+        'targets': [{'target': t, 'value': v} for t, v in spec.get('targets', [])],
     })
     settings = HumanService.get_default_deserialization_settings(); settings['subdiv_levels'] = 0
     base = HumanService.deserialize_from_dict(info, settings)
@@ -219,7 +290,7 @@ for pid, spec in PEOPLE.items():
         if o is base or o is proxy: set_material(o, skin); flat(o); continue
         if 'low-poly' in n or 'eye' in n: continue          # eyes keep their small texture
         key = next((k for k in spec['clothes'] if k.split('_')[-1] in n or k in n), None)
-        if spec['hair'].split('_')[-1] in n or 'hair' in n or n.startswith('short') or n.startswith('long') or 'braid' in n or 'bun' in n:
+        if (spec.get('hair') and spec['hair'].split('_')[-1] in n) or 'hair' in n or n.startswith('short') or n.startswith('long') or 'braid' in n or 'bun' in n:
             set_material(o, flat_material('hair', spec['hair_color'], .6)); decimate(o, .4); flat(o)
             if spec.get('hairbones'): hair_bones(rig, o)
             continue
@@ -230,6 +301,8 @@ for pid, spec in PEOPLE.items():
             col = next((c for k, c in spec['clothes'].items() if k in str(src)), (.4, .4, .4))
         set_material(o, flat_material(o.name, col)); decimate(o, .35); flat(o)
     extra = build_coat(rig, base, H, spec['coat']) if spec.get('coat') else []
+    if spec.get('ears'): add_ears(rig, spec['ears'] * H / 1.75, spec['skin'])
+    if spec.get('tusks'): add_tusks(rig, H)
     # Export: proxy body (base hidden by MPFB's mask), garments, hair, eyes, coat.
     bpy.ops.object.select_all(action='DESELECT')
     for o in bpy.data.objects:

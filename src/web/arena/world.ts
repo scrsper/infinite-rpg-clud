@@ -2,7 +2,7 @@ import { Color3, Color4, Matrix, Mesh, MeshBuilder, Quaternion, StandardMaterial
 import type { ArenaAssets, CharacterInstance } from './assets';
 import type { LookId } from './looks';
 import { Animator } from './anim';
-import { ALLIES, DODGES, FOES, MOVESETS, WEAPONS, waveRoster, type AttackDef, type FoeDef, type FoeKind, type Moveset, type WeaponId } from './combat';
+import { ALLIES, DODGES, FOES, MOVESETS, SPELLS, WEAPONS, waveRoster, type AttackDef, type FoeDef, type FoeKind, type Moveset, type WeaponId } from './combat';
 import { Debris } from './debris';
 import { BlobShadows, Fx, SlashTrail } from './fx';
 import { mulberry } from '../render/noise';
@@ -27,7 +27,7 @@ export function setArenaHalf(h: number): void { ARENA = h; }
 /** Seconds a dodge lasts (clip is played to fit). */
 const DODGE_TIME = .55, ROLL_TIME = .82;
 
-export type FState = 'spawn' | 'idle' | 'move' | 'tell' | 'attack' | 'spin' | 'guard' | 'aim' | 'dodge' | 'hit' | 'down' | 'revive' | 'dead';
+export type FState = 'spawn' | 'idle' | 'move' | 'tell' | 'attack' | 'spin' | 'guard' | 'aim' | 'dodge' | 'hit' | 'down' | 'revive' | 'dead' | 'cast';
 export type Role = 'hero' | 'ally' | 'foe';
 
 export interface HeroInput {
@@ -37,6 +37,16 @@ export interface HeroInput {
   secondary: boolean;
   /** Hold to sprint (Shift / left stick click). */
   sprint: boolean;
+  /** Heavy attack (RMB): press starts, hold charges, release unleashes. */
+  heavyPressed: boolean; heavyReleased: boolean;
+  /** Skill slot cast this frame (0-3, or -1). */
+  cast: number;
+  /** Hold to guard (F). */
+  guard: boolean;
+  /** Drink a flask (Q). */
+  flask: boolean;
+  /** Cycle to the next drawn weapon (Tab). */
+  cycle: boolean;
   dodgePressed: boolean;
   interact: boolean;
   weapon: WeaponId | null;
@@ -56,6 +66,8 @@ export class Fighter {
   mvel = new Vector3(); turnRate = 0; lean = 0; pitch = 0; dodgeTime = .55;
   /** Tower: per-fighter outgoing damage scale, boss identity, burning and chill. */
   dmgMul = 1; boss: { name: string } | null = null; burnT = 0; burnDps = 0; slowT = 0;
+  /** Heavy attacks: charging while RMB is held at the wind-up; which heavy in the chain. */
+  charging = false; charge = 0; heavyIdx = -1; healT = 0; spell = -1; spellDone = false;
   trail: SlashTrail | null = null; extra: InstancedMesh[] = [];
   label = 'Idle';
   constructor(readonly id: number, readonly role: Role, readonly name: string, readonly inst: CharacterInstance, readonly anim: Animator,
@@ -118,6 +130,11 @@ export class ArenaWorld {
   weaponMesh: Partial<Record<WeaponId, { mesh: string; hand: 'l' | 'r' }>> = {};
   weaponMul: Partial<Record<WeaponId, number>> = {};
   armor = 0;
+  /** Signs: cooldowns, unlocked slots (tower unlocks via affinities), power per slot, ward pool, sigils on the floor. */
+  spellCd = [0, 0, 0, 0]; spellUnlocked = new Set([0, 1, 2, 3]); spellPower = [1, 1, 1, 1];
+  wardHp = 0; wardT = 0; sigils: { x: number; z: number; r: number; t: number; p: number }[] = [];
+  /** Flasks (Q): charges and max; the tower refills them per floor. */
+  flasks = 3; flaskMax = 3;
   /** Foe scaling for the current floor. */
   foeHpMul = 1; foeDmgMul = 1;
   onHeroHit: ((t: Fighter, dmg: number, crit: boolean) => void) | null = null;
@@ -169,7 +186,7 @@ export class ArenaWorld {
     this.fighters.filter(f => f.role === 'ally').forEach((a, i) => { a.pos.set(spec.start.x + (i ? 2.5 : -2.5), 0, spec.start.z + 1.5); a.inst.springs?.reset(); });
     for (const e of spec.foes) this.spawnFoe(e.kind, e.x, e.z);
     if (spec.boss) {
-      const b = spec.boss, f = this.spawnFoe(b.kind, b.x, b.z);
+      const b = spec.boss, f = this.spawnFoe(b.kind, b.x, b.z, b.kind === 'orc' ? 'orc_chief' : undefined);
       f.maxHp = f.hp = Math.round(f.hp * b.hpMul); f.hpShown = f.hp; f.dmgMul *= b.dmgMul; f.boss = { name: b.name };
       f.inst.root.scaling.scaleInPlace(b.scale); f.radius *= b.scale; f.speed *= .9;
     }
@@ -281,11 +298,12 @@ export class ArenaWorld {
     this.fighters = this.fighters.filter(f => on || f.role !== 'ally');
   }
 
-  private spawnFoe(k: FoeKind, x: number, z: number): Fighter {
+  private spawnFoe(k: FoeKind, x: number, z: number, look?: LookId): Fighter {
     const d = FOES[k];
     const hp = Math.round(d.hp * (1 + Math.max(0, this.wave - 1) * .08) * this.foeHpMul);
-    const f = this.makeFighter(d.looks[Math.floor(this.rnd() * d.looks.length)], 'foe', k, hp, d.speed * (.9 + this.rnd() * .2), d, k);
+    const f = this.makeFighter(look ?? d.looks[Math.floor(this.rnd() * d.looks.length)], 'foe', k, hp, d.speed * (.9 + this.rnd() * .2), d, k);
     this.equip(f, [], { [d.hand ?? 'r']: d.weapon }); f.dmgMul = this.foeDmgMul;
+    if (d.scale) { f.inst.root.scaling.scaleInPlace(d.scale); f.radius *= d.scale; }
     f.pos.set(x, 0, z); f.yaw = Math.atan2(this.hero.pos.x - x, this.hero.pos.z - z);
     f.state = 'spawn'; f.st = 0; f.cd = .6 + this.rnd() * 1.4; f.strafe = this.rnd() < .5 ? 1 : -1;
     f.anim.play(this.ms(f).enter, { speed: 1.6, fade: 0 });
@@ -305,6 +323,14 @@ export class ArenaWorld {
     if (f.role === 'ally') return MOVESETS[f.name === ALLIES.barbarian.name ? ALLIES.barbarian.set : ALLIES.rogue.set];
     return MOVESETS[f.foe!.set];
   }
+  /** Walk/run blend paced to ground speed (stride matches travel, no hard gait switch). */
+  private locoAnim(f: Fighter, sp: number): void {
+    const m = this.ms(f), walkPace = m.walkPace ?? 1.9;
+    const blend = Math.max(0, Math.min(1, (sp - 2.4) / 2.4)), b = blend * blend * (3 - 2 * blend);
+    const lw = f.anim.length(m.walk), lr = f.anim.length(m.run);
+    const rate = (1 - b) * sp / (walkPace * lw) + b * sp / (m.runPace * lr);
+    f.anim.loco(m.walk, m.run, b, rate, .25);
+  }
   private pick<T>(a: T[]): T { return a[Math.floor(this.rnd() * a.length)]; }
   private idleOf(f: Fighter): string {
     return this.ms(f).idle;
@@ -320,6 +346,13 @@ export class ArenaWorld {
     this.stepHero(dt, input);
     for (const f of this.fighters) if (f.role !== 'hero') f.role === 'foe' ? this.stepFoe(f, dt) : this.stepAlly(f, dt);
     for (const f of this.fighters) this.integrate(f, dt);
+    for (const g of this.sigils) {
+      g.t -= dt;
+      if (Math.floor(g.t * 2) !== Math.floor((g.t + dt) * 2)) this.fx.ring(new Vector3(g.x, 0, g.z), g.r * 2, .55, new Color3(.6, .9, 1));
+      for (const f of this.fighters) if (f.role === 'foe' && f.standing && Math.hypot(f.pos.x - g.x, f.pos.z - g.z) < g.r) { f.slowT = Math.max(f.slowT, .4); f.hp -= 7 * g.p * dt; if (f.hp <= 0) this.kill(f, new Vector3(0, 0, 0), 0, false); }
+    }
+    this.sigils = this.sigils.filter(g => g.t > 0);
+    if (this.wardHp > 0 && this.rnd() < dt * 6) this.fx.sparksAt(this.hero.pos.add(new Vector3((this.rnd() - .5) * 1.4, .4 + this.rnd() * 1.6, (this.rnd() - .5) * 1.4)), 2, new Color4(.55, .8, 1, 1));
     // Statuses: burning deals damage over time; chill slows (applied in movement).
     for (const f of this.fighters) {
       if (f.slowT > 0) f.slowT -= dt;
@@ -346,7 +379,7 @@ export class ArenaWorld {
       f.turnRate += (turn - f.turnRate) * Math.min(1, dt * 10);
       const spd = f.role === 'hero' ? f.mvel.length() : 0;
       f.lean += (Math.max(-.2, Math.min(.2, -f.turnRate * spd * .012)) - f.lean) * Math.min(1, dt * 8);
-      f.inst.root.position.set(f.pos.x, f.y, f.pos.z); f.inst.root.rotation.set(0, f.yaw, f.state === 'move' ? f.lean : f.lean * .5);
+      f.inst.root.position.set(f.pos.x, f.y, f.pos.z); f.inst.root.rotation.set(0, f.yaw, f.state === 'move' ? f.lean : 0);
       if (f.flash > 0) f.flash -= dt;
       const on = f.flash > 0;
       for (const m of f.inst.meshes) { m.renderOverlay = on; if (on) { m.overlayColor = f.role === 'hero' ? new Color3(1, .2, .15) : Color3.White(); m.overlayAlpha = .65; } }
@@ -376,6 +409,11 @@ export class ArenaWorld {
     const h = this.hero, w = WEAPONS[this.weapon];
     if (!h.alive) return;
     if (i.weapon && i.weapon !== this.weapon && !h.busy) this.setWeapon(h, i.weapon);
+    if (i.cycle && !h.busy) { const order: WeaponId[] = ['fists', 'greatsword', 'axe', 'bow'].filter(x => this.unlocked.has(x as WeaponId)) as WeaponId[]; const n = order[(order.indexOf(this.weapon) + 1) % order.length]; if (n && n !== this.weapon) { this.setWeapon(h, n); this.ev.sound('whoosh', .3); } }
+    for (let k = 0; k < 4; k++) this.spellCd[k] = Math.max(0, this.spellCd[k] - dt);
+    if (this.wardT > 0 && (this.wardT -= dt) <= 0) this.wardHp = 0;
+    if (i.flask && this.flasks > 0 && h.hp < h.maxHp && h.healT <= 0) { this.flasks--; h.healT = 1.1; this.fx.ring(h.pos, 2.6, .6, new Color3(.4, 1, .55)); this.ev.sound('level', .5); }
+    if (h.healT > 0) { h.healT -= dt; h.hp = Math.min(h.maxHp, h.hp + h.maxHp * .42 / 1.1 * dt); if (this.rnd() < dt * 12) this.fx.sparksAt(h.pos.add(new Vector3(0, 1 + this.rnd(), 0)), 3, new Color4(.4, 1, .5, 1)); }
     h.st += dt; h.iframe = Math.max(0, h.iframe - dt);
     h.energyDelay -= dt;
     if (h.energyDelay <= 0) h.energy = Math.min(100, h.energy + 26 * this.mods.regen * dt);
@@ -398,7 +436,7 @@ export class ArenaWorld {
       const clip = roll ? DODGES.roll : Math.abs(rel) < Math.PI / 4 ? DODGES.forward : Math.abs(rel) > Math.PI * .75 ? DODGES.back : rel > 0 ? DODGES.left : DODGES.right;
       h.dodgeTime = roll ? ROLL_TIME : DODGE_TIME; if (roll) h.yaw = dir;
       h.state = 'dodge'; h.st = 0; h.atkDir = dir; h.iframe = .4; h.energy -= 18; h.energyDelay = .6; h.label = 'Evading';
-      h.anim.play(clip, { speed: h.anim.length(clip) * (roll ? .92 : .8) / h.dodgeTime, fade: .05, restart: true });
+      h.anim.play(clip, { speed: h.anim.length(clip) * (roll ? .92 : .8) / h.dodgeTime, fade: .1, restart: true });
       this.fx.dustAt(h.pos.add(new Vector3(0, .1, 0)), 8);
       return;
     }
@@ -416,15 +454,35 @@ export class ArenaWorld {
       case 'hit': if (h.st > .32) this.toIdle(h); return;
       case 'attack': {
         const a = h.atk!;
+        if (h.charging) {
+          // Hold at the wind-up while RMB is held (max ~1.2 s), then release with scaled power.
+          const hold = a.active[0] * .8;
+          if (h.atkT >= hold) {
+            h.atkT = hold; h.anim.setSpeed(.035); h.charge = Math.min(1, h.charge + dt / 1.2);
+            if (this.rnd() < dt * 18) this.fx.sparksAt(h.inst.slotR.getAbsolutePosition(), 3, new Color4(1, .85, .4, 1));
+            if (!i.secondary || h.charge >= 1) {
+              const c = h.charge; h.charging = false; h.anim.setSpeed(a.speed * (this.mods.atkSpeed * this.bonus.atkSpeed));
+              h.atk = { ...a, damage: a.damage * (1 + .9 * c), knock: a.knock * (1 + .6 * c), hitstop: a.hitstop + .04 * c, shake: a.shake + .2 * c, label: c > .9 ? 'Full charge' : a.label };
+              if (c > .9) this.fx.flash(h.pos.add(new Vector3(0, 1.4, 0)), 2.2, new Color3(1, .8, .4));
+            }
+            if (h.charging) { h.yaw = turnTo(h.yaw, aimYaw, dt * 6); return; }
+          }
+        }
         h.atkT += dt * a.speed * (this.mods.atkSpeed * this.bonus.atkSpeed);
         if (h.atkT < a.active[0]) h.yaw = turnTo(h.yaw, this.assist(h, aimYaw, a.range), dt * 14);
-        if (a.lunge && h.atkT < a.active[1]) h.pos.addInPlace(fwd(h.yaw).scale(a.lunge / a.active[1] * dt * a.speed * (1 - h.atkT / a.active[1]) * 2));
+        if (a.lunge && h.atkT < a.active[1]) h.pos.addInPlace(fwd(h.yaw).scale(this.lungeStep(h, a, dt * a.speed * (this.mods.atkSpeed * this.bonus.atkSpeed))));
         if (this.weapon === 'bow') { if (h.atkT >= a.active[0] && !h.atkHits.size) { h.atkHits.set(this, 0); this.fireBolt(h, h.state === 'attack' && i.secondary ? 1.35 : 1); } }
         else this.swing(h, a);
         if (i.attackPressed && h.atkT > a.cancel - .35) h.queued = true;
-        if (h.atkT >= a.cancel && (h.queued || (i.attack && this.weapon !== 'bow')) && h.combo + 1 < w.combo.length) { this.startAttack(h, w.combo[++h.combo], aimYaw); return; }
+        // Heavy: finish a light combo, or chain heavy -> heavy (Witcher strong attacks / Elden Ring R2).
+        if (i.heavyPressed && w.heavy && h.atkT > a.cancel - .3 && this.weapon !== 'bow') { const nx = h.heavyIdx >= 0 ? (h.heavyIdx + 1) % w.heavy.length : 0; this.startHeavy(h, nx, aimYaw, false); return; }
+        if (h.heavyIdx < 0 && h.atkT >= a.cancel && (h.queued || (i.attack && this.weapon !== 'bow')) && h.combo + 1 < w.combo.length) { this.startAttack(h, w.combo[++h.combo], aimYaw); return; }
         if (this.weapon === 'bow' && h.atkT >= a.cancel && (h.queued || i.attack)) { this.startAttack(h, w.combo[0], aimYaw); return; }
-        if (h.atkT >= (a.end ?? a.cancel)) { this.endAttack(h); h.combo = 0; this.toIdle(h); }
+        if (h.atkT >= (a.end ?? a.cancel)) { this.endAttack(h); h.combo = 0; h.heavyIdx = -1; this.toIdle(h); }
+        return;
+      }
+      case 'cast': {
+        this.stepCast(h, dt, i);
         return;
       }
       case 'spin': {
@@ -440,25 +498,25 @@ export class ArenaWorld {
       case 'guard': {
         h.yaw = turnTo(h.yaw, aimYaw, dt * 10);
         if (moving) h.pos.addInPlace(mv.scale(2.4 * dt));
-        if (i.attackPressed) { this.startAttack(h, w.bash!, aimYaw); return; }
-        if (!i.secondary) this.toIdle(h);
+        if (i.attackPressed) { this.startAttack(h, w.bash ?? w.kick ?? w.combo[0], aimYaw); return; }
+        if (!i.guard) this.toIdle(h);
         return;
       }
       case 'aim': {
         h.yaw = turnTo(h.yaw, aimYaw, dt * 16);
         if (moving) h.pos.addInPlace(mv.scale(2.8 * dt));
         this.aimLine(h, true, i.aim);
-        if (i.attackPressed) { this.aimLine(h, false); this.startAttack(h, w.aimed!, aimYaw); return; }
+        if (i.attackPressed || (i.heavyReleased && h.st > .35)) { this.aimLine(h, false); this.startAttack(h, w.aimed!, aimYaw); return; }
         if (!i.secondary) { this.aimLine(h, false); this.toIdle(h); }
         return;
       }
     }
     // idle / move
-    if (i.attackPressed || (i.attack && h.st > .05)) { h.combo = 0; this.startAttack(h, w.combo[0], aimYaw); return; }
-    if (i.secondary) {
-      if (w.secondary === 'spin' && h.energy > 10) { h.state = 'spin'; h.st = 0; h.atk = w.spin!; h.atkT = 0; h.atkHits.clear(); h.label = 'Whirlwind'; h.anim.play(w.spin!.clip, { loop: true, speed: w.spin!.speed * (this.mods.atkSpeed * this.bonus.atkSpeed), fade: .1 }); if (h.trail) h.trail.active = true; return; }
-      if (w.secondary === 'guard') { h.state = 'guard'; h.st = 0; h.label = 'Guarding'; h.anim.play(this.ms(h).guard, { loop: true, fade: .08 }); return; }
-      if (w.secondary === 'kick' && w.kick) { this.startAttack(h, w.kick, aimYaw); return; }
+    if (i.attackPressed || (i.attack && h.st > .05)) { h.combo = 0; h.heavyIdx = -1; this.startAttack(h, w.combo[0], aimYaw); return; }
+    if (i.cast >= 0 && this.tryCast(h, i.cast, aimYaw)) return;
+    if (i.guard && this.weapon !== 'bow') { h.state = 'guard'; h.st = 0; h.label = 'Guarding'; h.anim.play(this.ms(h).guard === this.ms(h).idle ? this.ms(h).block : this.ms(h).guard, { loop: true, fade: .12 }); return; }
+    if (i.heavyPressed && w.heavy && this.weapon !== 'bow' && h.energy >= 8) { h.combo = 0; this.startHeavy(h, 0, aimYaw, true); return; }
+    if (i.secondary && this.weapon === 'bow') {
       if (w.secondary === 'aim') { h.state = 'aim'; h.st = 0; h.label = 'Aiming'; h.anim.play(this.ms(h).guard, { loop: true, fade: .08 }); return; }
     }
     // Weighted locomotion: velocity eases toward the stick (faster to stop than to start), the body
@@ -474,9 +532,65 @@ export class ArenaWorld {
       const m = this.ms(h), walk = sp < 3.6;
       if (h.state !== 'move') { h.state = 'move'; h.st = 0; }
       h.label = walk ? 'Walking' : 'Running';
-      h.anim.play(walk ? m.walk : m.run, { loop: true, speed: Math.max(.5, walk ? sp / (m.walkPace ?? 1.9) : sp / m.runPace), fade: .22 });
+      this.locoAnim(h, sp); void walk;
       this.debris.stir(h.pos.x, h.pos.z, 1.1, 1.6, h.mvel.x * .5, h.mvel.z * .5);
     } else if (h.state !== 'idle') this.toIdle(h);
+  }
+
+  /** Start a heavy attack; `charge` = may be held to charge at the wind-up. */
+  private startHeavy(h: Fighter, idx: number, yaw: number, charge: boolean): void {
+    const w = WEAPONS[this.weapon], a = w.heavy![idx];
+    this.startAttack(h, a, yaw); h.heavyIdx = idx; h.charging = charge; h.charge = 0;
+    h.energy -= 8; h.energyDelay = .6;
+  }
+
+  private tryCast(h: Fighter, k: number, yaw: number): boolean {
+    const s = SPELLS[k];
+    if (!this.spellUnlocked.has(k) || this.spellCd[k] > 0 || h.energy < s.cost) { if (!this.spellUnlocked.has(k)) this.ev.damage(h.pos.add(new Vector3(0, 2.4, 0)), 0, 'block'); return false; }
+    h.energy -= s.cost; h.energyDelay = .8; this.spellCd[k] = s.cooldown;
+    h.state = 'cast'; h.st = 0; h.spell = k; h.spellDone = false; h.label = s.name; h.yaw = turnTo(h.yaw, yaw, Math.PI);
+    h.anim.play(k === 2 ? 'sword_and_shield/sword and shield casting (2)' : 'great_sword/spell cast', { speed: 1.7, fade: .1, restart: true });
+    return true;
+  }
+
+  private stepCast(h: Fighter, dt: number, i: HeroInput): void {
+    const k = h.spell, p = this.spellPower[k], release = k === 2 ? .12 : .2;
+    if (!h.spellDone && h.st >= release) {
+      h.spellDone = true;
+      const f = fwd(h.yaw), origin = h.pos.add(new Vector3(0, 1.2, 0));
+      const cone = (range: number, arc: number) => this.fighters.filter(t => t.team !== h.team && t.standing && Vector3.Distance(t.pos, h.pos) < range + t.radius && Math.abs(wrap(Math.atan2(t.pos.x - h.pos.x, t.pos.z - h.pos.z) - h.yaw)) < arc);
+      if (k === 0) {   // Ember: fire cone, burns
+        for (let d = 1.2; d < 7; d += 1.1) for (const sd of [-1, 0, 1]) this.fx.sparksAt(origin.add(f.scale(d)).add(new Vector3(f.z, 0, -f.x).scale(sd * d * .35)), 10, new Color4(1, .5 + this.rnd() * .3, .1, 1));
+        this.fx.flash(origin.add(f.scale(2)), 2.6, new Color3(1, .55, .2));
+        for (const t of cone(7, .62)) { this.damage(t, 22 * p, t.pos.subtract(h.pos).normalize(), 3, false, h); t.burnT = 3.5; t.burnDps = Math.max(t.burnDps, 9 * p); }
+        for (const pr of this.props) if (!pr.broken && !pr.solid && Vector3.Distance(pr.pos, h.pos) < 6 && Math.abs(wrap(Math.atan2(pr.pos.x - h.pos.x, pr.pos.z - h.pos.z) - h.yaw)) < .6) this.hitProp(pr, pr.pos.subtract(h.pos).normalize(), 3, 1, true);
+        this.ev.sound('heavy');
+      } else if (k === 1) {   // Gust: force wave, knocks back, breaks guards and furniture
+        for (let d = 1; d < 8; d += 1.6) this.fx.ring(h.pos.add(f.scale(d)), 1.8 + d * .4, .45, new Color3(.85, .93, 1));
+        this.fx.dustAt(h.pos.add(f.scale(3)), 18);
+        for (const t of cone(8, .7)) this.damage(t, 10 * p, t.pos.subtract(h.pos).normalize(), 16 * p, true, h);
+        for (const pr of this.props) if (!pr.broken && !pr.solid && Vector3.Distance(pr.pos, h.pos) < 7.5 && Math.abs(wrap(Math.atan2(pr.pos.x - h.pos.x, pr.pos.z - h.pos.z) - h.yaw)) < .7) this.hitProp(pr, pr.pos.subtract(h.pos).normalize(), 12, 3, true);
+        this.fx.shake = Math.max(this.fx.shake, .35); this.ev.sound('heavy');
+      } else if (k === 2) {   // Ward: absorbing shield
+        this.wardHp = 220 * p; this.wardT = 9; this.fx.ring(h.pos, 3.2, .7, new Color3(.5, .75, 1)); this.fx.flash(h.pos.add(new Vector3(0, 1.3, 0)), 2.6, new Color3(.55, .8, 1)); this.ev.sound('block', .6);
+      } else {   // Frost Sigil: a chilling circle at the aim point
+        const d = Math.min(9, Math.hypot(i.aim.x - h.pos.x, i.aim.z - h.pos.z));
+        const c = h.pos.add(f.scale(d)); this.sigils.push({ x: c.x, z: c.z, r: 4, t: 7, p }); this.fx.ring(c, 8, .8, new Color3(.6, .9, 1)); this.ev.sound('clay', .5);
+      }
+    }
+    if (h.st > .62) this.toIdle(h);
+  }
+
+  /** One frame of lunge: a half-sine velocity profile over the wind-up and strike, damped when a foe is already in reach. */
+  private lungeStep(f: Fighter, a: AttackDef, clipDt: number): number {
+    const k = Math.min(1, f.atkT / a.active[1]);
+    let v = a.lunge * Math.PI / 2 * Math.sin(Math.PI * k) / a.active[1];
+    for (const t of this.fighters) {
+      if (t.team === f.team || !t.standing) continue;
+      const dx = t.pos.x - f.pos.x, dz = t.pos.z - f.pos.z, d = Math.hypot(dx, dz);
+      if (d < a.range * .55 + t.radius && Math.abs(wrap(Math.atan2(dx, dz) - f.yaw)) < 1) { v *= .15; break; }
+    }
+    return v * clipDt;
   }
 
   /** Soft aim assist: nudge the swing toward the nearest foe near the cursor direction. */
@@ -495,13 +609,13 @@ export class ArenaWorld {
   private toIdle(f: Fighter): void {
     f.state = 'idle'; f.st = 0; f.label = 'Idle'; f.atk = null;
     if (f.trail) f.trail.active = false;
-    f.anim.play(this.idleOf(f), { loop: true, fade: .18 });
+    f.anim.play(this.idleOf(f), { loop: true, fade: .32 });
   }
 
   private startAttack(f: Fighter, a: AttackDef, yaw: number): void {
     f.state = 'attack'; f.st = 0; f.atk = a; f.atkT = 0; f.atkHits.clear(); f.queued = false; f.label = a.label ?? 'Attacking';
-    f.yaw = turnTo(f.yaw, f.role === 'hero' ? this.assist(f, yaw, a.range) : yaw, Math.PI * .6);
-    f.anim.play(a.clip, { speed: a.speed * (f.role === 'hero' ? (this.mods.atkSpeed * this.bonus.atkSpeed) : 1), fade: .06, restart: true });
+    f.yaw = turnTo(f.yaw, f.role === 'hero' ? this.assist(f, yaw, a.range) : yaw, Math.PI * .22);
+    f.anim.play(a.clip, { speed: a.speed * (f.role === 'hero' ? (this.mods.atkSpeed * this.bonus.atkSpeed) : 1), fade: f.state === 'attack' ? .16 : .12, restart: true });
     if (f.role !== 'foe' && a.arc > 0) this.ev.sound(a.heavy || a.damage > 40 ? 'heavy' : 'whoosh', f.role === 'hero' ? 1 : .5);
   }
 
@@ -550,6 +664,14 @@ export class ArenaWorld {
     const chest = t.pos.add(new Vector3(0, 1.3, 0));
     // Shields: the hero's guard and skeleton warriors' tower shields stop frontal blows unless heavy.
     const shieldUp = (t.state === 'guard' && facing) || (t.foe?.shield && facing && !t.busy && this.rnd() < .7);
+    if (t.role === 'hero' && t.state === 'guard' && facing && t.st < .25 && src) {
+      // Parry: a guard raised just in time staggers the attacker and refunds stamina.
+      this.endAttack(src); src.state = 'hit'; src.st = -.4; src.label = 'Parried'; src.vel.addInPlace(push.scale(-6));
+      src.anim.play(this.pick(this.ms(src).hit), { speed: 1, fade: .08, restart: true });
+      t.energy = Math.min(100, t.energy + 25); this.hitstop = .12; this.fx.shake = .3;
+      this.fx.flash(chest.add(push.scale(-.5)), 2.4, new Color3(1, .95, .7)); this.fx.ring(t.pos, 3.5, .4, new Color3(1, .95, .7));
+      this.ev.damage(chest, 0, 'block'); this.ev.sound('block'); return false;
+    }
     if (shieldUp && !heavy) {
       this.fx.sparksAt(chest.add(push.scale(-.5)), 18, new Color4(.8, .9, 1, 1)); this.fx.flash(chest.add(push.scale(-.5)), 1, new Color3(.7, .85, 1));
       t.vel.addInPlace(push.scale(knock * .35));
@@ -560,6 +682,7 @@ export class ArenaWorld {
       return false;
     }
     let dmg = amount;
+    if (t.role === 'hero' && this.wardHp > 0) { const ab = Math.min(this.wardHp, dmg); this.wardHp -= ab; dmg -= ab; this.fx.sparksAt(chest, 12, new Color4(.5, .75, 1, 1)); if (dmg <= 0) { this.ev.damage(chest, 0, 'block'); this.ev.sound('block', .6); return false; } }
     let crit = false;
     if (src?.role === 'hero' || src?.role === 'ally') {
       dmg *= (src.role === 'hero' ? (this.mods.damage * this.bonus.damage) * this.comboMul : 1);
@@ -588,7 +711,7 @@ export class ArenaWorld {
     if (stagger && t.state !== 'spin') {
       this.endAttack(t); t.aimLine && this.aimLine(t, false);
       t.state = 'hit'; t.st = 0; t.label = 'Hit';
-      t.anim.play(this.pick(this.ms(t).hit), { speed: 1.4, fade: .04, restart: true });
+      t.anim.play(this.pick(this.ms(t).hit), { speed: 1.3, fade: .09, restart: true });
       if (t.role === 'foe') t.cd = Math.max(t.cd, .6 + this.rnd() * .6);
     }
     return true;
@@ -768,7 +891,7 @@ export class ArenaWorld {
       f.atkT += dt * a.speed;
       if (d.ranged) { if (f.atkT >= a.active[0] && !f.atkHits.size) { f.atkHits.set(this, 0); this.fireBolt(f, 1, d.ranged === 'orb'); } }
       else {
-        if (a.lunge && f.atkT < a.active[1]) f.pos.addInPlace(fwd(f.yaw).scale(a.lunge / a.active[1] * dt * a.speed));
+        if (a.lunge && f.atkT < a.active[1]) f.pos.addInPlace(fwd(f.yaw).scale(this.lungeStep(f, a, dt * a.speed)));
         if (f.atkT >= a.active[0]) { f.cancelTell?.(); f.cancelTell = null; }
         this.swing(f, a);
         if (f.atkT >= a.active[0] && f.atkT <= a.active[1] && f.atkHits.size) this.fx.shake = Math.max(this.fx.shake, t.role === 'hero' && f.atkHits.has(t) ? a.shake : 0);
@@ -778,7 +901,7 @@ export class ArenaWorld {
     }
     // Approach, hold a ring, or wind up. A few attack tokens per target keep crowds fair.
     const attackers = this.fighters.filter(o => o.role === 'foe' && o.target === t && (o.state === 'tell' || o.state === 'attack')).length;
-    const tokens = t.role === 'hero' ? 3 : 2;
+    const tokens = (t.role === 'hero' ? 3 : 2) + (d.tokens ? d.tokens - 2 : 0);
     const want = d.ranged ? 9 : d.reach * .85;
     if (f.cd <= 0 && attackers < tokens && dist <= (d.ranged ? d.reach : d.reach + .4) && (!d.ranged || dist > 3)) {
       const a = d.attacks[Math.floor(this.rnd() * d.attacks.length)];
@@ -799,7 +922,7 @@ export class ArenaWorld {
       f.yaw = turnTo(f.yaw, dist < 7 ? toT : Math.atan2(mx, mz), dt * 8);
       f.state = 'move'; f.label = 'Moving';
       const fast = sp > 3.5;
-      const m = this.ms(f); f.anim.play(fast ? m.run : m.walk, { loop: true, speed: fast ? sp / m.runPace : Math.max(.6, sp / 1.6), fade: .15 });
+      this.locoAnim(f, sp); void fast;
       this.debris.stir(f.pos.x, f.pos.z, .9, 1);
     } else if (f.state !== 'idle') this.toIdle(f);
     else f.yaw = turnTo(f.yaw, toT, dt * 6);
@@ -816,7 +939,7 @@ export class ArenaWorld {
       const a = f.atk!;
       f.atkT += dt * a.speed;
       if (ranged) { if (f.atkT >= a.active[0] && !f.atkHits.size) { f.atkHits.set(this, 0); this.fireBolt(f); } }
-      else { if (a.lunge && f.atkT < a.active[1]) f.pos.addInPlace(fwd(f.yaw).scale(a.lunge / a.active[1] * dt * a.speed)); this.swing(f, a); }
+      else { if (a.lunge && f.atkT < a.active[1]) f.pos.addInPlace(fwd(f.yaw).scale(this.lungeStep(f, a, dt * a.speed))); this.swing(f, a); }
       if (f.atkT >= (a.end ?? 1)) { this.endAttack(f); f.cd = ranged ? .9 + this.rnd() * .5 : .5 + this.rnd() * .6; this.toIdle(f); }
       return;
     }
@@ -839,7 +962,7 @@ export class ArenaWorld {
         f.pos.x += (nd ? nd.x : dx / dist) * sp * dt; f.pos.z += (nd ? nd.z : dz / dist) * sp * dt;
         f.yaw = turnTo(f.yaw, face ?? Math.atan2(dx, dz), dt * 9);
         f.state = 'move'; f.label = 'Moving';
-        const m = this.ms(f); f.anim.play(run ? m.run : m.walk, { loop: true, speed: run ? sp / m.runPace : 1.3, fade: .15 });
+        this.locoAnim(f, sp);
         this.debris.stir(f.pos.x, f.pos.z, 1, 1.2);
         return;
       }

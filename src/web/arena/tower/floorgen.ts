@@ -99,7 +99,9 @@ export function planFloor(runSeed: number, floor: number): FloorPlan {
   for (let i = 0; i < count; i++) {
     const r = rnd();
     // Early floors are mostly raiders; archers from 4, soldiers from 3 (rising), mystics from 7.
-    const k: FoeKind = floor >= 7 && r < .06 + floor * .002 ? 'mage' : floor >= 4 && r < .26 ? 'rogue' : floor >= 3 && r < .26 + Math.min(.34, (floor - 2) * .03) ? 'warrior' : 'minion';
+    // Goblin packs from the start, goblin archers from 2, orcs from 4; human raiders, archers, soldiers and mystics mixed in.
+    const k: FoeKind = floor >= 7 && r < .06 ? 'mage' : floor >= 4 && r < .16 ? 'rogue' : floor >= 2 && r < .28 ? 'goblin_archer' : r < .52 ? 'goblin'
+      : floor >= 4 && r < .52 + Math.min(.18, (floor - 3) * .02) ? 'orc' : floor >= 3 && r < .74 ? 'warrior' : 'minion';
     let x = 0, z = 0;
     for (let t = 0; t < 20; t++) { x = (rnd() * 2 - 1) * (half - 3); z = (rnd() * 2 - 1) * (half - 3); if (Math.hypot(x - start.x, z - start.z) > 14) break; }
     foes.push({ kind: k, x, z });
@@ -107,7 +109,7 @@ export function planFloor(runSeed: number, floor: number): FloorPlan {
   const tier = theme.tier;
   let boss: FloorPlan['boss'], god: God | undefined, shrine: FloorPlan['shrine'];
   const bossName = () => `${BOSS_FIRST[Math.floor(rnd() * BOSS_FIRST.length)]} ${BOSS_EPITHET[tier][Math.floor(rnd() * 3)]}`;
-  if (kind === 'boss') boss = { kind: rnd() < .6 ? 'warrior' : 'minion', name: bossName(), x: 0, z: -half * .35, hpMul: 6 + floor * .25, dmgMul: 1.3 + floor * .02, scale: 1.3 };
+  if (kind === 'boss') boss = { kind: rnd() < .55 ? 'orc' : 'warrior', name: bossName(), x: 0, z: -half * .35, hpMul: 6 + floor * .25, dmgMul: 1.3 + floor * .02, scale: 1.3 };
   if (kind === 'shrine' || kind === 'summit') {
     god = GODS[Math.floor(rnd() * GODS.length)];
     shrine = { x: 0, z: -half * .45 };

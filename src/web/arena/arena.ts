@@ -23,8 +23,8 @@ import type { WeaponId } from './combat';
  */
 const TOWER_HELP = `<span class="x">✕</span><b>Tower of Chrysanthus</b><br>
   Clear each floor, then walk through the door at the far wall.<br>
-  <b>WASD</b> move · <b>Shift</b> sprint · <b>Mouse</b> aim<br><b>LMB</b> attack (hold to chain) · <b>RMB</b> kick / special<br>
-  <b>Space</b> dodge or roll · <b>1-4</b> fists and found weapons<br><b>E</b> use a god's shrine · <b>K</b> Codex of classes<br>
+  <b>WASD</b> move · <b>Shift</b> sprint · <b>Mouse</b> aim · <b>MMB drag</b> orbit · <b>Wheel</b> zoom<br><b>LMB</b> light (chain) · <b>RMB</b> heavy (hold to charge) · <b>F</b> guard/parry<br>
+  <b>Space</b> dodge or roll · <b>Tab</b> weapon · <b>1-4</b> signs (learned from tomes) · <b>Q</b> flask<br><b>E</b> use a god's shrine · <b>K</b> Codex of classes<br>
   Loot drops from foes and chests: walk over it.<br>Every 5th floor a boss, every 10th a god.<br><b>R</b> new climb · <b>P</b> pause · <b>H</b> this help`;
 
 export async function startArena(): Promise<void> {
@@ -73,7 +73,8 @@ export async function startArena(): Promise<void> {
   let tower: TowerRun | null = null;
   if (towerMode) { tower = new TowerRun(scene, world, hud, assets, stage, seed); tower.startFloor = Math.max(1, Math.min(100, Number(params.get('floor') ?? 1) || 1)); hud.tower = tower as never; tower.start(); }
   document.title = towerMode ? 'Tower of Chrysanthus' : document.title;
-  let zoom = 13, paused = false, camYaw = Math.PI * .25, camPitch = .9;
+  // Classic isometric framing (~35 deg elevation), orbitable with the middle mouse button.
+  let zoom = 15, paused = false, camYaw = Math.PI * .25, camPitch = .64, orbiting = false;
   // Automation hooks (scripts/web/arena-play.ts): read-only views plus a projector for aiming real mouse input.
   (window as unknown as { __arena: unknown }).__arena = {
     world, hud, scene, camera, get tower() { return tower; },
@@ -102,10 +103,13 @@ export async function startArena(): Promise<void> {
   window.addEventListener('keyup', e => keys.delete(e.code));
   window.addEventListener('blur', () => { keys.clear(); lmb = rmb = false; });
   canvas.addEventListener('contextmenu', e => e.preventDefault());
-  canvas.addEventListener('pointerdown', e => { audio.unlock(); canvas.focus(); if (e.button === 0) { lmb = true; lmbPressed = true; } if (e.button === 2) rmb = true; });
-  window.addEventListener('pointerup', e => { if (e.button === 0) lmb = false; if (e.button === 2) rmb = false; });
+  let rmbPressed = false, rmbReleased = false;
+  canvas.addEventListener('pointerdown', e => { audio.unlock(); canvas.focus(); if (e.button === 0) { lmb = true; lmbPressed = true; } if (e.button === 2) { rmb = true; rmbPressed = true; } if (e.button === 1) { orbiting = true; e.preventDefault(); } });
+  window.addEventListener('pointerup', e => { if (e.button === 0) lmb = false; if (e.button === 2) { rmb = false; rmbReleased = true; } if (e.button === 1) orbiting = false; });
+  window.addEventListener('pointermove', e => { if (!orbiting) return; camYaw -= e.movementX * .006; camPitch = Math.max(.32, Math.min(1.25, camPitch + e.movementY * .004)); });
+  canvas.addEventListener('auxclick', e => e.preventDefault());
   window.addEventListener('keydown', () => audio.unlock(), { once: true });
-  canvas.addEventListener('wheel', e => { zoom = Math.max(12, Math.min(34, zoom + Math.sign(e.deltaY) * 1.5)); e.preventDefault(); }, { passive: false });
+  canvas.addEventListener('wheel', e => { zoom = Math.max(7, Math.min(32, zoom + Math.sign(e.deltaY) * 1.2)); e.preventDefault(); }, { passive: false });
 
   const camFocus = new Vector3();
   let padWeapon = 0, padPrev: boolean[] = [];
@@ -123,8 +127,12 @@ export async function startArena(): Promise<void> {
     const t = ray.direction.y < -1e-3 ? -ray.origin.y / ray.direction.y : 30;
     const aim = ray.origin.add(ray.direction.scale(t));
     let attack = lmb, attackPressed = lmbPressed, secondary = rmb, dodge = pressed.has('Space');
+    let heavyPressed = rmbPressed, heavyReleased = rmbReleased; rmbPressed = rmbReleased = false;
+    const cast = ['Digit1', 'Digit2', 'Digit3', 'Digit4'].findIndex(k => pressed.has(k));
     let sprint = keys.has('ShiftLeft') || keys.has('ShiftRight');
-    let weapon: WeaponId | null = pressed.has('Digit1') ? 'fists' : pressed.has('Digit2') ? 'greatsword' : pressed.has('Digit3') ? 'axe' : pressed.has('Digit4') ? 'bow' : null;
+    // Diablo-style: 1-4 are skills; Tab cycles drawn weapons (F1-F4 pick one directly).
+    let weapon: WeaponId | null = pressed.has('F1') ? 'fists' : pressed.has('F2') ? 'greatsword' : pressed.has('F3') ? 'axe' : pressed.has('F4') ? 'bow' : null;
+    const cycle = pressed.has('Tab');
     const pad = navigator.getGamepads?.().find(p => p);
     if (pad) {
       const dz = (v: number) => Math.abs(v) < .18 ? 0 : v;
@@ -142,7 +150,7 @@ export async function startArena(): Promise<void> {
     const len = Math.hypot(mx, mz);
     if (len > 1) { mx /= len; mz /= len; }
     lmbPressed = false;
-    return { move: { x: mx, z: mz }, aim, attack, attackPressed, secondary, sprint, dodgePressed: dodge, interact: keys.has('KeyE'), weapon };
+    return { move: { x: mx, z: mz }, aim, attack, attackPressed, secondary, heavyPressed, heavyReleased, cast, guard: keys.has('KeyF'), flask: pressed.has('KeyQ'), cycle, sprint, dodgePressed: dodge, interact: keys.has('KeyE'), weapon };
   };
 
   const rebuild = () => { if (tower) { hud.closeModal(); levels.length = 0; tower.start(); return; } hud.closeModal(); heroDown = false; levels.length = 0; world.reset(++seed); hud.announce('COMBAT GYM', 'rebuilt · seed ' + seed); };
@@ -176,7 +184,9 @@ export async function startArena(): Promise<void> {
     }
     // Camera: fixed high three-quarter view that follows the hero, like the reference.
     const h = world.hero.pos;
-    camFocus.x += (h.x - camFocus.x) * Math.min(1, dt * 6); camFocus.z += (h.z - camFocus.z) * Math.min(1, dt * 6); camFocus.y = 1;
+    const la = Math.min(3, Math.hypot(input.aim.x - h.x, input.aim.z - h.z) * .12), ld = Math.atan2(input.aim.x - h.x, input.aim.z - h.z);
+    const fx = h.x + Math.sin(ld) * la, fz = h.z + Math.cos(ld) * la;
+    camFocus.x += (fx - camFocus.x) * Math.min(1, dt * 5); camFocus.z += (fz - camFocus.z) * Math.min(1, dt * 5); camFocus.y = 1.1;
     shakeT += dt * 60;
     const s = world.fx.shake * world.fx.shake * .9;
     const off = new Vector3(Math.sin(camYaw) * Math.cos(camPitch), Math.sin(camPitch), Math.cos(camYaw) * Math.cos(camPitch)).scale(zoom);

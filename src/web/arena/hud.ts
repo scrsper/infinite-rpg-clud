@@ -1,6 +1,6 @@
 import { Matrix, Vector3, type Camera, type Scene } from '@babylonjs/core';
 import { ARENA, type ArenaWorld, type Fighter } from './world';
-import { WEAPONS, type WeaponId } from './combat';
+import { SPELLS, WEAPONS, type WeaponId } from './combat';
 
 /** DOM overlay for the Combat Arena: bars, combo badge, numbers, radar, cards. */
 const css = `
@@ -67,6 +67,13 @@ const css = `
 .ar-codex h2{margin:0 0 6px;color:#ffd45c;font:900 22px "Segoe UI",sans-serif}
 .ar-codex table{width:100%;border-collapse:collapse;margin-top:8px}.ar-codex td,.ar-codex th{padding:4px 6px;border-bottom:1px solid #2a3140;text-align:left}
 .ar-w.locked{opacity:.3}
+.ar-skills{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:8px;align-items:flex-end}
+.ar-sk{position:relative;width:52px;height:52px;border-radius:6px;background:#141a26e0;border:2px solid #56627a;display:grid;place-items:center;font-size:24px;overflow:hidden}
+.ar-sk em{position:absolute;left:4px;top:2px;font:700 11px sans-serif;color:#ffd45c;font-style:normal}
+.ar-sk i{position:absolute;left:0;right:0;bottom:0;background:#000a;transform-origin:bottom}
+.ar-sk.locked{opacity:.25}
+.ar-flask{margin-left:10px;width:52px;height:52px;border-radius:26px;background:#1e1418e0;border:2px solid #b3485e;display:grid;place-items:center;font:800 15px sans-serif;color:#ffc6d0}
+.ar-charge{position:absolute;left:50%;top:58%;transform:translateX(-50%);width:120px;height:8px;background:#0008;border:1px solid #000;display:none}.ar-charge i{display:block;height:100%;background:#ffd45c}
 .ar-btn{margin-top:20px;padding:10px 22px;font:700 14px sans-serif;background:#ffd45c;color:#1a1300;border:0;border-radius:4px;cursor:pointer}
 `;
 
@@ -100,6 +107,7 @@ export class ArenaHud {
   private hurt = 0; private bannerT = 0;
   private toasts = el('div', 'ar-toasts'); private fadeEl = el('div', 'ar-fade'); private bossEl = el('div', 'ar-boss', '<span></span><div class="ar-bar"><i></i></div>');
   private codexEl = el('div', 'ar-codex');
+  private skills = el('div', 'ar-skills'); private skillEls: HTMLElement[] = []; private flaskEl = el('div', 'ar-flask'); private chargeEl = el('div', 'ar-charge', '<i></i>');
   /** Set by the tower: drives the floor panel, boss bar, tier/class line and weapon locks. */
   tower: { floor: number; plan: { objective: string; theme: { name: string; tier: string } }; boss: Fighter | null; summary(): { tier: string; cls: string; styles: [string, number][]; affinities: [string, number][] }; gear: Record<string, { name: string; quality: number } | undefined> } | null = null;
   modalOpen = false;
@@ -118,13 +126,15 @@ export class ArenaHud {
     wrow.append(this.wname);
     this.radar.width = 132; this.radar.height = 132; this.rctx = this.radar.getContext('2d')!;
     this.help = el('div', 'ar-help', `<span class="x">✕</span><b>Combat Gym</b> · local feel lab<br>
-      <b>WASD</b> move · <b>Shift</b> sprint · <b>Mouse</b> aim<br><b>LMB</b> attack (hold to chain combo)<br>
-      <b>RMB</b> kick / whirlwind / guard / draw and aim<br><b>Space</b> dodge or roll · <b>1-4</b> fists, greatsword, axe, bow<br>
+      <b>WASD</b> move · <b>Shift</b> sprint · <b>Mouse</b> aim · <b>MMB drag</b> orbit · <b>Wheel</b> zoom<br><b>LMB</b> light attack (chain) · <b>RMB</b> heavy (hold to charge)<br><b>F</b> guard (parry if timed) · <b>1-4</b> signs · <b>Q</b> flask · <b>Tab</b> weapon<br>
+      <b>Space</b> dodge or roll · bow: hold <b>RMB</b> to aim, release to loose<br>
       <b>E</b> hold near a fallen companion to revive<br><b>C</b> companions · <b>N</b> spawn enemies · <b>M</b> auto waves<br>
       <b>R</b> rebuild the gym · <b>L</b> state labels · <b>P</b> pause · <b>H</b> this help`);
     this.help.querySelector('.x')!.addEventListener('click', () => this.toggleHelp());
     this.layer.style.cssText = 'position:absolute;inset:0;overflow:hidden';
-    this.root.append(this.vignette, this.layer, frame, this.combo, wrow, this.radar, this.waveEl, this.banner, this.bossEl, this.toasts, this.help, this.codexEl, this.modal, this.fadeEl);
+    for (const [k, s] of SPELLS.entries()) { const e = el('div', 'ar-sk', `<span>${s.icon}</span><em>${k + 1}</em><i></i>`); e.title = `${s.name}: ${s.text}`; this.skillEls.push(e); this.skills.append(e); }
+    this.skills.append(this.flaskEl);
+    this.root.append(this.vignette, this.layer, frame, this.combo, wrow, this.radar, this.waveEl, this.banner, this.bossEl, this.toasts, this.skills, this.chargeEl, this.help, this.codexEl, this.modal, this.fadeEl);
     document.body.append(this.root);
   }
 
@@ -219,6 +229,9 @@ export class ArenaHud {
     this.combo.style.opacity = w.combo.hits > 1 ? '1' : '0';
     this.mul.textContent = `x${w.comboMul.toFixed(1)}`;
     this.hits.innerHTML = `${w.combo.hits}<small>hits</small>`;
+    this.skillEls.forEach((e, k) => { e.classList.toggle('locked', !w.spellUnlocked.has(k)); (e.querySelector('i') as HTMLElement).style.transform = `scaleY(${w.spellCd[k] / SPELLS[k].cooldown})`; e.style.borderColor = w.hero.energy >= SPELLS[k].cost ? SPELLS[k].color : '#56627a'; });
+    this.flaskEl.textContent = `Q ${w.flasks}`; this.flaskEl.style.opacity = w.flasks ? '1' : '.4';
+    this.chargeEl.style.display = w.hero.charging ? 'block' : 'none'; (this.chargeEl.firstChild as HTMLElement).style.width = `${w.hero.charge * 100}%`;
     for (const [id, e] of this.weapons) { e.classList.toggle('on', id === w.weapon); e.classList.toggle('locked', !w.unlocked.has(id)); }
     const g = this.tower?.gear[w.weapon];
     this.wname.textContent = g ? g.name : WEAPONS[w.weapon].name;

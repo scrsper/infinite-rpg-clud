@@ -43,6 +43,7 @@ export class TowerRun {
     w.companions = false; w.autoWaves = false;
     w.reset(this.seed);
     w.unlocked = new Set<WeaponId>(['fists']); w.weaponMesh = {}; w.weaponMul = {}; w.armor = 0;
+    w.spellUnlocked = new Set(); w.flaskMax = 3; w.flasks = 3;
     w.setWeapon(w.hero, 'fists');
     w.onHeroHit = (t, dmg, crit) => this.onHit(t, dmg, crit);
     w.onChest = p => this.drop(p, 'chest');
@@ -59,6 +60,7 @@ export class TowerRun {
     this.door?.dispose(); this.shrine?.dispose(); this.door = this.shrine = null;
     this.stage.setFloor(this.plan.half, this.plan.theme, n);
     // Gentle start (you begin bare-handed), full strength by floor 10, then steady growth.
+    w.flasks = w.flaskMax;
     w.foeHpMul = (n < 10 ? .75 + n * .025 : 1) * (1 + Math.max(0, n - 10) * .1); w.foeDmgMul = (n < 10 ? .55 + n * .045 : 1) * (1 + Math.max(0, n - 10) * .04);
     w.loadFloor({ ...this.plan, wallColor: this.plan.theme.wall });
     this.buildDoor(); if (this.plan.shrine) this.buildShrine();
@@ -160,7 +162,7 @@ export class TowerRun {
         this.gear[item.slot as Exclude<WeaponId, 'fists'>] = item;
         w.unlocked.add(item.slot); w.weaponMesh[item.slot] = { mesh: item.mesh, hand: item.hand }; w.weaponMul[item.slot] = QUALITY_MUL[item.quality] * this.bonus.damage;
         const first = !cur; if (first || w.weapon === item.slot) w.setWeapon(w.hero, item.slot);
-        this.hud.toast(`${item.name} — press ${({ fists: 1, greatsword: 2, axe: 3, bow: 4 } as Record<WeaponId, number>)[item.slot]}`, QUALITY_COLOR[item.quality]);
+        this.hud.toast(`${item.name} — Tab to draw`, QUALITY_COLOR[item.quality]);
       } else { this.hud.toast(`${item.name} (worse than yours — salvaged)`, '#888'); this.sheet.style[item.style] += 2; }
     } else if (item.kind === 'armor') {
       if (!this.armorItem || item.quality > this.armorItem.quality) { this.armorItem = item; w.armor = item.reduction; this.hud.toast(`Equipped ${item.name} (−${Math.round(item.reduction * 100)}% damage)`, QUALITY_COLOR[item.quality]); }
@@ -169,7 +171,7 @@ export class TowerRun {
       this.sheet.affinity[item.element] += 1; this.sheet.history.tomes++;
       this.hud.toast(`${item.name}: ${item.element} affinity ${Math.floor(this.sheet.affinity[item.element])}`, ELEMENT_COLOR[item.element]);
       this.applyPassives(); this.evaluateClass();
-    } else { w.hero.hp = Math.min(w.hero.maxHp, w.hero.hp + w.hero.maxHp * item.heal); this.hud.toast(item.name, '#ff6a8a'); }
+    } else { w.flaskMax = Math.min(5, w.flaskMax + (w.flasks >= w.flaskMax ? 1 : 0)); w.flasks = Math.min(w.flaskMax, w.flasks + 1); this.hud.toast(`${item.name}: +1 flask (Q)`, '#ff6a8a'); }
   }
 
   /** Swiftness and iron are passive capabilities; recompute their effect. */
@@ -179,6 +181,9 @@ export class TowerRun {
     this.bonus.damage = 1 + (this.cls?.boon.stat === 'damage' ? this.cls.boon.amount : 0);
     w.bonus.atkSpeed = this.bonus.speed; w.bonus.move = 1 + s.affinity.swift * .04; w.bonus.damage = this.bonus.damage;
     w.armor = Math.min(.75, (this.armorItem?.reduction ?? 0) + s.affinity.iron * .03);
+    // Signs unlock from affinity (capability first): flame->Ember, storm/swift->Gust, iron->Ward, frost->Frost Sigil.
+    const need: number[] = [s.affinity.flame, Math.max(s.affinity.storm, s.affinity.swift), s.affinity.iron, s.affinity.frost];
+    need.forEach((v, k) => { if (v >= 1 && !w.spellUnlocked.has(k)) { w.spellUnlocked.add(k); this.hud.toast(`New sign: ${['Ember', 'Gust', 'Ward', 'Frost Sigil'][k]} (key ${k + 1})`, '#ffd45c'); } w.spellPower[k] = 1 + Math.max(0, v - 1) * .25; });
     const vit = 1 + s.affinity.iron * .05 + (this.cls?.boon.stat === 'vitality' ? this.cls.boon.amount : 0);
     const base = 1000 * w.bonus.maxHpUpgrades;
     const before = w.hero.maxHp; w.hero.maxHp = base * vit; w.hero.hp = Math.min(w.hero.maxHp, w.hero.hp + Math.max(0, w.hero.maxHp - before));

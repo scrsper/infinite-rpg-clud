@@ -65,6 +65,8 @@ export interface WeaponDef {
   spin?: AttackDef;
   bash?: AttackDef;
   aimed?: AttackDef;
+  /** Heavy attacks (RMB): slower, chargeable by holding, chain into each other and finish light combos. */
+  heavy?: AttackDef[];
   attach?: { r?: string; l?: string };
   trail: number;
 }
@@ -72,7 +74,7 @@ export interface WeaponDef {
 const D = Math.PI / 180;
 export const WEAPONS: Record<WeaponId, WeaponDef> = {
   fists: {
-    id: 'fists', name: 'Bare hands', key: '1', set: 'fists', secondary: 'kick', trail: 0,
+    id: 'fists', name: 'Bare hands', key: 'F1', set: 'fists', secondary: 'kick', trail: 0,
     combo: [
       { clip: U('jab_left'), speed: 1.7, active: [0.48, 0.68], cancel: 0.7, end: 0.95, range: 2.4, arc: 40 * D, damage: 14, knock: 1.5, lunge: .6, hitstop: .045, shake: .08, label: 'Jab' },
       { clip: U('cross_right'), speed: 1.7, active: [0.36, 0.62], cancel: 0.66, end: 0.95, range: 2.5, arc: 40 * D, damage: 18, knock: 2.5, lunge: .8, hitstop: .05, shake: .12, label: 'Cross' },
@@ -80,31 +82,42 @@ export const WEAPONS: Record<WeaponId, WeaponDef> = {
       { clip: U('uppercut_right'), speed: 1.55, active: [0.28, 0.5], cancel: 0.56, end: 0.9, range: 2.3, arc: 45 * D, damage: 24, knock: 4, lunge: .6, hitstop: .07, shake: .2, label: 'Uppercut' },
       { clip: U('roundhouse_right'), speed: 1.45, active: [0.2, 0.56], cancel: 0.9, end: 1.1, range: 2.9, arc: 110 * D, damage: 34, knock: 9, lunge: 1, heavy: true, hitstop: .09, shake: .35, label: 'Roundhouse' },
     ],
+    heavy: [
+      { clip: U('heavy_cross'), speed: 1.25, active: [0.5, 0.84], cancel: 0.92, end: 1.3, range: 2.7, arc: 45 * D, damage: 32, knock: 8, lunge: 1.1, heavy: true, hitstop: .09, shake: .3, label: 'Heavy cross' },
+      { clip: U('side_kick'), speed: 1.3, active: [0.12, 0.54], cancel: 0.9, end: 1.1, range: 3, arc: 40 * D, damage: 34, knock: 13, lunge: 1.2, heavy: true, hitstop: .1, shake: .38, label: 'Side kick' },
+    ],
     kick: { clip: U('side_kick'), speed: 1.45, active: [0.12, 0.54], cancel: 0.85, end: 1.05, range: 3, arc: 40 * D, damage: 30, knock: 12, lunge: 1.2, heavy: true, hitstop: .09, shake: .35, label: 'Side kick' },
   },
   greatsword: {
-    id: 'greatsword', name: 'Oathbreaker', key: '2', set: 'greatsword', secondary: 'spin', attach: { r: 'W_oathbreaker' }, trail: 1.75,
+    id: 'greatsword', name: 'Oathbreaker', key: 'F2', set: 'greatsword', secondary: 'spin', attach: { r: 'W_oathbreaker' }, trail: 1.75,
     combo: [
       { clip: GS('slash'), speed: 1.3, active: [0.42, 0.84], cancel: 0.86, end: 1.12, range: 3.6, arc: 95 * D, damage: 32, knock: 4, lunge: 1.2, hitstop: .06, shake: .2, label: 'Attacking' },
       { clip: GS('slash (4)'), speed: 1.4, active: [0.26, 0.86], cancel: 0.9, end: 1.3, range: 3.6, arc: 100 * D, damage: 36, knock: 5, lunge: 1.4, hitstop: .065, shake: .25, label: 'Attacking' },
       { clip: GS('slash (3)'), speed: 1.4, active: [0.64, 1.2], cancel: 1.24, end: 1.55, range: 3.8, arc: 60 * D, damage: 50, knock: 7, lunge: 1.8, hitstop: .085, shake: .38, label: 'Attacking' },
       { clip: GS('high spin attack'), speed: 1.3, active: [0.78, 1.42], cancel: 1.6, end: 1.85, range: 3.8, arc: 180 * D, damage: 30, knock: 8, lunge: 2.2, multi: .22, heavy: true, hitstop: .08, shake: .4, label: 'Spin finisher' },
     ],
+    heavy: [
+      { clip: GS('attack'), speed: 1.0, active: [0.36, 0.64], cancel: 0.84, end: 1.2, range: 3.9, arc: 60 * D, damage: 58, knock: 9, lunge: 1.5, heavy: true, hitstop: .11, shake: .45, label: 'Heavy cleave' },
+      { clip: GS('jump attack'), speed: 1.1, active: [0.9, 1.9], cancel: 1.95, end: 2.15, range: 4.1, arc: 70 * D, damage: 72, knock: 12, lunge: 3.2, heavy: true, hitstop: .13, shake: .55, label: 'Leaping slam' },
+    ],
     // Held whirlwind: the KayKit spin loop (no looping spin exists in the Mixamo packs).
     spin: { clip: '2H_Melee_Attack_Spinning', speed: 1.25, active: [0, 99], cancel: 0, range: 3.5, arc: 180 * D, damage: 15, knock: 5, lunge: 0, multi: .19, heavy: true, hitstop: .03, shake: .14, move: 4.2, label: 'Whirlwind' },
   },
   axe: {
-    id: 'axe', name: 'Widow Cleaver', key: '3', set: 'sword', secondary: 'guard', attach: { r: 'W_widow-cleaver' }, trail: 1.1,
+    id: 'axe', name: 'Widow Cleaver', key: 'F3', set: 'sword', secondary: 'guard', attach: { r: 'W_widow-cleaver' }, trail: 1.1,
     combo: [
       { clip: SS('slash'), speed: 1.35, active: [0.48, 0.76], cancel: 0.8, end: 1.05, range: 3, arc: 80 * D, damage: 24, knock: 2.5, lunge: 1, hitstop: .05, shake: .12, label: 'Attacking' },
       { clip: SS('attack (4)'), speed: 1.25, active: [0.36, 0.6], cancel: 0.64, end: 0.9, range: 3, arc: 90 * D, damage: 26, knock: 3, lunge: 1, hitstop: .05, shake: .14, label: 'Attacking' },
       { clip: SS('slash (5)'), speed: 1.35, active: [0.44, 0.76], cancel: 0.82, end: 1.1, range: 3.1, arc: 70 * D, damage: 30, knock: 4.5, lunge: 1.2, hitstop: .07, shake: .25, label: 'Attacking' },
-      { clip: SS('attack (2)'), speed: 1.3, active: [0.3, 0.78], cancel: 1.05, end: 1.3, range: 3.5, arc: 60 * D, damage: 46, knock: 9, lunge: 2.4, heavy: true, hitstop: .1, shake: .45, label: 'Heavy cleave' },
+    ],
+    heavy: [
+      { clip: SS('attack (2)'), speed: 1.15, active: [0.3, 0.78], cancel: 1.0, end: 1.3, range: 3.5, arc: 60 * D, damage: 46, knock: 9, lunge: 2.2, heavy: true, hitstop: .1, shake: .45, label: 'Heavy cleave' },
+      { clip: SS('slash (4)'), speed: 1.25, active: [1.22, 1.62], cancel: 1.9, end: 2.2, range: 3.4, arc: 95 * D, damage: 54, knock: 10, lunge: 1.6, heavy: true, hitstop: .11, shake: .45, label: 'Reaping arc' },
     ],
     bash: { clip: SS('kick'), speed: 1.4, active: [0.08, 0.34], cancel: .7, end: .95, range: 2.6, arc: 60 * D, damage: 12, knock: 11, lunge: 1.2, heavy: true, hitstop: .08, shake: .3, label: 'Kick' },
   },
   bow: {
-    id: 'bow', name: 'Ashwood Sentinel', key: '4', set: 'bow', secondary: 'aim', attach: { l: 'W_ashwood-sentinel' }, trail: 0,
+    id: 'bow', name: 'Ashwood Sentinel', key: 'F4', set: 'bow', secondary: 'aim', attach: { l: 'W_ashwood-sentinel' }, trail: 0,
     combo: [
       { clip: BOW('draw arrow'), speed: 1.5, active: [0.8, 0.81], cancel: 0.95, end: 1.05, range: 40, arc: 0, damage: 34, knock: 4, lunge: 0, hitstop: .03, shake: .08, label: 'Shooting' },
     ],
@@ -112,12 +125,14 @@ export const WEAPONS: Record<WeaponId, WeaponDef> = {
   },
 };
 
-export type FoeKind = 'minion' | 'warrior' | 'rogue' | 'mage';
+export type FoeKind = 'minion' | 'warrior' | 'rogue' | 'mage' | 'goblin' | 'goblin_archer' | 'orc';
 export interface FoeDef {
   looks: LookId[]; set: keyof typeof MOVESETS; hp: number; speed: number; xp: number; reach: number;
   attacks: AttackDef[]; shield?: string; weapon?: string; hand?: 'l' | 'r'; ranged?: 'bolt' | 'orb';
   /** Seconds of red-crescent warning before a melee swing lands. */
   tell: number; cooldown: [number, number]; armor: number;
+  /** Body scale (goblins are small, orcs huge) and how many attack one target at once. */
+  scale?: number; tokens?: number;
 }
 export const FOES: Record<FoeKind, FoeDef> = {
   minion: {
@@ -133,6 +148,22 @@ export const FOES: Record<FoeKind, FoeDef> = {
   rogue: {
     looks: ['archer'], set: 'bow', hp: 60, speed: 4.2, xp: 15, reach: 16, weapon: 'W_briar-whisper', hand: 'l', ranged: 'bolt', tell: .9, cooldown: [2.2, 3.4], armor: 0,
     attacks: [{ clip: BOW('draw arrow'), speed: 1.25, active: [0.8, 0.81], cancel: 9, end: 1.05, range: 30, arc: 0, damage: 70, knock: 4, lunge: 0, hitstop: .02, shake: .2 }],
+  },
+  // Goblins: small, quick, cowardly in ones and dangerous in packs; they dart in and out.
+  goblin: {
+    looks: ['goblin'], set: 'sword', hp: 34, speed: 5.4, xp: 6, reach: 2.1, weapon: 'W_night-thorn', tell: .35, cooldown: [.9, 1.8], armor: 0, scale: .82, tokens: 4,
+    attacks: [{ clip: SS('attack (4)'), speed: 1.35, active: [0.38, 0.56], cancel: 9, end: .9, range: 2.3, arc: 70 * D, damage: 28, knock: 2, lunge: 1.1, hitstop: .03, shake: .15 },
+      { clip: SS('slash'), speed: 1.4, active: [0.5, 0.74], cancel: 9, end: 1.05, range: 2.3, arc: 60 * D, damage: 24, knock: 2, lunge: 1, hitstop: .03, shake: .15 }],
+  },
+  goblin_archer: {
+    looks: ['goblin_archer'], set: 'bow', hp: 28, speed: 5, xp: 7, reach: 14, weapon: 'W_briar-whisper', hand: 'l', ranged: 'bolt', tell: .7, cooldown: [1.8, 2.8], armor: 0, scale: .82,
+    attacks: [{ clip: BOW('draw arrow'), speed: 1.4, active: [0.8, 0.81], cancel: 9, end: 1.05, range: 26, arc: 0, damage: 40, knock: 3, lunge: 0, hitstop: .02, shake: .15 }],
+  },
+  // Orcs: huge, slow to start, crushing two-handed blows that break guards; they shrug off light hits.
+  orc: {
+    looks: ['orc'], set: 'greatsword', hp: 210, speed: 3.6, xp: 32, reach: 3, weapon: 'W_execution-standard', tell: .75, cooldown: [1.6, 2.8], armor: .45, scale: 1.08, tokens: 2,
+    attacks: [{ clip: GS('attack'), speed: 1, active: [0.36, 0.64], cancel: 9, end: 1.2, range: 3.6, arc: 60 * D, damage: 110, knock: 9, lunge: 1.3, heavy: true, hitstop: .06, shake: .5 },
+      { clip: GS('slash'), speed: 1.05, active: [0.42, 0.84], cancel: 9, end: 1.25, range: 3.6, arc: 90 * D, damage: 90, knock: 7, lunge: 1.2, heavy: true, hitstop: .05, shake: .45 }],
   },
   mage: {
     looks: ['mystic'], set: 'caster', hp: 70, speed: 3.6, xp: 20, reach: 14, weapon: 'W_elderroot', ranged: 'orb', tell: 1.0, cooldown: [2.8, 4], armor: 0,
@@ -154,17 +185,28 @@ export function waveRoster(n: number, rnd: () => number): FoeKind[] {
   const total = Math.min(30, 5 + n * 3);
   for (let i = 0; i < total; i++) {
     const r = rnd();
-    out.push(n >= 3 && r < .12 ? 'mage' : n >= 2 && r < .3 ? 'rogue' : r < .3 + Math.min(.35, n * .06) ? 'warrior' : 'minion');
+    out.push(n >= 3 && r < .1 ? 'mage' : n >= 2 && r < .22 ? 'rogue' : r < .34 ? 'goblin' : n >= 2 && r < .44 ? 'goblin_archer' : n >= 3 && r < .54 ? 'orc' : r < .54 + Math.min(.3, n * .05) ? 'warrior' : 'minion');
   }
   return out;
 }
+
+/** Witcher-style signs on 1-4 (Diablo skill slots). Power scales with the matching affinity in the tower. */
+export interface SpellDef { id: 'ember' | 'gust' | 'ward' | 'sigil'; name: string; icon: string; cost: number; cooldown: number; color: string; text: string }
+export const SPELLS: SpellDef[] = [
+  { id: 'ember', name: 'Ember', icon: '🔥', cost: 22, cooldown: 2.5, color: '#ff7a2e', text: 'Cone of fire; burns' },
+  { id: 'gust', name: 'Gust', icon: '🌀', cost: 25, cooldown: 4, color: '#cfe8ff', text: 'Force wave; knocks down, breaks guards' },
+  { id: 'ward', name: 'Ward', icon: '🛡️', cost: 30, cooldown: 10, color: '#7fb8ff', text: 'Shield that absorbs damage' },
+  { id: 'sigil', name: 'Frost Sigil', icon: '❄️', cost: 28, cooldown: 7, color: '#8fdcff', text: 'Circle that chills and slows' },
+];
+export const SPELL_CLIPS = ['great_sword/spell cast', 'sword_and_shield/sword and shield casting (2)'];
 
 /** Every clip name referenced by weapons, foes, allies and movesets: only these are baked and instantiated. */
 export function usedClips(): Set<string> {
   const out = new Set<string>(['Lie_StandUp', ...Object.values(DODGES)]);
   const add = (a?: AttackDef) => a && out.add(a.clip);
   for (const m of Object.values(MOVESETS)) for (const c of [m.idle, m.walk, m.run, m.block, m.guard, m.enter, ...m.hit, ...m.death]) out.add(c);
-  for (const w of Object.values(WEAPONS)) { w.combo.forEach(add); add(w.spin); add(w.bash); add(w.aimed); add(w.kick); }
+  for (const w of Object.values(WEAPONS)) { w.combo.forEach(add); w.heavy?.forEach(add); add(w.spin); add(w.bash); add(w.aimed); add(w.kick); }
+  for (const c of SPELL_CLIPS) out.add(c);
   for (const f of Object.values(FOES)) f.attacks.forEach(add);
   for (const a of Object.values(ALLIES)) a.attacks.forEach(add);
   return out;

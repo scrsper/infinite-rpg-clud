@@ -32,6 +32,29 @@ export class Animator {
     this.current = name;
   }
 
+  /**
+   * Locomotion blend space: walk and run play together, phase-locked (same normalised cycle time),
+   * weighted by `blend` (0 walk .. 1 run) and paced to `rate` gait cycles per second, so stride
+   * matches ground speed through the whole walk-jog-run range instead of hard-switching clips.
+   */
+  loco(walk: string, run: string, blend: number, rate: number, fade = .25): void {
+    const gw = this.groups.get(walk), gr = this.groups.get(run); if (!gw || !gr) return;
+    const phaseOf = (g: AnimationGroup) => { const m = g.animatables[0]?.masterFrame; return m === undefined ? 0 : ((m - g.from) / Math.max(1e-3, g.to - g.from)) % 1; };
+    const lead = this.active.get(walk)?.g.isPlaying ? gw : this.active.get(run)?.g.isPlaying ? gr : null;
+    const phase = lead ? phaseOf(lead) : 0;
+    for (const [n, a] of this.active) if (n !== walk && n !== run) { a.target = 0; a.rate = 1 / fade; }
+    for (const [name, g, w] of [[walk, gw, 1 - blend], [run, gr, blend]] as const) {
+      let a = this.active.get(name);
+      if (!a || !g.isPlaying) {
+        if (!a) { a = { g, w: 0, target: w, rate: 1 / fade }; this.active.set(name, a); }
+        g.stop(); g.start(true, 1, g.from, g.to); g.goToFrame(g.from + phase * (g.to - g.from)); g.setWeightForAllAnimatables(a.w);
+      }
+      a.target = Math.max(0, Math.min(1, w)); a.rate = 1 / fade;
+      g.speedRatio = Math.max(.05, rate * clipLength(g));
+    }
+    this.current = 'loco';
+  }
+
   setSpeed(speed: number): void { const a = this.active.get(this.current); if (a) a.g.speedRatio = speed; }
 
   update(dt: number): void {

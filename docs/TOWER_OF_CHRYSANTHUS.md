@@ -8,6 +8,19 @@ Play: `Play Tower of Chrysanthus.cmd` (static build on :7505), or `npm run web:d
 `http://127.0.0.1:5180/?arena=1&tower=1`. Add `&seed=N` for a specific tower, or `&floor=N` to start higher (testing).
 The Combat Gym panel has an **Enter the Tower of Chrysanthus** button.
 
+## Controls (Diablo 4 layout, Witcher 3 / Elden Ring combat)
+
+- **Camera:** classic isometric (about 35°). Drag with the middle mouse button to orbit and tilt; the wheel zooms. The view leads slightly toward your aim.
+- **Move:** WASD (camera-relative), Shift sprint, mouse aim.
+- **Attacks:** LMB light chain. RMB heavy: hold to charge at the wind-up and release for scaled damage, knockback and hit-stop. A heavy also finishes a light combo, and heavies chain into each other.
+- **Defence:** Space dodges (a roll when moving forward). F guards; raising the guard just before a hit parries, staggering the attacker and refunding stamina.
+- **Signs (1–4):** Ember (fire cone, burns), Gust (force wave, knockback, breaks guards), Ward (absorbing shield), Frost Sigil (slowing circle at the aim point). They share the stamina bar and have cooldowns. In the tower they unlock from affinities: flame→Ember, storm/swift→Gust, iron→Ward, frost→Frost Sigil. Power scales with the affinity.
+- **Other keys:** Q drinks a flask (heals over a second; refilled each floor; potions add flasks). Tab cycles drawn weapons (F1–F4 select one directly). E uses a shrine. K opens the Codex.
+
+## Monsters
+
+Goblins (small, fast, packs of four attackers; knives), goblin archers (shortbows), orcs (huge two-handed halberd swings that break guards, heavy poise) and orc chiefs (helmeted bosses). They are MPFB bodies pushed past human with face targets (square jaws, flared noses, pointed ears), authored tusks and ears, and green skins, in the same low-poly style (`build_arena_stylized.py`). They appear from early floors alongside human raiders, soldiers, archers and mystics.
+
 ## How a climb works
 
 - You start with **bare hands and plain cloth** (fists: jab, cross, hook, uppercut, roundhouse; kick; roll).
