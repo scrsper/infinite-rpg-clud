@@ -25,7 +25,8 @@ import type { WeaponId } from './combat';
 const TOWER_HELP = `<span class="x">✕</span><b>Tower of Chrysanthus</b><br>
   Clear each floor, then walk through the door at the far wall.<br>
   <b>WASD</b> move · <b>Shift</b> sprint · <b>Mouse</b> aim · <b>MMB drag</b> orbit · <b>Wheel</b> zoom<br><b>LMB</b> light (chain) · <b>RMB</b> heavy (hold to charge) · <b>F</b> guard/parry<br>
-  <b>Space</b> dodge or roll · <b>Tab</b> weapon · <b>Q</b> flask<br><b>1-7</b> skills: slots fill from essences you absorb, skill books you read and the class you become; more slots as your tier rises<br><b>G</b> read a scroll · <b>E</b> use a god's shrine · <b>K</b> Codex<br>
+  <b>Space</b> dodge or roll · <b>Tab</b> weapon · <b>Q</b> flask<br><b>1-7</b> skills: slots fill from essences you absorb, skill books you read and the class you become; more slots as your tier rises<br><b>G</b> read a scroll · <b>V</b> drink from the belt · <b>B</b> Spellbook · <b>E</b> use a god's shrine · <b>K</b> Codex<br>
+  Magic: an element you hold (affinity 1+) shaped by a form you have learned (treatises) is a spell. Soak then shock, soak then freeze, freeze then burn.<br>
   Loot drops from foes and chests: walk over it. Achievements award loot boxes, opened when a floor is clear.<br>Every 5th floor a boss, every 10th a god.<br><b>R</b> new climb · <b>P</b> pause · <b>H</b> this help`;
 
 export async function startArena(): Promise<void> {
@@ -68,11 +69,12 @@ export async function startArena(): Promise<void> {
     wave: (n, count) => hud.announce(`WAVE ${n}`, `${count} raiders attack`),
     heroDown: () => { if (tower) tower.onHeroDown(); else heroDown = true; },
     sound: (k, g) => audio.play(k, g),
+    word: (p, text, color) => hud.word(p, text, color),
   });
   let seed = Number(params.get('seed') ?? 918271) || 918271;
   world.reset(seed);
   let tower: TowerRun | null = null;
-  if (towerMode) { tower = new TowerRun(scene, world, hud, assets, stage, seed); tower.startFloor = Math.max(1, Math.min(100, Number(params.get('floor') ?? 1) || 1)); hud.tower = tower as never; tower.start(); }
+  if (towerMode) { tower = new TowerRun(scene, world, hud, assets, stage, seed); { const fl = params.has('hall') ? '0' : params.get('floor'); tower.startFloor = fl === null ? 1 : Math.max(0, Math.min(100, Math.floor(Number(fl)) || 0)); } hud.tower = tower as never; tower.start(); }
   document.title = towerMode ? 'Tower of Chrysanthus' : document.title;
   // Classic isometric framing (~35 deg elevation), orbitable with the middle mouse button.
   // The shared elevated, freely orbitable third-person camera (src/web/game/adaptiveCamera.ts).
@@ -174,12 +176,13 @@ export async function startArena(): Promise<void> {
     if (pressed.has('KeyH')) hud.toggleHelp();
     if (pressed.has('KeyL')) world.showLabels = !world.showLabels;
     if (pressed.has('KeyC') && !tower) { world.setCompanions(!world.companions); hud.announce(world.companions ? 'COMPANIONS JOIN' : 'FIGHTING ALONE'); }
-    if (pressed.has('KeyN') && !tower) world.spawnNow();
+    if (pressed.has('KeyN') && (!tower || tower.plan.kind === 'hall')) world.spawnNow();
+    if (pressed.has('KeyB') && tower) hud.toggleBook(world.skills, (slot, sk) => tower!.assign(slot, sk));
     if (pressed.has('KeyK')) hud.toggleCodex(loadCodex());
     if (pressed.has('KeyM')) { world.autoWaves = !world.autoWaves; hud.announce(world.autoWaves ? 'WAVES ON' : 'SANDBOX', world.autoWaves ? 'enemies keep coming' : 'press N to spawn enemies'); }
     const input = readInput();
     pressed.clear();
-    if (!paused && !hud.modalOpen) { world.step(dt, input); tower?.update(dt, input.interact, input.scroll); }
+    if (!paused && !hud.modalOpen) { world.step(dt, input); tower?.update(dt, input.interact, input.scroll, pressed.has('KeyV')); }
     // After the step: bodies are at this frame's positions, so planted feet, cloth and grips solve against them
     // (Babylon animates before onBeforeRender, so solving earlier would lag the root by a frame and skate the feet).
     else scene.animationTimeScale = 0;
@@ -211,6 +214,18 @@ export async function startArena(): Promise<void> {
     camera.fov = pose.fov;
     camera.position.set(pose.position.x + Math.sin(shakeT * 1.7) * s, pose.position.y + Math.sin(shakeT * 2.3) * s, pose.position.z + Math.cos(shakeT * 1.9) * s);
     camera.setTarget(camFocus);
+    // Bodies between the camera and the hero (a floating god, an orc) fade to ghosts instead of filling the screen.
+    {
+      const c = camera.position, hx = h.x, hy = h.y + 1.2, hz = h.z, dx = hx - c.x, dy = hy - c.y, dz = hz - c.z, L = Math.hypot(dx, dy, dz) || 1;
+      for (const f of world.fighters) {
+        if (f === hero) continue;
+        const px = f.pos.x - c.x, py = f.pos.y + f.hover + 1.1 - c.y, pz = f.pos.z - c.z, along = (px * dx + py * dy + pz * dz) / L;
+        const off = Math.hypot(px - dx / L * along, py - dy / L * along, pz - dz / L * along);
+        const block = along > .3 && along < L - .6 && off < 1.1 * f.inst.root.scaling.x;
+        const v = block ? .28 : 1;
+        for (const m of f.inst.meshes) if (Math.abs(m.visibility - v) > .01) m.visibility += (v - m.visibility) * Math.min(1, dt * 10);
+      }
+    }
     hud.update(dt, world, scene, camera);
   });
   ctx.engine.runRenderLoop(() => scene.render());

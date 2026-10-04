@@ -2,6 +2,8 @@ import { Matrix, Vector3, type Camera, type Scene } from '@babylonjs/core';
 import { ARENA, type ArenaWorld, type Fighter } from './world';
 import { WEAPONS, type WeaponId } from './combat';
 import type { SkillDef } from './tower/skills';
+import { ALL_ELEMENTS, ALL_FORMS, ELEMENT_INFO, FORMS, REACTIONS, spellFor, type Form } from './magic';
+import type { Element } from './tower/capability';
 
 /** DOM overlay for the Combat Arena: bars, combo badge, numbers, radar, cards. */
 const css = `
@@ -15,7 +17,8 @@ const css = `
 .ar-bar i{position:absolute;inset:0;transform-origin:left;background:linear-gradient(#e8382f,#9d1410)}
 .ar-bar b{position:absolute;inset:0;transform-origin:left;background:#ffd9a0;opacity:.7}
 .ar-bar span{position:absolute;inset:0;text-align:center;font-size:11px;line-height:15px;text-shadow:0 1px 2px #000}
-.ar-bar.en{height:7px}.ar-bar.en i{background:linear-gradient(#5fb8ff,#2163b8)}
+.ar-bar.en{height:6px}.ar-bar.en i{background:linear-gradient(#ffe08a,#c8962c)}
+.ar-bar.mana{height:9px}.ar-bar.mana i{background:linear-gradient(#6ec0ff,#2050c8)}.ar-bar.mana span{position:absolute;right:4px;top:-2px;font:700 9px sans-serif;color:#d8ecff}
 .ar-bar.xp{height:5px;background:#222}.ar-bar.xp i{background:#e2c25b}
 .ar-allies{margin-top:8px;display:flex;flex-direction:column;gap:4px}
 .ar-ally{display:flex;align-items:center;gap:6px;font-size:11px;text-shadow:0 1px 2px #000}
@@ -41,6 +44,7 @@ const css = `
 .ar-help b{color:#ffd45c}
 .ar-help .x{float:right;cursor:pointer;color:#aaa}
 .ar-num{position:absolute;font:900 20px/1 "Segoe UI",sans-serif;color:#fff;text-shadow:0 2px 0 #000,0 0 6px #000;white-space:nowrap;will-change:transform}
+.ar-num.word{font:900 22px/1 'Segoe UI',sans-serif;letter-spacing:.08em;-webkit-text-stroke:1px #000}
 .ar-num.crit{color:#ffd23d;font-size:28px}.ar-num.hurt{color:#ff5a4a}.ar-num.block{color:#9fd0ff;font-size:16px}.ar-num.heal{color:#6dff9a}
 .ar-hp{position:absolute;width:56px;height:6px;background:#1a0606;border:1px solid #000;margin-left:-28px}
 .ar-hp i{position:absolute;inset:0;transform-origin:left;background:#e8322a}.ar-hp.ally i{background:#35d06c}
@@ -83,6 +87,17 @@ const css = `
 .ar-ach h3{margin:0 0 4px;font:800 19px "Segoe UI",sans-serif;color:#fff}
 .ar-ach p{margin:0 0 6px;color:#b8c4d6;font-style:italic}
 .ar-ach .rw{font-weight:800}
+.ar-belt{display:flex;gap:4px;margin-left:8px}.ar-pot{width:34px;height:34px;border-radius:17px;background:#141a26e0;border:2px solid #56627a;display:grid;place-items:center;font-size:16px;position:relative}
+.ar-pot em{position:absolute;left:-2px;top:-6px;font:700 10px sans-serif;color:#ffd45c;font-style:normal}
+.ar-imbue{position:absolute;left:50%;bottom:78px;transform:translateX(-50%);font:800 12px sans-serif;letter-spacing:.12em;text-shadow:0 1px 2px #000}
+.ar-book{position:absolute;inset:5% 8%;background:#0a0e16f4;border:1px solid #6a5a2a;border-radius:8px;padding:16px 20px;overflow:auto;display:none;pointer-events:auto;font:500 12px/1.45 'Segoe UI',sans-serif;color:#dfe8f5}
+.ar-book h2{margin:0 0 4px;font:900 22px 'Segoe UI',sans-serif;color:#ffd76a;letter-spacing:.06em}
+.ar-book table{border-collapse:collapse;margin:8px 0}.ar-book td,.ar-book th{border:1px solid #2a3344;padding:3px 5px;text-align:center;min-width:86px}
+.ar-book td.known{cursor:pointer;background:#16203a}.ar-book td.known:hover{background:#25345c}.ar-book td.dim{color:#3e4758}.ar-book td.sel{outline:2px solid #ffd76a}
+.ar-book .slots{display:flex;gap:6px;margin:8px 0}.ar-book .slot{border:1px solid #56627a;border-radius:4px;padding:4px 8px;cursor:pointer;min-width:100px}.ar-book .slot:hover{border-color:#ffd76a}
+.ar-dialog{position:absolute;left:50%;bottom:120px;transform:translateX(-50%);width:min(820px,92%);background:linear-gradient(#0c1220f2,#070a12f2);border:1px solid #c9a23a;border-radius:6px;padding:14px 20px;display:none;pointer-events:auto;box-shadow:0 0 40px #000}
+.ar-dialog h3{margin:0 0 6px;font:800 15px 'Segoe UI',sans-serif;color:#ffd76a;letter-spacing:.1em}.ar-dialog p{margin:0 0 10px;font:500 16px/1.5 Georgia,serif;color:#f1ead8}
+.ar-dialog button{display:block;width:100%;text-align:left;margin:4px 0;padding:7px 10px;background:#141c2c;border:1px solid #3a4660;color:#dfe8f5;font:600 13px 'Segoe UI',sans-serif;border-radius:4px;cursor:pointer}.ar-dialog button:hover{border-color:#ffd76a}
 .ar-flask{margin-left:10px;width:52px;height:52px;border-radius:26px;background:#1e1418e0;border:2px solid #b3485e;display:grid;place-items:center;font:800 15px sans-serif;color:#ffc6d0}
 .ar-charge{position:absolute;left:50%;top:58%;transform:translateX(-50%);width:120px;height:8px;background:#0008;border:1px solid #000;display:none}.ar-charge i{display:block;height:100%;background:#ffd45c}
 .ar-btn{margin-top:20px;padding:10px 22px;font:700 14px sans-serif;background:#ffd45c;color:#1a1300;border:0;border-radius:4px;cursor:pointer}
@@ -105,7 +120,10 @@ export const UPGRADES: Upgrade[] = [
 
 export class ArenaHud {
   readonly root = el('div', 'ar');
-  private hp = el('i'); private hpLag = el('b'); private hpText = el('span'); private en = el('i'); private xp = el('i'); private lvl = el('div', 'ar-lvl');
+  private hp = el('i'); private hpLag = el('b'); private hpText = el('span'); private en = el('i'); private mana = el('i'); private manaText = el('span');
+  private belt = el('div', 'ar-belt'); private beltSig = ''; private imbueEl = el('div', 'ar-imbue'); private bookEl = el('div', 'ar-book'); private dialogEl = el('div', 'ar-dialog');
+  /** Potion belt and spellbook data (set by the tower). */
+  magic: { belt: { icon: string; name: string; color: string }[]; spells: SkillDef[]; ley: Element | null; forms: string[]; affinity: (e: Element) => number; manaControl: number } | null = null; private xp = el('i'); private lvl = el('div', 'ar-lvl');
   private allies = el('div', 'ar-allies');
   private combo = el('div', 'ar-combo'); private mul = el('span'); private hits = el('div', 'ar-hits');
   private weapons = new Map<WeaponId, HTMLElement>(); private wname = el('div', 'ar-wname');
@@ -131,8 +149,9 @@ export class ArenaHud {
     frame.append(el('div', 'ar-portrait', '🛡️'), bars);
     const hpBar = el('div', 'ar-bar'); hpBar.append(this.hpLag, this.hp, this.hpText);
     const enBar = el('div', 'ar-bar en'); enBar.append(this.en);
+    const manaBar = el('div', 'ar-bar mana'); manaBar.append(this.mana, this.manaText);
     const xpBar = el('div', 'ar-bar xp'); xpBar.append(this.xp);
-    bars.append(this.lvl, hpBar, enBar, xpBar, this.allies);
+    bars.append(this.lvl, hpBar, manaBar, enBar, xpBar, this.allies);
     const d = el('div', 'ar-diamond'); d.append(this.mul); this.combo.append(d, this.hits);
     const wrow = el('div', 'ar-weapons');
     for (const id of Object.keys(WEAPONS) as WeaponId[]) { const w = el('div', 'ar-w', `<span>${ICON[id]}</span><em>${WEAPONS[id].key}</em>`); this.weapons.set(id, w); wrow.append(w); }
@@ -145,8 +164,8 @@ export class ArenaHud {
       <b>R</b> rebuild the gym · <b>L</b> state labels · <b>P</b> pause · <b>H</b> this help`);
     this.help.querySelector('.x')!.addEventListener('click', () => this.toggleHelp());
     this.layer.style.cssText = 'position:absolute;inset:0;overflow:hidden';
-    this.skills.append(this.flaskEl);
-    this.root.append(this.vignette, this.layer, frame, this.combo, wrow, this.radar, this.waveEl, this.banner, this.bossEl, this.toasts, this.skills, this.achEl, this.chargeEl, this.help, this.codexEl, this.modal, this.fadeEl);
+    this.skills.append(this.flaskEl, this.belt);
+    this.root.append(this.vignette, this.layer, frame, this.combo, wrow, this.radar, this.waveEl, this.banner, this.bossEl, this.toasts, this.skills, this.imbueEl, this.achEl, this.bookEl, this.dialogEl, this.chargeEl, this.help, this.codexEl, this.modal, this.fadeEl);
     document.body.append(this.root);
   }
 
@@ -194,6 +213,56 @@ export class ArenaHud {
     this.achEl.style.borderColor = color;
   }
 
+  /** A floating word over a body: reactions and statuses (FREEZE, ELECTROCUTE, SHATTER, STEAM...). */
+  word(p: Vector3, text: string, color: string): void {
+    const e = el('div', 'ar-num word', text); e.style.color = color; this.layer.append(e);
+    this.nums.push({ e, p: p.add(new Vector3((Math.random() - .5) * .4, .5, 0)), t: -.25, vx: 0 });
+    if (this.nums.length > 60) this.nums.shift()!.e.remove();
+  }
+
+  /**
+   * The Spellbook (B): the element x form grid. Discovered spells are lit; click one, then a slot, to ready it.
+   * Shows affinities, learned forms, the floor's ley and the reaction rules, so emergence can be read and planned.
+   */
+  toggleBook(slots: (SkillDef | null)[], assign: (slot: number, s: SkillDef) => void): void {
+    if (this.bookEl.style.display === 'block') { this.bookEl.style.display = 'none'; this.modalOpen = false; return; }
+    const M = this.magic; if (!M) return;
+    const known = new Map(M.spells.map(x => [x.id, x]));
+    let sel: SkillDef | null = null;
+    const render = () => {
+      const head = '<tr><th></th>' + ALL_FORMS.map(f => `<th title="${FORMS[f].text}" style="color:${M.forms.includes(f) ? '#ffd76a' : '#4b5568'}">${FORMS[f].name}</th>`).join('') + '<th>affinity</th></tr>';
+      const rows = ALL_ELEMENTS.map(e => '<tr><th style="color:' + ELEMENT_INFO[e].color + '">' + ELEMENT_INFO[e].glyph + ' ' + ELEMENT_INFO[e].name + (M.ley === e ? ' ✦' : '') + '</th>' + ALL_FORMS.map(f => {
+        const id = `sp:${e}:${f}`, k = known.get(id);
+        return k ? `<td class="known${sel?.id === id ? ' sel' : ''}" data-id="${id}" title="${k.text} · ${k.mana} mana · ${k.cooldown}s">${k.icon} ${k.name}${k.rank > 1 ? ` <small>r${k.rank}</small>` : ''}</td>` : `<td class="dim" title="Needs ${ELEMENT_INFO[e].name} affinity 1 and the ${FORMS[f as Form].name} form">${spellFor(e, f as Form).name}</td>`;
+      }).join('') + `<td>${M.affinity(e).toFixed(1)}</td></tr>`).join('');
+      const others = M.spells.filter(x => x.source !== 'spell');
+      this.bookEl.innerHTML = `<h2>Spellbook</h2>
+        <div>Magic is an element (an affinity you hold) shaped by a form (a way you have learned to shape mana). Reach affinity 1 in an element and every form you know gives you its spell. Mana control ${M.manaControl.toFixed(1)}${M.ley ? ` · this floor's ley runs with <b style="color:${ELEMENT_INFO[M.ley].color}">${ELEMENT_INFO[M.ley].name}</b> (+35%)` : ''}.</div>
+        <table>${head}${rows}</table>
+        ${others.length ? `<div><b>Other skills:</b> ${others.map(o => `<span class="known" data-id="${o.id}" style="cursor:pointer;color:${o.color}">${o.icon} ${o.name}</span>`).join(' · ')}</div>` : ''}
+        <div style="margin-top:8px"><b>Skill slots</b> ${sel ? `· choose a slot for <b style="color:${sel.color}">${sel.name}</b>` : '· pick a spell, then a slot'}</div>
+        <div class="slots">${slots.map((x, i) => `<div class="slot" data-slot="${i}">${i + 1}. ${x ? `${x.icon} ${x.name}` : '<i>empty</i>'}</div>`).join('')}</div>
+        <div><b>Reactions</b>${REACTIONS.map(r => `<div>${r.a} + ${r.b} → <b>${r.result}</b>: ${r.text}</div>`).join('')}</div>
+        <button class="ar-btn" id="book-close">Close (B)</button>`;
+      this.bookEl.querySelectorAll<HTMLElement>('[data-id]').forEach(c => c.addEventListener('click', () => { sel = known.get(c.dataset.id!) ?? null; render(); }));
+      this.bookEl.querySelectorAll<HTMLElement>('[data-slot]').forEach(c => c.addEventListener('click', () => { if (!sel) return; assign(Number(c.dataset.slot), sel); slots = slots.map((x, i) => (i === Number(c.dataset.slot) ? sel : x)); sel = null; render(); }));
+      this.bookEl.querySelector('#book-close')!.addEventListener('click', () => this.toggleBook(slots, assign));
+    };
+    render(); this.bookEl.style.display = 'block'; this.modalOpen = true;
+  }
+
+  /** A conversation panel: the speaker's line and the player's replies (keys 1-3 or click). */
+  dialogue(speaker: string, line: string, replies: string[]): Promise<number> {
+    this.modalOpen = true; this.dialogEl.style.display = 'block';
+    this.dialogEl.innerHTML = `<h3>${speaker}</h3><p>${line}</p>`;
+    return new Promise(res => {
+      const done = (i: number) => { window.removeEventListener('keydown', key, true); this.dialogEl.style.display = 'none'; this.modalOpen = false; res(i); };
+      const key = (e: KeyboardEvent) => { const i = e.code.startsWith('Digit') ? Number(e.code.slice(5)) - 1 : e.code === 'Enter' || e.code === 'Space' ? 0 : -1; if (i >= 0 && i < Math.max(1, replies.length)) { e.stopPropagation(); e.preventDefault(); done(i); } };
+      window.addEventListener('keydown', key, true);
+      (replies.length ? replies : ['Continue']).forEach((r, i) => { const b = el('button', '', `${i + 1}. ${r}`); b.addEventListener('click', () => done(i)); this.dialogEl.append(b); });
+    });
+  }
+
   setHelp(html: string): void { this.help.innerHTML = html; this.help.querySelector('.x')?.addEventListener('click', () => this.toggleHelp()); }
 
   toggleHelp(): void { this.help.style.display = this.help.style.display === 'none' ? '' : 'none'; }
@@ -236,6 +305,13 @@ export class ArenaHud {
     this.hpLag.style.transform = `scaleX(${Math.max(0, h.hpShown / h.maxHp)})`;
     this.hpText.textContent = `${Math.max(0, Math.ceil(h.hp))} / ${Math.round(h.maxHp)}`;
     this.en.style.transform = `scaleX(${h.energy / 100})`;
+    this.mana.style.transform = `scaleX(${Math.max(0, h.mana / h.maxMana)})`; this.manaText.textContent = `${Math.floor(h.mana)}`;
+    const ie = w.imbue?.e ?? w.weaponImbue[w.weapon];
+    this.imbueEl.style.display = ie ? '' : 'none';
+    if (ie) { this.imbueEl.textContent = `${ELEMENT_INFO[ie].glyph} ${ELEMENT_INFO[ie].name.toUpperCase()} WEAPON${w.imbue ? ` ${Math.ceil(w.imbue.t)}s` : ''}`; this.imbueEl.style.color = ELEMENT_INFO[ie].color; }
+    const M = this.magic;
+    const bs = M ? M.belt.map(b => b.name).join('|') : '';
+    if (bs !== this.beltSig) { this.beltSig = bs; this.belt.replaceChildren(...(M?.belt ?? []).map((b, i) => { const e = el('div', 'ar-pot', `${i === 0 ? '<em>V</em>' : ''}${b.icon}`); e.style.borderColor = b.color; e.title = b.name; return e; })); }
     this.xp.style.transform = `scaleX(${w.xp / w.nextXp})`;
     const allies = w.fighters.filter(f => f.role === 'ally');
     if (this.allies.childElementCount !== allies.length) this.allies.replaceChildren(...allies.map(() => el('div', 'ar-ally', '<span></span><div class="ar-bar"><i></i></div>')));

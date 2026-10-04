@@ -20,6 +20,10 @@ The Combat Gym panel has an **Enter the Tower of Chrysanthus** button.
   The Combat Gym sandbox keeps the four Witcher-style signs (Ember, Gust, Ward, Frost Sigil) on 1–4.
 - **Other keys:** Q drinks a flask (heals over a second; refilled each floor; potions add flasks). Health does not regenerate on its own in the tower. Tab cycles drawn weapons (F1–F4 select one directly). E uses a shrine. K opens the Codex.
 
+## Magic and the god
+
+Magic (element × form; 80 spells that emerge from affinity and learned forms), elemental reactions, imbuing, potions, the Proving Hall (floor 0) and Chrysanthus himself (the floor-10 trial and the summit) are described in docs/TOWER_MAGIC.md.
+
 ## Monsters
 
 Each floor belongs to a faction, and about a fifth of its foes come from the others (`floorgen.ts`):

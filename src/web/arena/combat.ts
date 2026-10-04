@@ -125,7 +125,7 @@ export const WEAPONS: Record<WeaponId, WeaponDef> = {
   },
 };
 
-export type FoeKind = 'minion' | 'warrior' | 'rogue' | 'mage' | 'goblin' | 'goblin_archer' | 'orc' | 'skeleton' | 'skeleton_mage' | 'skeleton_brute';
+export type FoeKind = 'minion' | 'warrior' | 'rogue' | 'mage' | 'goblin' | 'goblin_archer' | 'orc' | 'skeleton' | 'skeleton_mage' | 'skeleton_brute' | 'dummy' | 'chrysanthus';
 export interface FoeDef {
   looks: LookId[]; set: keyof typeof MOVESETS; hp: number; speed: number; xp: number; reach: number;
   attacks: AttackDef[]; shield?: string; weapon?: string; hand?: 'l' | 'r'; ranged?: 'bolt' | 'orb';
@@ -168,6 +168,17 @@ export const FOES: Record<FoeKind, FoeDef> = {
       { clip: GS('slash'), speed: 1.05, active: [0.42, 0.84], cancel: 9, end: 1.25, range: 3.6, arc: 90 * D, damage: 90, knock: 7, lunge: 1.2, heavy: true, hitstop: .05, shake: .45 }],
   },
   // Skeletons: the dead in ranks. Brittle (low hp, no poise against heavies), relentless, and they keep coming.
+  // A training dummy (the Proving Hall): stands, takes everything, mends itself.
+  dummy: {
+    looks: ['soldier'], set: 'sword', hp: 4000, speed: 0, xp: 0, reach: 0, tell: 9, cooldown: [99, 99], armor: 0,
+    attacks: [{ clip: SS('slash'), speed: 1, active: [0.5, 0.74], cancel: 9, end: 1.15, range: 0, arc: 0, damage: 0, knock: 0, lunge: 0, hitstop: 0, shake: 0 }],
+  },
+  // Chrysanthus's avatar: driven by its own controller (tower/chrysanthus.ts), these are its sword blows.
+  chrysanthus: {
+    looks: ['chrysanthus'], set: 'sword', hp: 60000, speed: 7.5, xp: 400, reach: 2.8, weapon: 'W_veilguard', tell: .55, cooldown: [.8, 1.6], armor: .9, scale: 1.08,
+    attacks: [{ clip: SS('slash'), speed: 1.35, active: [0.5, 0.74], cancel: 9, end: 1.1, range: 3.2, arc: 80 * D, damage: 70, knock: 6, lunge: 1.4, hitstop: .05, shake: .35 },
+      { clip: SS('attack (4)'), speed: 1.4, active: [0.38, 0.56], cancel: 9, end: 0.95, range: 3.2, arc: 70 * D, damage: 60, knock: 5, lunge: 1.4, hitstop: .05, shake: .3 }],
+  },
   skeleton: {
     looks: ['skeleton'], set: 'sword', hp: 48, speed: 4, xp: 8, reach: 2.4, weapon: 'W_serpent-tooth', tell: .5, cooldown: [1.2, 2.2], armor: .1, tokens: 3, hunch: .12,
     attacks: [{ clip: SS('slash'), speed: 1.05, active: [0.5, 0.74], cancel: 9, end: 1.15, range: 2.7, arc: 60 * D, damage: 40, knock: 3, lunge: .8, hitstop: .04, shake: .2 },
@@ -212,7 +223,7 @@ export const SPELL_CLIPS = ['great_sword/spell cast', 'sword_and_shield/sword an
 
 /** Every clip name referenced by weapons, foes, allies and movesets: only these are baked and instantiated. */
 export function usedClips(): Set<string> {
-  const out = new Set<string>(['Lie_StandUp', ...Object.values(DODGES), 'unarmed/walk_forward', 'unarmed/walk_backward', 'unarmed/walk_strafe_left', 'unarmed/walk_strafe_right']);
+  const out = new Set<string>(['Lie_StandUp', 'great_sword/great sword casting', 'great_sword/spell cast', 'sword_and_shield/sword and shield casting (2)', 'sword_and_shield/sword and shield power up', 'sword_and_shield/sword and shield idle', ...Object.values(DODGES), 'unarmed/walk_forward', 'unarmed/walk_backward', 'unarmed/walk_strafe_left', 'unarmed/walk_strafe_right']);
   const add = (a?: AttackDef) => a && out.add(a.clip);
   for (const m of Object.values(MOVESETS)) for (const c of [m.idle, m.walk, m.run, m.block, m.guard, m.enter, ...m.hit, ...m.death]) out.add(c);
   for (const w of Object.values(WEAPONS)) { w.combo.forEach(add); w.heavy?.forEach(add); add(w.spin); add(w.bash); add(w.aimed); add(w.kick); }

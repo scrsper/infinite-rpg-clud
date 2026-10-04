@@ -31,7 +31,8 @@ export const GODS: God[] = [
   { name: 'Maelith', domain: 'verdance', title: 'of Green Return' },
 ];
 
-export type FloorKind = 'battle' | 'boss' | 'shrine' | 'summit';
+/** hall: floor 0, the Proving Hall (every magic to try, training dummies). avatar: floor 10, Chrysanthus's first trial. */
+export type FloorKind = 'battle' | 'boss' | 'shrine' | 'summit' | 'hall' | 'avatar';
 export interface Wall { x: number; z: number; len: number; yaw: number }
 export interface FloorPlan {
   floor: number; seed: number; half: number; theme: Theme; kind: FloorKind;
@@ -44,6 +45,8 @@ export interface FloorPlan {
   god?: God; shrine?: { x: number; z: number };
   start: { x: number; z: number }; exit: { x: number; z: number };
   objective: string;
+  /** The element whose mana runs strong on this floor (null on the first floors and in the hall). */
+  ley: Element | null;
 }
 
 const BOSS_FIRST = ['Gorrak', 'Velma', 'Draun', 'Isolde', 'Mordecai', 'Hask', 'Brynja', 'Oren', 'Sable', 'Teodric', 'Ulla', 'Corvin'];
@@ -57,7 +60,8 @@ const BOSS_EPITHET: Record<Tier, string[]> = {
 export function planFloor(runSeed: number, floor: number): FloorPlan {
   const rnd = mulberry((runSeed * 7919 + floor * 104729) >>> 0);
   const half = halfSizeFor(floor), theme = themeFor(floor);
-  const kind: FloorKind = floor >= 100 ? 'summit' : floor % 10 === 0 ? 'shrine' : floor % 5 === 0 ? 'boss' : 'battle';
+  if (floor <= 0) return provingHall(runSeed);
+  const kind: FloorKind = floor >= 100 ? 'summit' : floor === 10 ? 'avatar' : floor % 10 === 0 ? 'shrine' : floor % 5 === 0 ? 'boss' : 'battle';
   const start = { x: 0, z: half - 4 }, exit = { x: 0, z: -half + 2.5 };
   const walls: Wall[] = [], props: FloorPlan['props'] = [], chests: FloorPlan['chests'] = [];
   const rects: { x0: number; z0: number; x1: number; z1: number }[] = [];
@@ -96,7 +100,7 @@ export function planFloor(runSeed: number, floor: number): FloorPlan {
   if (rnd() < .5) chests.push({ x: (rnd() * 2 - 1) * (half - 4), z: (rnd() * 2 - 1) * (half - 8), yaw: rnd() * 6 });
   // Enemies: count and mix scale with the floor.
   const foes: FloorPlan['foes'] = [];
-  const count = kind === 'shrine' || kind === 'summit' ? 3 + Math.floor(floor / 15) : Math.min(30, 3 + Math.floor(floor * .55));
+  const count = kind === 'avatar' ? 0 : kind === 'shrine' || kind === 'summit' ? 3 + Math.floor(floor / 15) : Math.min(30, 3 + Math.floor(floor * .55));
   // Each floor belongs to a faction (greenskins, the dead, raiders); a fifth of its foes are drawn from the others.
   const faction = floorFaction(floor, rnd);
   for (let i = 0; i < count; i++) {
@@ -115,8 +119,25 @@ export function planFloor(runSeed: number, floor: number): FloorPlan {
     shrine = { x: 0, z: -half * .45 };
     boss = { kind: 'warrior', name: kind === 'summit' ? `${god.name}, ${god.title}` : `Champion of ${god.name}`, x: 0, z: -half * .3, hpMul: (kind === 'summit' ? 30 : 9) + floor * .3, dmgMul: 1.5 + floor * .025, scale: kind === 'summit' ? 1.6 : 1.4 };
   }
-  const objective = kind === 'battle' ? 'Defeat every foe on the floor' : kind === 'boss' ? `Defeat ${boss!.name}` : kind === 'shrine' ? `Defeat the ${boss!.name} and claim a boon` : `Face ${boss!.name}`;
-  return { floor, seed: runSeed, half, theme, kind, walls, props, chests, foes, boss, god, shrine, start, exit, objective, faction };
+  if (kind === 'summit') boss = { kind: 'chrysanthus', name: 'Chrysanthus, God of the Tower', x: 0, z: -half * .3, hpMul: 1, dmgMul: 1.6 + floor * .02, scale: 1 };
+  const objective = kind === 'avatar' ? 'Survive the trial of Chrysanthus' : kind === 'battle' ? 'Defeat every foe on the floor' : kind === 'boss' ? `Defeat ${boss!.name}` : kind === 'shrine' ? `Defeat the ${boss!.name} and claim a boon` : `Face ${boss!.name}`;
+  if (kind === 'avatar') { boss = undefined; walls.length = 0; }   // an open hall for the god's trial
+  const ley: Element | null = floor < 3 ? null : LEY_ORDER[Math.floor(rnd() * LEY_ORDER.length)];
+  return { floor, seed: runSeed, half, theme, kind, walls, props, chests, foes, boss, god, shrine, start, exit, objective, faction, ley };
+}
+
+const LEY_ORDER: Element[] = ['flame', 'frost', 'storm', 'swift', 'iron', 'shadow', 'verdance', 'water', 'gravity'];
+
+/** Floor 0: the Proving Hall of Chrysanthus. No enemies but training dummies; every element and form to try. */
+function provingHall(runSeed: number): FloorPlan {
+  const half = 22, theme: Theme = { ...THEMES[6], name: 'The Proving Hall' };
+  const props: FloorPlan['props'] = [];
+  for (let i = 0; i < 6; i++) props.push({ key: i % 2 ? 'barrel' : 'crate', x: -15 + i * 6, z: 9, yaw: i });
+  for (let i = 0; i < 5; i++) props.push({ key: 'pot', x: -12 + i * 6, z: -12, yaw: i });
+  const foes: FloorPlan['foes'] = [];
+  for (let i = 0; i < 7; i++) foes.push({ kind: 'dummy', x: -12 + i * 4, z: -3 - (i % 2) * 2.5 });
+  return { floor: 0, seed: runSeed, half, theme, kind: 'hall', walls: [], props, chests: [{ x: 14, z: 12, yaw: 0 }], foes, start: { x: 0, z: half - 5 }, exit: { x: 0, z: -half + 2.5 },
+    objective: 'Try every magic: B opens the Spellbook · N summons foes · the door leads to Floor 1', ley: null };
 }
 
 export type Faction = 'greenskin' | 'undead' | 'raider';
