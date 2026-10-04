@@ -191,18 +191,11 @@ export function waveRoster(n: number, rnd: () => number): FoeKind[] {
 }
 
 /** Witcher-style signs on 1-4 (Diablo skill slots). Power scales with the matching affinity in the tower. */
-export interface SpellDef { id: 'ember' | 'gust' | 'ward' | 'sigil'; name: string; icon: string; cost: number; cooldown: number; color: string; text: string }
-export const SPELLS: SpellDef[] = [
-  { id: 'ember', name: 'Ember', icon: '🔥', cost: 22, cooldown: 2.5, color: '#ff7a2e', text: 'Cone of fire; burns' },
-  { id: 'gust', name: 'Gust', icon: '🌀', cost: 25, cooldown: 4, color: '#cfe8ff', text: 'Force wave; knocks down, breaks guards' },
-  { id: 'ward', name: 'Ward', icon: '🛡️', cost: 30, cooldown: 10, color: '#7fb8ff', text: 'Shield that absorbs damage' },
-  { id: 'sigil', name: 'Frost Sigil', icon: '❄️', cost: 28, cooldown: 7, color: '#8fdcff', text: 'Circle that chills and slows' },
-];
 export const SPELL_CLIPS = ['great_sword/spell cast', 'sword_and_shield/sword and shield casting (2)'];
 
 /** Every clip name referenced by weapons, foes, allies and movesets: only these are baked and instantiated. */
 export function usedClips(): Set<string> {
-  const out = new Set<string>(['Lie_StandUp', ...Object.values(DODGES)]);
+  const out = new Set<string>(['Lie_StandUp', ...Object.values(DODGES), 'unarmed/walk_forward', 'unarmed/walk_backward', 'unarmed/walk_strafe_left', 'unarmed/walk_strafe_right']);
   const add = (a?: AttackDef) => a && out.add(a.clip);
   for (const m of Object.values(MOVESETS)) for (const c of [m.idle, m.walk, m.run, m.block, m.guard, m.enter, ...m.hit, ...m.death]) out.add(c);
   for (const w of Object.values(WEAPONS)) { w.combo.forEach(add); w.heavy?.forEach(add); add(w.spin); add(w.bash); add(w.aimed); add(w.kick); }

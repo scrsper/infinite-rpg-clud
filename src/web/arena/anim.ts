@@ -65,9 +65,29 @@ export class Animator {
     return best;
   }
 
+  private legs: { name: string; g: AnimationGroup; w: number; target: number } | null = null;
+  /**
+   * A legs-only layer over whatever is playing (strafe/backpedal while guarding or aiming). Its weight is
+   * high so it dominates the leg bones; the upper body keeps the main clip. `null` fades it out.
+   */
+  legLayer(name: string | null, speed = 1): void {
+    if (name && this.legs?.name !== name) {
+      const g = this.groups.get(`legs:${name}`); if (!g) return;
+      if (this.legs) this.legs.target = 0;
+      const old = this.legs; if (old && old.w <= 0) old.g.stop();
+      g.stop(); g.start(true, speed, g.from, g.to); g.setWeightForAllAnimatables(0);
+      this.legs = { name, g, w: 0, target: 6 };
+    } else if (name && this.legs) { this.legs.target = 6; this.legs.g.speedRatio = speed; }
+    else if (!name && this.legs) this.legs.target = 0;
+  }
+
   setSpeed(speed: number): void { const a = this.active.get(this.current); if (a) a.g.speedRatio = speed; }
 
   update(dt: number): void {
+    if (this.legs) {
+      const L = this.legs; L.w += Math.sign(L.target - L.w) * Math.min(Math.abs(L.target - L.w), dt * 12);
+      if (L.w <= 0 && L.target === 0) { L.g.stop(); this.legs = null; } else L.g.setWeightForAllAnimatables(L.w);
+    }
     for (const [n, a] of this.active) {
       a.w = a.target > a.w ? Math.min(a.target, a.w + a.rate * dt) : Math.max(a.target, a.w - a.rate * dt);
       if (a.w <= 0 && a.target === 0) { a.g.stop(); this.active.delete(n); continue; }

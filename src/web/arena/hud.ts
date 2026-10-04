@@ -1,6 +1,7 @@
 import { Matrix, Vector3, type Camera, type Scene } from '@babylonjs/core';
 import { ARENA, type ArenaWorld, type Fighter } from './world';
-import { SPELLS, WEAPONS, type WeaponId } from './combat';
+import { WEAPONS, type WeaponId } from './combat';
+import type { SkillDef } from './tower/skills';
 
 /** DOM overlay for the Combat Arena: bars, combo badge, numbers, radar, cards. */
 const css = `
@@ -50,7 +51,7 @@ const css = `
 .ar-vignette{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 45%,rgba(190,0,0,.75) 100%);opacity:0}
 .ar-modal{position:absolute;inset:0;background:#05070bd8;display:none;place-items:center;pointer-events:auto}
 .ar-modal.on{display:grid}
-.ar-card-row{display:flex;gap:18px;justify-content:center}
+.ar-card-row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;max-width:1100px}
 .ar-card{width:190px;padding:18px 14px;background:#151b26;border:2px solid #4b5770;border-radius:8px;text-align:center;cursor:pointer;transition:transform .12s,border-color .12s}
 .ar-card:hover,.ar-card:focus{transform:translateY(-4px);border-color:#ffd45c;outline:none}
 .ar-card .ic{font-size:44px;margin:8px 0}
@@ -72,11 +73,22 @@ const css = `
 .ar-sk em{position:absolute;left:4px;top:2px;font:700 11px sans-serif;color:#ffd45c;font-style:normal}
 .ar-sk i{position:absolute;left:0;right:0;bottom:0;background:#000a;transform-origin:bottom}
 .ar-sk.locked{opacity:.25}
+.ar-sk b{position:absolute;left:0;right:0;bottom:0;height:3px}
+.ar-sk.empty{opacity:.35;font-size:14px;color:#56627a;border-style:dashed}
+.ar-scroll{position:relative;width:44px;height:44px;border-radius:6px;background:#2a2114e0;border:2px solid #c9a35a;display:grid;place-items:center;font-size:20px}
+.ar-scroll em{position:absolute;left:3px;top:1px;font:700 10px sans-serif;color:#ffd45c;font-style:normal}
+.ar-scroll small{position:absolute;right:3px;bottom:1px;font:700 10px sans-serif;color:#fff}
+.ar-ach{position:absolute;left:50%;top:150px;transform:translateX(-50%);min-width:380px;max-width:560px;background:#0b0f18f0;border:2px solid #5aa8ff;border-radius:6px;padding:12px 18px;font:500 14px/1.4 "Segoe UI",sans-serif;color:#dfe8f5;opacity:0;transition:opacity .3s;box-shadow:0 0 30px #000}
+.ar-ach h4{margin:0 0 2px;font:900 12px sans-serif;letter-spacing:.2em;color:#5aa8ff}
+.ar-ach h3{margin:0 0 4px;font:800 19px "Segoe UI",sans-serif;color:#fff}
+.ar-ach p{margin:0 0 6px;color:#b8c4d6;font-style:italic}
+.ar-ach .rw{font-weight:800}
 .ar-flask{margin-left:10px;width:52px;height:52px;border-radius:26px;background:#1e1418e0;border:2px solid #b3485e;display:grid;place-items:center;font:800 15px sans-serif;color:#ffc6d0}
 .ar-charge{position:absolute;left:50%;top:58%;transform:translateX(-50%);width:120px;height:8px;background:#0008;border:1px solid #000;display:none}.ar-charge i{display:block;height:100%;background:#ffd45c}
 .ar-btn{margin-top:20px;padding:10px 22px;font:700 14px sans-serif;background:#ffd45c;color:#1a1300;border:0;border-radius:4px;cursor:pointer}
 `;
 
+const SOURCE_COLOR: Record<string, string> = { essence: '#b57bff', confluence: '#ff5ad1', book: '#5aa8ff', class: '#ffd45c', scroll: '#c9a35a', sign: '#8fa0b8' };
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', html = ''): HTMLElementTagNameMap[K] => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; return e; };
 const ICON: Record<WeaponId, string> = { fists: '👊', greatsword: '🗡️', axe: '🪓', bow: '🏹' };
 
@@ -107,9 +119,10 @@ export class ArenaHud {
   private hurt = 0; private bannerT = 0;
   private toasts = el('div', 'ar-toasts'); private fadeEl = el('div', 'ar-fade'); private bossEl = el('div', 'ar-boss', '<span></span><div class="ar-bar"><i></i></div>');
   private codexEl = el('div', 'ar-codex');
-  private skills = el('div', 'ar-skills'); private skillEls: HTMLElement[] = []; private flaskEl = el('div', 'ar-flask'); private chargeEl = el('div', 'ar-charge', '<i></i>');
+  private skills = el('div', 'ar-skills'); private skillEls: HTMLElement[] = []; private skillSig = ''; private scrollEl = el('div', 'ar-scroll');
+  private achEl = el('div', 'ar-ach'); private achQ: string[] = []; private achT = 0; private flaskEl = el('div', 'ar-flask'); private chargeEl = el('div', 'ar-charge', '<i></i>');
   /** Set by the tower: drives the floor panel, boss bar, tier/class line and weapon locks. */
-  tower: { floor: number; plan: { objective: string; theme: { name: string; tier: string } }; boss: Fighter | null; summary(): { tier: string; cls: string; styles: [string, number][]; affinities: [string, number][] }; gear: Record<string, { name: string; quality: number } | undefined> } | null = null;
+  tower: { floor: number; plan: { objective: string; theme: { name: string; tier: string } }; boss: Fighter | null; summary(): { tier: string; cls: string; essences: string[]; confluence: string; gear: { name: string; color: string; text: string }[]; achievements: string[]; styles: [string, number][]; affinities: [string, number][] }; gear: Record<string, { name: string } | undefined>; scrolls: SkillDef[] } | null = null;
   modalOpen = false;
 
   constructor() {
@@ -132,9 +145,8 @@ export class ArenaHud {
       <b>R</b> rebuild the gym · <b>L</b> state labels · <b>P</b> pause · <b>H</b> this help`);
     this.help.querySelector('.x')!.addEventListener('click', () => this.toggleHelp());
     this.layer.style.cssText = 'position:absolute;inset:0;overflow:hidden';
-    for (const [k, s] of SPELLS.entries()) { const e = el('div', 'ar-sk', `<span>${s.icon}</span><em>${k + 1}</em><i></i>`); e.title = `${s.name}: ${s.text}`; this.skillEls.push(e); this.skills.append(e); }
     this.skills.append(this.flaskEl);
-    this.root.append(this.vignette, this.layer, frame, this.combo, wrow, this.radar, this.waveEl, this.banner, this.bossEl, this.toasts, this.skills, this.chargeEl, this.help, this.codexEl, this.modal, this.fadeEl);
+    this.root.append(this.vignette, this.layer, frame, this.combo, wrow, this.radar, this.waveEl, this.banner, this.bossEl, this.toasts, this.skills, this.achEl, this.chargeEl, this.help, this.codexEl, this.modal, this.fadeEl);
     document.body.append(this.root);
   }
 
@@ -151,11 +163,11 @@ export class ArenaHud {
   /** Generic card choice (god boons); resolves with the picked index. */
   choose(title: string, sub: string, cards: { icon: string; name: string; text: string }[]): Promise<number> {
     this.modalOpen = true; this.modal.classList.add('on');
-    this.modal.innerHTML = `<div><h2>${title}</h2><div class="sub">${sub}</div><div class="ar-card-row"></div><div class="sub" style="margin-top:14px">Keys 1 · 2 · 3</div></div>`;
+    this.modal.innerHTML = `<div><h2>${title}</h2><div class="sub">${sub}</div><div class="ar-card-row"></div><div class="sub" style="margin-top:14px">Keys ${cards.map((_, i) => i + 1).join(' · ')}</div></div>`;
     const row = this.modal.querySelector('.ar-card-row')!;
     return new Promise(res => {
       const pick = (i: number) => { window.removeEventListener('keydown', key, true); this.modal.classList.remove('on'); this.modalOpen = false; res(i); };
-      const key = (e: KeyboardEvent) => { const i = ['Digit1', 'Digit2', 'Digit3'].indexOf(e.code); if (i >= 0 && i < cards.length) { e.stopPropagation(); pick(i); } };
+      const key = (e: KeyboardEvent) => { const i = e.code.startsWith('Digit') ? Number(e.code.slice(5)) - 1 : -1; if (i >= 0 && i < cards.length) { e.stopPropagation(); pick(i); } };
       window.addEventListener('keydown', key, true);
       cards.forEach((c, i) => { const b = el('button', 'ar-card', `<div class="ic">${c.icon}</div><h3>${i + 1}. ${c.name}</h3><p>${c.text}</p>`); b.addEventListener('click', () => pick(i)); row.append(b); });
     });
@@ -166,7 +178,7 @@ export class ArenaHud {
     const sum = this.tower?.summary();
     const rows = codex.map(c => `<tr><td><b>${c.name}</b></td><td>${c.pattern}</td><td>${c.tier}</td><td>floor ${c.floor}</td><td>×${c.times}</td><td>${c.firstSeen.slice(0, 10)}</td></tr>`).join('');
     this.codexEl.innerHTML = `<h2>Codex of Emergent Classes</h2>
-      ${sum ? `<div><b>You:</b> ${sum.tier} · ${sum.cls}<br><b>Styles</b> ${sum.styles.map(([k, v]) => `${k} ${v}`).join(' · ')}<br><b>Affinities</b> ${sum.affinities.map(([k, v]) => `${k} ${v}`).join(' · ') || 'none yet'}</div>` : ''}
+      ${sum ? `<div><b>You:</b> ${sum.tier} · ${sum.cls}<br><b>Styles</b> ${sum.styles.map(([k, v]) => `${k} ${v}`).join(' · ')}<br><b>Affinities</b> ${sum.affinities.map(([k, v]) => `${k} ${v}`).join(' · ') || 'none yet'}<br><b>Essences</b> ${sum.essences.join(' · ') || 'none'}${sum.confluence ? ` → <b style="color:#ff5ad1">${sum.confluence}</b>` : ''}<br><b>Worn</b> ${sum.gear.map(g => `<span style="color:${g.color}" title="${g.text}">${g.name}</span>`).join(' · ') || 'plain cloth'}<br><b>Achievements</b> ${sum.achievements.length}</div>` : ''}
       <table><tr><th>Class</th><th>Qualifying pattern</th><th>Tier</th><th>First seen</th><th>Seen</th><th>Date</th></tr>${rows || '<tr><td colspan=6>No class has emerged yet. Fight, learn tomes, accept boons.</td></tr>'}</table>
       <button class="ar-btn" id="codex-export">Export codex (JSON)</button> <button class="ar-btn" id="codex-close">Close (K)</button>`;
     this.codexEl.style.display = 'block';
@@ -174,6 +186,12 @@ export class ArenaHud {
     this.codexEl.querySelector('#codex-export')!.addEventListener('click', () => {
       const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(codex, null, 1)], { type: 'application/json' })); a.download = 'chrysanthus-codex.json'; a.click();
     });
+  }
+
+  /** A Dungeon Crawler Carl style system notice: achievement, flavour, and the box it awards. */
+  achievement(head: string, name: string, text: string, reward: string, color: string): void {
+    this.achQ.push(`<h4 style="color:${color}">${head}</h4><h3>${name}</h3><p>${text}</p><div class="rw" style="color:${color}">${reward}</div>`);
+    this.achEl.style.borderColor = color;
   }
 
   setHelp(html: string): void { this.help.innerHTML = html; this.help.querySelector('.x')?.addEventListener('click', () => this.toggleHelp()); }
@@ -229,7 +247,21 @@ export class ArenaHud {
     this.combo.style.opacity = w.combo.hits > 1 ? '1' : '0';
     this.mul.textContent = `x${w.comboMul.toFixed(1)}`;
     this.hits.innerHTML = `${w.combo.hits}<small>hits</small>`;
-    this.skillEls.forEach((e, k) => { e.classList.toggle('locked', !w.spellUnlocked.has(k)); (e.querySelector('i') as HTMLElement).style.transform = `scaleY(${w.spellCd[k] / SPELLS[k].cooldown})`; e.style.borderColor = w.hero.energy >= SPELLS[k].cost ? SPELLS[k].color : '#56627a'; });
+    // Skill slots are whatever the world holds now (they grow and change during a climb).
+    const sig = w.skills.map(s => s ? s.id + s.name : '-').join('|') + (this.tower ? '|t' : '');
+    if (sig !== this.skillSig) {
+      this.skillSig = sig; for (const e of this.skillEls) e.remove(); this.skillEls = [];
+      w.skills.forEach((s, k) => {
+        const e = s ? el('div', 'ar-sk', `<span>${s.icon}</span><em>${k + 1}</em><i></i><b style="background:${SOURCE_COLOR[s.source]}"></b>`) : el('div', 'ar-sk empty', `<em>${k + 1}</em>empty`);
+        e.title = s ? `${s.name} (${s.source}): ${s.text} · ${s.cost} stamina · ${s.cooldown}s` : 'Empty slot: absorb an essence, read a skill book, or let a class emerge';
+        this.skillEls.push(e); this.skills.insertBefore(e, this.flaskEl);
+      });
+      if (this.tower) this.skills.insertBefore(this.scrollEl, this.flaskEl); else this.scrollEl.remove();
+    }
+    this.skillEls.forEach((e, k) => { const s = w.skills[k]; if (!s) return; (e.querySelector('i') as HTMLElement).style.transform = `scaleY(${s.cooldown ? w.skillCd[k] / s.cooldown : 0})`; e.style.borderColor = w.hero.energy >= s.cost ? s.color : '#56627a'; });
+    if (this.tower) { const sc = this.tower.scrolls; this.scrollEl.innerHTML = `<em>G</em>${sc[0]?.icon ?? '📜'}<small>${sc.length}</small>`; this.scrollEl.style.opacity = sc.length ? '1' : '.35'; this.scrollEl.title = sc[0] ? `${sc[0].name}: ${sc[0].text}` : 'No scrolls'; }
+    this.achT -= dt; if (this.achT <= 0) this.achEl.style.opacity = '0';
+    if (this.achT <= -.4 && this.achQ.length) { this.achEl.innerHTML = this.achQ.shift()!; this.achEl.style.opacity = '1'; this.achT = 4.2; }
     this.flaskEl.textContent = `Q ${w.flasks}`; this.flaskEl.style.opacity = w.flasks ? '1' : '.4';
     this.chargeEl.style.display = w.hero.charging ? 'block' : 'none'; (this.chargeEl.firstChild as HTMLElement).style.width = `${w.hero.charge * 100}%`;
     for (const [id, e] of this.weapons) { e.classList.toggle('on', id === w.weapon); e.classList.toggle('locked', !w.unlocked.has(id)); }

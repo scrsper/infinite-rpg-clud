@@ -3,9 +3,11 @@ import type { ArenaAssets } from '../assets';
 import type { ArenaHud } from '../hud';
 import type { ArenaWorld, Fighter } from '../world';
 import type { WeaponId } from '../combat';
-import { emergentClass, newSheet, rank, recordClass, tierOf, type CapabilitySheet, type Element, type EmergedClass, type Style } from './capability';
+import { ELEMENTS, TIERS, emergentClass, newSheet, rank, recordClass, tierOf, type CapabilitySheet, type Element, type EmergedClass, type Style } from './capability';
 import { planFloor, type FloorPlan, type Theme } from './floorgen';
-import { ELEMENT_COLOR, QUALITY_COLOR, QUALITY_MUL, rollLoot, type Item } from './items';
+import { ELEMENT_COLOR, RARITY_COLOR, describe, rollLoot, type Gear, type Item, type Source } from './items';
+import { ESSENCES, MAX_SLOTS, SLOTS_BY_TIER, cloneSkill, confluence, signatureSkill, type Essence, type SkillDef } from './skills';
+import { ACHIEVEMENTS, BOX_COLOR, BOX_TIERS, newStats, recordEarned, type RunStats } from './achievements';
 import { mulberry } from '../../render/noise';
 
 /**
@@ -14,13 +16,24 @@ import { mulberry } from '../../render/noise';
  */
 export interface StageControl { setFloor(half: number, theme: Theme, floor: number): void }
 interface Pickup { item: Item; node: TransformNode; ring: Mesh; pos: Vector3; t: number }
+const ELEMENT_ESSENCE: Record<Element, Essence> = { flame: 'fire', frost: 'ice', storm: 'storm', swift: 'swift', iron: 'iron', shadow: 'shadow', verdance: 'life' };
+const fwdOf = (yaw: number) => new Vector3(Math.sin(yaw), 0, Math.cos(yaw));
 const SLOT_STYLE: Record<WeaponId, Style> = { fists: 'fists', greatsword: 'heavy', axe: 'blade', bow: 'bow' };
 
 export class TowerRun {
   seed: number; floor = 0; plan!: FloorPlan;
   sheet: CapabilitySheet = newSheet();
-  gear: Partial<Record<WeaponId, Item & { kind: 'weapon' }>> = {};
-  armorItem: (Item & { kind: 'armor' }) | null = null;
+  gear: Partial<Record<WeaponId, Extract<Gear, { kind: 'weapon' }>>> = {};
+  armorItem: Extract<Gear, { kind: 'armor' }> | null = null;
+  charm: Extract<Gear, { kind: 'charm' }> | null = null;
+  /** Skills: everything learned (slotted or not), essences held, the class signature, the scroll pocket. */
+  known: SkillDef[] = []; essences: Essence[] = []; confluenceName = ''; classSkill: SkillDef | null = null; scrolls: SkillDef[] = [];
+  private pendingSlot: SkillDef[] = [];
+  /** DCC: run counters, achievements earned this climb, unopened boxes (tiers). */
+  stats: RunStats = newStats(); earned = new Set<string>(); boxes: number[] = [];
+  private killTimes: number[] = []; private floorHurt = false; private floorMinHp = 1; private lastHurt = -99; private achT = 0;
+  private hitCount = 0; private proc = false; private lastWeapon: WeaponId = 'fists'; private tierIdx = 0; private flaskBase = 3;
+  private safeBusy = false;
   cls: EmergedClass | null = null;
   doorOpen = false; shrineReady = false; boonTaken = false;
   private pickups: Pickup[] = [];
@@ -43,18 +56,23 @@ export class TowerRun {
     w.companions = false; w.autoWaves = false;
     w.reset(this.seed);
     w.unlocked = new Set<WeaponId>(['fists']); w.weaponMesh = {}; w.weaponMul = {}; w.armor = 0;
-    w.spellUnlocked = new Set(); w.flaskMax = 3; w.flasks = 3; w.passiveRegen = false;
+    w.flaskMax = 3; w.flasks = 3; w.passiveRegen = false; w.skills = [null, null]; w.skillCd.fill(0); w.gearStats = { crit: .12, leech: 0, cdr: 0, thorns: 0 };
+    w.onCast = sk => this.onCast(sk); w.onParry = () => this.onParry();
     w.setWeapon(w.hero, 'fists');
     w.onHeroHit = (t, dmg, crit) => this.onHit(t, dmg, crit);
     w.onChest = p => this.drop(p, 'chest');
-    this.over = false; this.floor = 0; this.sheet = newSheet(); this.gear = {}; this.armorItem = null; this.cls = null;
+    this.over = false; this.floor = 0; this.sheet = newSheet(); this.gear = {}; this.armorItem = null; this.charm = null; this.cls = null;
+    this.known = []; this.essences = []; this.confluenceName = ''; this.classSkill = null; this.scrolls = []; this.pendingSlot = [];
+    this.stats = newStats(); this.earned.clear(); this.boxes = []; this.killTimes = []; this.hitCount = 0; this.tierIdx = 0; this.flaskBase = 3; this.lastWeapon = 'fists';
+    this.applyPassives();
     this.enter(this.startFloor);
-    this.hud.announce('THE TOWER OF CHRYSANTHUS', 'Bare hands and plain cloth. Climb.');
+    this.hud.announce('THE TOWER OF CHRYSANTHUS', 'Bare hands and plain cloth. No skills: take them from what you kill.');
   }
 
   private enter(n: number): void {
     const w = this.world;
     if (this.floor) { this.sheet.history.floors++; if (!this.weaponUsedThisFloor) this.sheet.history.noWeaponFloors++; }
+    this.floorHurt = false; this.floorMinHp = 1; this.lastHurt = w.hero.lastHurt; this.stats.floor = n;
     this.floor = n; this.plan = planFloor(this.seed, n);
     for (const p of this.pickups) { p.node.dispose(); p.ring.dispose(); } this.pickups = [];
     this.door?.dispose(); this.shrine?.dispose(); this.door = this.shrine = null;
@@ -71,10 +89,16 @@ export class TowerRun {
   }
 
   // ---------------------------------------------------------------- frame
-  update(dt: number, interact: boolean): void {
+  update(dt: number, interact: boolean, scroll = false): void {
     if (this.over) return;
     const w = this.world, h = w.hero;
     if (this.transition > 0) { this.transition -= dt; if (this.transition <= 0) this.enter(this.floor + 1); return; }
+    if (scroll && this.scrolls.length && w.castNow(this.scrolls[0])) { const sc = this.scrolls.shift()!; this.stats.scrolls++; this.hud.toast(`Read ${sc.name}`, '#c9a35a'); }
+    if (h.lastHurt !== this.lastHurt) { this.lastHurt = h.lastHurt; this.floorHurt = true; }
+    this.floorMinHp = Math.min(this.floorMinHp, h.hp / h.maxHp);
+    this.stats.bestCombo = Math.max(this.stats.bestCombo, w.combo.hits); this.stats.smashed = w.smashed;
+    if (w.weapon !== this.lastWeapon) { this.lastWeapon = w.weapon; this.applyPassives(); }
+    if ((this.achT -= dt) <= 0) { this.achT = .5; this.checkAchievements(); this.checkTier(); }
     const foes = w.fighters.filter(f => f.role === 'foe' && f.alive);
     if (!this.doorOpen && foes.length === 0) {
       if (this.plan.shrine && !this.boonTaken) { if (!this.shrineReady) { this.shrineReady = true; this.hud.announce(`${this.plan.god!.name.toUpperCase()} WATCHES`, 'Approach the shrine and press E'); } }
@@ -102,10 +126,22 @@ export class TowerRun {
   // ---------------------------------------------------------------- combat hooks
   onKill(f: Fighter): void {
     if (this.over) return;
-    this.sheet.history.kills++;
-    this.sheet.style[SLOT_STYLE[this.world.weapon]] += 3;
-    if (f.boss) { this.sheet.history.bosses++; this.drop(f.pos, 'boss'); this.hud.announce(`${f.boss.name.toUpperCase()} FALLS`); }
-    else if (f.role === 'foe') this.drop(f.pos, 'enemy');
+    if (f.role !== 'foe') return;
+    const w = this.world, st = this.stats;
+    this.sheet.history.kills++; st.kills++;
+    this.sheet.style[SLOT_STYLE[w.weapon]] += 3;
+    if (w.weapon === 'fists') st.fistKills++;
+    if (f.burnT > 0) st.burnKills++;
+    const k = f.foeKind ?? '';
+    if (k.startsWith('skeleton') || k === 'minion') st.skeletons++; else if (k.startsWith('goblin')) st.goblins++; else if (k.startsWith('orc')) st.orcs++;
+    this.killTimes.push(w.time); this.killTimes = this.killTimes.filter(t => w.time - t < 2); st.multikill = Math.max(st.multikill, this.killTimes.length);
+    // Legendary powers that answer a kill.
+    const p = this.powers();
+    if (p.has('pyre') && !this.proc) { this.proc = true; w.blast(f.pos, 3.2, 18 * this.dmgScale(), 3, new Color3(1, .5, .15), 10 * this.dmgScale()); this.proc = false; }
+    if (p.has('thirst')) w.hero.hp = Math.min(w.hero.maxHp, w.hero.hp + w.hero.maxHp * .05);
+    if (p.has('reaper')) for (let i = 0; i < w.skillCd.length; i++) w.skillCd[i] = Math.max(0, w.skillCd[i] - 1);
+    if (f.boss) { this.sheet.history.bosses++; st.bosses++; this.drop(f.pos, 'boss', k); this.hud.announce(`${f.boss.name.toUpperCase()} FALLS`); }
+    else this.drop(f.pos, f.foe && (f.foe.scale ?? 1) > 1.15 ? 'elite' : 'enemy', k);
     this.evaluateClass();
   }
 
@@ -122,7 +158,14 @@ export class TowerRun {
     const s = this.sheet, w = this.world;
     s.style[SLOT_STYLE[w.weapon]] += crit ? 2 : 1;
     const it = this.gear[w.weapon as Exclude<WeaponId, 'fists'>];
-    const aff = (e: Element) => s.affinity[e] + (it?.element === e ? 1.5 : 0) + (this.cls?.boon.element === e ? this.cls.boon.amount : 0);
+    const aff = (e: Element) => this.aff(e) + (it?.element === e ? .5 : 0);
+    if (this.proc) return;
+    this.proc = true;
+    const pw = this.powers();
+    if (pw.has('thunder') && ++this.hitCount % 6 === 0) w.procChain(t, dmg * .6, 3);
+    if (pw.has('winter') && t.slowT > 0 && !crit && t.alive) w.effectDamage(t, dmg * .8, new Vector3(0, 0, 0), 0);
+    if (pw.has('avalanche') && w.hero.atk?.heavy && t.alive) w.blast(t.pos, 2.6, dmg * .4, 6, new Color3(.85, .9, 1));
+    this.proc = false;
     const r = this.rnd;
     const flame = aff('flame'); if (flame > 0 && r() < .18 + flame * .06) { t.burnT = 3; t.burnDps = Math.max(t.burnDps, dmg * .22 * flame); s.affinity.flame += .015; }
     const frost = aff('frost'); if (frost > 0 && r() < .2 + frost * .07) { t.slowT = 2 + frost * .5; this.world.fx.sparksAt(t.pos.add(new Vector3(0, 1.2, 0)), 10, new Color4(.6, .9, 1, 1)); s.affinity.frost += .015; }
@@ -137,54 +180,149 @@ export class TowerRun {
   }
 
   // ---------------------------------------------------------------- loot
-  drop(at: Vector3, source: 'enemy' | 'chest' | 'boss'): void {
-    for (const item of rollLoot(this.floor, this.rnd, source)) this.spawnPickup(item, at.add(new Vector3((this.rnd() - .5) * 1.6, 0, (this.rnd() - .5) * 1.6)));
+  drop(at: Vector3, source: Source, foeKind?: string, boxTier = 0): void {
+    for (const item of rollLoot(this.floor, this.rnd, source, foeKind, boxTier)) this.spawnPickup(item, at.add(new Vector3((this.rnd() - .5) * 1.8, 0, (this.rnd() - .5) * 1.8)));
+  }
+
+  private itemColor(item: Item): string {
+    return item.kind === 'weapon' || item.kind === 'armor' || item.kind === 'charm' ? RARITY_COLOR[item.rarity] : item.kind === 'book' ? ELEMENT_COLOR[item.element]
+      : item.kind === 'essence' ? ESSENCES[item.essence].color : item.kind === 'scroll' ? '#c9a35a' : '#ff6a8a';
   }
 
   private spawnPickup(item: Item, pos: Vector3): void {
-    const node = new TransformNode('loot', this.scene);
-    const src = item.kind === 'weapon' ? item.mesh : item.kind === 'tome' ? 'W_codex-of-the-veil' : item.kind === 'potion' ? 'L_bottle_b' : 'P_crate_small';
-    const m = this.assets.sources.get(src);
-    if (m) { const i = m.createInstance('loot-mesh'); i.parent = node; i.isPickable = false; if (item.kind === 'weapon') { i.rotation.z = Math.PI / 2.4; i.scaling.setAll(1.1); } if (item.kind === 'armor') i.scaling.setAll(.45); if (item.kind === 'tome') i.scaling.setAll(2.2); }
+    const node = new TransformNode('loot', this.scene), hex = this.itemColor(item), col = Color3.FromHexString(hex);
+    const glow = (m: Mesh) => { const mt = new StandardMaterial('loot-glow', this.scene); mt.emissiveColor = col; mt.disableLighting = true; m.material = mt; m.parent = node; m.isPickable = false; };
+    const src = item.kind === 'weapon' ? item.mesh : item.kind === 'book' ? 'W_codex-of-the-veil' : item.kind === 'potion' ? 'L_bottle_b' : item.kind === 'armor' ? 'P_crate_small' : '';
+    const m = src ? this.assets.sources.get(src) : undefined;
+    if (m) { const i = m.createInstance('loot-mesh'); i.parent = node; i.isPickable = false; if (item.kind === 'weapon') { i.rotation.z = Math.PI / 2.4; i.scaling.setAll(1.1); } if (item.kind === 'armor') i.scaling.setAll(.45); if (item.kind === 'book') i.scaling.setAll(2.2); }
+    else if (item.kind === 'essence') glow(MeshBuilder.CreatePolyhedron('essence', { type: 2, size: .3 }, this.scene));
+    else if (item.kind === 'scroll') { const c = MeshBuilder.CreateCylinder('scroll', { diameter: .16, height: .6, tessellation: 8 }, this.scene); c.rotation.z = Math.PI / 2; glow(c); }
+    else if (item.kind === 'charm') glow(MeshBuilder.CreateTorus('charm', { diameter: .45, thickness: .09, tessellation: 16 }, this.scene));
     const ring = MeshBuilder.CreateDisc('loot-ring', { radius: .75, tessellation: 24 }, this.scene);
     ring.rotation.x = Math.PI / 2; ring.position.set(pos.x, .04, pos.z); ring.isPickable = false;
     const mat = new StandardMaterial('loot-ring', this.scene);
-    const hex = item.kind === 'weapon' || item.kind === 'armor' ? QUALITY_COLOR[item.quality] : item.kind === 'tome' ? ELEMENT_COLOR[item.element] : '#ff6a8a';
-    mat.emissiveColor = Color3.FromHexString(hex); mat.disableLighting = true; mat.alpha = .6; ring.material = mat;
+    mat.emissiveColor = col; mat.disableLighting = true; mat.alpha = .6; ring.material = mat;
+    // Diablo's loot beam: legendaries, mythics and essences call attention from across the room.
+    const rare = ((item.kind === 'weapon' || item.kind === 'armor' || item.kind === 'charm') && item.rarity >= 3) || item.kind === 'essence';
+    if (rare) { const beam = MeshBuilder.CreateCylinder('loot-beam', { diameterTop: .05, diameterBottom: .35, height: 7, tessellation: 8 }, this.scene); beam.position.set(pos.x, 3.5, pos.z); beam.parent = ring; beam.position.set(0, 0, -3.5); beam.rotation.x = -Math.PI / 2; const bm = mat.clone('loot-beam'); bm.alpha = .35; beam.material = bm; beam.isPickable = false; }
     this.pickups.push({ item, node, ring, pos: pos.clone(), t: 0 });
   }
 
   private take(item: Item): void {
     const w = this.world;
     if (item.kind === 'weapon') {
-      const cur = this.gear[item.slot as Exclude<WeaponId, 'fists'>];
-      if (!cur || item.quality > cur.quality || (item.quality === cur.quality && item.element && !cur.element)) {
-        this.gear[item.slot as Exclude<WeaponId, 'fists'>] = item;
-        w.unlocked.add(item.slot); w.weaponMesh[item.slot] = { mesh: item.mesh, hand: item.hand }; w.weaponMul[item.slot] = QUALITY_MUL[item.quality] * this.bonus.damage;
-        const first = !cur; if (first || w.weapon === item.slot) w.setWeapon(w.hero, item.slot);
-        this.hud.toast(`${item.name} — Tab to draw`, QUALITY_COLOR[item.quality]);
-      } else { this.hud.toast(`${item.name} (worse than yours — salvaged)`, '#888'); this.sheet.style[item.style] += 2; }
-    } else if (item.kind === 'armor') {
-      if (!this.armorItem || item.quality > this.armorItem.quality) { this.armorItem = item; w.armor = item.reduction; this.hud.toast(`Equipped ${item.name} (−${Math.round(item.reduction * 100)}% damage)`, QUALITY_COLOR[item.quality]); }
-      else this.hud.toast(`${item.name} (worse than yours)`, '#888');
-    } else if (item.kind === 'tome') {
-      this.sheet.affinity[item.element] += 1; this.sheet.history.tomes++;
-      this.hud.toast(`${item.name}: ${item.element} affinity ${Math.floor(this.sheet.affinity[item.element])}`, ELEMENT_COLOR[item.element]);
-      this.applyPassives(); this.evaluateClass();
-    } else { w.flaskMax = Math.min(5, w.flaskMax + (w.flasks >= w.flaskMax ? 1 : 0)); w.flasks = Math.min(w.flaskMax, w.flasks + 1); this.hud.toast(`${item.name}: +1 flask (Q)`, '#ff6a8a'); }
+      const slot = item.slot as Exclude<WeaponId, 'fists'>, cur = this.gear[slot];
+      if (item.rarity >= 3) this.stats.legendaries++;
+      if (!cur || item.score > cur.score) {
+        this.gear[slot] = item; w.unlocked.add(item.slot); w.weaponMesh[item.slot] = { mesh: item.mesh, hand: item.hand };
+        if (!cur || w.weapon === item.slot) w.setWeapon(w.hero, item.slot);
+        this.hud.toast(`${item.name} (${item.base}) — ${describe(item) || 'plain'}${!cur ? ' · Tab to draw' : ''}`, RARITY_COLOR[item.rarity]);
+      } else { this.hud.toast(`${item.name} (salvaged: not better than yours)`, '#888'); this.sheet.style[item.style] += 2; }
+    } else if (item.kind === 'armor' || item.kind === 'charm') {
+      const cur = item.kind === 'armor' ? this.armorItem : this.charm;
+      if (item.rarity >= 3) this.stats.legendaries++;
+      if (!cur || item.score > cur.score) {
+        if (item.kind === 'armor') this.armorItem = item; else this.charm = item;
+        this.hud.toast(`Equipped ${item.name}${item.kind === 'armor' ? ` (−${Math.round(item.reduction * 100)}% damage)` : ''} — ${describe(item) || 'plain'}`, RARITY_COLOR[item.rarity]);
+      } else this.hud.toast(`${item.name} (salvaged)`, '#888');
+    } else if (item.kind === 'book') {
+      this.sheet.affinity[item.element] += 1; this.sheet.history.tomes++; this.stats.books++;
+      this.hud.toast(`${item.name}: learned ${item.skill.name} · ${item.element} affinity ${Math.floor(this.sheet.affinity[item.element])}`, ELEMENT_COLOR[item.element]);
+      this.learn(item.skill);
+    } else if (item.kind === 'scroll') {
+      if (this.scrolls.length >= 5) { this.hud.toast(`${item.name} (scroll pocket full)`, '#888'); return; }
+      this.scrolls.push(item.skill); this.hud.toast(`${item.name} — press G to read`, '#c9a35a');
+    } else if (item.kind === 'essence') this.absorb(item.essence);
+    else { this.flaskBase = Math.min(5, this.flaskBase + (w.flasks >= w.flaskMax ? 1 : 0)); w.flasks = Math.min(w.flaskMax + 1, w.flasks + 1); this.hud.toast(`${item.name}: +1 flask (Q)`, '#ff6a8a'); }
+    this.applyPassives(); this.evaluateClass();
   }
 
-  /** Swiftness and iron are passive capabilities; recompute their effect. */
+  // ---------------------------------------------------------------- essences and skills
+  /** He Who Fights With Monsters: an essence grants its ability; the third forms a confluence. */
+  private absorb(e: Essence): void {
+    const E = ESSENCES[e];
+    if (this.essences.includes(e) || this.essences.length >= 3) {
+      // A held (or unabsorbable) essence resonates instead: its ability, or your strongest, ranks up.
+      const sk = this.known.find(k => k.id === E.skill.id) ?? this.known.find(k => k.source === 'confluence');
+      if (sk) { sk.rank++; this.hud.toast(`${E.name} essence resonates: ${sk.name} rank ${sk.rank}`, E.color); }
+      if (E.element) this.sheet.affinity[E.element] += .5;
+      return;
+    }
+    this.essences.push(e); this.stats.essences++;
+    if (E.element) this.sheet.affinity[E.element] += 1;
+    this.hud.announce(`${E.name.toUpperCase()} ESSENCE ABSORBED`, `You gain ${E.skill.name}: ${E.skill.text}`);
+    this.learn(cloneSkill(E.skill));
+    if (this.essences.length === 3) {
+      const c = confluence(this.essences); this.confluenceName = c.name; this.stats.confluences++;
+      setTimeout(() => this.hud.announce(`CONFLUENCE: ${c.name.toUpperCase()}`, `${this.essences.map(x => ESSENCES[x].name).join(' + ')} → ${c.skill.name}`), 2300);
+      this.learn(c.skill); this.checkTier(true);
+    }
+  }
+
+  /** Learn a skill: rank up if known, else fill an empty slot, else wait for the floor's safe moment to choose. */
+  private learn(sk: SkillDef): void {
+    const had = this.known.find(k => k.id === sk.id);
+    if (had) { had.rank++; this.hud.toast(`${had.name} ranks up (${had.rank})`, sk.color); this.applyPassives(); return; }
+    this.known.push(sk);
+    const w = this.world, free = w.skills.indexOf(null);
+    if (free >= 0) { w.skills[free] = sk; this.hud.toast(`${sk.name} in slot ${free + 1}`, sk.color); }
+    else { this.pendingSlot.push(sk); this.hud.toast(`Slots full: choose a slot for ${sk.name} when the floor is clear`, sk.color); }
+    this.applyPassives();
+  }
+
+  /** Slots grow with measured tier (and a confluence). New slots fill from learned-but-unslotted skills. */
+  private checkTier(force = false): void {
+    const w = this.world, ti = TIERS.indexOf(this.tier);
+    if (ti === this.tierIdx && !force) return;
+    const grew = ti > this.tierIdx; this.tierIdx = ti;
+    const n = Math.min(MAX_SLOTS, SLOTS_BY_TIER[ti] + (this.confluenceName ? 1 : 0));
+    if (n <= w.skills.length) return;
+    while (w.skills.length < n) w.skills.push(null);
+    if (grew) this.hud.announce(`TIER: ${this.tier.toUpperCase()}`, `Skill slots: ${n}`);
+    for (let i = 0; i < w.skills.length; i++) if (!w.skills[i]) { const next = this.pendingSlot.shift() ?? this.known.find(k => !w.skills.includes(k)); if (next) w.skills[i] = next; }
+  }
+
+  private onCast(sk: SkillDef): boolean {
+    this.stats.skillCasts++;
+    // Practice is capability: casting trains the skill's element.
+    for (const r of sk.riders) if ((ELEMENTS as string[]).includes(r)) this.sheet.affinity[r as Element] += .01;
+    if (sk.uses % 25 === 0) { sk.rank++; this.hud.toast(`${sk.name} ranks up through use (${sk.rank})`, sk.color); this.applyPassives(); }
+    return this.powers().has('echo') && this.rnd() < .3;
+  }
+
+  private onParry(): void {
+    this.stats.parries++;
+    if (this.powers().has('bulwark')) { this.world.wardHp = Math.max(this.world.wardHp, 160 * this.dmgScale()); this.world.wardT = 6; }
+  }
+
+  // ---------------------------------------------------------------- gear, affinities, passives
+  /** Equipped gear: armour, charm and the drawn weapon (Diablo: only what you hold counts). */
+  private worn(): Gear[] { return [this.armorItem, this.charm, this.gear[this.world.weapon as Exclude<WeaponId, 'fists'>]].filter(Boolean) as Gear[]; }
+  private powers(): Set<string> { return new Set(this.worn().map(g => g.power).filter(Boolean) as string[]); }
+  private stat(id: string): number { let v = 0; for (const g of this.worn()) for (const a of g.affixes) if (a.stat === id) v += a.value; return v; }
+  /** Affinity in effect: capability plus what you wear and your class's boon. */
+  private aff(e: Element): number { return this.sheet.affinity[e] + this.stat(`aff:${e}`) + (this.cls?.boon.element === e ? this.cls.boon.amount : 0); }
+  /** Floor-relative damage scale for procs (keeps legendary powers useful as foes grow). */
+  private dmgScale(): number { return 1 + this.floor * .06; }
+
   private applyPassives(): void {
-    const s = this.sheet, w = this.world;
-    this.bonus.speed = 1 + s.affinity.swift * .05 + (this.cls?.boon.stat === 'speed' ? this.cls.boon.amount : 0);
-    this.bonus.damage = 1 + (this.cls?.boon.stat === 'damage' ? this.cls.boon.amount : 0);
-    w.bonus.atkSpeed = this.bonus.speed; w.bonus.move = 1 + s.affinity.swift * .04; w.bonus.damage = this.bonus.damage;
-    w.armor = Math.min(.75, (this.armorItem?.reduction ?? 0) + s.affinity.iron * .03);
-    // Signs unlock from affinity (capability first): flame->Ember, storm/swift->Gust, iron->Ward, frost->Frost Sigil.
-    const need: number[] = [s.affinity.flame, Math.max(s.affinity.storm, s.affinity.swift), s.affinity.iron, s.affinity.frost];
-    need.forEach((v, k) => { if (v >= 1 && !w.spellUnlocked.has(k)) { w.spellUnlocked.add(k); this.hud.toast(`New sign: ${['Ember', 'Gust', 'Ward', 'Frost Sigil'][k]} (key ${k + 1})`, '#ffd45c'); } w.spellPower[k] = 1 + Math.max(0, v - 1) * .25; });
-    const vit = 1 + s.affinity.iron * .05 + (this.cls?.boon.stat === 'vitality' ? this.cls.boon.amount : 0);
+    const s = this.sheet, w = this.world, c = this.cls?.boon;
+    this.bonus.speed = 1 + this.aff('swift') * .05 + (c?.stat === 'speed' ? c.amount : 0) + this.stat('atk');
+    this.bonus.damage = 1 + (c?.stat === 'damage' ? c.amount : 0) + this.stat('dmg');
+    w.bonus.atkSpeed = this.bonus.speed; w.bonus.move = 1 + this.aff('swift') * .04 + this.stat('move'); w.bonus.damage = this.bonus.damage;
+    w.armor = Math.min(.75, (this.armorItem?.reduction ?? 0) + this.aff('iron') * .03 + this.stat('armor'));
+    w.gearStats = { crit: Math.min(.6, .12 + this.stat('crit')), leech: Math.min(.08, this.stat('leech')), cdr: Math.min(.45, this.stat('cdr')), thorns: this.stat('thorns') };
+    for (const [slot, g] of Object.entries(this.gear)) if (g) w.weaponMul[slot as WeaponId] = g.item * (1 + g.rarity * .08);
+    const flaskMax = this.flaskBase + this.stat('flask');
+    if (flaskMax !== w.flaskMax) { w.flaskMax = flaskMax; w.flasks = Math.min(w.flasks, flaskMax); }
+    // Skill power: base, rank (books, resonance, practice) and the affinity of each rider element.
+    for (const sk of this.known) {
+      const base = sk.source === 'confluence' ? 1.4 : sk.source === 'class' ? 1.15 : 1;
+      const el = sk.riders.filter(r => (ELEMENTS as string[]).includes(r)) as Element[];
+      const affB = el.length ? Math.max(...el.map(e => this.aff(e))) : 0;
+      sk.power = base * (1 + (sk.rank - 1) * .2) * (1 + Math.max(0, affB - 1) * .15) * (1 + this.floor * .03);
+    }
+    const vit = 1 + this.aff('iron') * .05 + (c?.stat === 'vitality' ? c.amount : 0) + this.stat('life');
     const base = 1000 * w.bonus.maxHpUpgrades;
     const before = w.hero.maxHp; w.hero.maxHp = base * vit; w.hero.hp = Math.min(w.hero.maxHp, w.hero.hp + Math.max(0, w.hero.maxHp - before));
   }
@@ -192,10 +330,58 @@ export class TowerRun {
   private evaluateClass(): void {
     const c = emergentClass(this.sheet, this.world.level);
     if (!c || c.id === this.cls?.id) return;
-    this.cls = c;
+    this.cls = c; this.stats.classes++;
     const { isNew } = recordClass(c, this.floor, this.seed);
     this.hud.announce(isNew ? 'A NEW CLASS EMERGES' : 'CLASS EMERGES', `${c.name} — ${c.pattern}`);
+    // The class grants its signature skill; a new class replaces the old signature in place.
+    const style = c.id === 'fists+ascetic' ? 'ascetic' : c.id.split('+')[0] as Style;
+    const sig = signatureSkill(c.id, c.name, style, c.boon.element);
+    const w = this.world, old = this.classSkill;
+    if (old) {
+      this.known = this.known.filter(k => k !== old);
+      const i = w.skills.indexOf(old); if (i >= 0) { w.skills[i] = sig; this.known.push(sig); } else this.learn(sig);
+    } else this.learn(sig);
+    this.classSkill = sig;
     this.applyPassives();
+  }
+
+  // ---------------------------------------------------------------- achievements and boxes (DCC)
+  private checkAchievements(): void {
+    for (const a of ACHIEVEMENTS) {
+      if (this.earned.has(a.id) || !a.test(this.stats)) continue;
+      this.earned.add(a.id); const first = recordEarned(a.id);
+      this.boxes.push(a.box);
+      this.hud.achievement(first ? 'NEW ACHIEVEMENT!' : 'ACHIEVEMENT', a.name, a.text, `Reward: ${BOX_TIERS[a.box]} Box${this.doorOpen ? '' : ' (opens when the floor is clear)'}`, BOX_COLOR[a.box]);
+    }
+    if (this.doorOpen && this.boxes.length) this.openBoxes();
+  }
+
+  /** The floor's safe moment: open earned boxes (loot spills at your feet), then settle full skill slots. */
+  private async safeMoment(): Promise<void> {
+    if (this.safeBusy) return; this.safeBusy = true;
+    const st = this.stats;
+    if (!this.floorHurt && this.plan.foes.length >= 3) st.flawlessFloors++;
+    if (this.floorMinHp < .12) st.nearDeath++;
+    this.checkAchievements();
+    this.openBoxes();
+    while (this.pendingSlot.length && !this.over) {
+      const sk = this.pendingSlot[0], w = this.world;
+      const cards = w.skills.map((x, i) => ({ icon: x!.icon, name: `Replace ${x!.name}`, text: `slot ${i + 1} · ${x!.source}` }));
+      cards.push({ icon: '📖', name: 'Keep it for later', text: 'It stays learned and fills the next slot you earn' });
+      const pick = await this.hud.choose(`${sk.icon} ${sk.name}`, `${sk.text} · ${sk.source} · your skill slots are full`, cards);
+      this.pendingSlot.shift();
+      if (pick < w.skills.length) { const old = w.skills[pick]!; w.skills[pick] = sk; w.skillCd[pick] = 0; this.hud.toast(`${sk.name} replaces ${old.name} (still learned)`, sk.color); }
+    }
+    this.safeBusy = false;
+  }
+
+  private openBoxes(): void {
+    const h = this.world.hero;
+    for (const tier of this.boxes.splice(0)) {
+      this.hud.toast(`Opened a ${BOX_TIERS[tier]} Box`, BOX_COLOR[tier]);
+      this.world.fx.ring(h.pos, 4, .7, Color3.FromHexString(BOX_COLOR[tier]));
+      this.drop(h.pos.add(fwdOf(h.yaw).scale(1.6)), 'box', undefined, tier);
+    }
   }
 
   // ---------------------------------------------------------------- shrine and door
@@ -205,16 +391,18 @@ export class TowerRun {
       { icon: '✦', name: `${g.name}'s Favour`, text: `+2 ${e} affinity` },
       { icon: '☍', name: `Pact of ${g.name}`, text: `+30% damage, −20% max health (a bane for power)` },
       { icon: '✚', name: 'Mending Light', text: `Full heal, +1 ${e} affinity` },
+      { icon: '✦', name: `${g.name}'s Essence`, text: `Absorb the essence of ${e}${this.essences.length >= 3 ? ' (resonates: your skills rank up)' : ''}` },
     ]);
     this.boonTaken = true; this.sheet.history.boons++;
     if (pick === 0) this.sheet.affinity[e] += 2;
     if (pick === 1) { this.world.mods.damage *= 1.3; this.world.bonus.maxHpUpgrades *= .8; }
     if (pick === 2) { this.sheet.affinity[e] += 1; this.world.hero.hp = this.world.hero.maxHp; }
+    if (pick === 3) this.absorb(ELEMENT_ESSENCE[e]);
     this.applyPassives(); this.evaluateClass(); this.openDoor();
   }
 
   private openDoor(): void {
-    this.doorOpen = true; if (this.doorGlow) { this.doorGlow.emissiveColor = new Color3(1, .85, .45); this.doorGlow.alpha = .7; }
+    this.doorOpen = true; void this.safeMoment(); if (this.doorGlow) { this.doorGlow.emissiveColor = new Color3(1, .85, .45); this.doorGlow.alpha = .7; }
     this.world.fx.ring(new Vector3(this.plan.exit.x, 0, this.plan.exit.z), 6, .9, new Color3(1, .9, .6));
     this.hud.announce('THE WAY UP IS OPEN', 'Walk through the door at the far wall');
   }
@@ -249,9 +437,10 @@ export class TowerRun {
   }
 
   /** For the HUD: current capability summary. */
-  summary(): { tier: string; cls: string; styles: [string, number][]; affinities: [string, number][] } {
+  summary(): { tier: string; cls: string; essences: string[]; confluence: string; gear: { name: string; color: string; text: string }[]; achievements: string[]; styles: [string, number][]; affinities: [string, number][] } {
     return {
-      tier: this.tier, cls: this.cls?.name ?? '—',
+      tier: this.tier, cls: this.cls?.name ?? '—', essences: this.essences.map(e => ESSENCES[e].name), confluence: this.confluenceName,
+      gear: this.worn().map(g => ({ name: g.name, color: RARITY_COLOR[g.rarity], text: describe(g) })), achievements: [...this.earned],
       styles: (Object.entries(this.sheet.style) as [string, number][]).map(([k, v]) => [k, rank(v)]),
       affinities: (Object.entries(this.sheet.affinity) as [string, number][]).filter(([, v]) => v >= .01).map(([k, v]) => [k, Math.floor(v * 10) / 10]),
     };

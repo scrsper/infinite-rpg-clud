@@ -4,6 +4,8 @@ import { MIXAMO, UE, Retargeter, instantiateClips, type ClipTemplate, type Grip 
 import type { LookId } from './looks';
 import { SpringBones } from './springs';
 
+/** Directional walks used as a legs-only layer while guarding or aiming. */
+export const STRAFE_CLIPS = ['unarmed/walk_forward', 'unarmed/walk_backward', 'unarmed/walk_strafe_left', 'unarmed/walk_strafe_right'];
 /** Cast folder: stylised low-poly people (art/tools/arena/build_arena_stylized.py). */
 const PEOPLE_DIR = 'people_flat/';
 const springsFor = (nodes: Map<string, TransformNode>) => { const s = new SpringBones(nodes, HUMAN_SCALE); return s.active ? s : undefined; };
@@ -173,10 +175,21 @@ export class ArenaAssets {
     }));
   }
 
+  private legCache: Map<string, ClipTemplate> | null = null;
+  /** Lower-body-only versions of the directional walk clips (pelvis and legs). */
+  legClips(): Map<string, ClipTemplate> {
+    if (this.legCache) return this.legCache;
+    const LEG = /^(pelvis|thigh|calf|foot|ball)/;
+    this.legCache = new Map();
+    for (const n of STRAFE_CLIPS) { const c = this.clips.get(n); if (c) this.legCache.set(n, { ...c, tracks: c.tracks.filter(t => LEG.test(t.bone)) }); }
+    return this.legCache;
+  }
+
   human(look: LookId, _id: string): CharacterInstance {
     const p = this.person(look);
     p.holder.scaling.setAll(HUMAN_SCALE);
     const anims = instantiateClips(p.tag, this.clips, p.nodes, this.scene);
+    for (const [k, g] of instantiateClips(p.tag + '.legs', this.legClips(), p.nodes, this.scene)) anims.set(`legs:${k}`, g);
     const slot = (hand: string, g: Grip) => {
       const s = new TransformNode(`${p.tag}.slot.${hand}`, this.scene); s.parent = p.nodes.get(hand)!;
       s.rotationQuaternion = g.rot.clone(); s.position.copyFrom(g.pos); s.scaling.setAll(1 / g.scale);

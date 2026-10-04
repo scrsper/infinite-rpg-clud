@@ -24,8 +24,8 @@ import type { WeaponId } from './combat';
 const TOWER_HELP = `<span class="x">✕</span><b>Tower of Chrysanthus</b><br>
   Clear each floor, then walk through the door at the far wall.<br>
   <b>WASD</b> move · <b>Shift</b> sprint · <b>Mouse</b> aim · <b>MMB drag</b> orbit · <b>Wheel</b> zoom<br><b>LMB</b> light (chain) · <b>RMB</b> heavy (hold to charge) · <b>F</b> guard/parry<br>
-  <b>Space</b> dodge or roll · <b>Tab</b> weapon · <b>1-4</b> signs (learned from tomes) · <b>Q</b> flask<br><b>E</b> use a god's shrine · <b>K</b> Codex of classes<br>
-  Loot drops from foes and chests: walk over it.<br>Every 5th floor a boss, every 10th a god.<br><b>R</b> new climb · <b>P</b> pause · <b>H</b> this help`;
+  <b>Space</b> dodge or roll · <b>Tab</b> weapon · <b>Q</b> flask<br><b>1-7</b> skills: slots fill from essences you absorb, skill books you read and the class you become; more slots as your tier rises<br><b>G</b> read a scroll · <b>E</b> use a god's shrine · <b>K</b> Codex<br>
+  Loot drops from foes and chests: walk over it. Achievements award loot boxes, opened when a floor is clear.<br>Every 5th floor a boss, every 10th a god.<br><b>R</b> new climb · <b>P</b> pause · <b>H</b> this help`;
 
 export async function startArena(): Promise<void> {
   const canvas = document.getElementById('game') as HTMLCanvasElement;
@@ -128,9 +128,9 @@ export async function startArena(): Promise<void> {
     const aim = ray.origin.add(ray.direction.scale(t));
     let attack = lmb, attackPressed = lmbPressed, secondary = rmb, dodge = pressed.has('Space');
     let heavyPressed = rmbPressed, heavyReleased = rmbReleased; rmbPressed = rmbReleased = false;
-    const cast = ['Digit1', 'Digit2', 'Digit3', 'Digit4'].findIndex(k => pressed.has(k));
+    const cast = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7'].findIndex(k => pressed.has(k));
     let sprint = keys.has('ShiftLeft') || keys.has('ShiftRight');
-    // Diablo-style: 1-4 are skills; Tab cycles drawn weapons (F1-F4 pick one directly).
+    // Diablo-style: 1-7 are skill slots, G reads a scroll; Tab cycles drawn weapons (F1-F4 pick one directly).
     let weapon: WeaponId | null = pressed.has('F1') ? 'fists' : pressed.has('F2') ? 'greatsword' : pressed.has('F3') ? 'axe' : pressed.has('F4') ? 'bow' : null;
     const cycle = pressed.has('Tab');
     const pad = navigator.getGamepads?.().find(p => p);
@@ -150,7 +150,7 @@ export async function startArena(): Promise<void> {
     const len = Math.hypot(mx, mz);
     if (len > 1) { mx /= len; mz /= len; }
     lmbPressed = false;
-    return { move: { x: mx, z: mz }, aim, attack, attackPressed, secondary, heavyPressed, heavyReleased, cast, guard: keys.has('KeyF'), flask: pressed.has('KeyQ'), cycle, sprint, dodgePressed: dodge, interact: keys.has('KeyE'), weapon };
+    return { move: { x: mx, z: mz }, aim, attack, attackPressed, secondary, heavyPressed, heavyReleased, cast, guard: keys.has('KeyF'), flask: pressed.has('KeyQ'), cycle, sprint, dodgePressed: dodge, interact: keys.has('KeyE'), scroll: pressed.has('KeyG'), weapon };
   };
 
   const rebuild = () => { if (tower) { hud.closeModal(); levels.length = 0; tower.start(); return; } hud.closeModal(); heroDown = false; levels.length = 0; world.reset(++seed); hud.announce('COMBAT GYM', 'rebuilt · seed ' + seed); };
@@ -172,7 +172,7 @@ export async function startArena(): Promise<void> {
     if (pressed.has('KeyM')) { world.autoWaves = !world.autoWaves; hud.announce(world.autoWaves ? 'WAVES ON' : 'SANDBOX', world.autoWaves ? 'enemies keep coming' : 'press N to spawn enemies'); }
     const input = readInput();
     pressed.clear();
-    if (!paused && !hud.modalOpen) { world.step(dt, input); tower?.update(dt, input.interact); }
+    if (!paused && !hud.modalOpen) { world.step(dt, input); tower?.update(dt, input.interact, input.scroll); }
     // After the step: bodies are at this frame's positions, so planted feet, cloth and grips solve against them
     // (Babylon animates before onBeforeRender, so solving earlier would lag the root by a frame and skate the feet).
     else scene.animationTimeScale = 0;
