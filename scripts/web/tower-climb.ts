@@ -68,9 +68,10 @@ while ((Date.now() - t0) / 1000 < seconds) {
   await page.waitForTimeout(80);
 }
 for (const k of held) await page.keyboard.up(k);
+await page.screenshot({ path: join(out, 'zz-end.png') }).catch(() => undefined);
 const final = await state(page).catch(() => null);
 const codex = await page.evaluate(() => JSON.parse(localStorage.getItem('tv.tower.codex.v1') ?? '[]')).catch(() => []);
-const report = { seed, seconds, floors, final: final && { floor: final.floor, tier: final.tier, cls: final.cls, level: final.level, gear: final.gear, armor: final.armor, skills: final.skills, essences: final.essences, scrolls: final.scrolls, achievements: final.achievements, over: final.over }, codex, errors };
+const report = { seed, seconds, floors, final: final && { floor: final.floor, tier: final.tier, cls: final.cls, level: final.level, gear: final.gear, armor: final.armor, skills: final.skills, essences: final.essences, scrolls: final.scrolls, achievements: final.achievements, over: final.over, hero: final.hero, foes: final.foes, open: final.open, loot: final.loot.length }, codex, errors };
 writeFileSync(join(out, 'report.json'), JSON.stringify(report, null, 1));
 console.log(JSON.stringify(report, null, 1));
 await ctx.close(); await browser.close();

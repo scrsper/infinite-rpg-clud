@@ -2,7 +2,7 @@ import { Color3, Color4, Matrix, Mesh, MeshBuilder, Quaternion, StandardMaterial
 import type { ArenaAssets, CharacterInstance } from './assets';
 import type { LookId } from './looks';
 import { Animator } from './anim';
-import { ALLIES, DODGES, FOES, MOVESETS, WEAPONS, waveRoster, type AttackDef, type FoeDef, type FoeKind, type Moveset, type WeaponId } from './combat';
+import { ALLIES, DODGES, FOES, MOVESETS, RELAXED, WEAPONS, waveRoster, type AttackDef, type FoeDef, type FoeKind, type Moveset, type WeaponId } from './combat';
 import { Debris } from './debris';
 import { BlobShadows, Fx, SlashTrail } from './fx';
 import { mulberry } from '../render/noise';
@@ -70,6 +70,8 @@ export class Fighter {
   energy = 100; energyDelay = 0;
   /** Off hand pulled onto the grip of a two-handed weapon. */
   twoHand = false; ikW = 0;
+  /** Out of combat: relaxed walk and idle, weapon slung on the back. */
+  relaxed = false; sheathed = false; alertT = 0;
   /** Smoothed locomotion velocity, turn rate and body lean (presentation of weight). */
   mvel = new Vector3(); turnRate = 0; lean = 0; pitch = 0; dodgeTime = .55;
   /** Tower: per-fighter outgoing damage scale, boss identity, burning and chill. */
@@ -346,6 +348,7 @@ export class ArenaWorld {
     if (!this.unlocked.has(id)) return;
     this.weapon = id; const w = WEAPONS[id], o = this.weaponMesh[id];
     this.equip(h, [], o ? { [o.hand]: o.mesh } : w.attach);
+    if (h.sheathed) { h.sheathed = false; this.sheathe(h, true); }
     this.bladeBase.position.set(0, w.trail * .3, 0); this.bladeTip.position.set(0, Math.max(.3, w.trail), 0);
     if (!h.busy) { h.state = 'idle'; h.anim.play(this.ms(h).idle, { loop: true }); }
   }
@@ -386,7 +389,7 @@ export class ArenaWorld {
 
   /** The moveset a fighter currently moves with (the hero's follows the drawn weapon). */
   ms(f: Fighter): Moveset {
-    if (f.role === 'hero') return MOVESETS[WEAPONS[this.weapon].set];
+    if (f.role === 'hero') { const m = MOVESETS[WEAPONS[this.weapon].set]; return f.relaxed ? { ...m, ...RELAXED } : m; }
     if (f.role === 'ally') return MOVESETS[f.name === ALLIES.barbarian.name ? ALLIES.barbarian.set : ALLIES.rogue.set];
     return MOVESETS[f.foe!.set];
   }
@@ -471,7 +474,7 @@ export class ArenaWorld {
     if (this.footLock && dt > 0) for (const f of this.fighters) this.plantFeet(f, dt);
     for (const f of this.fighters) f.inst.springs?.update(dt);
     for (const f of this.fighters) {
-      const b = f.inst.bones; if (!b || !f.twoHand) continue;
+      const b = f.inst.bones; if (!b || !f.twoHand || f.sheathed) { f.ikW = 0; continue; }
       const free = f.standing && f.state !== 'dodge' && f.state !== 'hit' && f.state !== 'spawn' && f.state !== 'revive';
       f.ikW += ((free ? 1 : 0) - f.ikW) * Math.min(1, dt * 12);
       if (f.ikW < .02) continue;
@@ -544,6 +547,7 @@ export class ArenaWorld {
     if (h.energyDelay <= 0) h.energy = Math.min(100, h.energy + 26 * this.mods.regen * dt);
     // No passive regeneration: health returns through flasks, potions, abilities and boons. (Sandbox keeps a slow trickle.)
     if (this.passiveRegen && h.hp < h.maxHp && this.time - h.lastHurt > 8) h.hp = Math.min(h.maxHp, h.hp + h.maxHp * .004 * dt);
+    this.stepAlert(h, dt, i);
     const mv = new Vector3(i.move.x, 0, i.move.z); const moving = mv.lengthSquared() > .01;
     if (moving) mv.normalize();
     const aimYaw = Math.atan2(i.aim.x - h.pos.x, i.aim.z - h.pos.z); this.aimYaw = aimYaw;
@@ -742,6 +746,38 @@ export class ArenaWorld {
   sound(kind: Sfx, gain = 1): void { this.ev.sound(kind, gain); }
   shake(k: number): void { this.fx.shake = Math.max(this.fx.shake, k); }
   removeBody(f: Fighter): void { for (const fx of f.statusFx.values()) fx.dispose(); f.statusFx.clear(); this.removeFighter(f); this.fighters = this.fighters.filter(o => o !== f); }
+
+  /**
+   * Calm or alert. A body at ease walks and stands like a person (relaxed clips, arms loose, weapon on the back);
+   * a foe within reach, a blow taken or any combat input brings the weapon to hand and the fighting stance at once.
+   */
+  private stepAlert(h: Fighter, dt: number, i: HeroInput): void {
+    const action = i.attack || i.attackPressed || i.heavyPressed || i.secondary || i.guard || i.cast >= 0 || i.dodgePressed;
+    const near = this.fighters.some(f => f.role === 'foe' && f.alive && f.foeKind !== 'dummy' && Math.hypot(f.pos.x - h.pos.x, f.pos.z - h.pos.z) < 9);
+    const busy = h.state !== 'idle' && h.state !== 'move';
+    if (action || near || busy || this.time - h.lastHurt < 4) h.alertT = 3.5; else h.alertT -= dt;
+    const relaxed = h.alertT <= 0;
+    if (relaxed === h.relaxed) return;
+    h.relaxed = relaxed; this.sheathe(h, relaxed);
+    // Swap the stance clip now (locomotion picks its new pair on the next frame by itself).
+    if (h.state === 'idle') h.anim.play(this.idleOf(h), { loop: true, fade: relaxed ? .6 : .2 });
+  }
+
+  /** Weapons to the back (sheathed) or back to the hands. */
+  private sheathe(f: Fighter, on: boolean): void {
+    const back = f.inst.bones?.get('spine_03'); if (!back) return;
+    f.sheathed = on;
+    f.extra.forEach((m, k) => {
+      const inHand = m.metadata?.hand as TransformNode | undefined;
+      if (on) {
+        if (!inHand) m.metadata = { ...(m.metadata ?? {}), hand: m.parent };
+        m.parent = back; const bow = this.weapon === 'bow';
+        m.position.set(k ? -.08 : .06, bow ? .05 : .12, -.2); m.rotationQuaternion = null; m.rotation.set(0, bow ? Math.PI / 2 : 0, bow ? -Math.PI * .2 : Math.PI * .15);
+      } else if (inHand) { m.parent = inHand; m.position.setAll(0); m.rotation.setAll(0); }
+    });
+    if (f.trail) f.trail.active = false;
+    if (!on) this.vfx.flash(f.pos.add(new Vector3(0, 1.4, 0)), new Color3(1, .95, .8), .6, .12);
+  }
 
   /** Spawn a foe of a kind (tower controllers). */
   spawnAt(k: FoeKind, x: number, z: number): Fighter { return this.spawnFoe(k, x, z); }

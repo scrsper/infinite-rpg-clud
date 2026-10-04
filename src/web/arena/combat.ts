@@ -53,6 +53,8 @@ export const MOVESETS: Record<'fists' | 'greatsword' | 'sword' | 'bow' | 'caster
     block: BOW('block'), guard: 'great_sword/spell cast', enter: 'sword_and_shield/sword and shield casting (2)', runPace: 6 },
 };
 /** Evasive rolls/steps for anyone, by direction relative to facing. */
+/** Relaxed, unarmed-looking locomotion for when the hero is out of combat (weapon on the back). */
+export const RELAXED = { idle: 'locomotion/idle', walk: 'locomotion/walking', run: 'locomotion/running', walkPace: 1.5 };
 export const DODGES = { forward: BOW('dodge forward'), back: BOW('dodge backward'), left: BOW('dodge left'), right: BOW('dodge right'), roll: U('roll_forward') };
 
 export type WeaponId = 'fists' | 'greatsword' | 'axe' | 'bow';
@@ -223,7 +225,7 @@ export const SPELL_CLIPS = ['great_sword/spell cast', 'sword_and_shield/sword an
 
 /** Every clip name referenced by weapons, foes, allies and movesets: only these are baked and instantiated. */
 export function usedClips(): Set<string> {
-  const out = new Set<string>(['Lie_StandUp', 'great_sword/great sword casting', 'great_sword/spell cast', 'sword_and_shield/sword and shield casting (2)', 'sword_and_shield/sword and shield power up', 'sword_and_shield/sword and shield idle', ...Object.values(DODGES), 'unarmed/walk_forward', 'unarmed/walk_backward', 'unarmed/walk_strafe_left', 'unarmed/walk_strafe_right']);
+  const out = new Set<string>(['Lie_StandUp', RELAXED.idle, RELAXED.walk, RELAXED.run, 'great_sword/great sword casting', 'great_sword/spell cast', 'sword_and_shield/sword and shield casting (2)', 'sword_and_shield/sword and shield power up', 'sword_and_shield/sword and shield idle', ...Object.values(DODGES), 'unarmed/walk_forward', 'unarmed/walk_backward', 'unarmed/walk_strafe_left', 'unarmed/walk_strafe_right']);
   const add = (a?: AttackDef) => a && out.add(a.clip);
   for (const m of Object.values(MOVESETS)) for (const c of [m.idle, m.walk, m.run, m.block, m.guard, m.enter, ...m.hit, ...m.death]) out.add(c);
   for (const w of Object.values(WEAPONS)) { w.combo.forEach(add); w.heavy?.forEach(add); add(w.spin); add(w.bash); add(w.aimed); add(w.kick); }

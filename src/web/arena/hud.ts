@@ -4,6 +4,7 @@ import { WEAPONS, type WeaponId } from './combat';
 import type { SkillDef } from './tower/skills';
 import { ALL_ELEMENTS, ALL_FORMS, ELEMENT_INFO, FORMS, REACTIONS, spellFor, type Form } from './magic';
 import type { Element } from './tower/capability';
+import { PAD_SKILL_LABELS } from './pad';
 
 /** DOM overlay for the Combat Arena: bars, combo badge, numbers, radar, cards. */
 const css = `
@@ -77,6 +78,8 @@ const css = `
 .ar-sk em{position:absolute;left:4px;top:2px;font:700 11px sans-serif;color:#ffd45c;font-style:normal}
 .ar-sk i{position:absolute;left:0;right:0;bottom:0;background:#000a;transform-origin:bottom}
 .ar-sk.locked{opacity:.25}
+.padfocus{outline:3px solid #ffd76a !important;outline-offset:2px;transform:translateY(-3px)}
+.ar-sk em.pad{font-size:9px;left:2px}
 .ar-sk b{position:absolute;left:0;right:0;bottom:0;height:3px}
 .ar-sk.empty{opacity:.35;font-size:14px;color:#56627a;border-style:dashed}
 .ar-scroll{position:relative;width:44px;height:44px;border-radius:6px;background:#2a2114e0;border:2px solid #c9a35a;display:grid;place-items:center;font-size:20px}
@@ -142,6 +145,8 @@ export class ArenaHud {
   /** Set by the tower: drives the floor panel, boss bar, tier/class line and weapon locks. */
   tower: { floor: number; plan: { objective: string; theme: { name: string; tier: string } }; boss: Fighter | null; summary(): { tier: string; cls: string; essences: string[]; confluence: string; gear: { name: string; color: string; text: string }[]; achievements: string[]; styles: [string, number][]; affinities: [string, number][] }; gear: Record<string, { name: string } | undefined>; scrolls: SkillDef[] } | null = null;
   modalOpen = false;
+  /** Controller in use: skill slots show L2 combinations; menus take D-pad focus. */
+  padMode = false; private focusI = 0;
 
   constructor() {
     const style = el('style'); style.textContent = css; document.head.append(style);
@@ -263,6 +268,38 @@ export class ArenaHud {
     });
   }
 
+  setPadMode(on: boolean): void { this.padMode = on; this.skillSig = ''; }
+  showHelp(on: boolean): void { this.help.style.display = on ? '' : 'none'; }
+  /** Any menu that takes controller focus is open (cards, messages, dialogue, spellbook, codex). */
+  menuOpen(): boolean { return this.modalOpen || this.bookEl.style.display === 'block' || this.codexEl.style.display === 'block'; }
+  private focusables(): HTMLElement[] {
+    const q = (root: HTMLElement, sel: string) => [...root.querySelectorAll<HTMLElement>(sel)];
+    if (this.dialogEl.style.display === 'block') return q(this.dialogEl, 'button');
+    if (this.modal.classList.contains('on')) return q(this.modal, '.ar-card, .ar-btn');
+    if (this.bookEl.style.display === 'block') return q(this.bookEl, '[data-id], [data-slot], #book-close');
+    if (this.codexEl.style.display === 'block') return q(this.codexEl, 'button');
+    return [];
+  }
+  /** D-pad focus: left/right steps one item, up/down steps a row (or one, in short lists). */
+  padNav(dx: number, dy: number): void {
+    const items = this.focusables(); if (!items.length) return;
+    const row = this.bookEl.style.display === 'block' ? 8 : 1;
+    this.focusI = Math.max(0, Math.min(items.length - 1, (items.findIndex(e => e.classList.contains('padfocus')) + 1 ? items.findIndex(e => e.classList.contains('padfocus')) : -1) + dx + dy * row));
+    items.forEach((e, i) => e.classList.toggle('padfocus', i === this.focusI)); items[this.focusI].scrollIntoView?.({ block: 'nearest' });
+  }
+  padConfirm(): void {
+    const items = this.focusables(); if (!items.length) return;
+    const cur = items.find(e => e.classList.contains('padfocus')) ?? items[0];
+    cur.click();
+    // Re-rendered menus (the spellbook) keep their focus position.
+    setTimeout(() => { const again = this.focusables(); again[Math.min(this.focusI, again.length - 1)]?.classList.add('padfocus'); }, 0);
+  }
+  padBack(): void {
+    if (this.bookEl.style.display === 'block') this.bookEl.querySelector<HTMLElement>('#book-close')?.click();
+    else if (this.codexEl.style.display === 'block') this.codexEl.style.display = 'none';
+    else if (this.dialogEl.style.display === 'block' || this.modal.classList.contains('on')) { /* choices must be made */ }
+  }
+
   setHelp(html: string): void { this.help.innerHTML = html; this.help.querySelector('.x')?.addEventListener('click', () => this.toggleHelp()); }
 
   toggleHelp(): void { this.help.style.display = this.help.style.display === 'none' ? '' : 'none'; }
@@ -324,11 +361,12 @@ export class ArenaHud {
     this.mul.textContent = `x${w.comboMul.toFixed(1)}`;
     this.hits.innerHTML = `${w.combo.hits}<small>hits</small>`;
     // Skill slots are whatever the world holds now (they grow and change during a climb).
-    const sig = w.skills.map(s => s ? s.id + s.name : '-').join('|') + (this.tower ? '|t' : '');
+    const sig = w.skills.map(s => s ? s.id + s.name : '-').join('|') + (this.tower ? '|t' : '') + (this.padMode ? '|pad' : '');
     if (sig !== this.skillSig) {
       this.skillSig = sig; for (const e of this.skillEls) e.remove(); this.skillEls = [];
       w.skills.forEach((s, k) => {
-        const e = s ? el('div', 'ar-sk', `<span>${s.icon}</span><em>${k + 1}</em><i></i><b style="background:${SOURCE_COLOR[s.source]}"></b>`) : el('div', 'ar-sk empty', `<em>${k + 1}</em>empty`);
+        const key = this.padMode ? `<em class="pad">${PAD_SKILL_LABELS[k] ?? ''}</em>` : `<em>${k + 1}</em>`;
+        const e = s ? el('div', 'ar-sk', `<span>${s.icon}</span>${key}<i></i><b style="background:${SOURCE_COLOR[s.source]}"></b>`) : el('div', 'ar-sk empty', `${key}empty`);
         e.title = s ? `${s.name} (${s.source}): ${s.text} · ${s.cost} stamina · ${s.cooldown}s` : 'Empty slot: absorb an essence, read a skill book, or let a class emerge';
         this.skillEls.push(e); this.skills.insertBefore(e, this.flaskEl);
       });
