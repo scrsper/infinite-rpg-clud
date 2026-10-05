@@ -1,4 +1,56 @@
-# Current: Same-world Observatory workbench (2026-10-03)
+# Current: Tower sword-and-shield, checkpoint E2E and compact HUD (2026-10-05)
+
+Branch `codex/tower-expedition` (worktree `C:\Users\green\Documents\Codex\2026-10-04\task\tower`): a reviewed
+finishing pass on base `22211a0`. External push, PR and Library upload are blocked by auto-review until trusted
+approval. Final evidence stays local (only an earlier trial image was uploaded). Presentation and Tower UI only;
+canonical simulation unchanged.
+
+- **Gear transfer:** the 0.22 s floating draw blend and its torso arc are removed. None of the licensed clips makes hand
+  contact with the slung gear. The great-sword draws are two-handed and overhead (closest palm-to-grip 0.60/0.69 m
+  with the sword slung, its hilt hidden behind the slung shield). The sword-and-shield sheaths go to the hip, and no
+  clip unslings a shield. So drawing and stowing are an intentional instantaneous transfer, with the existing flash;
+  no hand contact is faked.
+- **Foot contact (bounded):** the defect is missed stance lock. `FootPlant`'s first-pose ankle band missed planted
+  feet in the crouched/rolled sword-and-shield stances. `FootPlant.update` takes an optional per-foot `contact`;
+  without it the behaviour is unchanged (`sharedCast`). The Tower/arena hero passes the dominant clip's baked contact
+  in idle, move and a still guard, never with the strafe leg layer, lunging attacks or dodges. Live Tower, Proving
+  Hall, armed. Before and after are separate live runs, not phase-matched visual A/B, and the earlier before
+  feet pixels were partly hidden by toasts; the numbers are the evidence, not a broader claim that foot motion is
+  solved:
+  - Missed locks went to 0.
+  - Clip-planted slide in move: mean 3.80 → 0.88 m/s, p90 4.54 → 0.
+  - Jumps over 2 m/s: move 71 → 5, armed idle 45 → 3, guard 48 → 2.
+  - Residual: reset spikes over 10 m/s remain (single frames). Attacks are untouched (56 → 57).
+  - Relaxed locomotion was not re-measured. On the simpler lower-foot metric, the armed sprint segment still
+    averages 3.5 m/s.
+  - No vertical-contact claim: the solver keeps the animated foot height. Diagnostic scripts and runs stayed in
+    gitignored `.debug/`.
+- **Retry floor fix:** after Continue on floor N, a death retry began the new climb on floor N, because `resume()`
+  left `startFloor` at the saved floor. It now restores the base start floor; checkpoint restore, non-persistent
+  `floor=` previews and death stat semantics are unchanged.
+- **HUD:**
+  - The routine banner is a compact ribbon at 108 px, and achievements are a 300 px card on the right above the
+    radar, keeping name, text and reward.
+  - Toasts are a left stack above the weapon row. Expiries are unchanged (2.2 s, 4.2 s queue, 3.2 s). Choice, death
+    and recovery modals are unchanged.
+  - Below 1060 px wide the floor title moves right of the stats instead of over the HP bars.
+- **Browser evidence:** in fresh Playwright contexts, never a player profile:
+  - `scripts/web/tower-checkpoint-e2e.ts`: 23/23 checks, 0 page errors. Covers fresh floor-1 write, floor retry
+    rollback with exact-once lifetime receipts, a single floor-2 write, floor-2 Continue, Proving Hall isolation,
+    death, and corrupt/incompatible recovery with download. Continue and recovery are driven through the real menu
+    cards; death and the hall-exit position are harness-forced and labelled.
+  - `scripts/web/tower-sword-shield.ts --tower`: 6/6 armed-strip and transfer checks (stow, draw, rapid reversal,
+    swap with disposal by object identity), 0 page errors.
+  - `scripts/web/tower-hud.ts`: at 760×760 and 1100×700, no missing nodes, overlaps or errors after. Before (HEAD CSS
+    re-applied with `--legacy-css`): the title overlaps the HP frame at 760, and the banner overlaps the achievement
+    at both sizes.
+- **Checks:** typecheck passed; earlier focused tests 14/14. Reviewer reported build:bundle, web:build,
+  ontology:check, assets verify and ontology:build passing. Full `npm test`: 192 files, 1,907 tests passed,
+  0 failures (1,740.82 s). World smoke (run separately by the reviewer) exited 0: 7 scenarios, 5 PASS, 2 DEGRADED,
+  0 FAIL. Both DEGRADED results come only from the WL-TIMBER-HORIZON finite-timber warning, so not every scenario is
+  healthy. No CI, merge or publication is claimed.
+
+# Previous: Same-world Observatory workbench (2026-10-03)
 
 Local branch `codex/observatory-workbench`, based on cleanup `968897f` (PR #57).
 Movable/resizable/collapsible panels retain local layout; embedded Babylon uses the

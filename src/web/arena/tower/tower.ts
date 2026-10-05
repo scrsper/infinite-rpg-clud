@@ -158,7 +158,8 @@ export class TowerRun {
   /** Restore at a floor boundary, with skills reconnected by identity instead of duplicated slot copies. */
   private resume(saved: TowerCheckpoint): void {
     const data: TowerCheckpoint = JSON.parse(JSON.stringify(saved));
-    this.restoring = true; this.seed = data.seed; this.startFloor = data.floor; this.start();
+    // Rebuild the saved floor, then restore the climb's base start floor: a later death retry begins a new climb there.
+    const base = this.startFloor; this.restoring = true; this.seed = data.seed; this.startFloor = data.floor; this.start(); this.startFloor = base;
     this.runId = data.runId; this.climberId = data.climberId; this.sheet = data.sheet; this.gear = data.gear; this.armorItem = data.armor; this.charm = data.charm;
     this.known = data.known; const skill = (id: string | null) => this.known.find(k => k.id === id) ?? null;
     this.pendingSlot = data.pending.map(id => skill(id)!); this.classSkill = skill(data.classSkill); this.cls = data.cls; this.essences = data.essences as Essence[]; this.confluenceName = data.confluence; this.scrolls = data.scrolls;

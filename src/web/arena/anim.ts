@@ -68,6 +68,8 @@ export class Animator {
   }
 
   private legs: { name: string; g: AnimationGroup; w: number; target: number } | null = null;
+  /** True while a legs-only layer is driving (or fading out of) the leg bones. */
+  get legLayered(): boolean { return !!this.legs; }
   /**
    * A legs-only layer over whatever is playing (strafe/backpedal while guarding or aiming). Its weight is
    * high so it dominates the leg bones; the upper body keeps the main clip. `null` fades it out.

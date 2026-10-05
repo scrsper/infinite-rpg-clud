@@ -40,7 +40,9 @@ const css = `
 .ar-wave{position:absolute;left:50%;top:14px;transform:translateX(-50%);text-align:center;text-shadow:0 2px 3px #000}
 .ar-wave b{display:block;font:900 26px/1.1 "Segoe UI",sans-serif;letter-spacing:.08em;color:#f3e3b5}
 .ar-wave span{font-size:12px;color:#ddd}
-.ar-banner{position:absolute;left:50%;top:22%;transform:translateX(-50%);font:900 46px/1 "Segoe UI",sans-serif;letter-spacing:.12em;color:#ffe6a8;text-shadow:0 3px 0 #4a2b00,0 0 22px #000;opacity:0;transition:opacity .3s}
+@media (max-width:1060px){.ar-wave{left:392px;transform:none;text-align:left;max-width:calc(100vw - 406px)}.ar-wave b{font-size:20px}}
+.ar-banner{position:absolute;left:50%;top:108px;transform:translateX(-50%);max-width:min(560px,calc(100vw - 340px));padding:5px 14px;background:#0b0f18b0;border-radius:4px;text-align:center;font:900 18px/1.15 "Segoe UI",sans-serif;letter-spacing:.1em;color:#ffe6a8;text-shadow:0 2px 0 #4a2b00,0 0 8px #000;opacity:0;transition:opacity .3s;pointer-events:none}
+.ar-banner .s{font:600 12px/1.3 "Segoe UI",sans-serif;letter-spacing:.03em;color:#e6dcc4;margin-top:3px}
 .ar-help{position:absolute;right:14px;top:12px;max-width:290px;padding:10px 12px;background:#0d1118c8;border:1px solid #3b4558;border-radius:6px;font:500 12px/1.5 "Segoe UI",sans-serif;pointer-events:auto}
 .ar-help b{color:#ffd45c}
 .ar-help .x{float:right;cursor:pointer;color:#aaa}
@@ -64,8 +66,8 @@ const css = `
 .ar-card p{margin:0;font:500 12px/1.4 sans-serif;color:#c8cfdb}
 .ar-modal h2{text-align:center;margin:0 0 4px;font:900 28px "Segoe UI",sans-serif;color:#ffd45c}
 .ar-modal .sub{text-align:center;color:#ccc;margin-bottom:22px;font-weight:500}
-.ar-toasts{position:absolute;left:50%;bottom:110px;transform:translateX(-50%);display:flex;flex-direction:column-reverse;gap:6px;align-items:center}
-.ar-toast{padding:6px 14px;background:#0d1118d8;border:1px solid #3b4558;border-radius:4px;font:600 14px "Segoe UI",sans-serif;transition:opacity .4s}
+.ar-toasts{position:absolute;left:14px;bottom:104px;display:flex;flex-direction:column-reverse;gap:4px;align-items:flex-start;max-width:min(360px,42vw)}
+.ar-toast{padding:4px 10px;background:#0d1118c8;border:1px solid #3b4558;border-left-width:3px;border-radius:3px;font:600 12px/1.35 "Segoe UI",sans-serif;transition:opacity .4s}
 .ar-fade{position:absolute;inset:0;background:#05070b;opacity:0;display:grid;place-items:center;font:900 40px "Segoe UI",sans-serif;letter-spacing:.14em;color:#ffe6a8;transition:opacity .35s}
 .ar-boss{position:absolute;left:50%;top:70px;transform:translateX(-50%);width:520px;text-align:center;font:800 15px "Segoe UI",sans-serif;letter-spacing:.08em;color:#ffd0c0;text-shadow:0 1px 3px #000;display:none}
 .ar-boss .ar-bar{height:12px;margin-top:4px}
@@ -85,10 +87,10 @@ const css = `
 .ar-scroll{position:relative;width:44px;height:44px;border-radius:6px;background:#2a2114e0;border:2px solid #c9a35a;display:grid;place-items:center;font-size:20px}
 .ar-scroll em{position:absolute;left:3px;top:1px;font:700 10px sans-serif;color:#ffd45c;font-style:normal}
 .ar-scroll small{position:absolute;right:3px;bottom:1px;font:700 10px sans-serif;color:#fff}
-.ar-ach{position:absolute;left:50%;top:150px;transform:translateX(-50%);min-width:380px;max-width:560px;background:#0b0f18f0;border:2px solid #5aa8ff;border-radius:6px;padding:12px 18px;font:500 14px/1.4 "Segoe UI",sans-serif;color:#dfe8f5;opacity:0;transition:opacity .3s;box-shadow:0 0 30px #000}
-.ar-ach h4{margin:0 0 2px;font:900 12px sans-serif;letter-spacing:.2em;color:#5aa8ff}
-.ar-ach h3{margin:0 0 4px;font:800 19px "Segoe UI",sans-serif;color:#fff}
-.ar-ach p{margin:0 0 6px;color:#b8c4d6;font-style:italic}
+.ar-ach{position:absolute;right:14px;bottom:166px;width:min(300px,40vw);background:#0b0f18e0;border:1px solid #5aa8ff;border-left-width:4px;border-radius:4px;padding:7px 10px;font:500 12px/1.35 "Segoe UI",sans-serif;color:#dfe8f5;opacity:0;transition:opacity .3s;box-shadow:0 2px 10px #0008;pointer-events:none}
+.ar-ach h4{margin:0 0 1px;font:900 10px sans-serif;letter-spacing:.18em;color:#5aa8ff}
+.ar-ach h3{margin:0 0 2px;font:800 14px "Segoe UI",sans-serif;color:#fff}
+.ar-ach p{margin:0 0 3px;color:#b8c4d6;font-style:italic}
 .ar-ach .rw{font-weight:800}
 .ar-belt{display:flex;gap:4px;margin-left:8px}.ar-pot{width:34px;height:34px;border-radius:17px;background:#141a26e0;border:2px solid #56627a;display:grid;place-items:center;font-size:16px;position:relative}
 .ar-pot em{position:absolute;left:-2px;top:-6px;font:700 10px sans-serif;color:#ffd45c;font-style:normal}
@@ -304,7 +306,7 @@ export class ArenaHud {
 
   toggleHelp(): void { this.help.style.display = this.help.style.display === 'none' ? '' : 'none'; }
 
-  announce(text: string, sub = ''): void { this.banner.innerHTML = text + (sub ? `<div style="font-size:16px;letter-spacing:.05em;margin-top:8px">${sub}</div>` : ''); this.banner.style.opacity = '1'; this.bannerT = 2.2; }
+  announce(text: string, sub = ''): void { this.banner.innerHTML = text + (sub ? `<div class="s">${sub}</div>` : ''); this.banner.style.opacity = '1'; this.bannerT = 2.2; }
 
   number(p: Vector3, amount: number, kind: 'hit' | 'crit' | 'block' | 'hurt' | 'heal'): void {
     const e = el('div', `ar-num ${kind}`, kind === 'block' ? 'BLOCK' : kind === 'heal' ? `+${amount}` : String(amount));
