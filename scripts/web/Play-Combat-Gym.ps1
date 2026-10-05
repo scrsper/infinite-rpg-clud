@@ -1,4 +1,5 @@
-param([switch]$NoBrowser, [switch]$Build, [switch]$Arena, [switch]$Tower)
+param([switch]$NoBrowser, [switch]$Build, [switch]$Arena, [switch]$Tower, [switch]$Hall)
+if ($Hall) { $Tower = $true }
 if ($Tower) { $Arena = $true }
 $ErrorActionPreference = 'Stop'
 $repo = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
@@ -17,7 +18,7 @@ try {
         do { Start-Sleep -Milliseconds 300; try { $health = Invoke-RestMethod 'http://127.0.0.1:7505/api/health' -TimeoutSec 2 } catch {} } while (-not $health -and (Get-Date) -lt $deadline)
         if (-not $health) { throw 'Combat Gym did not become ready. See .debug\combat-gym\server.err.log.' }
     }
-    $url = if ($Tower) { 'http://127.0.0.1:7505/?arena=1&tower=1' } elseif ($Arena) { 'http://127.0.0.1:7505/?arena=1' } else { 'http://127.0.0.1:7505/?gym=1&autoplay=1&view=orbit' }
+    $url = if ($Hall) { 'http://127.0.0.1:7505/?arena=1&tower=1&hall=1' } elseif ($Tower) { 'http://127.0.0.1:7505/?arena=1&tower=1' } elseif ($Arena) { 'http://127.0.0.1:7505/?arena=1' } else { 'http://127.0.0.1:7505/?gym=1&autoplay=1&view=orbit' }
     Write-Host "Disposable Combat Gym: $url"
     if (-not $NoBrowser) { Start-Process $url }
 } finally { Pop-Location }

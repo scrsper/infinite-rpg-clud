@@ -10,6 +10,7 @@ import { strikeWindow } from './retarget';
 import { usedClips } from './combat';
 import { ArenaAudio } from './sfx';
 import { ARENA, ArenaWorld, setArenaHalf, type HeroInput } from './world';
+import { DualSense, type PadFrame } from './pad';
 import { AdaptiveCamera, CAMERA_PRESETS, marchObstruction, type CameraPresetName } from '../game/adaptiveCamera';
 import { TowerRun } from './tower/tower';
 import { ARSENAL_KEYS } from './tower/items';
@@ -25,7 +26,9 @@ import type { WeaponId } from './combat';
 const TOWER_HELP = `<span class="x">✕</span><b>Tower of Chrysanthus</b><br>
   Clear each floor, then walk through the door at the far wall.<br>
   <b>WASD</b> move · <b>Shift</b> sprint · <b>Mouse</b> aim · <b>MMB drag</b> orbit · <b>Wheel</b> zoom<br><b>LMB</b> light (chain) · <b>RMB</b> heavy (hold to charge) · <b>F</b> guard/parry<br>
-  <b>Space</b> dodge or roll · <b>Tab</b> weapon · <b>Q</b> flask<br><b>1-7</b> skills: slots fill from essences you absorb, skill books you read and the class you become; more slots as your tier rises<br><b>G</b> read a scroll · <b>E</b> use a god's shrine · <b>K</b> Codex<br>
+  <b>PS5 controller:</b> L-stick move · R-stick camera (R3 recentre) · R1 light · R2 heavy / bow aim · L1 guard · ○ dodge (hold: sprint) · ✕ interact · □ flask · △ weapon · <b>L2 +</b> □△○✕ R1 R2 L1 = skills 1-7 · D-pad ↑ potion ↓ scroll ←→ weapon · touchpad Spellbook · Create Codex · Options pause<br>
+  <b>Space</b> dodge or roll · <b>Tab</b> weapon · <b>Q</b> flask<br><b>1-7</b> skills: slots fill from essences you absorb, skill books you read and the class you become; more slots as your tier rises<br><b>G</b> read a scroll · <b>V</b> drink from the belt · <b>B</b> Spellbook · <b>E</b> use a god's shrine · <b>K</b> Codex<br>
+  Magic: an element you hold (affinity 1+) shaped by a form you have learned (treatises) is a spell. Soak then shock, soak then freeze, freeze then burn.<br>
   Loot drops from foes and chests: walk over it. Achievements award loot boxes, opened when a floor is clear.<br>Every 5th floor a boss, every 10th a god.<br><b>R</b> new climb · <b>P</b> pause · <b>H</b> this help`;
 
 export async function startArena(): Promise<void> {
@@ -62,17 +65,18 @@ export async function startArena(): Promise<void> {
   const levels: number[] = [];
   let heroDown = false;
   const world = new ArenaWorld(scene, assets, shadow, {
-    damage: (p, n, kind) => hud.number(p, n, kind),
+    damage: (p, n, kind) => { hud.number(p, n, kind); if (kind === 'hurt') ds.rumble(.7, .45, 200); else if (kind === 'crit') ds.rumble(.15, .55, 70); else if (kind === 'block') ds.rumble(.35, .2, 90); },
     kill: f => tower?.onKill(f),
     levelUp: l => { levels.push(l); audio.play('level'); },
     wave: (n, count) => hud.announce(`WAVE ${n}`, `${count} raiders attack`),
     heroDown: () => { if (tower) tower.onHeroDown(); else heroDown = true; },
     sound: (k, g) => audio.play(k, g),
+    word: (p, text, color) => hud.word(p, text, color),
   });
   let seed = Number(params.get('seed') ?? 918271) || 918271;
   world.reset(seed);
   let tower: TowerRun | null = null;
-  if (towerMode) { tower = new TowerRun(scene, world, hud, assets, stage, seed); tower.startFloor = Math.max(1, Math.min(100, Number(params.get('floor') ?? 1) || 1)); hud.tower = tower as never; tower.start(); }
+  if (towerMode) { tower = new TowerRun(scene, world, hud, assets, stage, seed); { const fl = params.has('hall') ? '0' : params.get('floor'); tower.startFloor = fl === null ? 1 : Math.max(0, Math.min(100, Math.floor(Number(fl)) || 0)); } hud.tower = tower as never; tower.start(); }
   document.title = towerMode ? 'Tower of Chrysanthus' : document.title;
   // Classic isometric framing (~35 deg elevation), orbitable with the middle mouse button.
   // The shared elevated, freely orbitable third-person camera (src/web/game/adaptiveCamera.ts).
@@ -119,9 +123,13 @@ export async function startArena(): Promise<void> {
 
   const camFocus = new Vector3();
   let camPrev: { x: number; z: number } | null = null; const camVel = { x: 0, z: 0 };
-  let padWeapon = 0, padPrev: boolean[] = [];
+  // PlayStation 5 DualSense (any standard gamepad): see pad.ts for the layout.
+  const ds = new DualSense();
+  ds.onConnect = label => hud.toast(`${label} connected · Options shows the controls`, '#9fd0ff');
+  ds.onModeChange = on => hud.setPadMode(on);
+  let pf: PadFrame | null = null;
 
-  const readInput = (): HeroInput => {
+  const readInput = (dt: number): HeroInput => {
     const fwd = new Vector3(-Math.sin(cam.yaw), 0, -Math.cos(cam.yaw)), right = new Vector3(-fwd.z, 0, fwd.x);
     let mx = 0, mz = 0;
     if (keys.has('KeyW') || keys.has('ArrowUp')) { mx += fwd.x; mz += fwd.z; }
@@ -140,24 +148,35 @@ export async function startArena(): Promise<void> {
     // Diablo-style: 1-7 are skill slots, G reads a scroll; Tab cycles drawn weapons (F1-F4 pick one directly).
     let weapon: WeaponId | null = pressed.has('F1') ? 'fists' : pressed.has('F2') ? 'greatsword' : pressed.has('F3') ? 'axe' : pressed.has('F4') ? 'bow' : null;
     const cycle = pressed.has('Tab');
-    const pad = navigator.getGamepads?.().find(p => p);
-    if (pad) {
-      const dz = (v: number) => Math.abs(v) < .18 ? 0 : v;
-      const lx = dz(pad.axes[0]), ly = dz(pad.axes[1]), rx = dz(pad.axes[2]), ry = dz(pad.axes[3]);
-      mx += -fwd.x * ly + right.x * lx; mz += -fwd.z * ly + right.z * lx;
-      const b = pad.buttons.map(x => x.pressed), edge = (i: number) => b[i] && !padPrev[i];
-      sprint ||= !!b[10];
-      if (rx || ry) aim.copyFrom(world.hero.pos.add(fwd.scale(-ry * 6)).add(right.scale(rx * 6)));
-      else if (lx || ly) aim.copyFrom(world.hero.pos.add(new Vector3(mx, 0, mz).normalize().scale(5)));
-      attack ||= b[2] || b[7]; attackPressed ||= edge(2) || edge(7); secondary ||= b[6] || b[3]; dodge ||= edge(0) || edge(1);
-      if (edge(4) || edge(5)) { padWeapon = (padWeapon + (edge(5) ? 1 : 3)) % 4; weapon = (['fists', 'greatsword', 'axe', 'bow'] as WeaponId[])[padWeapon]; }
-      if (edge(9)) paused = !paused;
-      padPrev = b;
+    let guard = keys.has('KeyF'), flask = pressed.has('KeyQ'), interact = keys.has('KeyE'), scroll = pressed.has('KeyG'), castK = cast, cyc = cycle;
+    if (pf) {
+      const p = pf, h = world.hero;
+      mx += fwd.x * -p.move.y + right.x * p.move.x; mz += fwd.z * -p.move.y + right.z * p.move.x;
+      cam.addLook(p.look.x * dt * 3.1, p.look.y * dt * 2.1);
+      if (p.recentre) cam.yaw = h.yaw + Math.PI;
+      attack ||= p.light; attackPressed ||= p.lightPressed;
+      secondary ||= p.heavy; heavyPressed ||= p.heavyPressed; heavyReleased ||= p.heavyReleased;
+      dodge ||= p.dodge; sprint ||= p.sprint; guard ||= p.guard; flask ||= p.flask; interact ||= p.interact; scroll ||= p.scroll; cyc ||= p.cycle;
+      if (p.skill >= 0) castK = p.skill;
+      if (p.weaponStep) { const order = (['fists', 'greatsword', 'axe', 'bow'] as WeaponId[]).filter(x => world.unlocked.has(x)); const k = order.indexOf(world.weapon); weapon = order[(k + p.weaponStep + order.length) % order.length]; }
+      if (ds.active) {
+        // Controller aim: the foe you are facing (or moving toward), else straight ahead.
+        const mv = Math.hypot(mx, mz) > .2 ? new Vector3(mx, 0, mz).normalize() : new Vector3(Math.sin(h.yaw), 0, Math.cos(h.yaw));
+        let best: Vector3 | null = null, bs = Infinity;
+        for (const f of world.fighters) {
+          if (f.role !== 'foe' || !f.alive || !f.standing) continue;
+          const d = f.pos.subtract(h.pos); d.y = 0; const dist = d.length(); if (dist > 13 || dist < .01) continue;
+          const ang = Math.acos(Math.max(-1, Math.min(1, (d.x * mv.x + d.z * mv.z) / dist)));
+          if (ang > .85) continue;
+          const score = dist * (1 + ang * 2.2); if (score < bs) { bs = score; best = f.pos; }
+        }
+        aim.copyFrom(best ? best.clone() : h.pos.add(mv.scale(6)));
+      }
     }
     const len = Math.hypot(mx, mz);
     if (len > 1) { mx /= len; mz /= len; }
     lmbPressed = false;
-    return { move: { x: mx, z: mz }, aim, attack, attackPressed, secondary, heavyPressed, heavyReleased, cast, guard: keys.has('KeyF'), flask: pressed.has('KeyQ'), cycle, sprint, dodgePressed: dodge, interact: keys.has('KeyE'), scroll: pressed.has('KeyG'), weapon };
+    return { move: { x: mx, z: mz }, aim, attack, attackPressed, secondary, heavyPressed, heavyReleased, cast: castK, guard, flask, cycle: cyc, sprint, dodgePressed: dodge, interact, scroll, weapon };
   };
 
   const rebuild = () => { if (tower) { hud.closeModal(); levels.length = 0; tower.start(); return; } hud.closeModal(); heroDown = false; levels.length = 0; world.reset(++seed); hud.announce('COMBAT GYM', 'rebuilt · seed ' + seed); };
@@ -169,17 +188,26 @@ export async function startArena(): Promise<void> {
   let shakeT = 0;
   scene.onBeforeRenderObservable.add(() => {
     const dt = Math.min(scene.getEngine().getDeltaTime() / 1000, 1 / 20);
+    pf = ds.poll(dt);
+    if (pf) {
+      if (hud.menuOpen()) { if (pf.nav.x || pf.nav.y) hud.padNav(pf.nav.x, pf.nav.y); if (pf.confirm) hud.padConfirm(); if (pf.back) hud.padBack(); }
+      if (pf.pause && !hud.menuOpen()) { paused = !paused; hud.showHelp(paused); }
+      if (pf.book && tower) hud.toggleBook(world.skills, (slot, sk) => tower!.assign(slot, sk));
+      if (pf.codex) hud.toggleCodex(loadCodex());
+      if (hud.menuOpen()) pf = { ...pf, move: { x: 0, y: 0 }, look: pf.look, light: false, lightPressed: false, heavy: false, heavyPressed: false, heavyReleased: false, dodge: false, interact: false, flask: false, cycle: false, skill: -1, drink: false, scroll: false, weaponStep: 0 };
+    }
     if (pressed.has('KeyR')) rebuild();
     if (pressed.has('KeyP') || pressed.has('Escape')) paused = !paused;
     if (pressed.has('KeyH')) hud.toggleHelp();
     if (pressed.has('KeyL')) world.showLabels = !world.showLabels;
     if (pressed.has('KeyC') && !tower) { world.setCompanions(!world.companions); hud.announce(world.companions ? 'COMPANIONS JOIN' : 'FIGHTING ALONE'); }
-    if (pressed.has('KeyN') && !tower) world.spawnNow();
+    if (pressed.has('KeyN') && (!tower || tower.plan.kind === 'hall')) world.spawnNow();
+    if (pressed.has('KeyB') && tower) hud.toggleBook(world.skills, (slot, sk) => tower!.assign(slot, sk));
     if (pressed.has('KeyK')) hud.toggleCodex(loadCodex());
     if (pressed.has('KeyM')) { world.autoWaves = !world.autoWaves; hud.announce(world.autoWaves ? 'WAVES ON' : 'SANDBOX', world.autoWaves ? 'enemies keep coming' : 'press N to spawn enemies'); }
-    const input = readInput();
+    const input = readInput(dt), drink = pressed.has('KeyV') || !!pf?.drink;
     pressed.clear();
-    if (!paused && !hud.modalOpen) { world.step(dt, input); tower?.update(dt, input.interact, input.scroll); }
+    if (!paused && !hud.modalOpen) { world.step(dt, input); tower?.update(dt, input.interact, input.scroll, drink); }
     // After the step: bodies are at this frame's positions, so planted feet, cloth and grips solve against them
     // (Babylon animates before onBeforeRender, so solving earlier would lag the root by a frame and skate the feet).
     else scene.animationTimeScale = 0;
@@ -211,6 +239,18 @@ export async function startArena(): Promise<void> {
     camera.fov = pose.fov;
     camera.position.set(pose.position.x + Math.sin(shakeT * 1.7) * s, pose.position.y + Math.sin(shakeT * 2.3) * s, pose.position.z + Math.cos(shakeT * 1.9) * s);
     camera.setTarget(camFocus);
+    // Bodies between the camera and the hero (a floating god, an orc) fade to ghosts instead of filling the screen.
+    {
+      const c = camera.position, hx = h.x, hy = h.y + 1.2, hz = h.z, dx = hx - c.x, dy = hy - c.y, dz = hz - c.z, L = Math.hypot(dx, dy, dz) || 1;
+      for (const f of world.fighters) {
+        if (f === hero) continue;
+        const px = f.pos.x - c.x, py = f.pos.y + f.hover + 1.1 - c.y, pz = f.pos.z - c.z, along = (px * dx + py * dy + pz * dz) / L;
+        const off = Math.hypot(px - dx / L * along, py - dy / L * along, pz - dz / L * along);
+        const block = along > .3 && along < L - .6 && off < 1.1 * f.inst.root.scaling.x;
+        const v = block ? .28 : 1;
+        for (const m of f.inst.meshes) if (Math.abs(m.visibility - v) > .01) m.visibility += (v - m.visibility) * Math.min(1, dt * 10);
+      }
+    }
     hud.update(dt, world, scene, camera);
   });
   ctx.engine.runRenderLoop(() => scene.render());

@@ -3,12 +3,15 @@ import { Color3, Color4, Matrix, Mesh, MeshBuilder, Quaternion, StandardMaterial
 import type { ArenaAssets, CharacterInstance } from './assets';
 import type { LookId } from './looks';
 import { Animator } from './anim';
-import { ALLIES, DODGES, FOES, MOVESETS, WEAPONS, waveRoster, type AttackDef, type FoeDef, type FoeKind, type Moveset, type WeaponId } from './combat';
+import { ALLIES, DODGES, FOES, MOVESETS, RELAXED, WEAPONS, waveRoster, type AttackDef, type FoeDef, type FoeKind, type Moveset, type WeaponId } from './combat';
 import { Debris } from './debris';
 import { BlobShadows, Fx, SlashTrail } from './fx';
 import { mulberry } from '../render/noise';
 import { reach } from './ik';
 import { SIGNS, cloneSkill, type SkillDef } from './tower/skills';
+import { Vfx, elementLook, type Handle } from './vfx';
+import { ELEMENT_INFO, LEY_BONUS } from './magic';
+import type { Element } from './tower/capability';
 import { NavGrid } from './nav';
 import type { Sfx } from './sfx';
 
@@ -68,10 +71,22 @@ export class Fighter {
   energy = 100; energyDelay = 0;
   /** Off hand pulled onto the grip of a two-handed weapon. */
   twoHand = false; ikW = 0;
+  /** Out of combat: relaxed walk and idle, weapon slung on the back. */
+  relaxed = false; sheathed = false; alertT = 0;
   /** Smoothed locomotion velocity, turn rate and body lean (presentation of weight). */
   mvel = new Vector3(); turnRate = 0; lean = 0; pitch = 0; dodgeTime = .55;
   /** Tower: per-fighter outgoing damage scale, boss identity, burning and chill. */
   dmgMul = 1; boss: { name: string } | null = null; burnT = 0; burnDps = 0; slowT = 0;
+  /** Elemental statuses: soaked, frozen solid, shocked (stunned), time-slowed (with stored hits), gathered by gravity, armour shredded. */
+  wetT = 0; frozenT = 0; shockT = 0; timeT = 0; ruptureHits = 0; gatherT = 0; shredT = 0;
+  /** Mana (hero): spells spend it; it flows back with mana control and the floor's ley. */
+  mana = 100; maxMana = 100;
+  /** Height floated above the ground (the god's avatar never touches it). */
+  hover = 0;
+  /** A god's body: takes only this share of damage, never staggers, shrugs statuses off. */
+  god = false; godArmor = 1;
+  /** Status visuals currently shown on this body. */
+  statusFx = new Map<string, Handle>();
   /** Heavy attacks: charging while RMB is held at the wind-up; which heavy in the chain. */
   charging = false; charge = 0; heavyIdx = -1; healT = 0; castDef: SkillDef | null = null; spellDone = false; dashHit = new Set<Fighter>();
   /** Foot planting: world-space lock per foot (l, r) and its blend weight. */
@@ -103,6 +118,8 @@ export interface ArenaEvents {
   wave(n: number, count: number): void;
   heroDown(): void;
   sound(kind: Sfx, gain?: number): void;
+  /** A reaction or status word over a body (FREEZE, ELECTROCUTE, SHATTER...). */
+  word?(pos: Vector3, text: string, color: string): void;
 }
 
 const PROP_DEF: Record<string, { scale: number; hp: number; round?: boolean; inset?: number }> = {
@@ -148,7 +165,7 @@ export class ArenaWorld {
    */
   skills: (SkillDef | null)[] = SIGNS.map(cloneSkill);
   skillCd: number[] = [0, 0, 0, 0, 0, 0, 0];
-  wardHp = 0; wardT = 0; sigils: { x: number; z: number; r: number; t: number; p: number; color: Color3 }[] = [];
+  wardHp = 0; wardT = 0;
   /** Gear on the hero (tower affixes): crit chance, life leech (fraction of damage), cooldown reduction, thorns. */
   gearStats = { crit: .12, leech: 0, cdr: 0, thorns: 0 };
   /** Blood Frenzy / Iron Body: timed damage and attack-speed buff. */
@@ -161,7 +178,31 @@ export class ArenaWorld {
   freezeFoes = false; postureOn = true;
   /** Last cursor bearing from the hero (scrolls cast toward it). */
   aimYaw = 0;
-  get atkSpeed(): number { return this.mods.atkSpeed * this.bonus.atkSpeed * (this.frenzyT > 0 ? 1 + .2 * this.frenzyP : 1); }
+  /** Elemental effects (particles, glow, lights). */
+  readonly vfx: Vfx;
+  /** The floor's ley element: its spells are stronger and mana flows faster here (mechanical truth). */
+  ley: Element | null = null;
+  /** Weave spells and elixirs: the drawn weapon carries an element for a while; runestones set one permanently per slot. */
+  imbue: { e: Element; t: number; p: number } | null = null; weaponImbue: Partial<Record<WeaponId, Element>> = {};
+  private imbueFx: Handle | null = null; private imbueFxKey = '';
+  /** Potion effects (seconds left). */
+  potion = { haste: 0, might: 0, stone: 0, clarity: 0 };
+  /** Mana control (tower capability) speeds the flow of mana back. */
+  manaControl = 0;
+  /** Elemental wards: the element of the active ward answers attackers; Rewind keeps a little history of health. */
+  wardEl: Element | null = null; private hpHistory: number[] = []; private histT = 0; regenT = 0; veilT = 0;
+  /** Lasting fields (Field spells, sigils) and magic missiles (Bolt spells). */
+  fields: { x: number; z: number; r: number; t: number; p: number; e: Element; tick: number; owner: Fighter; fx: Handle }[] = [];
+  private missiles: { pos: Vector3; vel: Vector3; e: Element; p: number; owner: Fighter; life: number; fx: Handle; hit: Set<Fighter>; pierce: number; dmg: number }[] = [];
+  private inSkill = false;
+  private wordAt = new Map<string, number>();
+  /** Fighters run by a custom controller (the god's avatar) instead of the foe AI. */
+  readonly customAI = new Map<Fighter, (f: Fighter, dt: number) => boolean | void>();
+  /** Called instead of killing the hero (a god's trial spares the climber). */
+  spareHero: (() => void) | null = null;
+  private ignoreGuard = false;
+  get heroMove(): number { return this.potion.haste > 0 ? 1.25 : 1; }
+  get atkSpeed(): number { return this.mods.atkSpeed * this.bonus.atkSpeed * (this.frenzyT > 0 ? 1 + .2 * this.frenzyP : 1) * (this.potion.haste > 0 ? 1.25 : 1) * (this.imbue?.e === 'time' ? 1.3 : 1); }
   /** Flasks (Q): charges and max; the tower refills them per floor. */
   flasks = 3; flaskMax = 3;
   /** Foe scaling for the current floor. */
@@ -177,7 +218,7 @@ export class ArenaWorld {
   private bladeBase!: TransformNode; private bladeTip!: TransformNode;
 
   constructor(private readonly scene: Scene, private readonly assets: ArenaAssets, private readonly shadow: BlobShadows, private readonly ev: ArenaEvents) {
-    this.fx = new Fx(scene);
+    this.fx = new Fx(scene); this.vfx = new Vfx(scene);
     this.boltMat = new StandardMaterial('bolt-glow', scene); this.boltMat.emissiveColor = new Color3(1, .85, .5); this.boltMat.disableLighting = true;
     this.orbMat = new StandardMaterial('orb', scene); this.orbMat.emissiveColor = new Color3(.75, .35, 1); this.orbMat.disableLighting = true; this.orbMat.alpha = .9;
     this.lineMat = new StandardMaterial('aim-line', scene); this.lineMat.emissiveColor = new Color3(1, .15, .1); this.lineMat.disableLighting = true; this.lineMat.alpha = .55;
@@ -308,6 +349,7 @@ export class ArenaWorld {
     if (!this.unlocked.has(id)) return;
     this.weapon = id; const w = WEAPONS[id], o = this.weaponMesh[id];
     this.equip(h, [], o ? { [o.hand]: o.mesh } : w.attach);
+    if (h.sheathed) { h.sheathed = false; this.sheathe(h, true); }
     this.bladeBase.position.set(0, w.trail * .3, 0); this.bladeTip.position.set(0, Math.max(.3, w.trail), 0);
     if (!h.busy) { h.state = 'idle'; h.anim.play(this.ms(h).idle, { loop: true }); }
   }
@@ -348,7 +390,7 @@ export class ArenaWorld {
 
   /** The moveset a fighter currently moves with (the hero's follows the drawn weapon). */
   ms(f: Fighter): Moveset {
-    if (f.role === 'hero') return MOVESETS[WEAPONS[this.weapon].set];
+    if (f.role === 'hero') { const m = MOVESETS[WEAPONS[this.weapon].set]; return f.relaxed ? { ...m, ...RELAXED } : m; }
     if (f.role === 'ally') return MOVESETS[f.name === ALLIES.barbarian.name ? ALLIES.barbarian.set : ALLIES.rogue.set];
     return MOVESETS[f.foe!.set];
   }
@@ -384,25 +426,18 @@ export class ArenaWorld {
     this.time += dt;
     if (this.combo.hits && (this.combo.timer -= dt) <= 0) this.combo.hits = 0;
 
-    this.stepHero(dt, input);
-    for (const f of this.fighters) if (f.role !== 'hero') f.role === 'foe' ? (this.freezeFoes || this.stepFoe(f, dt)) : this.stepAlly(f, dt);
+    this.vfx.update(dt);
+    // Each body runs on its own clock: frozen solid stops it, a shock stutters it, time magic slows it.
+    for (const f of this.fighters) { const k = this.bodyTime(f); f.anim.timeScale = k; }
+    this.stepHero(dt * (this.hero.frozenT > 0 ? 0 : this.hero.timeT > 0 ? .5 : 1), input);
+    for (const f of this.fighters) if (f.role !== 'hero') {
+      const k = this.bodyTime(f), cd = dt * k;
+      const ai = this.customAI.get(f);
+      if (ai) { if (ai(f, dt) === false) this.stepFoe(f, cd); } else if (f.role === 'foe') { if (!this.freezeFoes) this.stepFoe(f, cd); } else this.stepAlly(f, cd);
+    }
     for (const f of this.fighters) this.integrate(f, dt);
-    for (const g of this.sigils) {
-      g.t -= dt;
-      if (Math.floor(g.t * 2) !== Math.floor((g.t + dt) * 2)) this.fx.ring(new Vector3(g.x, 0, g.z), g.r * 2, .55, g.color);
-      for (const f of this.fighters) if (f.role === 'foe' && f.standing && Math.hypot(f.pos.x - g.x, f.pos.z - g.z) < g.r) { f.slowT = Math.max(f.slowT, .4); f.hp -= 7 * g.p * dt; if (f.hp <= 0) this.kill(f, new Vector3(0, 0, 0), 0, false); }
-    }
-    this.sigils = this.sigils.filter(g => g.t > 0);
+    this.stepFields(dt); this.stepMissiles(dt); this.stepStatuses(dt);
     if (this.wardHp > 0 && this.rnd() < dt * 6) this.fx.sparksAt(this.hero.pos.add(new Vector3((this.rnd() - .5) * 1.4, .4 + this.rnd() * 1.6, (this.rnd() - .5) * 1.4)), 2, new Color4(.55, .8, 1, 1));
-    // Statuses: burning deals damage over time; chill slows (applied in movement).
-    for (const f of this.fighters) {
-      if (f.slowT > 0) f.slowT -= dt;
-      if (f.burnT > 0 && f.standing) {
-        f.burnT -= dt; f.hp -= f.burnDps * dt;
-        if (this.rnd() < dt * 9) this.fx.sparksAt(f.pos.add(new Vector3(0, .6 + this.rnd() * 1.2, 0)), 4, new Color4(1, .45, .1, 1));
-        if (f.hp <= 0) this.kill(f, new Vector3(0, 0, 0), 0, false);
-      }
-    }
     this.separate();
     this.stepShots(dt);
     this.stepWaves(dt);
@@ -420,7 +455,7 @@ export class ArenaWorld {
       f.turnRate += (turn - f.turnRate) * Math.min(1, dt * 10);
       const spd = f.role === 'hero' ? f.mvel.length() : 0;
       f.lean += (Math.max(-.2, Math.min(.2, -f.turnRate * spd * .012)) - f.lean) * Math.min(1, dt * 8);
-      f.inst.root.position.set(f.pos.x, f.y, f.pos.z); f.inst.root.rotation.set(0, f.yaw, f.state === 'move' ? f.lean : 0);
+      f.inst.root.position.set(f.pos.x, f.y + f.hover, f.pos.z); f.inst.root.rotation.set(0, f.yaw, f.state === 'move' ? f.lean : 0);
       if (f.flash > 0) f.flash -= dt;
       const on = f.flash > 0;
       for (const m of f.inst.meshes) { m.renderOverlay = on; if (on) { m.overlayColor = f.role === 'hero' ? new Color3(1, .2, .15) : Color3.White(); m.overlayAlpha = .65; } }
@@ -440,7 +475,7 @@ export class ArenaWorld {
     if (this.footLock && dt > 0) for (const f of this.fighters) this.plantFeet(f, dt);
     for (const f of this.fighters) f.inst.springs?.update(dt);
     for (const f of this.fighters) {
-      const b = f.inst.bones; if (!b || !f.twoHand) continue;
+      const b = f.inst.bones; if (!b || !f.twoHand || f.sheathed) { f.ikW = 0; continue; }
       const free = f.standing && f.state !== 'dodge' && f.state !== 'hit' && f.state !== 'spawn' && f.state !== 'revive';
       f.ikW += ((free ? 1 : 0) - f.ikW) * Math.min(1, dt * 12);
       if (f.ikW < .02) continue;
@@ -497,6 +532,13 @@ export class ArenaWorld {
     if (i.weapon && i.weapon !== this.weapon && !h.busy) this.setWeapon(h, i.weapon);
     if (i.cycle && !h.busy) { const order: WeaponId[] = ['fists', 'greatsword', 'axe', 'bow'].filter(x => this.unlocked.has(x as WeaponId)) as WeaponId[]; const n = order[(order.indexOf(this.weapon) + 1) % order.length]; if (n && n !== this.weapon) { this.setWeapon(h, n); this.ev.sound('whoosh', .3); } }
     for (let k = 0; k < this.skillCd.length; k++) this.skillCd[k] = Math.max(0, this.skillCd[k] - dt);
+    h.mana = Math.min(h.maxMana, h.mana + (4 + this.manaControl * .6) * (this.ley ? 1.25 : 1) * dt);
+    for (const k of ['haste', 'might', 'stone', 'clarity'] as const) if (this.potion[k] > 0) this.potion[k] -= dt;
+    if ((this.histT += dt) > .25) { this.histT = 0; this.hpHistory.push(h.hp); if (this.hpHistory.length > 14) this.hpHistory.shift(); }
+    if (this.regenT > 0) { this.regenT -= dt; h.hp = Math.min(h.maxHp, h.hp + h.maxHp * .025 * dt); }
+    if (this.veilT > 0) this.veilT -= dt;
+    if (this.imbue && (this.imbue.t -= dt) <= 0) this.imbue = null;
+    this.syncImbueFx(h);
     if (this.frenzyT > 0) { this.frenzyT -= dt; if (this.rnd() < dt * 10) this.fx.sparksAt(h.pos.add(new Vector3((this.rnd() - .5) * .8, .6 + this.rnd() * 1.4, (this.rnd() - .5) * .8)), 2, new Color4(1, .2, .15, 1)); }
     if (this.wardT > 0 && (this.wardT -= dt) <= 0) this.wardHp = 0;
     if (i.flask && this.flasks > 0 && h.hp < h.maxHp && h.healT <= 0) { this.flasks--; h.healT = 1.1; this.fx.ring(h.pos, 2.6, .6, new Color3(.4, 1, .55)); this.ev.sound('level', .5); }
@@ -506,10 +548,11 @@ export class ArenaWorld {
     if (h.energyDelay <= 0) h.energy = Math.min(100, h.energy + 26 * this.mods.regen * dt);
     // No passive regeneration: health returns through flasks, potions, abilities and boons. (Sandbox keeps a slow trickle.)
     if (this.passiveRegen && h.hp < h.maxHp && this.time - h.lastHurt > 8) h.hp = Math.min(h.maxHp, h.hp + h.maxHp * .004 * dt);
+    this.stepAlert(h, dt, i);
     const mv = new Vector3(i.move.x, 0, i.move.z); const moving = mv.lengthSquared() > .01;
     if (moving) mv.normalize();
     const aimYaw = Math.atan2(i.aim.x - h.pos.x, i.aim.z - h.pos.z); this.aimYaw = aimYaw;
-    const speed = h.speed * (this.mods.move * this.bonus.move);
+    const speed = h.speed * (this.mods.move * this.bonus.move) * this.heroMove;
 
     // Revive a downed companion by holding interact beside them.
     const downed = this.fighters.find(f => f.role === 'ally' && f.state === 'down' && Vector3.Distance(f.pos, h.pos) < 2.6);
@@ -638,8 +681,10 @@ export class ArenaWorld {
   private tryCast(h: Fighter, k: number, yaw: number): boolean {
     const s = this.skills[k];
     if (!s) { this.ev.damage(h.pos.add(new Vector3(0, 2.4, 0)), 0, 'block'); return false; }
-    if (this.skillCd[k] > 0 || h.energy < s.cost) return false;
-    h.energy -= s.cost; h.energyDelay = .8; this.skillCd[k] = s.cooldown * (1 - this.gearStats.cdr);
+    if (this.skillCd[k] > 0) return false;
+    if (s.mana) { const need = this.potion.clarity > 0 ? 0 : s.mana; if (h.mana < need) { this.ev.word?.(h.pos.add(new Vector3(0, 2.4, 0)), 'NO MANA', '#5aa8ff'); return false; } h.mana -= need; }
+    else { if (h.energy < s.cost) return false; h.energy -= s.cost; h.energyDelay = .8; }
+    this.skillCd[k] = s.cooldown * (1 - this.gearStats.cdr);
     if (this.onCast?.(s)) this.skillCd[k] = 0;
     this.beginCast(h, s, yaw); return true;
   }
@@ -655,7 +700,7 @@ export class ArenaWorld {
     h.state = 'cast'; h.st = 0; h.castDef = s; h.spellDone = false; h.label = s.name; h.yaw = turnTo(h.yaw, yaw, Math.PI); h.dashHit.clear();
     s.uses++;
     const self = s.kernel === 'ward' || s.kernel === 'heal' || s.kernel === 'frenzy';
-    if (s.kernel === 'dash') { h.iframe = .35; h.anim.play(DODGES.forward, { speed: 1.6, fade: .06, restart: true }); }
+    if (s.kernel === 'dash' || s.kernel === 'blink') { h.iframe = .35; h.anim.play(DODGES.forward, { speed: 1.6, fade: .06, restart: true }); }
     else h.anim.play(self ? 'sword_and_shield/sword and shield casting (2)' : 'great_sword/spell cast', { speed: 1.7, fade: .1, restart: true });
   }
 
@@ -664,12 +709,12 @@ export class ArenaWorld {
     if (!t.alive || !t.standing) return;
     const r = s.riders, p = s.power;
     const dmg = base * p * (r.includes('shadow') ? 1.35 : 1);
+    this.inSkill = true;
     this.damage(t, dmg, push, knock, heavy || r.includes('bone'), h);
+    for (const x of r) if (x in ELEMENT_INFO) this.elementHit(h, t, x as Element, p, dmg);
+    this.inSkill = false;
     for (const x of r) {
-      if (x === 'flame') { t.burnT = 3.5; t.burnDps = Math.max(t.burnDps, 9 * p); }
-      else if (x === 'frost') t.slowT = Math.max(t.slowT, 2.5);
-      else if (x === 'verdance') h.hp = Math.min(h.maxHp, h.hp + dmg * .05);
-      else if (x === 'blood') h.hp = Math.min(h.maxHp, h.hp + dmg * .12);
+      if (x === 'blood') h.hp = Math.min(h.maxHp, h.hp + dmg * .12);
       else if (x === 'storm' && s.kernel !== 'chain') {
         const o = this.fighters.find(o => o !== t && o.team !== h.team && o.alive && o.standing && Vector3.Distance(o.pos, t.pos) < 5);
         if (o) { this.damage(o, dmg * .4, o.pos.subtract(t.pos).normalize(), 2, false, null); this.bolt(t.pos, o.pos, new Color4(.8, .7, 1, 1)); }
@@ -697,6 +742,234 @@ export class ArenaWorld {
     }
   }
 
+  /** Presentation helpers for controllers: a floating word, a sound, a screen shake, removing a body. */
+  ev_word(p: Vector3, text: string, color: string): void { this.ev.word?.(p, text, color); }
+  sound(kind: Sfx, gain = 1): void { this.ev.sound(kind, gain); }
+  shake(k: number): void { this.fx.shake = Math.max(this.fx.shake, k); }
+  removeBody(f: Fighter): void { for (const fx of f.statusFx.values()) fx.dispose(); f.statusFx.clear(); this.removeFighter(f); this.fighters = this.fighters.filter(o => o !== f); }
+
+  /**
+   * Calm or alert. A body at ease walks and stands like a person (relaxed clips, arms loose, weapon on the back);
+   * a foe within reach, a blow taken or any combat input brings the weapon to hand and the fighting stance at once.
+   */
+  private stepAlert(h: Fighter, dt: number, i: HeroInput): void {
+    const action = i.attack || i.attackPressed || i.heavyPressed || i.secondary || i.guard || i.cast >= 0 || i.dodgePressed;
+    const near = this.fighters.some(f => f.role === 'foe' && f.alive && f.foeKind !== 'dummy' && Math.hypot(f.pos.x - h.pos.x, f.pos.z - h.pos.z) < 9);
+    const busy = h.state !== 'idle' && h.state !== 'move';
+    if (action || near || busy || this.time - h.lastHurt < 4) h.alertT = 3.5; else h.alertT -= dt;
+    const relaxed = h.alertT <= 0;
+    if (relaxed === h.relaxed) return;
+    h.relaxed = relaxed; this.sheathe(h, relaxed);
+    // Swap the stance clip now (locomotion picks its new pair on the next frame by itself).
+    if (h.state === 'idle') h.anim.play(this.idleOf(h), { loop: true, fade: relaxed ? .6 : .2 });
+  }
+
+  /** Weapons to the back (sheathed) or back to the hands. */
+  private sheathe(f: Fighter, on: boolean): void {
+    const back = f.inst.bones?.get('spine_03'); if (!back) return;
+    f.sheathed = on;
+    f.extra.forEach((m, k) => {
+      const inHand = m.metadata?.hand as TransformNode | undefined;
+      if (on) {
+        if (!inHand) m.metadata = { ...(m.metadata ?? {}), hand: m.parent };
+        m.parent = back; const bow = this.weapon === 'bow';
+        m.position.set(k ? -.08 : .06, bow ? .05 : .12, -.2); m.rotationQuaternion = null; m.rotation.set(0, bow ? Math.PI / 2 : 0, bow ? -Math.PI * .2 : Math.PI * .15);
+      } else if (inHand) { m.parent = inHand; m.position.setAll(0); m.rotation.setAll(0); }
+    });
+    if (f.trail) f.trail.active = false;
+    if (!on) this.vfx.flash(f.pos.add(new Vector3(0, 1.4, 0)), new Color3(1, .95, .8), .6, .12);
+  }
+
+  /** Spawn a foe of a kind (tower controllers). */
+  spawnAt(k: FoeKind, x: number, z: number): Fighter { return this.spawnFoe(k, x, z); }
+
+  /** Wind up a foe's melee blow `idx` at its target (the normal tell, telegraph and hit resolution follow). */
+  foeStrike(f: Fighter, idx: number, tell?: number): void {
+    const d = f.foe!, a = d.attacks[idx % d.attacks.length], t = f.target ?? this.hero, tl = tell ?? d.tell;
+    const toT = Math.atan2(t.pos.x - f.pos.x, t.pos.z - f.pos.z);
+    f.state = 'tell'; f.st = 0; f.atk = a; f.atkT = 0; f.atkHits.clear(); f.yaw = toT; f.label = 'Winding up';
+    f.anim.play(a.clip, { speed: Math.max(.05, a.active[0] * .55 / Math.max(tl, .01)), fade: .08, restart: true });
+    f.atkT = a.active[0] * .55;
+    f.cancelTell = this.fx.telegraph(() => f.standing ? f.pos : null, () => f.yaw, a.range + 1, a.range * 2.2, tl + .25);
+  }
+
+  /** A blow that ignores guard, parry and wards (only a dodge's grace avoids it). Returns false if dodged. */
+  hitUnblockable(t: Fighter, amount: number, push: Vector3, knock: number, src: Fighter | null): boolean {
+    if (t.iframe > 0 || t.state === 'dodge') { this.ev.word?.(t.pos.add(new Vector3(0, 2.3, 0)), 'DODGED', '#ffd76a'); return false; }
+    this.ignoreGuard = true; this.damage(t, amount, push, knock, true, src); this.ignoreGuard = false; return true;
+  }
+
+  /** A body's own clock: frozen solid 0, shocked a stutter, time-slowed a third, otherwise 1. */
+  bodyTime(f: Fighter): number { return f.frozenT > 0 ? 0 : f.shockT > 0 ? .12 : f.timeT > 0 ? .35 : 1; }
+
+  /**
+   * One elemental contact: leaves the element's status and resolves its reactions with what is already there.
+   * Statuses are the memory of the fight, so combinations emerge: soak then shock, soak then freeze, freeze then
+   * burn, gather then burst, slow then strike. `base` is the blow's damage (reactions scale from it).
+   */
+  elementHit(src: Fighter, t: Fighter, e: Element, p: number, base: number): void {
+    if (!t.alive) return;
+    const chest = t.pos.add(new Vector3(0, 1.3 * t.inst.root.scaling.x / 1.22, 0));
+    // Time stored in a slowed body: three more contacts of any element rupture it.
+    if (e !== 'time' && t.timeT > 0 && ++t.ruptureHits >= 3) {
+      t.timeT = 0; t.ruptureHits = 0; this.vfx.clockRing(t.pos.add(new Vector3(0, .1, 0)), 2.4, .9); this.vfx.burst('time', chest, 1.4);
+      this.ev.word?.(chest.add(new Vector3(0, .9, 0)), 'RUPTURE', ELEMENT_INFO.time.color);
+      this.damage(t, base * 2.5, new Vector3(0, 0, 0), 2, false, src.role === 'hero' ? src : null);
+    }
+    const say = (w: string, el: Element = e) => { const k = `${t.id}:${w}`, last = this.wordAt.get(k) ?? -9; if (this.time - last < .9) return; this.wordAt.set(k, this.time); this.ev.word?.(chest.add(new Vector3(0, .6, 0)), w, ELEMENT_INFO[el].color); };
+    const extra = (k: number, push = new Vector3(0, 0, 0), knock = 0) => this.damage(t, base * k, push, knock, false, src.role === 'hero' ? src : null);
+    const resist = t.god ? .12 : t.boss ? .45 : 1;   // bosses shrug statuses off faster; gods barely notice
+    const friends = (r: number) => this.fighters.filter(o => o !== t && o.team === t.team && o.alive && o.standing && Vector3.Distance(o.pos, t.pos) < r);
+    switch (e) {
+      case 'water':
+        if (t.burnT > 0) { t.burnT = 0; say('STEAM'); this.vfx.burst('water', chest, 1); for (const o of [t, ...friends(2.6)]) { o.shockT = Math.max(o.shockT, .5); } }
+        t.wetT = 7 * resist; break;
+      case 'frost':
+        if (t.wetT > 0 && !t.god) { t.wetT = 0; t.frozenT = 2.2 * resist; say('FREEZE'); this.vfx.burst('frost', chest, 1.1); }
+        else t.slowT = Math.max(t.slowT, 2.5); break;
+      case 'flame':
+        if (t.frozenT > 0) { t.frozenT = 0; say('SHATTER', 'frost'); this.vfx.burst('frost', chest, 1.3); extra(2); }
+        else if (t.wetT > 0) { t.wetT = 0; say('STEAM', 'water'); this.vfx.burst('water', chest, .9); t.shockT = Math.max(t.shockT, .5); }
+        else { t.burnT = 3.5; t.burnDps = Math.max(t.burnDps, 9 * p); } break;
+      case 'storm':
+        if (t.wetT > 0) {
+          say('ELECTROCUTE'); t.shockT = 1 * resist; extra(1);
+          for (const o of friends(6)) if (o.wetT > 0) { this.vfx.bolt(chest, o.pos.add(new Vector3(0, 1.3, 0))); o.shockT = .7 * (o.boss ? .45 : 1); this.damage(o, base * .7, o.pos.subtract(t.pos).normalize(), 1, false, src.role === 'hero' ? src : null); }
+        } else t.shockT = Math.max(t.shockT, .3 * resist);
+        if (this.rnd() < .5) this.vfx.bolt(chest.add(new Vector3(0, 2.5, 0)), chest, new Color3(.85, .8, 1), .035);
+        break;
+      case 'swift': {
+        const d = t.pos.subtract(src.pos); d.y = 0; if (d.lengthSquared() > 1e-4) t.vel.addInPlace(d.normalize().scale(6 * resist));
+        if (t.burnT > 0 && this.time - (this.wordAt.get(`${t.id}:spread`) ?? -9) > 1) { this.wordAt.set(`${t.id}:spread`, this.time); say('WILDFIRE', 'flame'); for (const o of friends(4.5).slice(0, 3)) { o.burnT = 3.5; o.burnDps = Math.max(o.burnDps, t.burnDps); this.vfx.burst('flame', o.pos.add(new Vector3(0, 1, 0)), .6); } }
+        break;
+      }
+      case 'iron':
+        if (t.frozenT > 0) { t.frozenT = 0; say('SHATTER', 'frost'); this.vfx.burst('frost', chest, 1.3); extra(2); }
+        t.shredT = 5; if (!t.boss) t.shockT = Math.max(t.shockT, .25); break;
+      case 'shadow':
+        if (t.target !== src || t.state !== 'attack') { extra(.5); if (this.rnd() < .3) say('UNSEEN'); } break;
+      case 'verdance':
+        src.hp = Math.min(src.maxHp, src.hp + base * .1); t.slowT = Math.max(t.slowT, 1.2); break;
+      case 'gravity':
+        t.gatherT = 3;
+        if (friends(2.8).filter(o => o.gatherT > 0).length >= 2) { say('CRUSH'); extra(.6); this.vfx.blackhole(chest, .5, .4); }
+        break;
+      case 'time':
+        if (t.timeT <= 0) { t.timeT = 3.5 * resist; t.ruptureHits = 0; say('SLOWED'); }
+        break;
+    }
+  }
+
+  /** Launch an elemental missile (Bolt spells, the god's orb). */
+  launch(owner: Fighter, e: Element, from: Vector3, dir: Vector3, p: number, dmg: number, speed = 26): void {
+    const fx = this.vfx.missile(e, e === 'gravity' || e === 'iron' ? 1.4 : 1); fx.node.position.copyFrom(from);
+    this.missiles.push({ pos: from.clone(), vel: dir.scale(e === 'iron' ? speed * .85 : e === 'time' ? speed * .7 : speed), e, p, owner, life: 1.4, fx, hit: new Set(), pierce: e === 'frost' ? 2 : 0, dmg });
+    this.vfx.flash(from, elementLook(e).light, 1.2, .1); this.ev.sound('shoot', owner.role === 'hero' ? .8 : .5);
+  }
+
+  private stepMissiles(dt: number): void {
+    for (const m of this.missiles) {
+      m.life -= dt; m.pos.addInPlace(m.vel.scale(dt)); m.fx.node.position.copyFrom(m.pos);
+      let done = m.life <= 0 || this.cameraBlocked(m.pos.x, m.pos.y, m.pos.z);
+      if (!done) for (const t of this.fighters) {
+        if (t.team === m.owner.team || !t.alive || !t.standing || m.hit.has(t) || t.state === 'spawn') continue;
+        if (Math.hypot(t.pos.x - m.pos.x, t.pos.z - m.pos.z) > t.radius + .4) continue;
+        m.hit.add(t); this.impact(m, t);
+        if (m.pierce-- <= 0) { done = true; break; }
+      }
+      if (done) { if (!m.hit.size) this.impact(m, null); m.fx.dispose(); m.life = -1; }
+    }
+    this.missiles = this.missiles.filter(m => m.life > 0);
+  }
+
+  private impact(m: { pos: Vector3; vel: Vector3; e: Element; p: number; owner: Fighter; dmg: number }, t: Fighter | null): void {
+    const e = m.e, at = m.pos.clone(), dir = m.vel.clone().normalize(), src = m.owner;
+    this.vfx.burst(e, at, e === 'gravity' || e === 'flame' ? 1.1 : .8);
+    const asHero = src.role === 'hero';
+    if (t) { if (asHero) this.inSkill = true; this.damage(t, m.dmg * m.p, dir, e === 'iron' ? 6 : 3, e === 'iron', asHero ? src : src); this.elementHit(src, t, e, m.p, m.dmg * m.p); this.inSkill = false; }
+    // Area kinds: fire explodes, water splashes, gravity drags in, lightning arcs once.
+    const around = (r: number) => this.fighters.filter(o => o !== t && o.team !== src.team && o.alive && o.standing && Math.hypot(o.pos.x - at.x, o.pos.z - at.z) < r);
+    if (e === 'flame') for (const o of around(1.8)) { this.damage(o, m.dmg * m.p * .5, o.pos.subtract(at).normalize(), 2, false, asHero ? src : null); this.elementHit(src, o, 'flame', m.p, m.dmg * .5); }
+    if (e === 'water') for (const o of around(2)) o.wetT = 7;
+    if (e === 'gravity') for (const o of around(4)) { o.vel.addInPlace(at.subtract(o.pos).normalize().scale(10)); o.gatherT = 3; }
+    if (e === 'storm' && t) { const o = around(6)[0]; if (o) { this.vfx.bolt(at, o.pos.add(new Vector3(0, 1.3, 0))); this.damage(o, m.dmg * m.p * .5, dir, 1, false, asHero ? src : null); this.elementHit(src, o, 'storm', m.p, m.dmg * .5); } }
+    for (const pr of this.props) if (!pr.broken && !pr.solid && Vector3.Distance(pr.pos, at) < 1.6) this.hitProp(pr, pr.pos.subtract(at).normalize(), 5, 2, asHero);
+  }
+
+  private stepFields(dt: number): void {
+    for (const g of this.fields) {
+      g.t -= dt; g.tick -= dt;
+      const c = new Vector3(g.x, 0, g.z), inside = this.fighters.filter(f => f.alive && f.standing && Math.hypot(f.pos.x - g.x, f.pos.z - g.z) < g.r + f.radius);
+      const foes = inside.filter(f => f.team !== g.owner.team), friends = inside.filter(f => f.team === g.owner.team);
+      // Continuous pulls: gravity and the whirlwind drag foes toward the centre.
+      if (g.e === 'gravity' || g.e === 'swift' || g.e === 'water') for (const f of this.fighters) {
+        if (f.team === g.owner.team || !f.alive || !f.standing) continue;
+        const d = c.subtract(f.pos); d.y = 0; const dist = d.length(); if (dist > g.r * 1.5 || dist < .4) continue;
+        f.vel.addInPlace(d.normalize().scale((g.e === 'gravity' ? 26 : g.e === 'swift' ? 16 : 7) * dt));
+      }
+      if (g.e === 'time') for (const f of foes) { f.timeT = Math.max(f.timeT, .6); }
+      if (g.tick <= 0) {
+        g.tick = .5;
+        const asHero = g.owner.role === 'hero';
+        if (g.e === 'storm') { const t = foes[Math.floor(this.rnd() * foes.length)]; if (t) { this.vfx.bolt(t.pos.add(new Vector3(0, 7, 0)), t.pos.add(new Vector3(0, 1.2, 0))); this.damage(t, 16 * g.p, new Vector3(0, 0, 0), 1, false, asHero ? g.owner : null); this.elementHit(g.owner, t, 'storm', g.p, 16 * g.p); } }
+        else if (g.e === 'verdance') { for (const f of friends) f.hp = Math.min(f.maxHp, f.hp + f.maxHp * .025 * g.p); for (const f of foes) { this.damage(f, 5 * g.p, new Vector3(0, 0, 0), 0, false, asHero ? g.owner : null); f.slowT = Math.max(f.slowT, .8); } }
+        else for (const f of foes) {
+          const base = g.e === 'gravity' ? 8 : g.e === 'iron' ? 12 : g.e === 'time' ? 3 : 7;
+          this.inSkill = asHero;
+          this.damage(f, base * g.p, new Vector3(0, 0, 0), g.e === 'iron' ? 2 : 0, false, asHero ? g.owner : null);
+          this.elementHit(g.owner, f, g.e, g.p, base * g.p);
+          this.inSkill = false;
+          if (g.e === 'iron') this.vfx.burst('iron', f.pos.add(new Vector3(0, .3, 0)), .5);
+          if (g.e === 'shadow' && asHero) g.owner.hp = Math.min(g.owner.maxHp, g.owner.hp + base * g.p * .2);
+        }
+      }
+      if (g.t <= 0) { g.fx.dispose(); if (g.e === 'gravity') { this.vfx.burst('gravity', c.add(new Vector3(0, 1, 0)), 1.6); for (const f of this.fighters.filter(f => f.team !== g.owner.team && f.alive && Math.hypot(f.pos.x - g.x, f.pos.z - g.z) < g.r)) { this.damage(f, 30 * g.p, f.pos.subtract(c).normalize(), 9, true, g.owner.role === 'hero' ? g.owner : null); } } }
+    }
+    this.fields = this.fields.filter(g => g.t > 0);
+  }
+
+  /** Status timers and their visuals on each body. */
+  private stepStatuses(dt: number): void {
+    for (const f of this.fighters) {
+      const k = this.bodyTime(f) || .2;   // statuses still run down while frozen
+      if (f.slowT > 0) f.slowT -= dt;
+      if (f.wetT > 0) f.wetT -= dt;
+      if (f.frozenT > 0) f.frozenT -= dt;
+      if (f.shockT > 0) f.shockT -= dt;
+      if (f.timeT > 0) f.timeT -= dt * Math.max(.5, k);
+      if (f.gatherT > 0) f.gatherT -= dt;
+      if (f.shredT > 0) f.shredT -= dt;
+      if (f.burnT > 0 && f.standing) {
+        f.burnT -= dt; f.hp -= f.burnDps * dt;
+        if (f.hp <= 0) this.kill(f, new Vector3(0, 0, 0), 0, false);
+      }
+      const want: [string, boolean][] = [['burn', f.burnT > 0 && f.alive], ['wet', f.wetT > 0 && f.alive], ['frozen', f.frozenT > 0 && f.alive], ['shock', f.shockT > 0 && f.alive], ['time', f.timeT > 0 && f.alive], ['gravity', f.gatherT > 0 && f.alive]];
+      const h = 1.75 * f.inst.root.scaling.x;
+      for (const [name, on] of want) {
+        const cur = f.statusFx.get(name);
+        if (on && !cur) {
+          const root = f.inst.root, chest = f.inst.chest ?? root;
+          const fx = name === 'burn' ? this.vfx.aura('flame', chest, { rate: 70, size: 2.4, radius: .25 })
+            : name === 'wet' ? this.vfx.aura('water', chest, { rate: 30, size: 1, radius: .3 })
+            : name === 'frozen' ? this.vfx.iceShell(root, h / root.scaling.x)
+            : name === 'shock' ? this.vfx.aura('storm', chest, { rate: 90, size: 1.2, radius: .35 })
+            : name === 'time' ? this.vfx.clockAt(root, .8)
+            : this.vfx.aura('gravity', chest, { rate: 40, size: 1.4, radius: .4 });
+          f.statusFx.set(name, fx);
+        } else if (!on && cur) { cur.dispose(); f.statusFx.delete(name); }
+      }
+    }
+  }
+
+  /** Weapon glow while the drawn weapon carries an element. */
+  private syncImbueFx(h: Fighter): void {
+    const e = this.imbue?.e ?? this.weaponImbue[this.weapon] ?? null;
+    const key = e ? `${e}:${this.weapon}` : '';
+    if (key === this.imbueFxKey) return;
+    this.imbueFx?.dispose(); this.imbueFx = null; this.imbueFxKey = key;
+    if (e) this.imbueFx = this.vfx.aura(e, this.weapon === 'bow' ? h.inst.slotL : this.bladeTip, { rate: 80, size: 1.6, radius: .12 });
+  }
+
   /** A crackling line of sparks between two points (lightning, arrows). */
   private bolt(a: Vector3, b: Vector3, c: Color4): void {
     for (let k = 0; k <= 5; k++) { const q = Vector3.Lerp(a, b, k / 5).add(new Vector3((this.rnd() - .5) * .4, 1.2 + (this.rnd() - .5) * .4, (this.rnd() - .5) * .4)); this.fx.sparksAt(q, 5, c); }
@@ -712,6 +985,23 @@ export class ArenaWorld {
     const near = (c: Vector3, r: number) => foes().filter(t => Math.hypot(t.pos.x - c.x, t.pos.z - c.z) < r + t.radius);
     const away = (t: Fighter, from = h.pos) => { const d = t.pos.subtract(from); d.y = 0; return d.lengthSquared() > 1e-4 ? d.normalize() : f.clone(); };
     const smash = (c: Vector3, r: number, force: number, arc = Math.PI) => { for (const pr of this.props) if (!pr.broken && !pr.solid && Vector3.Distance(pr.pos, c) < r && (arc >= Math.PI || Math.abs(wrap(Math.atan2(pr.pos.x - h.pos.x, pr.pos.z - h.pos.z) - h.yaw)) < arc)) this.hitProp(pr, pr.pos.subtract(c).normalize(), force, 2, true); };
+    const el = s.element ?? (s.riders.find(r => r in ELEMENT_INFO) as Element | undefined);
+    const ley = el && el === this.ley ? LEY_BONUS : 1;
+    if (s.kernel === 'blink') {
+      // Step: through space to the cursor (stopping short of walls), with the element bursting on arrival.
+      if (!h.spellDone) {
+        h.spellDone = true;
+        const want = Math.min(9, Math.hypot(i.aim.x - h.pos.x, i.aim.z - h.pos.z));
+        let d = want; while (d > .5 && this.cameraBlocked(h.pos.x + f.x * d, .5, h.pos.z + f.z * d)) d -= .5;
+        const from = h.pos.clone(); if (el) this.vfx.burst(el, from.add(new Vector3(0, 1, 0)), .8);
+        h.pos.addInPlace(f.scale(d)); h.iframe = .4;
+        if (el) { this.vfx.burst(el, h.pos.add(new Vector3(0, 1, 0)), 1.1); if (el === 'storm') this.vfx.bolt(from.add(new Vector3(0, 1.2, 0)), h.pos.add(new Vector3(0, 1.2, 0))); }
+        for (const t of near(h.pos, 2.4)) this.skillHit(h, t, s, 18 * ley, away(t), 5);
+        this.ev.sound('whoosh');
+      }
+      if (h.st > .3) this.toIdle(h);
+      return;
+    }
     if (s.kernel === 'dash') {
       // Blink Strike / Shadow Step: a fast committed dash; everything passed through is cut once.
       if (h.st < .26) {
@@ -726,11 +1016,27 @@ export class ArenaWorld {
     if (!h.spellDone && h.st >= release) {
       h.spellDone = true;
       const aimD = Math.min(12, Math.hypot(i.aim.x - h.pos.x, i.aim.z - h.pos.z)), at = h.pos.add(f.scale(aimD));
+      if (el && s.kernel !== 'chain' && s.kernel !== 'bolt' && s.kernel !== 'cone') this.vfx.burst(el, origin.add(f.scale(.8)), .35);
       switch (s.kernel) {
+        case 'bolt': {   // Bolt spells: an elemental missile at the cursor
+          const dir = at.subtract(h.pos); dir.y = 0; if (dir.lengthSquared() < .01) dir.copyFrom(f); dir.normalize();
+          this.launch(h, el ?? 'flame', origin.add(dir.scale(.7)), dir, p * ley, 20);
+          break;
+        }
+        case 'field': {   // Field spells: a lasting zone at the cursor whose element ticks every half second
+          const e = el ?? 'frost';
+          this.fields.push({ x: at.x, z: at.z, r: e === 'gravity' ? 4.5 : 4, t: 7, p: p * ley, e, tick: 0, owner: h, fx: this.vfx.field(e, at, e === 'gravity' ? 4.5 : 4) });
+          this.vfx.burst(e, at.add(new Vector3(0, .5, 0)), 1); this.ev.sound('clay', .5); break;
+        }
+        case 'imbue': {   // Weave spells: the drawn weapon carries the element
+          this.imbue = { e: el ?? 'flame', t: 20, p: p * ley };
+          this.vfx.burst(this.imbue.e, origin, .7); this.ev.word?.(origin.add(new Vector3(0, 1.2, 0)), `${ELEMENT_INFO[this.imbue.e].name.toUpperCase()} WEAVE`, ELEMENT_INFO[this.imbue.e].color); break;
+        }
         case 'cone':   // Ember / Hundred Fists: a short forward cone
           for (let d = 1.2; d < 7; d += 1.1) for (const sd of [-1, 0, 1]) this.fx.sparksAt(origin.add(f.scale(d)).add(new Vector3(f.z, 0, -f.x).scale(sd * d * .35)), 10, s.riders.includes('flame') ? new Color4(1, .5 + this.rnd() * .3, .1, 1) : c4);
           this.fx.flash(origin.add(f.scale(2)), 2.6, col);
-          for (const t of cone(7, .62)) this.skillHit(h, t, s, 22, away(t), 3);
+          if (el) { this.vfx.spray(el, origin.add(f.scale(.6)), f, 7, .62); this.vfx.burst(el, origin.add(f.scale(5.5)), .7); }
+          for (const t of cone(7, .62)) this.skillHit(h, t, s, 22 * ley, away(t), el === 'swift' || el === 'water' ? 9 : 3);
           smash(h.pos, 6, 3, .6); this.ev.sound('heavy'); break;
         case 'wave':   // Gust / Reaving Cleave: force wave, knocks down, breaks guards and furniture
           for (let d = 1; d < 8; d += 1.6) this.fx.ring(h.pos.add(f.scale(d)), 1.8 + d * .4, .45, col);
@@ -738,13 +1044,22 @@ export class ArenaWorld {
           for (const t of cone(8, .7)) this.skillHit(h, t, s, 12, away(t), 16, true);
           smash(h.pos, 7.5, 12, .7); this.fx.shake = Math.max(this.fx.shake, .35); this.ev.sound('heavy'); break;
         case 'ward':
-          this.wardHp = Math.max(this.wardHp, 220 * p); this.wardT = 9; this.fx.ring(h.pos, 3.2, .7, col); this.fx.flash(origin, 2.6, col); this.ev.sound('block', .6); break;
+          if (el === 'time') {   // Rewind: health returns to what it was three seconds ago
+            const back = this.hpHistory[0] ?? h.hp; h.hp = Math.min(h.maxHp, Math.max(h.hp, back)); this.vfx.clockRing(h.pos.add(new Vector3(0, .1, 0)), 2, 1.2); this.ev.word?.(origin.add(new Vector3(0, 1.2, 0)), 'REWIND', ELEMENT_INFO.time.color); break;
+          }
+          this.wardHp = Math.max(this.wardHp, 220 * p * (el === 'iron' ? 1.6 : 1)); this.wardT = 9; this.wardEl = el ?? null;
+          if (el === 'verdance') this.regenT = 6;
+          if (el === 'shadow') this.veilT = 5;
+          if (el) this.vfx.burst(el, origin, 1); this.fx.ring(h.pos, 3.2, .7, col); this.fx.flash(origin, 2.6, col); this.ev.sound('block', .6); break;
         case 'sigil':
-          this.sigils.push({ x: at.x, z: at.z, r: 4, t: 7, p, color: col }); this.fx.ring(at, 8, .8, col); this.ev.sound('clay', .5); break;
+          this.fields.push({ x: at.x, z: at.z, r: 4, t: 7, p, e: 'frost', tick: 0, owner: h, fx: this.vfx.field('frost', at, 4) }); this.ev.sound('clay', .5); break;
         case 'nova':   // Immolate / Thunderclap / Whirlwind: a burst around the hero
           this.fx.ring(h.pos, 8.5, .55, col); this.fx.ring(h.pos, 5, .4, col); this.fx.flash(origin, 3, col);
           for (let k = 0; k < 10; k++) { const a = k / 10 * Math.PI * 2; this.fx.sparksAt(origin.add(new Vector3(Math.sin(a) * 2.6, -.4, Math.cos(a) * 2.6)), 8, c4); }
-          for (const t of near(h.pos, 4.2)) this.skillHit(h, t, s, 26, away(t), 7);
+          if (el) { this.vfx.burst(el, origin, 2.2); this.vfx.ring(el, h.pos.add(new Vector3(0, .1, 0)), 4.2, .5); }
+          if (el === 'verdance') { h.hp = Math.min(h.maxHp, h.hp + h.maxHp * .12 * p); this.ev.damage(origin.add(new Vector3(0, 1, 0)), Math.round(h.maxHp * .12 * p), 'heal'); }
+          if (el === 'gravity') for (const t of near(h.pos, 7)) t.vel.addInPlace(h.pos.subtract(t.pos).normalize().scale(9));
+          for (const t of near(h.pos, 4.2)) this.skillHit(h, t, s, (el === 'time' ? 8 : 26) * ley, away(t), el === 'gravity' ? 0 : 7);
           smash(h.pos, 4.2, 6); this.fx.shake = Math.max(this.fx.shake, .3); this.ev.sound('heavy'); break;
         case 'chain': {   // Chain Lightning: nearest to the cursor, then leaps
           let cur = foes().filter(t => Vector3.Distance(t.pos, h.pos) < 12).sort((x, y) => Vector3.Distance(x.pos, at) - Vector3.Distance(y.pos, at))[0];
@@ -765,7 +1080,7 @@ export class ArenaWorld {
         case 'spear': {   // Bone Spear / Earthsplitter: spikes erupt along a line
           const hit = new Set<Fighter>();
           for (let d = 1.4; d < 10; d += 1.15) {
-            const q = h.pos.add(f.scale(d)); this.fx.dustAt(q, 8); this.fx.sparksAt(q.add(new Vector3(0, .4, 0)), 7, c4);
+            const q = h.pos.add(f.scale(d)); this.fx.dustAt(q, 8); this.fx.sparksAt(q.add(new Vector3(0, .4, 0)), 7, c4); if (el) this.vfx.burst(el, q.add(new Vector3(0, .5, 0)), .55);
             for (const t of near(q, 1.1)) if (!hit.has(t)) { hit.add(t); this.skillHit(h, t, s, 30, f.add(new Vector3(0, .6, 0)).normalize(), 9, true); }
             smash(q, 1.4, 8);
           }
@@ -878,8 +1193,8 @@ export class ArenaWorld {
     const facing = Math.abs(wrap(fromYaw - t.yaw)) < 1.25;
     const chest = t.pos.add(new Vector3(0, 1.3, 0));
     // Shields: the hero's guard and skeleton warriors' tower shields stop frontal blows unless heavy.
-    const shieldUp = (t.state === 'guard' && facing) || (t.foe?.shield && facing && !t.busy && this.rnd() < .7);
-    if (t.role === 'hero' && t.state === 'guard' && facing && t.st < .25 && src) {
+    const shieldUp = !this.ignoreGuard && ((t.state === 'guard' && facing) || (t.foe?.shield && facing && !t.busy && this.rnd() < .7));
+    if (!this.ignoreGuard && t.role === 'hero' && t.state === 'guard' && facing && t.st < .25 && src) {
       // Parry: a guard raised just in time staggers the attacker and refunds stamina.
       this.endAttack(src); src.state = 'hit'; src.st = -.4; src.label = 'Parried'; src.vel.addInPlace(push.scale(-6));
       src.anim.play(this.pick(this.ms(src).hit), { speed: 1, fade: .08, restart: true });
@@ -897,7 +1212,9 @@ export class ArenaWorld {
       return false;
     }
     let dmg = amount;
-    if (t.role === 'hero' && this.wardHp > 0) { const ab = Math.min(this.wardHp, dmg); this.wardHp -= ab; dmg -= ab; this.fx.sparksAt(chest, 12, new Color4(.5, .75, 1, 1)); if (dmg <= 0) { this.ev.damage(chest, 0, 'block'); this.ev.sound('block', .6); return false; } }
+    if (t.role === 'hero' && src?.role === 'foe' && this.veilT > 0 && this.rnd() < .5) { this.ev.word?.(chest, 'MISS', '#9a6ad0'); return false; }
+    if (t.role === 'hero' && src?.role === 'foe' && this.wardHp > 0 && this.wardEl && src.alive) this.elementHit(t, src, this.wardEl, 1, amount * .3);
+    if (t.role === 'hero' && this.wardHp > 0 && !this.ignoreGuard) { const ab = Math.min(this.wardHp, dmg); this.wardHp -= ab; dmg -= ab; this.fx.sparksAt(chest, 12, new Color4(.5, .75, 1, 1)); if (dmg <= 0) { this.ev.damage(chest, 0, 'block'); this.ev.sound('block', .6); return false; } }
     let crit = false;
     if (src?.role === 'hero' || src?.role === 'ally') {
       dmg *= (src.role === 'hero' ? (this.mods.damage * this.bonus.damage) * this.comboMul * (this.frenzyT > 0 ? 1 + .25 * this.frenzyP : 1) : 1);
@@ -906,8 +1223,11 @@ export class ArenaWorld {
     if (t.state === 'guard' && heavy) { dmg *= .5; }
     if (src?.role === 'hero') dmg *= this.weaponMul[this.weapon] ?? 1;
     if (src?.role === 'foe') dmg *= src.dmgMul;
-    if (t.role === 'hero') dmg *= 1 - this.armor;
-    if (t.foe) dmg *= 1 - t.foe.armor * (heavy ? .3 : 1) * .5;
+    if (t.role === 'hero') dmg *= (1 - this.armor) * (this.potion.stone > 0 ? .6 : 1);
+    if (src?.role === 'hero') dmg *= (this.potion.might > 0 ? 1.3 : 1) * (t.shredT > 0 ? 1.2 : 1);
+    if (t.frozenT > 0 && src?.role === 'hero' && (heavy || crit) && !this.inSkill) { dmg *= 2.5; t.frozenT = 0; this.ev.word?.(chest, 'SHATTER', ELEMENT_INFO.frost.color); this.vfx.burst('frost', chest, 1.4); }
+    if (t.foe && !t.god) dmg *= 1 - t.foe.armor * (heavy ? .3 : 1) * .5;
+    if (t.god) dmg *= t.godArmor;
     dmg = Math.max(1, Math.round(dmg * (.9 + this.rnd() * .2)));
     t.hp -= dmg; t.lastHurt = this.time; t.flash = .09;
     if (src?.role === 'hero') { const leech = this.gearStats.leech + (this.frenzyT > 0 ? this.frenzyLeech : 0); if (leech > 0) src.hp = Math.min(src.maxHp, src.hp + dmg * leech); }
@@ -919,10 +1239,18 @@ export class ArenaWorld {
     this.ev.damage(chest, dmg, t.role === 'hero' ? 'hurt' : crit ? 'crit' : 'hit');
     this.ev.sound(t.role === 'hero' ? 'hurt' : crit ? 'crit' : 'hit', t.role === 'ally' ? .5 : 1);
     if (src?.role === 'hero') { this.combo.hits++; this.combo.timer = 3.5; this.onHeroHit?.(t, dmg, crit); }
+    if (src?.role === 'hero' && !this.inSkill && t.timeT > 0 && t.alive && ++t.ruptureHits >= 3) { t.timeT = 0; t.ruptureHits = 0; this.vfx.clockRing(t.pos.add(new Vector3(0, .1, 0)), 2.4, .9); this.ev.word?.(chest.add(new Vector3(0, .9, 0)), 'RUPTURE', ELEMENT_INFO.time.color); this.inSkill = true; this.damage(t, dmg * 2.5, push, 2, false, src); this.inSkill = false; }
+    // Imbued weapons: ordinary blows (melee and arrows) carry the element.
+    if (src?.role === 'hero' && !this.inSkill && t.alive) {
+      const e = this.imbue?.e ?? this.weaponImbue[this.weapon];
+      if (e) { this.inSkill = true; this.elementHit(src, t, e, this.imbue?.p ?? .7, dmg * .35); this.inSkill = false; }
+    }
     if (t.role === 'hero') { t.iframe = .45; this.fx.shake = Math.max(this.fx.shake, .45); }
     const kb = knock * (t.role === 'hero' ? .5 : 1) * (t.foe ? 1 - t.foe.armor * .5 : 1);
     t.vel.addInPlace(push.scale(kb));
+    if (t.hp <= 0 && t.role === 'hero' && this.spareHero) { t.hp = 1; this.spareHero(); return false; }
     if (t.hp <= 0) { this.kill(t, push, knock, heavy || crit); return true; }
+    if (t.god) return false;   // a god does not stagger
     const poise = t.boss ? .8 : t.foe?.armor ?? 0;
     const stagger = t.role !== 'foe' ? t.state !== 'attack' || heavy : (!poise || (heavy && !t.boss) || this.rnd() > poise) && (t.state !== 'attack' || !t.boss);
     if (stagger && t.state !== 'spin') {
