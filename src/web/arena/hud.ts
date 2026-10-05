@@ -382,7 +382,7 @@ export class ArenaHud {
     const g = this.tower?.gear[w.weapon];
     this.wname.textContent = g ? g.name : WEAPONS[w.weapon].name;
     const T = this.tower;
-    if (T) {
+    if (T?.plan) {
       const sum = T.summary(), foesLeft = w.fighters.filter(f => f.role === 'foe' && f.alive).length;
       this.lvl.innerHTML = `LVL ${w.level} · <span style="color:#ffd45c">${sum.tier}</span> · ${sum.cls}`;
       this.waveEl.innerHTML = `<b>FLOOR ${T.floor}</b><span>${T.plan.theme.name} · ${T.plan.objective}${foesLeft ? ` · ${foesLeft} left` : ''}</span>`;

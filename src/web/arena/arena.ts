@@ -76,7 +76,7 @@ export async function startArena(): Promise<void> {
   let seed = Number(params.get('seed') ?? 918271) || 918271;
   world.reset(seed);
   let tower: TowerRun | null = null;
-  if (towerMode) { tower = new TowerRun(scene, world, hud, assets, stage, seed); { const fl = params.has('hall') ? '0' : params.get('floor'); tower.startFloor = fl === null ? 1 : Math.max(0, Math.min(100, Math.floor(Number(fl)) || 0)); } hud.tower = tower as never; tower.start(); }
+  if (towerMode) { tower = new TowerRun(scene, world, hud, assets, stage, seed); { const fl = params.has('hall') ? '0' : params.get('floor'); tower.startFloor = fl === null ? 1 : Math.max(0, Math.min(100, Math.floor(Number(fl)) || 0)); } hud.tower = tower as never; tower.persistent = !params.has('hall') && !params.has('floor'); void tower.launch(); }
   document.title = towerMode ? 'Tower of Chrysanthus' : document.title;
   // Classic isometric framing (~35 deg elevation), orbitable with the middle mouse button.
   // The shared elevated, freely orbitable third-person camera (src/web/game/adaptiveCamera.ts).
@@ -179,7 +179,7 @@ export async function startArena(): Promise<void> {
     return { move: { x: mx, z: mz }, aim, attack, attackPressed, secondary, heavyPressed, heavyReleased, cast: castK, guard, flask, cycle: cyc, sprint, dodgePressed: dodge, interact, scroll, weapon };
   };
 
-  const rebuild = () => { if (tower) { hud.closeModal(); levels.length = 0; tower.start(); return; } hud.closeModal(); heroDown = false; levels.length = 0; world.reset(++seed); hud.announce('COMBAT GYM', 'rebuilt · seed ' + seed); };
+  const rebuild = () => { if (tower) { hud.closeModal(); levels.length = 0; void tower.launch(); return; } hud.closeModal(); heroDown = false; levels.length = 0; world.reset(++seed); hud.announce('COMBAT GYM', 'rebuilt · seed ' + seed); };
 
   // ---- loop
   boot.remove(); ui.style.pointerEvents = 'none';

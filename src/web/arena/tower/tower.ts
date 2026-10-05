@@ -11,6 +11,7 @@ import { ChrysanthusTrial } from './chrysanthus';
 import { ESSENCES, MAX_SLOTS, SLOTS_BY_TIER, cloneSkill, confluence, signatureSkill, type Essence, type SkillDef } from './skills';
 import { ACHIEVEMENTS, BOX_COLOR, BOX_TIERS, newStats, recordEarned, type RunStats } from './achievements';
 import { mulberry } from '../../render/noise';
+import { readCheckpoint,writeCheckpoint,endCheckpoint,downloadCheckpoint,type TowerCheckpoint } from './checkpoint';
 
 /**
  * The Tower of Chrysanthus run controller: a 100-floor roguelite climb used as a proving ground for
@@ -43,7 +44,10 @@ export class TowerRun {
   doorOpen = false; shrineReady = false; boonTaken = false;
   private pickups: Pickup[] = [];
   private door: TransformNode | null = null; private doorGlow: StandardMaterial | null = null; private shrine: TransformNode | null = null;
-  private rnd: () => number;
+  private rnd: ReturnType<typeof mulberry>;
+  runId: string = crypto.randomUUID(); climberId: string = crypto.randomUUID();
+  /** Hall and explicit floor previews cannot replace a real expedition. */
+  persistent = true; private restoring = false; private saveWarning = false;
   private weaponUsedThisFloor = false;
   private transition = 0;
   over = false;
@@ -56,8 +60,32 @@ export class TowerRun {
   /** Dev/testing: begin the climb on a later floor. */
   startFloor = 1;
 
+  /** Entry UI keeps old data until the player explicitly chooses a new expedition. */
+  async launch(): Promise<void> {
+    if (!this.persistent) { this.start(); return; }
+    const saved = readCheckpoint();
+    if (saved.status === 'empty') { this.start(); return; }
+    if (saved.status === 'ready') {
+      const pick = await this.hud.choose('Tower of Chrysanthus', `Expedition checkpoint: floor ${saved.checkpoint.floor}. Continue restarts this floor with its saved equipment and capabilities.`, [
+        { icon: '↗', name: 'Continue climb', text: `Floor ${saved.checkpoint.floor} · seed ${saved.checkpoint.seed}` },
+        { icon: '+', name: 'New climb', text: 'Replace this expedition checkpoint. Lifetime discoveries remain.' },
+      ]);
+      if (pick === 0) { this.resume(saved.checkpoint); return; }
+    } else {
+      const pick = await this.hud.choose('Expedition recovery', saved.message, [
+        { icon: '↓', name: 'Download saved data', text: 'Keep a recovery copy before replacing it.' },
+        { icon: '+', name: 'New climb', text: 'Explicitly replace this Tower checkpoint. Other saves remain untouched.' },
+      ]);
+      if (pick === 0) { downloadCheckpoint(); await this.launch(); return; }
+    }
+    this.start();
+  }
+
   start(): void {
     const w = this.world;
+    // Practice gains belong to its demonstration body, never to a real expedition.
+    if (this.plan?.kind === 'hall' && this.persistent) { w.level = 1; w.xp = 0; w.nextXp = 100; w.mods = { damage: 1, atkSpeed: 1, move: 1, regen: 1, range: 1 }; w.bonus = { damage: 1, atkSpeed: 1, move: 1, maxHpUpgrades: 1 }; }
+    this.runId = crypto.randomUUID(); this.climberId = crypto.randomUUID(); this.rnd = mulberry(this.seed ^ 0x5eed); this.transition = 0; this.safeBusy = false;
     w.companions = false; w.autoWaves = false;
     w.reset(this.seed);
     w.unlocked = new Set<WeaponId>(['fists']); w.weaponMesh = {}; w.weaponMul = {}; w.armor = 0;
@@ -110,7 +138,38 @@ export class TowerRun {
     this.doorOpen = false; this.shrineReady = false; this.boonTaken = false; this.weaponUsedThisFloor = w.weapon !== 'fists';
     const label = this.plan.kind === 'avatar' ? 'THE TENTH FLOOR' : this.plan.kind === 'hall' ? 'THE PROVING HALL' : this.plan.kind === 'boss' ? 'BOSS FLOOR' : this.plan.kind === 'shrine' ? `SHRINE OF ${this.plan.god!.name.toUpperCase()}` : this.plan.kind === 'summit' ? 'THE SUMMIT' : this.plan.theme.name.toUpperCase();
     if (n > 1 || n === 0) this.hud.announce(n === 0 ? 'THE PROVING HALL' : `FLOOR ${n}`, `${label} · ${this.plan.objective}`);
-    this.evaluateClass();
+    if (!this.restoring) this.evaluateClass();
+    if (!this.restoring) this.saveCheckpoint();
+  }
+
+  private saveCheckpoint(): void {
+    if (!this.persistent || this.floor < 1 || this.over) return;
+    const w = this.world, h = w.hero;
+    const checkpoint: TowerCheckpoint = {
+      version: 1, kind: 'floor-start', runId: this.runId, climberId: this.climberId, savedAt: new Date().toISOString(), seed: this.seed, floor: this.floor, randomState: this.rnd.state(),
+      sheet: this.sheet, gear: this.gear, armor: this.armorItem, charm: this.charm, known: this.known, slots: w.skills.map(k => k?.id ?? null), pending: this.pendingSlot.map(k => k.id), classSkill: this.classSkill?.id ?? null, cls: this.cls,
+      essences: this.essences, confluence: this.confluenceName, scrolls: this.scrolls, stats: this.stats, earned: [...this.earned], boxes: this.boxes, belt: this.belt, extraSlots: this.extraSlots, tierIdx: this.tierIdx, flaskBase: this.flaskBase,
+      world: { level: w.level, xp: w.xp, nextXp: w.nextXp, mods: w.mods, bonus: w.bonus, weapon: w.weapon, hp: h.hp, energy: h.energy, mana: h.mana, flasks: w.flasks, cooldowns: w.skillCd, weaponImbue: w.weaponImbue, imbue: w.imbue, potion: w.potion, wardHp: w.wardHp, wardT: w.wardT, time: w.time },
+    };
+    h.inst.root.metadata = { ...h.inst.root.metadata, climberId: this.climberId, runId: this.runId };
+    if (!writeCheckpoint(checkpoint) && !this.saveWarning) { this.saveWarning = true; this.hud.toast('Checkpoint could not be saved. Keep this tab open; your existing saved data is retained.', '#ffba80'); }
+  }
+
+  /** Restore at a floor boundary, with skills reconnected by identity instead of duplicated slot copies. */
+  private resume(saved: TowerCheckpoint): void {
+    const data: TowerCheckpoint = JSON.parse(JSON.stringify(saved));
+    this.restoring = true; this.seed = data.seed; this.startFloor = data.floor; this.start();
+    this.runId = data.runId; this.climberId = data.climberId; this.sheet = data.sheet; this.gear = data.gear; this.armorItem = data.armor; this.charm = data.charm;
+    this.known = data.known; const skill = (id: string | null) => this.known.find(k => k.id === id) ?? null;
+    this.pendingSlot = data.pending.map(id => skill(id)!); this.classSkill = skill(data.classSkill); this.cls = data.cls; this.essences = data.essences as Essence[]; this.confluenceName = data.confluence; this.scrolls = data.scrolls;
+    this.stats = data.stats; this.earned = new Set(data.earned); this.boxes = data.boxes; this.belt = data.belt; this.extraSlots = data.extraSlots; this.tierIdx = data.tierIdx; this.flaskBase = data.flaskBase;
+    const w = this.world, h = w.hero, v = data.world;
+    w.level = v.level; w.xp = v.xp; w.nextXp = v.nextXp; w.mods = v.mods; w.bonus = v.bonus; w.unlocked = new Set<WeaponId>(['fists', ...Object.keys(this.gear) as WeaponId[]]);
+    w.weaponMesh = {}; for (const [slot,g] of Object.entries(this.gear)) if (g) w.weaponMesh[slot as WeaponId] = { mesh: g.mesh, hand: g.hand };
+    w.setWeapon(h,v.weapon); w.skills = data.slots.map(skill); w.skillCd = v.cooldowns; w.weaponImbue = v.weaponImbue; w.imbue = v.imbue; w.potion = v.potion; w.wardHp = v.wardHp; w.wardT = v.wardT; w.time = v.time;
+    this.applyPassives(); h.hp = Math.min(h.maxHp,v.hp); h.hpShown = h.hp; h.energy = v.energy; h.mana = Math.min(h.maxMana,v.mana); w.flasks = Math.min(w.flaskMax,v.flasks); this.rnd.restore(data.randomState);
+    this.lastWeapon = v.weapon; this.restoring = false; h.inst.root.metadata = { ...h.inst.root.metadata, climberId: this.climberId, runId: this.runId };
+    this.hud.announce('EXPEDITION CONTINUED', `Floor ${this.floor} · your last floor-boundary checkpoint`);
   }
 
   // ---------------------------------------------------------------- frame
@@ -134,6 +193,7 @@ export class TowerRun {
     if (this.shrineReady && !this.boonTaken && this.plan.shrine && Vector3.Distance(h.pos, new Vector3(this.plan.shrine.x, 0, this.plan.shrine.z)) < 3 && interact && !this.hud.modalOpen) void this.offerBoon();
     if (this.doorOpen && Math.hypot(h.pos.x - this.plan.exit.x, h.pos.z - this.plan.exit.z) < 2.2) {
       if (this.floor >= 100) { this.victory(); return; }
+      if (this.plan.kind === 'hall') { this.hud.closeModal(); this.startFloor = 1; this.persistent = true; this.transition = 999999; void this.launch(); return; }
       this.transition = .9; this.hud.fade(.9, `Floor ${this.floor + 1}`);
     }
     // Pickups bob, spin and are collected by walking over them.
@@ -173,7 +233,7 @@ export class TowerRun {
   }
 
   onHeroDown(): void {
-    this.over = true;
+    this.over = true; if (this.persistent) endCheckpoint(this.runId);
     const c = this.cls ? `${this.cls.name} (${this.cls.pattern})` : 'no class emerged';
     setTimeout(() => this.hud.message(`Fallen on Floor ${this.floor}`, `${this.tier} · ${c} · ${this.sheet.history.kills} foes · ${this.sheet.history.bosses} bosses`, 'Begin a new climb', () => {
       this.seed = (this.seed * 48271 + 11) % 2147483647; this.rnd = mulberry(this.seed ^ 0x5eed); this.start();
@@ -476,7 +536,7 @@ export class TowerRun {
     const c = emergentClass(this.sheet, this.world.level);
     if (!c || c.id === this.cls?.id) return;
     this.cls = c; this.stats.classes++;
-    const { isNew } = recordClass(c, this.floor, this.seed);
+    const { isNew } = recordClass(c, this.floor, this.seed, `${this.runId}:${this.floor}:${c.id}`);
     this.hud.announce(isNew ? 'A NEW CLASS EMERGES' : 'CLASS EMERGES', `${c.name} — ${c.pattern}`);
     // The class grants its signature skill; a new class replaces the old signature in place.
     const style = c.id === 'fists+ascetic' ? 'ascetic' : c.id.split('+')[0] as Style;
@@ -495,7 +555,7 @@ export class TowerRun {
     if (this.plan?.kind === 'hall') return;
     for (const a of ACHIEVEMENTS) {
       if (this.earned.has(a.id) || !a.test(this.stats)) continue;
-      this.earned.add(a.id); const first = recordEarned(a.id);
+      this.earned.add(a.id); const first = recordEarned(a.id, `${this.runId}:${a.id}`);
       this.boxes.push(a.box);
       this.hud.achievement(first ? 'NEW ACHIEVEMENT!' : 'ACHIEVEMENT', a.name, a.text, `Reward: ${BOX_TIERS[a.box]} Box${this.doorOpen ? '' : ' (opens when the floor is clear)'}`, BOX_COLOR[a.box]);
     }
@@ -578,7 +638,7 @@ export class TowerRun {
   }
 
   private victory(): void {
-    this.over = true;
+    this.over = true; if (this.persistent) endCheckpoint(this.runId);
     this.hud.message('Chrysanthus Opens', `You stand at the summit as ${this.tier}. ${this.cls?.name ?? ''}`, 'Climb again', () => { this.seed++; this.start(); });
   }
 

@@ -81,14 +81,15 @@ export function emergentClass(s: CapabilitySheet, level: number): EmergedClass |
 }
 
 // ---- Codex: every discovered class, kept across runs (localStorage) and exportable as JSON ----
-export interface CodexEntry extends EmergedClass { firstSeen: string; floor: number; seed: number; times: number }
+export interface CodexEntry extends EmergedClass { firstSeen: string; floor: number; seed: number; times: number; receipts?: string[] }
 const KEY = 'tv.tower.codex.v1';
 export function loadCodex(): CodexEntry[] { try { return JSON.parse(localStorage.getItem(KEY) ?? '[]'); } catch { return []; } }
-export function recordClass(c: EmergedClass, floor: number, seed: number): { entry: CodexEntry; isNew: boolean } {
+export function recordClass(c: EmergedClass, floor: number, seed: number, receipt?: string): { entry: CodexEntry; isNew: boolean } {
   const codex = loadCodex();
   let entry = codex.find(e => e.id === c.id); const isNew = !entry;
   if (!entry) { entry = { ...c, firstSeen: new Date().toISOString(), floor, seed, times: 0 }; codex.push(entry); }
-  entry.times++;
+  if (receipt && entry.receipts?.includes(receipt)) return { entry, isNew: false };
+  entry.times++; if (receipt) (entry.receipts ??= []).push(receipt);
   try { localStorage.setItem(KEY, JSON.stringify(codex)); } catch { /* private mode: codex lives for the session */ }
   return { entry, isNew };
 }
