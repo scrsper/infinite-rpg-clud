@@ -12,7 +12,9 @@ export const clipLength = (g: AnimationGroup) => {
  */
 export class Animator {
   current = '';
-  private active = new Map<string, { g: AnimationGroup; w: number; target: number; rate: number }>();
+  private active = new Map<string, { g: AnimationGroup; w: number; target: number; rate: number; base: number }>();
+  /** Per-body time: time magic slows a body's whole motion, frost freezes it (0), lightning stutters it. */
+  timeScale = 1;
   constructor(private readonly groups: Map<string, AnimationGroup>) {}
 
   has(name: string): boolean { return this.groups.has(name); }
@@ -21,13 +23,13 @@ export class Animator {
   play(name: string, o: { loop?: boolean; speed?: number; fade?: number; restart?: boolean; from?: number } = {}): void {
     const g = this.groups.get(name); if (!g) { console.warn('[arena] missing clip', name); return; }
     const fade = o.fade ?? 0.12, speed = o.speed ?? 1;
-    if (name === this.current && !o.restart) { g.speedRatio = speed; return; }
+    if (name === this.current && !o.restart) { const c = this.active.get(name); if (c) c.base = speed; g.speedRatio = speed * this.timeScale; return; }
     for (const [n, a] of this.active) if (n !== name) { a.target = 0; a.rate = 1 / Math.max(fade, 1e-3); }
     let a = this.active.get(name);
-    if (!a) { a = { g, w: fade <= 0 ? 1 : 0, target: 1, rate: 1 / Math.max(fade, 1e-3) }; this.active.set(name, a); }
-    a.target = 1; a.rate = 1 / Math.max(fade, 1e-3);
+    if (!a) { a = { g, w: fade <= 0 ? 1 : 0, target: 1, rate: 1 / Math.max(fade, 1e-3), base: speed }; this.active.set(name, a); }
+    a.target = 1; a.rate = 1 / Math.max(fade, 1e-3); a.base = speed;
     g.stop();
-    g.start(o.loop ?? false, speed, g.from + (o.from ?? 0) * (g.to - g.from), g.to);
+    g.start(o.loop ?? false, speed * this.timeScale, g.from + (o.from ?? 0) * (g.to - g.from), g.to);
     g.setWeightForAllAnimatables(a.w);
     this.current = name;
   }
@@ -46,11 +48,11 @@ export class Animator {
     for (const [name, g, w] of [[walk, gw, 1 - blend], [run, gr, blend]] as const) {
       let a = this.active.get(name);
       if (!a || !g.isPlaying) {
-        if (!a) { a = { g, w: 0, target: w, rate: 1 / fade }; this.active.set(name, a); }
+        if (!a) { a = { g, w: 0, target: w, rate: 1 / fade, base: 1 }; this.active.set(name, a); }
         g.stop(); g.start(true, 1, g.from, g.to); g.goToFrame(g.from + phase * (g.to - g.from)); g.setWeightForAllAnimatables(a.w);
       }
       a.target = Math.max(0, Math.min(1, w)); a.rate = 1 / fade;
-      g.speedRatio = Math.max(.05, rate * clipLength(g));
+      a.base = Math.max(.05, rate * clipLength(g)); g.speedRatio = a.base * this.timeScale;
     }
     this.current = 'loco';
   }
@@ -66,6 +68,8 @@ export class Animator {
   }
 
   private legs: { name: string; g: AnimationGroup; w: number; target: number } | null = null;
+  /** True while a legs-only layer is driving (or fading out of) the leg bones. */
+  get legLayered(): boolean { return !!this.legs; }
   /**
    * A legs-only layer over whatever is playing (strafe/backpedal while guarding or aiming). Its weight is
    * high so it dominates the leg bones; the upper body keeps the main clip. `null` fades it out.
@@ -81,7 +85,7 @@ export class Animator {
     else if (!name && this.legs) this.legs.target = 0;
   }
 
-  setSpeed(speed: number): void { const a = this.active.get(this.current); if (a) a.g.speedRatio = speed; }
+  setSpeed(speed: number): void { const a = this.active.get(this.current); if (a) { a.base = speed; a.g.speedRatio = speed * this.timeScale; } }
 
   update(dt: number): void {
     if (this.legs) {
@@ -92,6 +96,7 @@ export class Animator {
       a.w = a.target > a.w ? Math.min(a.target, a.w + a.rate * dt) : Math.max(a.target, a.w - a.rate * dt);
       if (a.w <= 0 && a.target === 0) { a.g.stop(); this.active.delete(n); continue; }
       a.g.setWeightForAllAnimatables(a.w);
+      a.g.speedRatio = a.base * this.timeScale;
     }
   }
 

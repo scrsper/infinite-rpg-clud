@@ -20,6 +20,42 @@ The Combat Gym panel has an **Enter the Tower of Chrysanthus** button.
   The Combat Gym sandbox keeps the four Witcher-style signs (Ember, Gust, Ward, Frost Sigil) on 1–4.
 - **Other keys:** Q drinks a flask (heals over a second; refilled each floor; potions add flasks). Health does not regenerate on its own in the tower. Tab cycles drawn weapons (F1–F4 select one directly). E uses a shrine. K opens the Codex.
 
+## PS5 controller (DualSense)
+
+Plug it in over USB or Bluetooth (Chrome and Edge present it as a standard gamepad). The HUD switches to controller glyphs the moment you touch it.
+
+| Input | Action |
+|---|---|
+| Left stick | Move (relative to the camera) |
+| Right stick | Orbit the camera |
+| R3 | Recentre the camera behind you |
+| R1 | Light attack (chain) |
+| R2 | Heavy attack (hold to charge). Bow: hold to aim, release to loose |
+| L1 | Guard (raise it just in time to parry) |
+| ○ | Tap: dodge or roll. Hold: sprint |
+| ✕ | Interact (shrines, revives); confirm in menus |
+| □ | Flask |
+| △ | Next weapon |
+| **Hold L2 +** □ △ ○ ✕ R1 R2 L1 | Skill slots 1–7 |
+| D-pad ↑ / ↓ | Drink from the belt / read a scroll |
+| D-pad ← / → | Previous / next weapon |
+| Touchpad | Spellbook |
+| Create | Codex |
+| Options | Pause and show the controls |
+
+- **Menus:** every card choice, dialogue, Spellbook page and message works with the D-pad (or a flick of the left stick), ✕ to confirm and ○ to back out.
+- **Aiming:** attacks and spells aim at the foe you are facing or moving toward.
+- **Rumble:** on hits taken, blocks and critical hits.
+- **Checking:** `scripts/web/arena-pad.ts` drives a virtual DualSense through every binding (19/19 pass). It hasn't been tried on a physical pad yet.
+
+## Movement at ease
+
+Out of combat (no foe within about 9 m, no recent blows) the hero walks, runs and stands relaxed: arms loose and weapon slung across the back. A foe drawing near, a hit taken, or any attack, guard, aim or cast draws the weapon at once into the combat stance.
+
+## Magic and the god
+
+Magic (element × form; 80 spells that emerge from affinity and learned forms), elemental reactions, imbuing, potions, the Proving Hall (floor 0) and Chrysanthus himself (the floor-10 trial and the summit) are described in docs/TOWER_MAGIC.md.
+
 ## Monsters
 
 Each floor belongs to a faction, and about a fifth of its foes come from the others (`floorgen.ts`):

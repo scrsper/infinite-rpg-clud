@@ -8,8 +8,9 @@
  * to the Codex (§60: knowledge of mechanics becomes power, and spreads).
  */
 export type Style = 'fists' | 'blade' | 'heavy' | 'axe' | 'bow';
-export type Element = 'flame' | 'frost' | 'storm' | 'swift' | 'iron' | 'shadow' | 'verdance';
-export const ELEMENTS: Element[] = ['flame', 'frost', 'storm', 'swift', 'iron', 'shadow', 'verdance'];
+/** Elements (display names in magic.ts): fire, ice, lightning, wind, earth, shadow, life, water, gravity, time. */
+export type Element = 'flame' | 'frost' | 'storm' | 'swift' | 'iron' | 'shadow' | 'verdance' | 'water' | 'gravity' | 'time';
+export const ELEMENTS: Element[] = ['flame', 'frost', 'storm', 'swift', 'iron', 'shadow', 'verdance', 'water', 'gravity', 'time'];
 
 /** Canonical power ontology names (Constitution §13); here a summary of measured capability. */
 export const TIERS = ['Normal', 'Iron', 'Bronze', 'Silver', 'Gold', 'Diamond', 'God'] as const;
@@ -22,13 +23,15 @@ export interface CapabilitySheet {
   /** Affinity per element: from tomes, boons and use. */
   affinity: Record<Element, number>;
   vitality: number; might: number; agility: number;
+  /** Magic: forms of shaping mana that have been learned, and mana control (grows with casting). */
+  forms: string[]; manaControl: number;
   history: { kills: number; bosses: number; floors: number; tomes: number; boons: number; nearDeaths: number; noWeaponFloors: number };
 }
 
 export const newSheet = (): CapabilitySheet => ({
   style: { fists: 0, blade: 0, heavy: 0, axe: 0, bow: 0 },
-  affinity: { flame: 0, frost: 0, storm: 0, swift: 0, iron: 0, shadow: 0, verdance: 0 },
-  vitality: 0, might: 0, agility: 0,
+  affinity: { flame: 0, frost: 0, storm: 0, swift: 0, iron: 0, shadow: 0, verdance: 0, water: 0, gravity: 0, time: 0 },
+  vitality: 0, might: 0, agility: 0, forms: [], manaControl: 0,
   history: { kills: 0, bosses: 0, floors: 0, tomes: 0, boons: 0, nearDeaths: 0, noWeaponFloors: 0 },
 });
 
@@ -53,7 +56,7 @@ export interface EmergedClass {
 }
 
 const STYLE_WORDS: Record<Style, [string, string]> = { fists: ['fist', 'Brawler'], blade: ['brand', 'Blademaster'], heavy: ['breaker', 'Warden'], axe: ['cleaver', 'Reaver'], bow: ['shot', 'Ranger'] };
-const ELEMENT_WORDS: Record<Element, string> = { flame: 'Flame', frost: 'Rime', storm: 'Storm', swift: 'Gale', iron: 'Iron', shadow: 'Shade', verdance: 'Thorn' };
+const ELEMENT_WORDS: Record<Element, string> = { flame: 'Flame', frost: 'Rime', storm: 'Storm', swift: 'Gale', iron: 'Iron', shadow: 'Shade', verdance: 'Thorn', water: 'Tide', gravity: 'Grave', time: 'Chrono' };
 
 /**
  * Qualifying patterns. Classes surface from capability + history, not choice:
@@ -72,20 +75,21 @@ export function emergentClass(s: CapabilitySheet, level: number): EmergedClass |
   const [element, ev] = (Object.entries(s.affinity) as [Element, number][]).sort((a, b) => b[1] - a[1])[0];
   if (ev >= 2) {
     const name = ELEMENT_WORDS[element] + STYLE_WORDS[style][0];
-    return { id: `${style}+${element}`, name, pattern: `${style} rank ${r}, ${element} affinity ${ev}`, boon: { stat: 'affinity', amount: 1, element }, tier };
+    return { id: `${style}+${element}`, name, pattern: `${style} rank ${r}, ${element} affinity ${ev.toFixed(1)}`, boon: { stat: 'affinity', amount: 1, element }, tier };
   }
   return { id: style, name: STYLE_WORDS[style][1], pattern: `${style} rank ${r}`, boon: { stat: style === 'heavy' ? 'vitality' : style === 'bow' || style === 'fists' ? 'speed' : 'damage', amount: .1 }, tier };
 }
 
 // ---- Codex: every discovered class, kept across runs (localStorage) and exportable as JSON ----
-export interface CodexEntry extends EmergedClass { firstSeen: string; floor: number; seed: number; times: number }
+export interface CodexEntry extends EmergedClass { firstSeen: string; floor: number; seed: number; times: number; receipts?: string[] }
 const KEY = 'tv.tower.codex.v1';
 export function loadCodex(): CodexEntry[] { try { return JSON.parse(localStorage.getItem(KEY) ?? '[]'); } catch { return []; } }
-export function recordClass(c: EmergedClass, floor: number, seed: number): { entry: CodexEntry; isNew: boolean } {
+export function recordClass(c: EmergedClass, floor: number, seed: number, receipt?: string): { entry: CodexEntry; isNew: boolean } {
   const codex = loadCodex();
   let entry = codex.find(e => e.id === c.id); const isNew = !entry;
   if (!entry) { entry = { ...c, firstSeen: new Date().toISOString(), floor, seed, times: 0 }; codex.push(entry); }
-  entry.times++;
+  if (receipt && entry.receipts?.includes(receipt)) return { entry, isNew: false };
+  entry.times++; if (receipt) (entry.receipts ??= []).push(receipt);
   try { localStorage.setItem(KEY, JSON.stringify(codex)); } catch { /* private mode: codex lives for the session */ }
   return { entry, isNew };
 }

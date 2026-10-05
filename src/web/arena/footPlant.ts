@@ -5,14 +5,15 @@ import {reach} from './ik';
 export class FootPlant {
  private ankleY=-1;private feet=[{lock:null as Vector3|null,w:0,yaw:0},{lock:null as Vector3|null,w:0,yaw:0}];
  constructor(private inst:CharacterInstance){}
- update(dt:number,y:number,yaw:number,active=true){
+ /** `contact` (optional, per foot l/r): the playing clip's own baked stance flags; without it, a foot near its first-pose ankle height counts as planted. */
+ update(dt:number,y:number,yaw:number,active=true,contact?:readonly [boolean,boolean]){
   const b=this.inst.bones;if(!b)return;
   if(!active){for(const l of this.feet){l.lock=null;l.w=0;}return;}
   const scale=this.inst.root.scaling.x;
   if(this.ankleY<0){const f=b.get('foot_l');if(!f)return;f.computeWorldMatrix(true);this.ankleY=Math.max(.02,f.getAbsolutePosition().y-y);}
   for(const [k,side] of ['l','r'].entries()){
    const thigh=b.get('thigh_'+side),calf=b.get('calf_'+side),foot=b.get('foot_'+side);if(!thigh||!calf||!foot)continue;
-   foot.computeWorldMatrix(true);const animPos=foot.getAbsolutePosition().clone(),planted=animPos.y-y<this.ankleY+.035*scale,L=this.feet[k];
+   foot.computeWorldMatrix(true);const animPos=foot.getAbsolutePosition().clone(),planted=contact?contact[k]:animPos.y-y<this.ankleY+.035*scale,L=this.feet[k];
    if(planted){if(!L.lock||Vector3.Distance(L.lock,animPos)>.6*scale||Math.abs(Math.atan2(Math.sin(yaw-L.yaw),Math.cos(yaw-L.yaw)))>.6){L.lock=animPos.clone();L.yaw=yaw;}L.w=1;}
    else{L.w=Math.max(0,L.w-dt*16);if(L.w===0)L.lock=null;}
    if(!L.lock||L.w<=0)continue;

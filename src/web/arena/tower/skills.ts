@@ -10,8 +10,8 @@ import type { Element, Style } from './capability';
  *   scroll      one-shot: read with G, never slotted
  * Each skill is data over a small set of effect kernels the world knows how to run.
  */
-export type Kernel = 'cone' | 'wave' | 'ward' | 'sigil' | 'nova' | 'chain' | 'dash' | 'heal' | 'frenzy' | 'spear' | 'volley' | 'meteor' | 'cataclysm';
-export type SkillSource = 'essence' | 'confluence' | 'book' | 'class' | 'scroll' | 'sign';
+export type Kernel = 'cone' | 'wave' | 'ward' | 'sigil' | 'nova' | 'chain' | 'dash' | 'heal' | 'frenzy' | 'spear' | 'volley' | 'meteor' | 'cataclysm' | 'bolt' | 'field' | 'imbue' | 'blink';
+export type SkillSource = 'essence' | 'confluence' | 'book' | 'class' | 'scroll' | 'sign' | 'spell';
 /** Status riders: elements, plus the two essences that are not elements. */
 export type Rider = Element | 'bone' | 'blood';
 
@@ -25,6 +25,8 @@ export interface SkillDef {
   power: number;
   /** Uses rank a skill up (practice is capability). */
   rank: number; uses: number;
+  /** Spells: mana cost (instead of stamina), and the element and form they were shaped from. */
+  mana?: number; element?: Element; form?: string;
 }
 
 const S = (id: string, name: string, icon: string, color: string, kernel: Kernel, cost: number, cooldown: number, riders: Rider[], text: string, source: SkillSource): SkillDef =>
@@ -40,7 +42,7 @@ export const SIGNS: SkillDef[] = [
 ];
 
 // ---- essences (He Who Fights With Monsters): absorbed from monsters, one ability each ----
-export type Essence = 'fire' | 'ice' | 'storm' | 'swift' | 'iron' | 'shadow' | 'life' | 'bone' | 'blood';
+export type Essence = 'fire' | 'ice' | 'storm' | 'swift' | 'iron' | 'shadow' | 'life' | 'bone' | 'blood' | 'water' | 'gravity' | 'time';
 export const ESSENCES: Record<Essence, { name: string; color: string; element?: Element; skill: SkillDef }> = {
   fire: { name: 'Fire', color: '#ff7a2e', element: 'flame', skill: S('ess-fire', 'Immolate', '🔥', '#ff7a2e', 'nova', 26, 6, ['flame'], 'Burst of flame around you; burns', 'essence') },
   ice: { name: 'Ice', color: '#8fdcff', element: 'frost', skill: S('ess-ice', 'Rime Circle', '❄️', '#8fdcff', 'sigil', 26, 7, ['frost'], 'Freezing circle at the cursor; slows', 'essence') },
@@ -51,6 +53,9 @@ export const ESSENCES: Record<Essence, { name: string; color: string; element?: 
   life: { name: 'Life', color: '#7fd36b', element: 'verdance', skill: S('ess-life', 'Mending', '✚', '#7fd36b', 'heal', 34, 14, ['verdance'], 'Restore a quarter of your health', 'essence') },
   bone: { name: 'Bone', color: '#e8dfc8', skill: S('ess-bone', 'Bone Spear', '🦴', '#e8dfc8', 'spear', 22, 3.5, ['bone'], 'A line of bone spikes erupts ahead', 'essence') },
   blood: { name: 'Blood', color: '#d1343e', skill: S('ess-blood', 'Blood Frenzy', '🩸', '#d1343e', 'frenzy', 20, 16, ['blood'], 'Faster, harder blows that drink life', 'essence') },
+  water: { name: 'Water', color: '#4aa8ff', element: 'water', skill: S('ess-water', 'Drowning Tide', '🌊', '#4aa8ff', 'cone', 22, 5, ['water'], 'A crashing wave that soaks everything', 'essence') },
+  gravity: { name: 'Gravity', color: '#7a5cff', element: 'gravity', skill: S('ess-gravity', 'Well of Weight', '🕳️', '#7a5cff', 'field', 28, 10, ['gravity'], 'A gravity well that drags foes together', 'essence') },
+  time: { name: 'Time', color: '#ffd76a', element: 'time', skill: S('ess-time', 'Still Moment', '⏳', '#ffd76a', 'nova', 34, 14, ['time'], 'Everything near you slows almost to stillness', 'essence') },
 };
 
 /** Named confluences; any other trio composes a name from its parts. Order does not matter. */
@@ -66,7 +71,7 @@ const CONFLUENCES: { of: Essence[]; name: string; text: string }[] = [
 ];
 const ROOT: Record<Essence, [string, string]> = {
   fire: ['Ember', 'blaze'], ice: ['Rime', 'frost'], storm: ['Thunder', 'storm'], swift: ['Gale', 'wind'], iron: ['Iron', 'heart'],
-  shadow: ['Gloam', 'shade'], life: ['Green', 'bloom'], bone: ['Ossu', 'bone'], blood: ['Sanguine', 'blood'],
+  shadow: ['Gloam', 'shade'], life: ['Green', 'bloom'], bone: ['Ossu', 'bone'], blood: ['Sanguine', 'blood'], water: ['Tide', 'deep'], gravity: ['Grave', 'well'], time: ['Aeon', 'hour'],
 };
 const riderOf = (e: Essence): Rider => ESSENCES[e].element ?? (e as 'bone' | 'blood');
 
@@ -85,8 +90,8 @@ export function confluence(held: Essence[]): { name: string; essenceText: string
 /** Which essences a monster can yield (its nature decides; HWFWM essences come from what they slay). */
 export const FOE_ESSENCE: Record<string, Essence[]> = {
   goblin: ['swift', 'shadow'], goblin_archer: ['swift', 'storm'], orc: ['blood', 'iron'], orc_chief: ['blood', 'iron', 'fire'],
-  skeleton: ['bone', 'shadow'], skeleton_mage: ['bone', 'ice'], skeleton_brute: ['bone', 'iron'],
-  minion: ['bone'], warrior: ['iron', 'blood'], rogue: ['shadow', 'swift'], mage: ['fire', 'ice', 'storm', 'life'],
+  skeleton: ['bone', 'shadow'], skeleton_mage: ['bone', 'ice', 'gravity'], skeleton_brute: ['bone', 'iron'],
+  minion: ['bone'], warrior: ['iron', 'blood'], rogue: ['shadow', 'swift'], mage: ['fire', 'ice', 'storm', 'life', 'water'], chrysanthus: ['time'],
 };
 
 // ---- skill books: learn the element's skill; affinity +1 ----
@@ -98,6 +103,9 @@ export const BOOKS: Record<Element, { title: string; skill: SkillDef }> = {
   iron: { title: 'Tome of the Unbowed', skill: S('book-ward', 'Ward', '🛡️', '#7fb8ff', 'ward', 30, 10, ['iron'], 'Shield that absorbs damage', 'book') },
   shadow: { title: 'Tome of the Quiet Knife', skill: S('book-knife', 'Night Knife', '🗡️', '#8a6aa8', 'dash', 20, 4, ['shadow'], 'Vanish and strike from behind', 'book') },
   verdance: { title: 'Tome of Green Return', skill: S('book-mend', 'Green Return', '✚', '#7fd36b', 'heal', 34, 14, ['verdance'], 'Restore a quarter of your health', 'book') },
+  water: { title: 'Tome of the Deep Current', skill: S('book-tide', 'Tidal Wave', '🌊', '#4aa8ff', 'cone', 22, 4, ['water'], 'A wave that soaks', 'book') },
+  gravity: { title: 'Tome of Falling Stars', skill: S('book-well', 'Gravity Well', '🕳️', '#7a5cff', 'field', 28, 10, ['gravity'], 'A well that drags foes in', 'book') },
+  time: { title: 'Tome of the Unwound Hour', skill: S('book-still', 'Still Moment', '⏳', '#ffd76a', 'nova', 34, 14, ['time'], 'Slow everything near you', 'book') },
 };
 
 // ---- scrolls: one strong cast, read with G ----
