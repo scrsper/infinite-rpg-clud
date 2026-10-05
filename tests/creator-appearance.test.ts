@@ -4,8 +4,14 @@ import { describe, it, expect, vi } from 'vitest';
 vi.mock('../tools/ontology/src/ontology/schema', () => ({ HumanFamilySchema: { parse: (x: unknown) => x }, EntitySchema: { parse: (x: unknown) => x } }));
 import { readFileSync } from 'node:fs';
 import { CREATOR_BODIES, creatorAppearance, isCreatorLook, variation } from '../src/web/actors/creatorAppearance';
-import { appearancePlan } from '../tools/ontology/src/visual/appearance';
-import { variation as ontologyVariation } from '../tools/ontology/src/visual/resolver';
+
+// The ontology is a nested project with its own dependencies (zod), which the root project does not install or
+// typecheck. Its modules are loaded at test run time through non-literal paths, so root `tsc` does not follow them;
+// the shapes used here are declared locally.
+type Plan = { supported: boolean; jaw: number; linen: number[]; leather: number[] };
+const ONTOLOGY = '../tools/ontology/src/visual/';
+const { appearancePlan } = await import(/* @vite-ignore */ `${ONTOLOGY}appearance`) as { appearancePlan: (e: unknown, assetId?: string) => Plan };
+const { variation: ontologyVariation } = await import(/* @vite-ignore */ `${ONTOLOGY}resolver`) as { variation: (e: unknown, channel: string) => number };
 
 const family = JSON.parse(readFileSync('tools/ontology/ontology/morphology/human-family.json', 'utf8')) as { variants: { sex: string; assetId: string; heightM: number }[] };
 const registry = JSON.parse(readFileSync('tools/ontology/assets/registry.json', 'utf8')) as { id: string; nativeHeightM?: number }[];
