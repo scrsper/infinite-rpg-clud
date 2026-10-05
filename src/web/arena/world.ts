@@ -31,6 +31,12 @@ export let ARENA = 34;
 export function setArenaHalf(h: number): void { ARENA = h; }
 /** Seconds a dodge lasts (clip is played to fit). */
 const DODGE_TIME = .55, ROLL_TIME = .82;
+/** Sheathed shield: centre distance behind the chest bone (world units), clear of the torso and the slung blade. */
+const SHIELD_SLUNG_BACK = .32;
+/** Seconds a drawn or stowed piece of gear takes to travel between back and hand (presentation only). */
+const GEAR_BLEND = .22;
+/** Horizontal clearance from the chest axis (world units) a blending piece keeps mid-travel: torso plus the shield board. */
+const GEAR_CLEAR_SHIELD = .62, GEAR_CLEAR_BLADE = .36;
 
 export type FState = 'spawn' | 'idle' | 'move' | 'tell' | 'attack' | 'spin' | 'guard' | 'aim' | 'dodge' | 'hit' | 'down' | 'revive' | 'dead' | 'cast';
 export type Role = 'hero' | 'ally' | 'foe';
@@ -349,7 +355,9 @@ export class ArenaWorld {
     if (!this.unlocked.has(id)) return;
     this.weapon = id; const w = WEAPONS[id], o = this.weaponMesh[id];
     this.equip(h, [], o ? { [o.hand]: o.mesh } : w.attach);
-    if (h.sheathed) { h.sheathed = false; this.sheathe(h, true); }
+    const shield = w.offhand && (o ? o.hand : 'r') === 'r' && h.inst.slotShield ? this.assets.sources.get(w.offhand) : undefined;
+    if (shield) { const i = shield.createInstance(`${w.offhand}-${h.id}`); i.parent = h.inst.slotShield!; i.isPickable = false; i.metadata = { shield: true }; h.extra.push(i); }
+    if (h.sheathed) { h.sheathed = false; this.sheathe(h, true, false); }
     this.bladeBase.position.set(0, w.trail * .3, 0); this.bladeTip.position.set(0, Math.max(.3, w.trail), 0);
     if (!h.busy) { h.state = 'idle'; h.anim.play(this.ms(h).idle, { loop: true }); }
   }
@@ -483,6 +491,7 @@ export class ArenaWorld {
       const target = Vector3.TransformCoordinates(new Vector3(0, -.26, 0), slot.getWorldMatrix());
       reach(b.get('upperarm_l')!, b.get('lowerarm_l')!, b.get('hand_l')!, target, f.ikW);
     }
+    this.stepGearBlend(dt);
   }
 
   /**
@@ -764,17 +773,69 @@ export class ArenaWorld {
     if (h.state === 'idle') h.anim.play(this.idleOf(h), { loop: true, fade: relaxed ? .6 : .2 });
   }
 
+  /**
+   * Presentation only: after a draw or stow the gear is already attached where it belongs (rules see it there at
+   * once); for GEAR_BLEND seconds its drawn transform eases from where it was (carried with the body) to that place.
+   */
+  /** Gear blending on/off (for A/B measurement, like footLock). */
+  gearBlendOn = true;
+  private gearBlend = new Map<AbstractMesh, { f: Fighter; from: Matrix; t: number; pos: Vector3; rot: Quaternion | null; euler: Vector3 }>();
+  private stepGearBlend(dt: number): void {
+    for (const [m, b] of this.gearBlend) {
+      if (m.isDisposed() || !b.f.extra.includes(m as InstancedMesh)) { this.gearBlend.delete(m); continue; }
+      // The destination attachment, exactly as sheathe() left it (and left that way once the blend completes).
+      m.position.copyFrom(b.pos); m.rotationQuaternion = b.rot?.clone() ?? null; m.rotation.copyFrom(b.euler); m.scaling.setAll(1);
+      if ((b.t += dt / GEAR_BLEND) >= 1) { this.gearBlend.delete(m); m.computeWorldMatrix(true); continue; }
+      const parent = m.parent as TransformNode | null; if (!parent) { this.gearBlend.delete(m); continue; }
+      // Blend in body space; midway, carry the piece around the outside of the torso (never through it).
+      const root = b.f.inst.root.computeWorldMatrix(true), rootInv = Matrix.Invert(root), toRel = m.computeWorldMatrix(true).multiply(rootInv);
+      const k = b.t * b.t * (3 - 2 * b.t), s0 = new Vector3(), q0 = new Quaternion(), p0 = new Vector3(), s1 = new Vector3(), q1 = new Quaternion(), p1 = new Vector3();
+      b.from.decompose(s0, q0, p0); toRel.decompose(s1, q1, p1);
+      const p = Vector3.Lerp(p0, p1, k), chest = b.f.inst.bones?.get('spine_03');
+      const axis = chest ? Vector3.TransformCoordinates(chest.getAbsolutePosition(), rootInv) : Vector3.Zero();
+      const clear = (m.metadata?.shield ? GEAR_CLEAR_SHIELD : GEAR_CLEAR_BLADE) / b.f.inst.root.scaling.x;
+      const r = Math.hypot(p.x - axis.x, p.z - axis.z);
+      if (r < clear) {
+        // Out along the piece's own bearing from the chest (toward its side when it is dead on the axis).
+        const ux = r > 1e-4 ? (p.x - axis.x) / r : (p0.x + p1.x < 2 * axis.x ? -1 : 1), uz = r > 1e-4 ? (p.z - axis.z) / r : 0;
+        const push = Math.sin(Math.PI * k) * (clear - r); p.x += ux * push; p.z += uz * push;
+      }
+      const w = Matrix.Compose(Vector3.Lerp(s0, s1, k), Quaternion.Slerp(q0, q1, k), p).multiply(root);
+      const local = w.multiply(Matrix.Invert(parent.computeWorldMatrix(true)));
+      const q = new Quaternion(); local.decompose(m.scaling, q, m.position); m.rotationQuaternion = q;
+      m.computeWorldMatrix(true);
+    }
+  }
+
   /** Weapons to the back (sheathed) or back to the hands. */
-  private sheathe(f: Fighter, on: boolean): void {
+  private sheathe(f: Fighter, on: boolean, blend = true): void {
     const back = f.inst.bones?.get('spine_03'); if (!back) return;
     f.sheathed = on;
+    // Where each piece is drawn right now (mid-blend included), relative to the body, so the move can be eased.
+    const rootInv = Matrix.Invert(f.inst.root.computeWorldMatrix(true));
+    const from = f.extra.map(m => m.computeWorldMatrix(true).multiply(rootInv));
     f.extra.forEach((m, k) => {
       const inHand = m.metadata?.hand as TransformNode | undefined;
       if (on) {
         if (!inHand) m.metadata = { ...(m.metadata ?? {}), hand: m.parent };
         m.parent = back; const bow = this.weapon === 'bow';
+        // A shield hangs flat over the slung blade, face out, so the two never interpenetrate.
+        // Placed from the body's own frame (facing, chest), since the spine bone's axes are not body-aligned.
+        if (m.metadata?.shield) {
+          const rq = f.inst.root.computeWorldMatrix(true) && f.inst.root.absoluteRotationQuaternion; back.computeWorldMatrix(true);
+          const at = back.getAbsolutePosition().add(Vector3.Forward().applyRotationQuaternion(rq).scale(-SHIELD_SLUNG_BACK));
+          m.position.copyFrom(Vector3.TransformCoordinates(at, Matrix.Invert(back.getWorldMatrix())));
+          m.rotationQuaternion = Quaternion.Inverse(back.absoluteRotationQuaternion).multiply(rq.multiply(Quaternion.RotationAxis(Vector3.Up(), Math.PI))).normalize();
+          return;
+        }
         m.position.set(k ? -.08 : .06, bow ? .05 : .12, -.2); m.rotationQuaternion = null; m.rotation.set(0, bow ? Math.PI / 2 : 0, bow ? -Math.PI * .2 : Math.PI * .15);
-      } else if (inHand) { m.parent = inHand; m.position.setAll(0); m.rotation.setAll(0); }
+      } else if (inHand) { m.parent = inHand; m.position.setAll(0); m.rotationQuaternion = null; m.rotation.setAll(0); }
+    });
+    f.extra.forEach((m, k) => {
+      m.scaling.setAll(1);
+      // Scope of this pass: the hero's sword-and-shield loadout only; every other weapon still snaps.
+      if (blend && this.gearBlendOn && f.role === 'hero' && WEAPONS[this.weapon].offhand) this.gearBlend.set(m, { f, from: from[k], t: 0, pos: m.position.clone(), rot: m.rotationQuaternion?.clone() ?? null, euler: m.rotation.clone() });
+      else this.gearBlend.delete(m);
     });
     if (f.trail) f.trail.active = false;
     if (!on) this.vfx.flash(f.pos.add(new Vector3(0, 1.4, 0)), new Color3(1, .95, .8), .6, .12);

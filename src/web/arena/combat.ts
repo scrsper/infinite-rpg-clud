@@ -70,6 +70,8 @@ export interface WeaponDef {
   /** Heavy attacks (RMB): slower, chargeable by holding, chain into each other and finish light combos. */
   heavy?: AttackDef[];
   attach?: { r?: string; l?: string };
+  /** Presentation only: carried on the left forearm with a right-hand weapon (the sword-and-shield clips hold one). */
+  offhand?: string;
   trail: number;
 }
 
@@ -106,7 +108,7 @@ export const WEAPONS: Record<WeaponId, WeaponDef> = {
     spin: { clip: '2H_Melee_Attack_Spinning', speed: 1.25, active: [0, 99], cancel: 0, range: 3.5, arc: 180 * D, damage: 15, knock: 5, lunge: 0, multi: .19, heavy: true, hitstop: .03, shake: .14, move: 4.2, label: 'Whirlwind' },
   },
   axe: {
-    id: 'axe', name: 'Widow Cleaver', key: 'F3', set: 'sword', secondary: 'guard', attach: { r: 'W_widow-cleaver' }, trail: 1.1,
+    id: 'axe', name: 'Widow Cleaver', key: 'F3', set: 'sword', secondary: 'guard', attach: { r: 'W_widow-cleaver' }, offhand: 'W_shield_round', trail: 1.1,
     combo: [
       { clip: SS('slash'), speed: 1.35, active: [0.48, 0.76], cancel: 0.8, end: 1.05, range: 3, arc: 80 * D, damage: 24, knock: 2.5, lunge: 1, hitstop: .05, shake: .12, label: 'Attacking' },
       { clip: SS('attack (4)'), speed: 1.25, active: [0.36, 0.6], cancel: 0.64, end: 0.9, range: 3, arc: 90 * D, damage: 26, knock: 3, lunge: 1, hitstop: .05, shake: .14, label: 'Attacking' },

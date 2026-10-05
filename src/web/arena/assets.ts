@@ -26,6 +26,8 @@ export interface CharacterInstance {
   meshes: AbstractMesh[];
   slotR: TransformNode;
   slotL: TransformNode;
+  /** Left-hand shield grip: the KayKit hand slot the CC0 shields were authored for, retargeted onto this hand. */
+  slotShield?: TransformNode;
   chest: TransformNode | null;
   /** Meshes parented to a hand slot or head, by original name (weapons, shields, helmets). */
   gear: Map<string, AbstractMesh>;
@@ -83,7 +85,7 @@ export class ArenaAssets {
   // ---- Realistic MPFB people driven by retargeted KayKit combat clips -----------------------
   private people = new Map<LookId, AssetContainer>();
   readonly clips = new Map<string, ClipTemplate>();
-  private gripR!: Grip; private gripL!: Grip;
+  private gripR!: Grip; private gripL!: Grip; private gripShield: Grip | null = null;
 
   /** Load the people (art/tools/arena/build_arena_people.py) and bake every combat clip onto their skeleton. */
   /** Clip names fighters need; null = bake and instantiate everything (measurement mode). */
@@ -109,6 +111,8 @@ export class ArenaAssets {
     const rt = new Retargeter({ space: src.root, nodes: srcNodes }, { space: ref.holder, nodes: ref.nodes });
     const fallbacks = new Set(this.used ? [...this.used].map(kaykitFallback) : []);
     for (const [name, g] of src.anims) if (!this.used || this.used.has(name) || fallbacks.has(name)) this.clips.set(name, rt.bake(name, g));
+    // KayKit shields keep their grip at the origin of the rig's hand slot; map that slot onto the human hand.
+    if (srcNodes.has('handslot.l') && srcNodes.has('hand.l')) this.gripShield = shieldGrip(rt.grip('wrist.l', 'handslot.l', 'hand_l', 'middle_01_l'));
     src.dispose();
     // Real motion capture: the user's Mixamo packs (art/tools/arena/build_mixamo_clips.py -> mixamo_clips.glb).
     progress('Learning motion capture');
@@ -217,7 +221,7 @@ export class ArenaAssets {
     // Fingers come from the captured Mixamo grips.
     return {
       root: p.holder, anims, meshes: p.meshes, gear: new Map(), bones: p.nodes, springs: springsFor(p.nodes), chest: p.nodes.get('spine_03') ?? null,
-      slotR: slot('hand_r', this.gripR), slotL: slot('hand_l', this.gripL),
+      slotR: slot('hand_r', this.gripR), slotL: slot('hand_l', this.gripL), slotShield: this.gripShield ? slot('hand_l', this.gripShield) : undefined,
       dispose: () => { for (const g of anims.values()) g.dispose(); p.dispose(); },
     };
   }
@@ -275,6 +279,15 @@ function handGrip(space: TransformNode, nodes: Map<string, TransformNode>, side:
   const hq = new Quaternion(), hs = new Vector3(); handModel.decompose(hs, hq);
   const local = Vector3.TransformCoordinates(pos, Matrix.Invert(handModel));
   return { rot: Quaternion.Inverse(hq).multiply(q).normalize(), pos: local, scale: hs.x };
+}
+/**
+ * The retargeted KayKit slot faces the shield (boss at local +Z) toward the foe but puts the board plane in the fist;
+ * the handle bar sits behind it. Move the board forward so the fist closes on the handle (KayKit units; checked with
+ * scripts/web/tower-sword-shield.ts).
+ */
+const SHIELD_HANDLE_DEPTH = .11;
+function shieldGrip(g: Grip): Grip {
+  return { rot: g.rot, pos: g.pos.add(new Vector3(0, 0, SHIELD_HANDLE_DEPTH / g.scale).applyRotationQuaternion(g.rot)), scale: g.scale };
 }
 /** Grip placement along wrist->middle knuckle, and toward the palm (model metres); tuned on pose sheets. */
 const GRIP_ALONG = .55, GRIP_PALM = .028;
