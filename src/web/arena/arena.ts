@@ -5,9 +5,9 @@ import { attachPipeline, createRenderer } from '../render/engine';
 import { ArenaAssets } from './assets';
 import { ArenaHud } from './hud';
 import { BlobShadows } from './fx';
-import { LOOK_IDS } from './looks';
+import { LOOK_IDS, type LookId } from './looks';
 import { strikeWindow } from './retarget';
-import { usedClips } from './combat';
+import { WEAPONS, usedClips } from './combat';
 import { ArenaAudio } from './sfx';
 import { ARENA, ArenaWorld, setArenaHalf, type HeroInput } from './world';
 import { DualSense, type PadFrame } from './pad';
@@ -59,6 +59,8 @@ export async function startArena(): Promise<void> {
   await assets.loadHumans([...LOOK_IDS], progress);
   progress('Unpacking the arsenal');
   await assets.loadArsenal([...new Set(['oathbreaker', 'widow-cleaver', 'raven-mechanism', 'serpent-tooth', 'bell-of-ruin', 'elderroot', 'execution-standard', 'briar-whisper', 'ashwood-sentinel', ...ARSENAL_KEYS])]);
+  // Project catalog equipment carried by movesets (the sword-and-shield set's shield).
+  await assets.loadCatalogItems([...new Set(Object.values(WEAPONS).map(w => w.offhand).filter((k): k is string => !!k?.startsWith('I_')))]);
 
   const hud = new ArenaHud();
   const audio = new ArenaAudio();
@@ -74,7 +76,21 @@ export async function startArena(): Promise<void> {
     word: (p, text, color) => hud.word(p, text, color),
   });
   let seed = Number(params.get('seed') ?? 918271) || 918271;
+  // Hero body: ?body=male|female|legacy (harnesses), else the choice made in the Codex panel, else the creator male.
+  const BODY: Record<string, LookId> = { male: 'creator_male', female: 'creator_female', legacy: 'ranger' };
+  const savedBody = (() => { try { return localStorage.getItem('tv.arena.body'); } catch { return null; } })();
+  const bodyOf = (k: string | null) => k !== null && Object.hasOwn(BODY, k) ? BODY[k] : null;
+  world.heroLook = bodyOf(params.get('body')) ?? bodyOf(savedBody) ?? 'creator_male';
+  // A Codex choice is deferred: the current hero keeps its body; the next reset (a new climb, or a reload) draws the new one.
+  hud.heroBody = { current: Object.keys(BODY).find(k => BODY[k] === world.heroLook) ?? 'male', choose: k => {
+    const look = bodyOf(k); if (!look) return;
+    world.heroLook = look; if (hud.heroBody) hud.heroBody.current = k;
+    try { localStorage.setItem('tv.arena.body', k); } catch { /* private mode */ }
+    hud.toast(`Body set to ${k}: it takes effect on the next climb or reload.`, '#9fd0ff');
+  } };
   world.reset(seed);
+  // A creator body that could not be drawn is said plainly; an ordinary success shows nothing.
+  if (world.heroBody && world.heroBody.drawn !== world.heroBody.requested) setTimeout(() => hud.toast(`Creator body did not load, so the earlier body is shown. ${world.heroBody!.reason}`, '#ffba80'), 1500);
   let tower: TowerRun | null = null;
   if (towerMode) { tower = new TowerRun(scene, world, hud, assets, stage, seed); { const fl = params.has('hall') ? '0' : params.get('floor'); tower.startFloor = fl === null ? 1 : Math.max(0, Math.min(100, Math.floor(Number(fl)) || 0)); } hud.tower = tower as never; tower.persistent = !params.has('hall') && !params.has('floor'); void tower.launch(); }
   document.title = towerMode ? 'Tower of Chrysanthus' : document.title;

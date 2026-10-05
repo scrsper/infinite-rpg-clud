@@ -54,7 +54,21 @@ export const MOVESETS: Record<'fists' | 'greatsword' | 'sword' | 'bow' | 'caster
 };
 /** Evasive rolls/steps for anyone, by direction relative to facing. */
 /** Relaxed, unarmed-looking locomotion for when the hero is out of combat (weapon on the back). */
-export const RELAXED = { idle: 'locomotion/idle', walk: 'locomotion/walking', run: 'locomotion/running', walkPace: 1.5 };
+// The unarmed (Motifect) set, not the packed Mixamo `locomotion/*` clips: measured on the creator rig, those stand with
+// ~50 deg bent knees and a forward slump even at rest (in the packed source itself, not added by the retarget), while
+// idle_neutral / walk_forward / run_sprint stand and move upright. Combat stances keep their deliberate crouch.
+export const RELAXED = { idle: U('idle_neutral'), walk: U('walk_forward'), run: U('run_sprint'), walkPace: 1.5 };
+/**
+ * Ready-stance clips (hero, sword and shield), composed at load by assets.ts layeredClip: [upright body source, weapon-arm
+ * source]. The packed sword-and-shield idle/walk/run carry a deep crouch and forward spine (measured on the creator rig:
+ * 22-51 deg trunk lean). The body (pelvis, spine, neck, head, legs) comes from the upright unarmed set; clavicles, arms,
+ * hands and fingers keep the authored sword-and-shield grips. Guard and attack clips are untouched.
+ */
+export const READY_CLIPS: Record<string, [string, string]> = {
+  'ready/sword and shield idle': [U('idle_neutral'), SS('idle')],
+  'ready/sword and shield walk': [U('walk_forward'), SS('walk')],
+  'ready/sword and shield run': [U('run_sprint'), SS('run')],
+};
 export const DODGES = { forward: BOW('dodge forward'), back: BOW('dodge backward'), left: BOW('dodge left'), right: BOW('dodge right'), roll: U('roll_forward') };
 
 export type WeaponId = 'fists' | 'greatsword' | 'axe' | 'bow';
@@ -70,7 +84,10 @@ export interface WeaponDef {
   /** Heavy attacks (RMB): slower, chargeable by holding, chain into each other and finish light combos. */
   heavy?: AttackDef[];
   attach?: { r?: string; l?: string };
-  /** Presentation only: carried on the left forearm with a right-hand weapon (the sword-and-shield clips hold one). */
+  /**
+   * Presentation only: carried on the left forearm with a right-hand weapon (the sword-and-shield clips hold one).
+   * A project catalog item (`I_<catalog id>`, or a recorded render variant of one, loaded by ArenaAssets.loadCatalogItems).
+   */
   offhand?: string;
   trail: number;
 }
@@ -108,7 +125,7 @@ export const WEAPONS: Record<WeaponId, WeaponDef> = {
     spin: { clip: '2H_Melee_Attack_Spinning', speed: 1.25, active: [0, 99], cancel: 0, range: 3.5, arc: 180 * D, damage: 15, knock: 5, lunge: 0, multi: .19, heavy: true, hitstop: .03, shake: .14, move: 4.2, label: 'Whirlwind' },
   },
   axe: {
-    id: 'axe', name: 'Widow Cleaver', key: 'F3', set: 'sword', secondary: 'guard', attach: { r: 'W_widow-cleaver' }, offhand: 'W_shield_round', trail: 1.1,
+    id: 'axe', name: 'Widow Cleaver', key: 'F3', set: 'sword', secondary: 'guard', attach: { r: 'W_widow-cleaver' }, offhand: 'I_TV-081v', trail: 1.1,
     combo: [
       { clip: SS('slash'), speed: 1.35, active: [0.48, 0.76], cancel: 0.8, end: 1.05, range: 3, arc: 80 * D, damage: 24, knock: 2.5, lunge: 1, hitstop: .05, shake: .12, label: 'Attacking' },
       { clip: SS('attack (4)'), speed: 1.25, active: [0.36, 0.6], cancel: 0.64, end: 0.9, range: 3, arc: 90 * D, damage: 26, knock: 3, lunge: 1, hitstop: .05, shake: .14, label: 'Attacking' },
@@ -232,6 +249,7 @@ export function usedClips(): Set<string> {
   for (const m of Object.values(MOVESETS)) for (const c of [m.idle, m.walk, m.run, m.block, m.guard, m.enter, ...m.hit, ...m.death]) out.add(c);
   for (const w of Object.values(WEAPONS)) { w.combo.forEach(add); w.heavy?.forEach(add); add(w.spin); add(w.bash); add(w.aimed); add(w.kick); }
   for (const c of SPELL_CLIPS) out.add(c);
+  for (const [body, arms] of Object.values(READY_CLIPS)) { out.add(body); out.add(arms); }
   for (const f of Object.values(FOES)) f.attacks.forEach(add);
   for (const a of Object.values(ALLIES)) a.attacks.forEach(add);
   return out;

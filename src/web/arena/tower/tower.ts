@@ -102,6 +102,8 @@ export class TowerRun {
     this.hud.magic = this.magicView();
     this.applyPassives();
     this.enter(this.startFloor);
+    // The climber's persistent identity seeds the creator body's appearance (resume restores the same climber).
+    w.applyHeroAppearance({ id: this.climberId, appearanceSeed: 0 });
     this.hud.announce('THE TOWER OF CHRYSANTHUS', 'Bare hands and plain cloth. No skills: take them from what you kill.');
   }
 
@@ -170,6 +172,7 @@ export class TowerRun {
     w.setWeapon(h,v.weapon); w.skills = data.slots.map(skill); w.skillCd = v.cooldowns; w.weaponImbue = v.weaponImbue; w.imbue = v.imbue; w.potion = v.potion; w.wardHp = v.wardHp; w.wardT = v.wardT; w.time = v.time;
     this.applyPassives(); h.hp = Math.min(h.maxHp,v.hp); h.hpShown = h.hp; h.energy = v.energy; h.mana = Math.min(h.maxMana,v.mana); w.flasks = Math.min(w.flaskMax,v.flasks); this.rnd.restore(data.randomState);
     this.lastWeapon = v.weapon; this.restoring = false; h.inst.root.metadata = { ...h.inst.root.metadata, climberId: this.climberId, runId: this.runId };
+    w.applyHeroAppearance({ id: this.climberId, appearanceSeed: 0 });
     this.hud.announce('EXPEDITION CONTINUED', `Floor ${this.floor} · your last floor-boundary checkpoint`);
   }
 

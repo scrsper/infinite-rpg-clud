@@ -1,4 +1,24 @@
-# Current: Tower sword-and-shield, checkpoint E2E and compact HUD (2026-10-05)
+# Current: Tower creator bodies, physical item fit and upright stances (2026-10-05)
+
+Branch `codex/tower-creator-fit` on `caeec71` (PR #62 head). Presentation only; canonical simulation, saves, reach and
+damage are unchanged.
+
+- **Hero bodies:** the ontology creator bodies `tv-human-male-v2` / `tv-human-female-v1` (hashes `869ebb80…`,
+  `c69e97f5…`), staged byte-for-byte. Each has its own bake of the existing Mixamo/Motifect clips and its own grips.
+  The male gets the editor's seeded appearance; the female has none to apply.
+- **Crouch diagnosis:** the crouch was measured in the packed source clips (`locomotion/*` 50-55 deg knee bend at
+  rest; sword-and-shield idle/walk/run 22-51 deg trunk lean), not added by the retarget. Calm movement now uses the
+  upright unarmed clips; near foes, a ready layer keeps the authored arms (resampled to the body cycle).
+- **Item fit:** contract in `physicalFit.ts`. KayKit `W_sword` 1.78 m-equivalent becomes 1.14 m and `W_greatsword`
+  2.37 becomes 1.82; Widow Cleaver 1.42 becomes 1.15. Other arsenal items stay at their authored size.
+- **Shield:** catalog TV-081 render variant with the handle bar turned upright, mounted in each body's fist slot with
+  a measured calibration. The finger-joint centre is 1.0-1.1 cm from the bar axis (bar half-thickness 1.5 cm) in
+  guard and ready, both bodies. The fist is hidden behind the arm in all inspected views, so visual contact is not
+  claimed.
+- **Checks:** sword-and-shield 6/6 per body, creator isolation/menu 8/8, checkpoint E2E 23/23, focused tests 37/37,
+  and `web:build`.
+
+# Previous: Tower sword-and-shield, checkpoint E2E and compact HUD (2026-10-05)
 
 Branch `codex/tower-expedition` (worktree `C:\Users\green\Documents\Codex\2026-10-04\task\tower`): a reviewed
 finishing pass on base `22211a0`. External push, PR and Library upload are blocked by auto-review until trusted

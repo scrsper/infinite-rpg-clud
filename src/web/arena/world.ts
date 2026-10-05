@@ -1,4 +1,6 @@
 import {FootPlant} from './footPlant';
+import { HELD_ITEMS, SHIELD_FIST_FIT, fitHeldItem, heldPlacement, resolveParts, type FitResult } from '../items/physicalFit';
+import { isCreatorLook, type CreatorIdentity } from '../actors/creatorAppearance';
 import { Color3, Color4, Matrix, Mesh, MeshBuilder, Quaternion, StandardMaterial, TransformNode, Vector3, type AbstractMesh, type InstancedMesh, type Scene } from '@babylonjs/core';
 import type { ArenaAssets, CharacterInstance } from './assets';
 import type { LookId } from './looks';
@@ -236,6 +238,7 @@ export class ArenaWorld {
     this.wave = 0; this.waveTimer = 2.5; this.kills = 0; this.smashed = 0;
     this.layoutProps();
     this.hero = this.spawnHero();
+    this.applyHeroAppearance(this.heroIdentity);
     if (this.companions) this.spawnCompanions();
   }
 
@@ -332,12 +335,74 @@ export class ArenaWorld {
       if (!w) continue;
       const src = this.assets.sources.get(w); if (!src) continue;
       const i = src.createInstance(`${w}-${f.id}`); i.parent = slot; i.isPickable = false;
+      if (!this.fitHeldInstance(i, w, f.inst.root.metadata?.look)) { i.dispose(); continue; }
       f.extra.push(i);
     }
   }
 
+  /** How far the fitted item reaches along its slot's +Y (the blade axis), in slot units. Presentation only. */
+  private bladeReach(m: InstancedMesh): number {
+    const bb = m.sourceMesh.getBoundingInfo().boundingBox;
+    return bb.maximum.y * m.scaling.y + (m.metadata?.fitPos?.y ?? 0);
+  }
+
+  /** Fit reports per mesh key, so an unspecified or unsupported item is visible instead of silently resized. */
+  readonly fitReports = new Map<string, FitResult>();
+  /**
+   * Size a held instance by the physical contract (src/web/items/physicalFit.ts): a uniform scale about its grip
+   * anchor, on the instance itself, under the hand slot, so the holder's own scale is inherited once and never doubled.
+   * The anchor offset is kept in metadata so a draw after a stow restores it.
+   */
+  private fitHeldInstance(i: InstancedMesh, key: string, look?: string): boolean {
+    const src = i.sourceMesh; src.refreshBoundingInfo();
+    const bb = src.getBoundingInfo().boundingBox, e = bb.maximum.subtract(bb.minimum);
+    // Part-referenced grips resolve against the loader-baked part bounds; a missing part is reported, never guessed.
+    const raw = HELD_ITEMS[key], resolved = raw ? resolveParts(raw, this.assets.partBounds.get(key)) : { spec: undefined, faceZ: null };
+    if (!resolved) {
+      const reason = `named grip/face part missing in ${key}; not drawn`;
+      if (!this.fitReports.has(key)) { this.fitReports.set(key, { key, status: 'unsupported', scale: 1, authoredLength_m: null, length_m: null, reason }); console.warn(`[fit] ${reason}`); }
+      return false;
+    }
+    // A fist-mounted shield's bar sits where this body's closed fingers are (measured per creator body).
+    const cal = resolved.spec?.mount?.slot === 'fist' && resolved.spec.category === 'shield' && look && Object.hasOwn(SHIELD_FIST_FIT, look) ? SHIELD_FIST_FIT[look] : undefined;
+    if (cal && resolved.spec?.mount) resolved.spec = { ...resolved.spec, mount: { ...resolved.spec.mount, slotPoint: resolved.spec.mount.slotPoint.map((v, k) => v + cal[k]) as [number, number, number] } };
+    const fit = fitHeldItem(key, [e.x, e.y, e.z], resolved.spec);
+    if (!this.fitReports.has(key)) { this.fitReports.set(key, { ...fit, ...(resolved.spec?.gripAnchor ? { gripAnchor: resolved.spec.gripAnchor, faceZ: resolved.faceZ } : {}) } as FitResult); if (fit.status === 'unspecified' || fit.status === 'unsupported') console.warn(`[fit] ${key}: ${fit.status}, ${fit.reason}`); }
+    const place = heldPlacement(resolved.spec, fit.scale);
+    i.scaling.setAll(fit.scale); i.position.set(...place.position);
+    i.rotationQuaternion = place.quat ? new Quaternion(...place.quat) : null;
+    i.metadata = { ...(i.metadata ?? {}), fit, fitPos: i.position.clone(), fitQuat: i.rotationQuaternion?.clone() ?? null };
+    return true;
+  }
+
+  /**
+   * The hero's body: the ontology creator's Human family (`creator_male` by default; `?body=female` selects the female
+   * body, `?body=legacy` the earlier MPFB ranger). An unstaged creator body falls back to the ranger explicitly, and
+   * `heroBody` records which body is drawn and why.
+   */
+  heroLook: LookId = 'creator_male';
+  heroBody: { requested: LookId; drawn: LookId; reason: string; appearance?: string[] } | null = null;
+  /** Identity the hero's seeded creator appearance is drawn from (set by the Tower from its climber id). */
+  heroIdentity: CreatorIdentity = { id: 'gym-hero', appearanceSeed: 0 };
+  private resolveHeroLook(): LookId {
+    const want = this.heroLook;
+    if (!isCreatorLook(want)) { this.heroBody = { requested: want, drawn: want, reason: 'legacy body requested' }; return want; }
+    const st = this.assets.creatorStatus.get(want);
+    if (st?.loaded) { this.heroBody = { requested: want, drawn: want, reason: st.reason }; return want; }
+    const reason = `creator body unavailable (${st?.reason ?? 'not loaded'}); drawing the legacy ranger instead`;
+    console.warn('[arena]', reason); this.heroBody = { requested: want, drawn: 'ranger', reason }; return 'ranger';
+  }
+  /** Apply the creator's seeded appearance for an identity to the hero (only what the editor supports). */
+  applyHeroAppearance(identity: CreatorIdentity): void {
+    this.heroIdentity = identity;
+    const look = this.heroBody?.drawn;
+    if (!this.hero || !look || !isCreatorLook(look)) return;
+    const applied = this.assets.applyCreatorAppearance(this.hero.inst, look, identity);
+    this.heroBody = { ...this.heroBody!, appearance: applied };
+  }
+
   private spawnHero(): Fighter {
-    const h = this.makeFighter('ranger', 'hero', 'You', 1000, 5.4);
+    const h = this.makeFighter(this.resolveHeroLook(), 'hero', 'You', 1000, 5.4);
     h.pos.set(0, 0, 0); h.yaw = Math.PI * .75;
     this.bladeBase = new TransformNode('blade-base', this.scene); this.bladeTip = new TransformNode('blade-tip', this.scene);
     this.bladeBase.parent = h.inst.slotR; this.bladeTip.parent = h.inst.slotR;
@@ -352,9 +417,13 @@ export class ArenaWorld {
     this.weapon = id; const w = WEAPONS[id], o = this.weaponMesh[id];
     this.equip(h, [], o ? { [o.hand]: o.mesh } : w.attach);
     const shield = w.offhand && (o ? o.hand : 'r') === 'r' && h.inst.slotShield ? this.assets.sources.get(w.offhand) : undefined;
-    if (shield) { const i = shield.createInstance(`${w.offhand}-${h.id}`); i.parent = h.inst.slotShield!; i.isPickable = false; i.metadata = { shield: true }; h.extra.push(i); }
+    if (shield) { const i = shield.createInstance(`${w.offhand}-${h.id}`); i.parent = HELD_ITEMS[w.offhand!]?.mount?.slot === 'fist' ? h.inst.slotL : h.inst.slotShield!; i.isPickable = false; i.metadata = { shield: true }; if (this.fitHeldInstance(i, w.offhand!, h.inst.root.metadata?.look)) h.extra.push(i); else i.dispose(); }
+    // The swing trail spans the visible fitted blade (slot +Y), measured in hand before any re-stow; fists and bows
+    // keep the moveset's nominal trail.
+    const held = h.extra.find(m => m.parent === h.inst.slotR && !m.metadata?.shield), tip = held ? this.bladeReach(held) : 0;
+    const trail = tip > .3 && w.trail > 0 ? tip : w.trail;
     if (h.sheathed) { h.sheathed = false; this.sheathe(h, true); }
-    this.bladeBase.position.set(0, w.trail * .3, 0); this.bladeTip.position.set(0, Math.max(.3, w.trail), 0);
+    this.bladeBase.position.set(0, trail * .3, 0); this.bladeTip.position.set(0, Math.max(.3, trail), 0);
     if (!h.busy) { h.state = 'idle'; h.anim.play(this.ms(h).idle, { loop: true }); }
   }
 
@@ -392,18 +461,32 @@ export class ArenaWorld {
     f.inst.dispose();
   }
 
+  /** Ready clips that could not be composed (reported once each). */
+  readonly readyMissing = new Set<string>();
   /** The moveset a fighter currently moves with (the hero's follows the drawn weapon). */
   ms(f: Fighter): Moveset {
-    if (f.role === 'hero') { const m = MOVESETS[WEAPONS[this.weapon].set]; return f.relaxed ? { ...m, ...RELAXED } : m; }
+    if (f.role === 'hero') {
+      const m = MOVESETS[WEAPONS[this.weapon].set];
+      if (f.relaxed) return { ...m, ...RELAXED };
+      // Ready near foes: an upright body with the weapon arms (assets.ts READY_CLIPS); guard and attacks keep their clips.
+      const r = (c: string) => {
+        const name = `ready/${c.split('/')[1]}`; if (f.anim.has(name)) return name;
+        if (!this.readyMissing.has(name)) { this.readyMissing.add(name); console.warn(`[arena] ready clip ${name} unavailable (a source clip is missing); using ${c}`); }
+        return c;
+      };
+      return WEAPONS[this.weapon].set === 'sword' ? { ...m, idle: r(m.idle), walk: r(m.walk), run: r(m.run) } : m;
+    }
     if (f.role === 'ally') return MOVESETS[f.name === ALLIES.barbarian.name ? ALLIES.barbarian.set : ALLIES.rogue.set];
     return MOVESETS[f.foe!.set];
   }
+  /** The baked template a fighter's body actually plays (creator rigs have their own bake: stride and contacts). */
+  private tpl(f: Fighter, clip: string) { return this.assets.clipsFor(f.inst.root.metadata?.look).get(clip); }
   /** Directional legs (forward / back / strafe) under a held upper-body pose. */
   private strafeLegs(f: Fighter, mv: Vector3 | null, sp: number): void {
     if (!mv) { f.anim.legLayer(null); return; }
     const rel = wrap(Math.atan2(mv.x, mv.z) - f.yaw), a = Math.abs(rel);
     const clip = a < Math.PI / 4 ? 'unarmed/walk_forward' : a > Math.PI * .75 ? 'unarmed/walk_backward' : rel > 0 ? 'unarmed/walk_strafe_left' : 'unarmed/walk_strafe_right';
-    const t = this.assets.clips.get(clip), pace = t?.stance ? t.stance * f.inst.root.scaling.x : 1.6;
+    const t = this.tpl(f, clip), pace = t?.stance ? t.stance * f.inst.root.scaling.x : 1.6;
     f.anim.legLayer(clip, Math.max(.5, sp / pace));
   }
 
@@ -411,7 +494,7 @@ export class ArenaWorld {
   private locoAnim(f: Fighter, sp: number): void {
     const m = this.ms(f), sc = f.inst.root.scaling.x;
     // Pace each gait from its measured stride (planted-foot speed) so travel and footfalls agree.
-    const tw = this.assets.clips.get(m.walk), tr = this.assets.clips.get(m.run);
+    const tw = this.tpl(f, m.walk), tr = this.tpl(f, m.run);
     const walkPace = tw?.stance ? tw.stance * sc : (m.walkPace ?? 1.9), runPace = tr?.stance ? tr.stance * sc : m.runPace;
     const blend = Math.max(0, Math.min(1, (sp - walkPace * 1.15) / Math.max(.5, runPace * .7 - walkPace * 1.15))), b = blend * blend * (3 - 2 * blend);
     const lw = f.anim.length(m.walk), lr = f.anim.length(m.run);
@@ -788,10 +871,13 @@ export class ArenaWorld {
           const at = back.getAbsolutePosition().add(Vector3.Forward().applyRotationQuaternion(rq).scale(-SHIELD_SLUNG_BACK));
           m.position.copyFrom(Vector3.TransformCoordinates(at, Matrix.Invert(back.getWorldMatrix())));
           m.rotationQuaternion = Quaternion.Inverse(back.absoluteRotationQuaternion).multiply(rq.multiply(Quaternion.RotationAxis(Vector3.Up(), Math.PI))).normalize();
+          // Hang it by its centre (a catalog shield's authored origin is its bottom edge).
+          const c = (m as InstancedMesh).sourceMesh.getBoundingInfo().boundingBox.center.scale(m.scaling.x).applyRotationQuaternion(m.rotationQuaternion);
+          m.position.subtractInPlace(c);
           return;
         }
         m.position.set(k ? -.08 : .06, bow ? .05 : .12, -.2); m.rotationQuaternion = null; m.rotation.set(0, bow ? Math.PI / 2 : 0, bow ? -Math.PI * .2 : Math.PI * .15);
-      } else if (inHand) { m.parent = inHand; m.position.setAll(0); m.rotationQuaternion = null; m.rotation.setAll(0); }
+      } else if (inHand) { m.parent = inHand; m.position.copyFrom(m.metadata?.fitPos ?? Vector3.Zero()); m.rotation.setAll(0); m.rotationQuaternion = m.metadata?.fitQuat?.clone() ?? null; }
     });
     if (f.trail) f.trail.active = false;
     if (!on) this.vfx.flash(f.pos.add(new Vector3(0, 1.4, 0)), new Color3(1, .95, .8), .6, .12);
@@ -1297,7 +1383,7 @@ export class ArenaWorld {
    */
   private heroContact(f:Fighter):readonly [boolean,boolean]|undefined{
     if(f.role!=='hero'||f.anim.legLayered||(f.state!=='idle'&&f.state!=='move'&&f.state!=='guard'))return undefined;
-    const d=f.anim.dominant(),c=d&&this.assets.clips.get(d.name)?.contact;if(!c)return undefined;
+    const d=f.anim.dominant(),c=d&&this.tpl(f,d.name)?.contact;if(!c)return undefined;
     const i=Math.min(c[0].length-1,Math.max(0,Math.round(d.frame)));return [c[0][i]===1,c[1][i]===1];
   }
 
