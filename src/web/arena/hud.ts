@@ -198,6 +198,8 @@ export class ArenaHud {
       cards.forEach((c, i) => { const b = el('button', 'ar-card', `<div class="ic">${c.icon}</div><h3>${i + 1}. ${c.name}</h3><p>${c.text}</p>`); b.addEventListener('click', () => pick(i)); row.append(b); });
     });
   }
+  /** Hero body choice shown in the Codex panel (applies from the next climb or reload). */
+  heroBody: { current: string; choose: (k: string) => void } | null = null;
   /** The Codex: every class that has emerged (this browser), plus the current climber's capabilities. */
   toggleCodex(codex: { name: string; pattern: string; tier: string; floor: number; times: number; firstSeen: string }[]): void {
     if (this.codexEl.style.display === 'block') { this.codexEl.style.display = 'none'; return; }
@@ -206,7 +208,9 @@ export class ArenaHud {
     this.codexEl.innerHTML = `<h2>Codex of Emergent Classes</h2>
       ${sum ? `<div><b>You:</b> ${sum.tier} · ${sum.cls}<br><b>Styles</b> ${sum.styles.map(([k, v]) => `${k} ${v}`).join(' · ')}<br><b>Affinities</b> ${sum.affinities.map(([k, v]) => `${k} ${v}`).join(' · ') || 'none yet'}<br><b>Essences</b> ${sum.essences.join(' · ') || 'none'}${sum.confluence ? ` → <b style="color:#ff5ad1">${sum.confluence}</b>` : ''}<br><b>Worn</b> ${sum.gear.map(g => `<span style="color:${g.color}" title="${g.text}">${g.name}</span>`).join(' · ') || 'plain cloth'}<br><b>Achievements</b> ${sum.achievements.length}</div>` : ''}
       <table><tr><th>Class</th><th>Qualifying pattern</th><th>Tier</th><th>First seen</th><th>Seen</th><th>Date</th></tr>${rows || '<tr><td colspan=6>No class has emerged yet. Fight, learn tomes, accept boons.</td></tr>'}</table>
-      <button class="ar-btn" id="codex-export">Export codex (JSON)</button> <button class="ar-btn" id="codex-close">Close (K)</button>`;
+      <button class="ar-btn" id="codex-export">Export codex (JSON)</button> <button class="ar-btn" id="codex-close">Close (K)</button>
+      ${this.heroBody ? `<div style="margin-top:12px"><b>Body</b> (from the next climb or reload): ${['male', 'female'].map(k => `<button class="ar-btn" data-body="${k}"${k === this.heroBody!.current ? ' style="border-color:#ffd45c"' : ''}>${k === 'male' ? 'Male' : 'Female'}</button>`).join(' ')}</div>` : ''}`;
+    for (const b of this.codexEl.querySelectorAll<HTMLButtonElement>('[data-body]')) b.addEventListener('click', () => { const k = b.dataset.body!; this.heroBody!.current = k; this.heroBody!.choose(k); this.codexEl.querySelectorAll<HTMLButtonElement>('[data-body]').forEach(x => x.style.borderColor = x.dataset.body === k ? '#ffd45c' : ''); });
     this.codexEl.style.display = 'block';
     this.codexEl.querySelector('#codex-close')!.addEventListener('click', () => { this.codexEl.style.display = 'none'; });
     this.codexEl.querySelector('#codex-export')!.addEventListener('click', () => {

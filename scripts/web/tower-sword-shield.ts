@@ -15,16 +15,20 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const arg = (k: string, d: string) => { const i = process.argv.indexOf(`--${k}`); return i > 0 ? process.argv[i + 1] : d; };
-const name = arg('name', 'sword-shield'), towerMode = process.argv.includes('--tower'), video = process.argv.includes('--video');
+const name = arg('name', 'sword-shield'), towerMode = process.argv.includes('--tower'), video = process.argv.includes('--video'), body = arg('body', '');
 const out = join(process.cwd(), '.debug/arena', name); mkdirSync(out, { recursive: true });
 const SS = (n: string) => `sword_and_shield/sword and shield ${n}`;
 const POSES: [string, number][] = [
   [SS('idle'), 0], [SS('idle'), .5], [SS('walk'), .25], [SS('walk'), .75], [SS('run'), .25], [SS('run'), .75],
   [SS('block idle'), .5], [SS('slash'), .35], [SS('slash'), .6], [SS('attack (4)'), .45],
+  // The ready stance the hero actually plays near foes (upright body, authored weapon arms).
+  ['ready/sword and shield idle', 0], ['ready/sword and shield idle', .5], ['ready/sword and shield walk', .25], ['ready/sword and shield run', .25],
 ];
 // Camera [pitch, yaw, zoom] (hero faces +z at yaw 0; camera yaw 0.7 pi frames its back). shieldside/swordside are
 // the views of the first baseline capture (kept identical for matched before/after); front-a/b are closer front views.
-const VIEWS: [string, number, number, number][] = [['shieldside', .18, Math.PI * .7, 5.2], ['swordside', .18, Math.PI * 1.3, 5.2], ['front-a', .16, -Math.PI * .2, 4.4], ['front-b', .16, Math.PI * .2, 4.4]];
+const VIEWS: [string, number, number, number][] = [['shieldside', .18, Math.PI * .7, 5.2], ['swordside', .18, Math.PI * 1.3, 5.2], ['front-a', .16, -Math.PI * .2, 4.4], ['front-b', .16, Math.PI * .2, 4.4],
+  // Close shield-grip views: from behind the shield arm (the fist on the bar) and from the front (the face).
+  ['grip-back', .1, Math.PI * .55, 2.4], ['grip-front', .1, -Math.PI * .35, 2.4]];
 
 const browser = await chromium.launch({ channel: 'chrome', headless: false, args: ['--disable-renderer-backgrounding', '--disable-background-timer-throttling', '--window-size=900,900'] });
 const ctx = await browser.newContext({ viewport: { width: 760, height: 760 }, ...(video ? { recordVideo: { dir: out, size: { width: 760, height: 760 } } } : {}) });
@@ -36,7 +40,8 @@ const checks: { step: string; ok: boolean; detail?: unknown }[] = [];
 const check = (step: string, ok: boolean, detail?: unknown) => { checks.push({ step, ok, detail }); console.log(`${ok ? 'PASS' : 'FAIL'} ${step}${ok ? '' : ' ' + JSON.stringify(detail)}`); };
 try {
 // --tower: the real Tower runtime, in the Proving Hall (floor 0: never persistent, so no checkpoint is read or written).
-await page.goto(`http://127.0.0.1:5180/?arena=1&seed=918271${towerMode ? '&tower=1&hall=1' : ''}`);
+// --body male|female|legacy selects the hero body (creator male v2, creator female v1, earlier MPFB ranger).
+await page.goto(`http://127.0.0.1:5180/?arena=1&seed=918271${towerMode ? '&tower=1&hall=1' : ''}${body ? `&body=${body}` : ''}`);
 await page.waitForFunction(() => !!(window as unknown as { __arena?: unknown }).__arena, null, { timeout: 240_000 });
 if (towerMode) await page.waitForFunction(() => (window as any).__arena.tower?.plan?.kind === 'hall', null, { timeout: 120_000 });
 // The Tower's representative sword-and-shield loadout: Veilguard (a Tower item) in the F3 slot, right hand.
@@ -120,10 +125,18 @@ if (video) { const v = page.video(); report.video = v ? await v.path() : null; r
 // Transfer checks: each piece must be exactly at its destination right after the call (no settling time).
 const gearNow = () => page.evaluate(() => {
   const h = (window as any).__arena.world.hero;
-  return { sheathed: h.sheathed, gear: h.extra.map((m: any) => ({ name: m.name, disposed: m.isDisposed(), parent: m.parent?.name, shield: !!m.metadata?.shield, pos: +m.position.length().toFixed(6), quat: m.rotationQuaternion ? 'set' : null, rot: +m.rotation.length().toFixed(6), scale: [m.scaling.x, m.scaling.y, m.scaling.z].map((v: number) => +v.toFixed(6)) })) };
+  return { sheathed: h.sheathed, gear: h.extra.map((m: any) => ({ name: m.name, disposed: m.isDisposed(), parent: m.parent?.name, shield: !!m.metadata?.shield, pos: +m.position.length().toFixed(6), quat: m.rotationQuaternion ? 'set' : null, rot: +m.rotation.length().toFixed(6), scale: [m.scaling.x, m.scaling.y, m.scaling.z].map((v: number) => +v.toFixed(6)),
+    // The physical fit recorded at equip time: the drawn piece must sit exactly at it.
+    fitScale: +(m.metadata?.fit?.scale ?? 1).toFixed(6), fitStatus: m.metadata?.fit?.status ?? null,
+    posVec: [m.position.x, m.position.y, m.position.z], fitPosVec: m.metadata?.fitPos ? [m.metadata.fitPos.x, m.metadata.fitPos.y, m.metadata.fitPos.z] : [0, 0, 0],
+    quatVec: m.rotationQuaternion ? [m.rotationQuaternion.x, m.rotationQuaternion.y, m.rotationQuaternion.z, m.rotationQuaternion.w] : null,
+    fitQuatVec: m.metadata?.fitQuat ? [m.metadata.fitQuat.x, m.metadata.fitQuat.y, m.metadata.fitQuat.z, m.metadata.fitQuat.w] : null })) };
 });
-const inHands = (g: Awaited<ReturnType<typeof gearNow>>) => !g.sheathed && g.gear.length === 2 && g.gear.every(x => !x.disposed && x.parent?.endsWith(x.shield ? '.slot.hand_l' : '.slot.hand_r') && x.pos === 0 && x.quat === null && x.rot === 0 && x.scale.every(v => v === 1));
-const onBack = (g: Awaited<ReturnType<typeof gearNow>>) => g.sheathed && g.gear.length === 2 && g.gear.every(x => !x.disposed && x.parent?.endsWith('.spine_03') && x.scale.every(v => v === 1));
+const samePos = (x: { posVec: number[]; fitPosVec: number[] }) => x.posVec.every((v, k) => Math.abs(v - x.fitPosVec[k]) < 1e-6);
+// Drawn rotation equals the recorded mount (none for items whose authored origin is the grip).
+const sameQuat = (x: { quatVec: number[] | null; fitQuatVec: number[] | null }) => x.fitQuatVec === null ? x.quatVec === null : !!x.quatVec && x.quatVec.every((v, k) => Math.abs(v - x.fitQuatVec![k]) < 1e-6);
+const inHands = (g: Awaited<ReturnType<typeof gearNow>>) => !g.sheathed && g.gear.length === 2 && g.gear.every(x => !x.disposed && x.parent?.endsWith(x.shield ? '.slot.hand_l' : '.slot.hand_r') && samePos(x) && sameQuat(x) && x.rot === 0 && x.scale.every(v => v === x.fitScale));
+const onBack = (g: Awaited<ReturnType<typeof gearNow>>) => g.sheathed && g.gear.length === 2 && g.gear.every(x => !x.disposed && x.parent?.endsWith('.spine_03') && x.scale.every(v => v === x.fitScale));
 await page.evaluate(() => { const w = (window as any).__arena.world, h = w.hero; h.alertT = 1e9; h.relaxed = false; w.sheathe(h, true); });
 const stowed = await gearNow(); check('stow: both pieces on the back at once', onBack(stowed), stowed);
 await page.evaluate(() => { const w = (window as any).__arena.world; w.sheathe(w.hero, false); });
@@ -147,7 +160,8 @@ for (const [view, pitch, yaw, zoom] of VIEWS) {
     const ok = await page.evaluate(([c, f]) => (window as any).__arena.pose(c, f, 0), [clip, f] as const);
     if (!ok) { console.log('missing', clip); continue; }
     await page.waitForTimeout(300);
-    const file = `${view}-${clip.split('/')[1].replace(/[^a-z0-9]+/gi, '_')}-${String(f).replace('.', '')}.png`;
+    // Full clip path in the name, so ready/... and sword_and_shield/... views never overwrite each other.
+    const file = `${view}-${clip.replace(/[^a-z0-9]+/gi, '_')}-${String(f).replace('.', '')}.png`;
     await page.screenshot({ path: join(out, file) });
     report[file] = await probe(page);
   }
@@ -169,6 +183,9 @@ report['redrawn-shieldside-block_idle-05.png'] = await probe(page);
   await page.screenshot({ path: join(out, 'fail-aborted.png') }).catch(() => undefined);
   check('harness completed every step', false, String((e as Error).message));
 }
+report.heroBody = await page.evaluate(() => { const w = (window as any).__arena?.world; return w ? { ...w.heroBody, creator: Object.fromEntries(w.assets.creatorStatus ?? []) } : null; }).catch(() => null);
+report.fits = await page.evaluate(() => Object.fromEntries((window as any).__arena?.world?.fitReports ?? [])).catch(() => null);
+report.partBounds = await page.evaluate(() => Object.fromEntries((window as any).__arena?.world?.assets?.partBounds ?? [])).catch(() => null);
 report.checks = checks; report.errors = errors;
 writeFileSync(join(out, 'report.json'), JSON.stringify(report, null, 1));
 await ctx.close().catch(() => undefined); await browser.close().catch(() => undefined);

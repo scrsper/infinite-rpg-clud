@@ -52,6 +52,27 @@ Plug it in over USB or Bluetooth (Chrome and Edge present it as a standard gamep
 
 Out of combat (no foe within about 9 m, no recent blows) the hero walks, runs and stands relaxed: arms loose and weapon slung across the back. A foe drawing near, a hit taken, or any attack, guard, aim or cast draws the weapon at once into the combat stance.
 
+## Bodies and held equipment
+
+- **Hero body:** the ontology creator's current Human family (`tools/ontology/ontology/morphology/human-family.json`):
+  `tv-human-male-v2` (default) or `tv-human-female-v1`, chosen in the Codex (K) and used from the next climb.
+  - **Staging:** `npm run web:creator` (run by `web:dev` / `web:build`) copies them byte-for-byte, hash-checked
+    against the provenance registry, into `web/public/arena/creator/` with `creator.json`.
+  - **Status:** both are CC0 MakeHuman/MPFB PROTOTYPE bodies.
+  - **Motion:** the existing Tower clips are baked onto each body's own rig.
+  - **Appearance:** the male body gets the creator's seeded jaw morph and linen/leather palette from the climber's
+    identity (the same seeding as the editor, on the climber id rather than an ontology entity). The female body has
+    no authored variants, and that is reported.
+  - **Fallback:** an unstaged body falls back to the earlier MPFB ranger with a visible notice.
+- **Stances:** calm movement uses the upright unarmed clips. Near foes, the sword-and-shield ready stance keeps the
+  authored weapon arms over an upright body. Guard and attacks are unchanged.
+- **Equipment size:** `src/web/items/physicalFit.ts` sizes held items against the metric item catalog's type ranges,
+  or explicit per-item targets for unit-less KayKit gear. It scales about each item's grip, so reach and damage are
+  unchanged.
+- **Shield:** the sword-and-shield shield is catalog TV-081 *Round Watch*, drawn as a recorded vertical-grip render
+  variant (only its handle bar is turned; the GLB is untouched).
+- **Checks:** `scripts/web/tower-sword-shield.ts`, `scripts/web/tower-creator.ts`.
+
 ## Magic and the god
 
 Magic (element × form; 80 spells that emerge from affinity and learned forms), elemental reactions, imbuing, potions, the Proving Hall (floor 0) and Chrysanthus himself (the floor-10 trial and the summit) are described in docs/TOWER_MAGIC.md.

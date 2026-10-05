@@ -7,7 +7,7 @@ $state = Join-Path $repo '.debug\combat-gym'
 New-Item -ItemType Directory -Force -Path $state | Out-Null
 Push-Location $repo
 try {
-    if ($Build -or -not (Test-Path 'dist-web\index.html') -or ($Arena -and -not (Test-Path 'dist-web\arena\props.glb'))) { npm run web:build; if ($LASTEXITCODE -ne 0) { throw 'Client build failed.' } }
+    if ($Build -or -not (Test-Path 'dist-web\index.html') -or ($Arena -and -not (Test-Path 'dist-web\arena\props.glb')) -or ($Arena -and -not (Test-Path 'dist-web\arena\creator\creator.json'))) { npm run web:build; if ($LASTEXITCODE -ne 0) { throw 'Client build failed.' } }
     $health = $null
     try { $health = Invoke-RestMethod 'http://127.0.0.1:7505/api/health' -TimeoutSec 2 } catch {}
     if ($health -and $health.projectRoot -ne $repo) { throw 'Port 7505 belongs to another checkout. Close that Combat Gym first.' }
