@@ -1,4 +1,22 @@
-# Current: Tower creator bodies, physical item fit and upright stances (2026-10-05)
+# Current: Tower character motion, customization and spell VFX (2026-10-06)
+
+Branch `codex/tower-opus-character-vfx` on PR #63's head `1457160`. Presentation and Tower UI only; canonical simulation,
+saves, reach and damage unchanged (one Proving Hall fix noted below).
+
+- **Fists:** the packed Mixamo clips keep constant finger channels as STEP keys, which `Animation.evaluate` did not
+  hold, so every bake opened the sword-hand fist after frame 2. The retargeter now holds STEP keys. Live ready-idle
+  closure went from 0.05 to 163/153 deg on both creator bodies (`scripts/web/tower-motion.ts`).
+- **Feet:** foot pops of 0.4-1.0 m per frame remain at locomotion starts, the run loop and the end of the roll
+  (24-31 per motion run). A cross-fade contact rule was tried, measured and reverted. Not fixed.
+- **Customization:** body, height 95-105% and hair on both bodies; jaw width and re-roll on the male only. Saved per
+  browser and applied live (`scripts/web/tower-creator.ts`, 19/19).
+- **Spell VFX:** missile outcome visuals (hit/blocked/wall/expire), a ribbon trail, the nova border at its exact 4.2
+  query radius, and field fade-out (`scripts/web/tower-vfx.ts`, 5/5). Proving Hall dummies now leave their spawn
+  state; bolts used to fly through them.
+- **Checks:** checkpoint E2E 23/23, sword and shield 6/6 per body, a climb bot from floor 1 to 4 on the creator male
+  with 0 page errors, focused tests and `web:build`. The full suite runs in PR CI.
+
+# Previous: Tower creator bodies, physical item fit and upright stances (2026-10-05)
 
 Branch `codex/tower-creator-fit` on `caeec71` (PR #62 head). Presentation only; canonical simulation, saves, reach and
 damage are unchanged.
