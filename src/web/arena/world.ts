@@ -1,6 +1,7 @@
 import {FootPlant} from './footPlant';
 import { HELD_ITEMS, SHIELD_FIST_FIT, fitHeldItem, heldPlacement, resolveParts, type FitResult } from '../items/physicalFit';
-import { isCreatorLook, type CreatorIdentity } from '../actors/creatorAppearance';
+import { DEFAULT_CUSTOMIZATION, isCreatorLook, type CreatorCustomization, type CreatorIdentity } from '../actors/creatorAppearance';
+import { HUMAN_SCALE } from './assets';
 import { Color3, Color4, Matrix, Mesh, MeshBuilder, Quaternion, StandardMaterial, TransformNode, Vector3, type AbstractMesh, type InstancedMesh, type Scene } from '@babylonjs/core';
 import type { ArenaAssets, CharacterInstance } from './assets';
 import type { LookId } from './looks';
@@ -392,12 +393,25 @@ export class ArenaWorld {
     const reason = `creator body unavailable (${st?.reason ?? 'not loaded'}); drawing the legacy ranger instead`;
     console.warn('[arena]', reason); this.heroBody = { requested: want, drawn: 'ranger', reason }; return 'ranger';
   }
-  /** Apply the creator's seeded appearance for an identity to the hero (only what the editor supports). */
-  applyHeroAppearance(identity: CreatorIdentity): void {
+  /** The player's saved customization (creatorAppearance.ts); `body` is read at the next reset via heroLook. */
+  heroCustom: CreatorCustomization = { ...DEFAULT_CUSTOMIZATION };
+  /**
+   * Apply the creator appearance to the hero: the identity's seeded appearance (seed from the customization), the
+   * chosen jaw and hair, and the height (a uniform scale of the whole body; held gear scales with it, reach and
+   * collision do not). Only what the drawn body supports is applied; the rest is reported.
+   */
+  applyHeroAppearance(identity: CreatorIdentity = this.heroIdentity): void {
     this.heroIdentity = identity;
     const look = this.heroBody?.drawn;
     if (!this.hero || !look || !isCreatorLook(look)) return;
-    const applied = this.assets.applyCreatorAppearance(this.hero.inst, look, identity);
+    const c = this.heroCustom;
+    const applied = this.assets.applyCreatorAppearance(this.hero.inst, look, { id: identity.id, appearanceSeed: c.seed }, { jaw: c.jaw, hair: c.hair });
+    const s = HUMAN_SCALE * c.height;
+    if (Math.abs(this.hero.inst.root.scaling.y - s) > 1e-6) {
+      this.hero.inst.root.scaling.setAll(s);
+      this.plants.delete(this.hero);   // the stance solver re-measures its ankle height at the new scale
+    }
+    applied.push(`height x${c.height.toFixed(3)}`);
     this.heroBody = { ...this.heroBody!, appearance: applied };
   }
 

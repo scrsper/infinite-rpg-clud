@@ -5,6 +5,7 @@ import type { SkillDef } from './tower/skills';
 import { ALL_ELEMENTS, ALL_FORMS, ELEMENT_INFO, FORMS, REACTIONS, spellFor, type Form } from './magic';
 import type { Element } from './tower/capability';
 import { PAD_SKILL_LABELS } from './pad';
+import { supportedControls, type CreatorCustomization, type CreatorLook } from '../actors/creatorAppearance';
 
 /** DOM overlay for the Combat Arena: bars, combo badge, numbers, radar, cards. */
 const css = `
@@ -199,7 +200,27 @@ export class ArenaHud {
     });
   }
   /** Hero body choice shown in the Codex panel (applies from the next climb or reload). */
-  heroBody: { current: string; choose: (k: string) => void } | null = null;
+  heroCustom: { readonly value: CreatorCustomization; readonly drawn: CreatorLook | null; set(patch: Partial<CreatorCustomization>): void } | null = null;
+  /** The Character section of the Codex panel: only controls the drawn creator body supports are live. */
+  private renderCharacter(box: HTMLElement): void {
+    const hc = this.heroCustom; if (!hc) { box.innerHTML = ''; return; }
+    const c = hc.value, drawn = hc.drawn, sup = drawn ? supportedControls(drawn) : null;
+    const off = (why: string) => `<span style="color:#9aa3b2">${why}</span>`;
+    const note = drawn === 'creator_female' ? 'not available on the female body (it has no authored jaw morph or palette)' : 'needs a creator body';
+    box.innerHTML = `<h3 style="margin:14px 0 6px;color:#ffd45c">Character</h3>
+      <div><b>Body</b> (from the next climb or reload): ${(['male', 'female'] as const).map(k => `<button class="ar-btn" data-body="${k}"${k === c.body ? ' style="border-color:#ffd45c"' : ''}>${k === 'male' ? 'Male' : 'Female'}</button>`).join(' ')}</div>
+      ${sup ? `<div style="margin-top:6px"><b>Height</b> <input id="cc-height" type="range" min="95" max="105" step="1" value="${Math.round(c.height * 100)}"> <span id="cc-height-v">${Math.round(c.height * 100)}%</span></div>
+      <div style="margin-top:6px"><label><input id="cc-hair" type="checkbox"${c.hair ? ' checked' : ''}> <b>Hair</b></label></div>
+      <div style="margin-top:6px"><b>Jaw width</b> ${sup.jaw ? `<input id="cc-jaw" type="range" min="0" max="100" step="1" value="${Math.round((c.jaw ?? .5) * 100)}"> <span id="cc-jaw-v">${c.jaw === null ? 'seeded' : Math.round(c.jaw * 100) + '%'}</span> <button class="ar-btn" id="cc-jaw-seeded">Use seeded</button>` : off(note)}</div>
+      <div style="margin-top:6px"><b>Look</b> ${sup.reroll ? `<button class="ar-btn" id="cc-reroll">Re-roll jaw and cloth colours</button> <span style="color:#9aa3b2">seed ${c.seed}</span>` : off(note)}</div>` : `<div style="margin-top:6px">${off('Height, hair and jaw apply to the creator bodies only.')}</div>`}`;
+    const re = () => this.renderCharacter(box);
+    box.querySelectorAll<HTMLButtonElement>('[data-body]').forEach(b => b.addEventListener('click', () => { hc.set({ body: b.dataset.body as 'male' | 'female' }); re(); }));
+    const h = box.querySelector<HTMLInputElement>('#cc-height'); h?.addEventListener('input', () => { hc.set({ height: Number(h.value) / 100 }); box.querySelector('#cc-height-v')!.textContent = `${h.value}%`; });
+    const hair = box.querySelector<HTMLInputElement>('#cc-hair'); hair?.addEventListener('change', () => hc.set({ hair: hair.checked }));
+    const j = box.querySelector<HTMLInputElement>('#cc-jaw'); j?.addEventListener('input', () => { hc.set({ jaw: Number(j.value) / 100 }); box.querySelector('#cc-jaw-v')!.textContent = `${j.value}%`; });
+    box.querySelector('#cc-jaw-seeded')?.addEventListener('click', () => { hc.set({ jaw: null }); re(); });
+    box.querySelector('#cc-reroll')?.addEventListener('click', () => { hc.set({ seed: (hc.value.seed + 1) >>> 0, jaw: null }); re(); });
+  }
   /** The Codex: every class that has emerged (this browser), plus the current climber's capabilities. */
   toggleCodex(codex: { name: string; pattern: string; tier: string; floor: number; times: number; firstSeen: string }[]): void {
     if (this.codexEl.style.display === 'block') { this.codexEl.style.display = 'none'; return; }
@@ -209,8 +230,8 @@ export class ArenaHud {
       ${sum ? `<div><b>You:</b> ${sum.tier} · ${sum.cls}<br><b>Styles</b> ${sum.styles.map(([k, v]) => `${k} ${v}`).join(' · ')}<br><b>Affinities</b> ${sum.affinities.map(([k, v]) => `${k} ${v}`).join(' · ') || 'none yet'}<br><b>Essences</b> ${sum.essences.join(' · ') || 'none'}${sum.confluence ? ` → <b style="color:#ff5ad1">${sum.confluence}</b>` : ''}<br><b>Worn</b> ${sum.gear.map(g => `<span style="color:${g.color}" title="${g.text}">${g.name}</span>`).join(' · ') || 'plain cloth'}<br><b>Achievements</b> ${sum.achievements.length}</div>` : ''}
       <table><tr><th>Class</th><th>Qualifying pattern</th><th>Tier</th><th>First seen</th><th>Seen</th><th>Date</th></tr>${rows || '<tr><td colspan=6>No class has emerged yet. Fight, learn tomes, accept boons.</td></tr>'}</table>
       <button class="ar-btn" id="codex-export">Export codex (JSON)</button> <button class="ar-btn" id="codex-close">Close (K)</button>
-      ${this.heroBody ? `<div style="margin-top:12px"><b>Body</b> (from the next climb or reload): ${['male', 'female'].map(k => `<button class="ar-btn" data-body="${k}"${k === this.heroBody!.current ? ' style="border-color:#ffd45c"' : ''}>${k === 'male' ? 'Male' : 'Female'}</button>`).join(' ')}</div>` : ''}`;
-    for (const b of this.codexEl.querySelectorAll<HTMLButtonElement>('[data-body]')) b.addEventListener('click', () => { const k = b.dataset.body!; this.heroBody!.current = k; this.heroBody!.choose(k); this.codexEl.querySelectorAll<HTMLButtonElement>('[data-body]').forEach(x => x.style.borderColor = x.dataset.body === k ? '#ffd45c' : ''); });
+      <div id="cc-character"></div>`;
+    this.renderCharacter(this.codexEl.querySelector<HTMLElement>('#cc-character')!);
     this.codexEl.style.display = 'block';
     this.codexEl.querySelector('#codex-close')!.addEventListener('click', () => { this.codexEl.style.display = 'none'; });
     this.codexEl.querySelector('#codex-export')!.addEventListener('click', () => {

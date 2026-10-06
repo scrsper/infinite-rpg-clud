@@ -328,12 +328,18 @@ export class ArenaAssets {
    * (tools/ontology/src/rendering/viewport.ts): the jaw morph and the linen/leather palettes, on this actor's own
    * cloned morph managers and materials only. Bodies without authored variants get nothing, and that is reported.
    */
-  applyCreatorAppearance(inst: CharacterInstance, look: CreatorLook, identity: CreatorIdentity): string[] {
-    const plan = creatorAppearance(identity, CREATOR_BODIES[look]);
-    if (!plan.supported) return [`${CREATOR_BODIES[look].assetId}: no authored appearance variants (unsupported, nothing applied)`];
-    const applied: string[] = [];
+  applyCreatorAppearance(inst: CharacterInstance, look: CreatorLook, identity: CreatorIdentity, opts: { jaw?: number | null; hair?: boolean } = {}): string[] {
+    const body = CREATOR_BODIES[look], plan = creatorAppearance(identity, body), applied: string[] = [];
+    // The body's own hair mesh (every primitive of it), shown or hidden.
+    if (opts.hair !== undefined) {
+      const hair = inst.meshes.filter(m => m.name.includes(`.${body.hairMesh}`));
+      for (const m of hair) m.setEnabled(opts.hair);
+      applied.push(hair.length ? `hair ${opts.hair ? 'shown' : 'hidden'} (${hair.length} mesh)` : `hair mesh ${body.hairMesh} not found`);
+    }
+    if (!plan.supported) return [...applied, `${body.assetId}: no authored appearance variants (unsupported, nothing applied)`];
+    const jaw = opts.jaw ?? plan.jaw;
     for (const m of inst.meshes) {
-      const mgr = m.morphTargetManager; if (mgr) for (let i = 0; i < mgr.numTargets; i++) { const t = mgr.getTarget(i); if (t.name === CREATOR_CHANNELS.jawMorph) { t.influence = plan.jaw; applied.push(`${t.name}=${plan.jaw.toFixed(3)}`); } }
+      const mgr = m.morphTargetManager; if (mgr) for (let i = 0; i < mgr.numTargets; i++) { const t = mgr.getTarget(i); if (t.name === CREATOR_CHANNELS.jawMorph) { t.influence = jaw; applied.push(`${t.name}=${jaw.toFixed(3)}${opts.jaw != null ? ' (chosen)' : ' (seeded)'}`); } }
       const mats = m.material instanceof MultiMaterial ? m.material.subMaterials : [m.material];
       for (const mat of mats) if (mat instanceof PBRMaterial) {
         if (mat.name.endsWith(CREATOR_CHANNELS.linenMaterial)) { mat.albedoColor = Color3.FromArray(plan.linen); applied.push('linen palette'); }
