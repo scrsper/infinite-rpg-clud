@@ -1,4 +1,4 @@
-import { Animation, AnimationGroup, Matrix, Quaternion, Vector3, type TransformNode } from '@babylonjs/core';
+import { Animation, AnimationGroup, AnimationKeyInterpolation, Matrix, Quaternion, Vector3, type TransformNode } from '@babylonjs/core';
 
 /**
  * Retarget KayKit combat clips onto the Torn Veil human kit skeleton (UE-mannequin naming).
@@ -93,6 +93,19 @@ function rotFromTo(a: Vector3, b: Vector3): Quaternion {
   return Quaternion.RotationAxis(Vector3.Cross(u, v).normalize(), Math.acos(d));
 }
 
+/**
+ * One source track at a frame. The packed Mixamo clips store constant channels (e.g. the closed fingers of a sword
+ * hand) as a few STEP-interpolated keys; Animation.evaluate does not hold those past the first segment and returns the
+ * rest pose, which opened every such fist in the bakes. STEP tracks are therefore held at the last key at or before the
+ * frame; every other track uses Babylon's own evaluation.
+ */
+export function sampleSource(anim: Animation, frame: number): unknown {
+  const keys = anim.getKeys();
+  if (!keys.length || !keys.every(k => k.interpolation === AnimationKeyInterpolation.STEP)) return anim.evaluate(frame);
+  let v = keys[0].value; for (const k of keys) { if (k.frame <= frame) v = k.value; else break; }
+  return typeof v?.clone === 'function' ? v.clone() : v;
+}
+
 export class Retargeter {
   private sRest = new Map<string, { q: Quaternion; p: Vector3; local: { r: Quaternion | null; p: Vector3; s: Vector3 } }>();
   private tRest = new Map<string, { q: Quaternion; p: Vector3; localQ: Quaternion }>();
@@ -142,7 +155,7 @@ export class Retargeter {
     for (let i = 0; i < frames; i++) {
       this.resetSource();
       const f = g.from + i;
-      for (const ta of g.targetedAnimations) { const t = ta.target as Record<string, unknown>; t[ta.animation.targetProperty] = ta.animation.evaluate(f); }
+      for (const ta of g.targetedAnimations) { const t = ta.target as Record<string, unknown>; t[ta.animation.targetProperty] = sampleSource(ta.animation, f); }
       refresh(this.src);
       const delta = new Map<string, Quaternion>();
       for (const [s, t] of rm.map) {
