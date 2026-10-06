@@ -2,7 +2,7 @@
  * Tower of Chrysanthus climb bot: real mouse/keyboard input against ?arena=1&tower=1 (dev server running).
  * Fights the nearest foe, walks through the door when it opens, takes boons/level-ups, records floors,
  * loot, classes and errors. Automation evidence, not a human playtest.
- *   npx tsx scripts/web/tower-climb.ts [--name climb] [--seconds 150] [--seed 7]
+ *   npx tsx scripts/web/tower-climb.ts [--name climb] [--seconds 150] [--seed 7] [--video]
  */
 import { chromium, type Page } from 'playwright';
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -13,7 +13,8 @@ const name = arg('name', 'climb'), seconds = Number(arg('seconds', '150')), seed
 const out = join(process.cwd(), '.debug/arena', name); mkdirSync(out, { recursive: true });
 const W = 1280, H = 720;
 const browser = await chromium.launch({ channel: 'chrome', headless: false, args: ['--disable-renderer-backgrounding', '--disable-background-timer-throttling', `--window-size=${W + 16},${H + 130}`] });
-const ctx = await browser.newContext({ viewport: { width: W, height: H }, recordVideo: { dir: out, size: { width: W, height: H } } });
+// --video records the run (needs Playwright's ffmpeg).
+const ctx = await browser.newContext({ viewport: { width: W, height: H }, ...(process.argv.includes('--video') ? { recordVideo: { dir: out, size: { width: W, height: H } } } : {}) });
 const page = await ctx.newPage();
 const errors: string[] = []; page.on('pageerror', e => errors.push(String(e))); page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
 await page.addInitScript(() => { (window as any).__name = (f: unknown) => f; try { localStorage.removeItem('tv.tower.codex.v1'); } catch { /* */ } });

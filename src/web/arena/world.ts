@@ -1,6 +1,7 @@
 import {FootPlant} from './footPlant';
 import { HELD_ITEMS, SHIELD_FIST_FIT, fitHeldItem, heldPlacement, resolveParts, type FitResult } from '../items/physicalFit';
-import { isCreatorLook, type CreatorIdentity } from '../actors/creatorAppearance';
+import { DEFAULT_CUSTOMIZATION, isCreatorLook, type CreatorCustomization, type CreatorIdentity } from '../actors/creatorAppearance';
+import { HUMAN_SCALE } from './assets';
 import { Color3, Color4, Matrix, Mesh, MeshBuilder, Quaternion, StandardMaterial, TransformNode, Vector3, type AbstractMesh, type InstancedMesh, type Scene } from '@babylonjs/core';
 import type { ArenaAssets, CharacterInstance } from './assets';
 import type { LookId } from './looks';
@@ -392,12 +393,25 @@ export class ArenaWorld {
     const reason = `creator body unavailable (${st?.reason ?? 'not loaded'}); drawing the legacy ranger instead`;
     console.warn('[arena]', reason); this.heroBody = { requested: want, drawn: 'ranger', reason }; return 'ranger';
   }
-  /** Apply the creator's seeded appearance for an identity to the hero (only what the editor supports). */
-  applyHeroAppearance(identity: CreatorIdentity): void {
+  /** The player's saved customization (creatorAppearance.ts); `body` is read at the next reset via heroLook. */
+  heroCustom: CreatorCustomization = { ...DEFAULT_CUSTOMIZATION };
+  /**
+   * Apply the creator appearance to the hero: the identity's seeded appearance (seed from the customization), the
+   * chosen jaw and hair, and the height (a uniform scale of the whole body; held gear scales with it, reach and
+   * collision do not). Only what the drawn body supports is applied; the rest is reported.
+   */
+  applyHeroAppearance(identity: CreatorIdentity = this.heroIdentity): void {
     this.heroIdentity = identity;
     const look = this.heroBody?.drawn;
     if (!this.hero || !look || !isCreatorLook(look)) return;
-    const applied = this.assets.applyCreatorAppearance(this.hero.inst, look, identity);
+    const c = this.heroCustom;
+    const applied = this.assets.applyCreatorAppearance(this.hero.inst, look, { id: identity.id, appearanceSeed: c.seed }, { jaw: c.jaw, hair: c.hair });
+    const s = HUMAN_SCALE * c.height;
+    if (Math.abs(this.hero.inst.root.scaling.y - s) > 1e-6) {
+      this.hero.inst.root.scaling.setAll(s);
+      this.plants.delete(this.hero);   // the stance solver re-measures its ankle height at the new scale
+    }
+    applied.push(`height x${c.height.toFixed(3)}`);
     this.heroBody = { ...this.heroBody!, appearance: applied };
   }
 
@@ -973,23 +987,26 @@ export class ArenaWorld {
   private stepMissiles(dt: number): void {
     for (const m of this.missiles) {
       m.life -= dt; m.pos.addInPlace(m.vel.scale(dt)); m.fx.node.position.copyFrom(m.pos);
-      let done = m.life <= 0 || this.cameraBlocked(m.pos.x, m.pos.y, m.pos.z);
+      const wall = this.cameraBlocked(m.pos.x, m.pos.y, m.pos.z); let done = m.life <= 0 || wall;
       if (!done) for (const t of this.fighters) {
         if (t.team === m.owner.team || !t.alive || !t.standing || m.hit.has(t) || t.state === 'spawn') continue;
         if (Math.hypot(t.pos.x - m.pos.x, t.pos.z - m.pos.z) > t.radius + .4) continue;
         m.hit.add(t); this.impact(m, t);
         if (m.pierce-- <= 0) { done = true; break; }
       }
-      if (done) { if (!m.hit.size) this.impact(m, null); m.fx.dispose(); m.life = -1; }
+      if (done) { if (!m.hit.size) this.impact(m, null, wall ? 'wall' : 'expire'); m.fx.dispose(); m.life = -1; }
     }
     this.missiles = this.missiles.filter(m => m.life > 0);
   }
 
-  private impact(m: { pos: Vector3; vel: Vector3; e: Element; p: number; owner: Fighter; dmg: number }, t: Fighter | null): void {
+  /** `miss`: why a missile with no target ended (presentation only; the area effects below run either way). */
+  private impact(m: { pos: Vector3; vel: Vector3; e: Element; p: number; owner: Fighter; dmg: number }, t: Fighter | null, miss: 'wall' | 'expire' = 'expire'): void {
     const e = m.e, at = m.pos.clone(), dir = m.vel.clone().normalize(), src = m.owner;
-    this.vfx.burst(e, at, e === 'gravity' || e === 'flame' ? 1.1 : .8);
     const asHero = src.role === 'hero';
-    if (t) { if (asHero) this.inSkill = true; this.damage(t, m.dmg * m.p, dir, e === 'iron' ? 6 : 3, e === 'iron', asHero ? src : src); this.elementHit(src, t, e, m.p, m.dmg * m.p); this.inSkill = false; }
+    let landed = false;
+    if (t) { if (asHero) this.inSkill = true; landed = this.damage(t, m.dmg * m.p, dir, e === 'iron' ? 6 : 3, e === 'iron', asHero ? src : src); this.elementHit(src, t, e, m.p, m.dmg * m.p); this.inSkill = false; }
+    // The visual follows the confirmed outcome: a full burst only for a landed hit.
+    this.vfx.impactAt(e, at, t ? (landed ? 'hit' : 'blocked') : miss, dir, e === 'gravity' || e === 'flame' ? 1.1 : .8);
     // Area kinds: fire explodes, water splashes, gravity drags in, lightning arcs once.
     const around = (r: number) => this.fighters.filter(o => o !== t && o.team !== src.team && o.alive && o.standing && Math.hypot(o.pos.x - at.x, o.pos.z - at.z) < r);
     if (e === 'flame') for (const o of around(1.8)) { this.damage(o, m.dmg * m.p * .5, o.pos.subtract(at).normalize(), 2, false, asHero ? src : null); this.elementHit(src, o, 'flame', m.p, m.dmg * .5); }
@@ -1026,7 +1043,7 @@ export class ArenaWorld {
           if (g.e === 'shadow' && asHero) g.owner.hp = Math.min(g.owner.maxHp, g.owner.hp + base * g.p * .2);
         }
       }
-      if (g.t <= 0) { g.fx.dispose(); if (g.e === 'gravity') { this.vfx.burst('gravity', c.add(new Vector3(0, 1, 0)), 1.6); for (const f of this.fighters.filter(f => f.team !== g.owner.team && f.alive && Math.hypot(f.pos.x - g.x, f.pos.z - g.z) < g.r)) { this.damage(f, 30 * g.p, f.pos.subtract(c).normalize(), 9, true, g.owner.role === 'hero' ? g.owner : null); } } }
+      if (g.t <= 0) { if (g.fx.expire) g.fx.expire(); else g.fx.dispose(); if (g.e === 'gravity') { this.vfx.burst('gravity', c.add(new Vector3(0, 1, 0)), 1.6); for (const f of this.fighters.filter(f => f.team !== g.owner.team && f.alive && Math.hypot(f.pos.x - g.x, f.pos.z - g.z) < g.r)) { this.damage(f, 30 * g.p, f.pos.subtract(c).normalize(), 9, true, g.owner.role === 'hero' ? g.owner : null); } } }
     }
     this.fields = this.fields.filter(g => g.t > 0);
   }
@@ -1157,9 +1174,10 @@ export class ArenaWorld {
         case 'sigil':
           this.fields.push({ x: at.x, z: at.z, r: 4, t: 7, p, e: 'frost', tick: 0, owner: h, fx: this.vfx.field('frost', at, 4) }); this.ev.sound('clay', .5); break;
         case 'nova':   // Immolate / Thunderclap / Whirlwind: a burst around the hero
-          this.fx.ring(h.pos, 8.5, .55, col); this.fx.ring(h.pos, 5, .4, col); this.fx.flash(origin, 3, col);
+          // One border at the damage query radius (4.2; a target also counts its own radius); the pull radius (7) is not drawn as a hit edge.
+          this.vfx.footprint(col, h.pos, 4.2, .55); this.fx.flash(origin, 3, col);
           for (let k = 0; k < 10; k++) { const a = k / 10 * Math.PI * 2; this.fx.sparksAt(origin.add(new Vector3(Math.sin(a) * 2.6, -.4, Math.cos(a) * 2.6)), 8, c4); }
-          if (el) { this.vfx.burst(el, origin, 2.2); this.vfx.ring(el, h.pos.add(new Vector3(0, .1, 0)), 4.2, .5); }
+          if (el) this.vfx.burst(el, origin, 2.2);
           if (el === 'verdance') { h.hp = Math.min(h.maxHp, h.hp + h.maxHp * .12 * p); this.ev.damage(origin.add(new Vector3(0, 1, 0)), Math.round(h.maxHp * .12 * p), 'heal'); }
           if (el === 'gravity') for (const t of near(h.pos, 7)) t.vel.addInPlace(h.pos.subtract(t.pos).normalize().scale(9));
           for (const t of near(h.pos, 4.2)) this.skillHit(h, t, s, (el === 'time' ? 8 : 26) * ley, away(t), el === 'gravity' ? 0 : 7);

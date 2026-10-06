@@ -90,6 +90,52 @@ try {
   await ready();
   const reloaded = await bodyNow();
   check('C4 a reload keeps the chosen body', reloaded.look === 'creator_female', reloaded);
+  // ---- D: customization through the real Codex controls, on each body, in the Proving Hall (never persistent).
+  for (const body of ['male', 'female'] as const) {
+    await page.goto(`http://127.0.0.1:5180/?arena=1&tower=1&hall=1&seed=918271&body=${body}`);
+    await page.waitForFunction(() => (window as any).__arena?.tower?.plan?.kind === 'hall', null, { timeout: 300_000 });
+    await page.evaluate(() => { const a = (window as any).__arena, w = a.world, h = w.hero; a.hud.showHelp(false); a.hud.toasts.style.display = 'none'; a.hud.banner.style.display = 'none';
+      a.tower.take({ kind: 'weapon', id: 'qa', name: 'Veilguard', base: 'Veilguard', slot: 'axe', mesh: 'W_veilguard', hand: 'r', style: 'blade', item: 1, rarity: 0, affixes: [], score: 1 }); w.setWeapon(h, 'axe'); h.alertT = 1e9; w.freezeFoes = true; });
+    const state = () => page.evaluate(() => {
+      const w = (window as any).__arena.world, h = w.hero; let jaw: number | null = null, linen: number[] | null = null; const hair: boolean[] = [];
+      for (const m of h.inst.meshes) { const mg = m.morphTargetManager; if (mg) for (let i = 0; i < mg.numTargets; i++) if (mg.getTarget(i).name === 'TV_JawWidth') jaw = mg.getTarget(i).influence;
+        if (/\.(short02|braid01)/.test(m.name)) hair.push(m.isEnabled());
+        for (const x of (m.material?.subMaterials ?? [m.material])) if (x && /linen shirt/.test(x.name)) linen = [x.albedoColor.r, x.albedoColor.g, x.albedoColor.b].map((v: number) => +v.toFixed(4)); }
+      const gear = h.extra.map((m: any) => { m.computeWorldMatrix(true); const s = h.pos.constructor.Zero(); m.getWorldMatrix().decompose(s); return +s.y.toFixed(4); });
+      return { look: h.inst.root.metadata?.look, scale: +h.inst.root.scaling.y.toFixed(4), jaw, linen, hair, gearWorldScale: gear, custom: w.heroCustom, appearance: w.heroBody?.appearance };
+    });
+    const ui = async (sel: string, value: string | boolean) => page.evaluate(([s, v]) => { const el = document.querySelector<HTMLInputElement>(s)!; if (typeof v === 'boolean') { el.checked = v; el.dispatchEvent(new Event('change')); } else { el.value = v; el.dispatchEvent(new Event('input')); } }, [sel, value] as const);
+    const closeUp = async (label: string) => { await page.evaluate(() => { const a = (window as any).__arena; a.hud.toggleCodex([]); a.view(.08, -Math.PI * .15); a.zoom(2.6); a.pose('ready/sword and shield idle', .3, 0); }); await page.waitForTimeout(500); await page.screenshot({ path: join(out, `custom-${body}-${label}.png`) }); await page.evaluate(() => { const a = (window as any).__arena; a.hud.toggleCodex([]); }); };
+    await page.keyboard.press('KeyK'); await page.waitForSelector('#cc-height', { timeout: 10_000 });
+    const s0 = await state();
+    check(`D1 ${body}: Codex shows live controls for the drawn ${body} body`, s0.look === `creator_${body}`, s0.look);
+    await ui('#cc-height', '95'); const sLow = await state(); await closeUp('height95-hair');
+    await ui('#cc-height', '105'); const sHigh = await state(); await closeUp('height105-hair');
+    check(`D2 ${body}: height 95% and 105% rescale the body and its held gear together`, Math.abs(sLow.scale - 1.22 * .95) < 1e-3 && Math.abs(sHigh.scale - 1.22 * 1.05) < 1e-3 && sHigh.gearWorldScale.length === 2 && sHigh.gearWorldScale.every((g: number, i: number) => Math.abs(g / sLow.gearWorldScale[i] - 1.05 / .95) < 1e-3), { sLow, sHigh });
+    await ui('#cc-hair', false); const sBald = await state(); await closeUp('height105-nohair');
+    check(`D3 ${body}: hair off hides the body's own hair mesh`, sBald.hair.length > 0 && sBald.hair.every((v: boolean) => !v), sBald.hair);
+    if (body === 'male') {
+      // Face close-ups for the jaw extremes (hair back on), same camera.
+      await ui('#cc-hair', true);
+      const faceUp = async (label: string) => { await page.evaluate(() => { const a = (window as any).__arena, h = a.world.hero; a.hud.toggleCodex([]); a.pose('unarmed/idle_neutral', .3, 0); a.view(.02, -Math.PI * .2); a.zoom(1.4); void h; }); await page.waitForTimeout(700); await page.screenshot({ path: join(out, `custom-${body}-${label}.png`) }); await page.evaluate(() => { const a = (window as any).__arena; a.hud.toggleCodex([]); }); };
+      await ui('#cc-jaw', '0'); const j0 = await state(); await faceUp('jaw0-face');
+      await ui('#cc-jaw', '100'); const j1 = await state(); await faceUp('jaw100-face');
+      check('D4 male: jaw 0% and 100% set the TV_JawWidth morph', j0.jaw === 0 && j1.jaw === 1, { j0: j0.jaw, j1: j1.jaw });
+      const before = await state(); await page.locator('#cc-reroll').click(); const after = await state();
+      check('D5 male: re-roll changes the seed and the cloth colours, and returns the jaw to seeded', after.custom.seed === before.custom.seed + 1 && JSON.stringify(after.linen) !== JSON.stringify(before.linen) && after.custom.jaw === null, { before: before.linen, after: after.linen });
+    } else {
+      const txt = await page.locator('#cc-character').textContent();
+      check('D4 female: jaw and re-roll are shown as not available, with the reason', /not available on the female body/.test(txt ?? '') && !(await page.locator('#cc-jaw').count()) && !(await page.locator('#cc-reroll').count()), txt);
+    }
+    // Persistence across a reload (same body via ?body, saved height/hair/jaw/seed).
+    const saved = (await state()).custom;
+    await page.reload(); await page.waitForFunction(() => (window as any).__arena?.tower?.plan?.kind === 'hall', null, { timeout: 300_000 });
+    const sR = await state();
+    check(`D6 ${body}: a reload restores the saved choices on the hero`, JSON.stringify({ ...sR.custom, body: null }) === JSON.stringify({ ...saved, body: null }) && Math.abs(sR.scale - 1.22 * saved.height) < 1e-3 && sR.hair.every((v: boolean) => v === saved.hair), { saved, restored: sR.custom, scale: sR.scale });
+    report[`custom-${body}`] = { s0, sLow, sHigh, sBald, sR };
+    // Back to defaults for the next body.
+    await page.evaluate(k => localStorage.removeItem(k), 'tv.tower.appearance.v1');
+  }
 } catch (e) {
   await page.screenshot({ path: join(out, 'fail-aborted.png') }).catch(() => undefined);
   check('harness completed every step', false, String((e as Error).message));

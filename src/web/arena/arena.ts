@@ -5,7 +5,8 @@ import { attachPipeline, createRenderer } from '../render/engine';
 import { ArenaAssets } from './assets';
 import { ArenaHud } from './hud';
 import { BlobShadows } from './fx';
-import { LOOK_IDS, type LookId } from './looks';
+import { LOOK_IDS } from './looks';
+import { CUSTOMIZATION_KEY, bodyLook, isCreatorLook, parseCustomization, type CreatorCustomization } from '../actors/creatorAppearance';
 import { strikeWindow } from './retarget';
 import { WEAPONS, usedClips } from './combat';
 import { ArenaAudio } from './sfx';
@@ -76,18 +77,25 @@ export async function startArena(): Promise<void> {
     word: (p, text, color) => hud.word(p, text, color),
   });
   let seed = Number(params.get('seed') ?? 918271) || 918271;
-  // Hero body: ?body=male|female|legacy (harnesses), else the choice made in the Codex panel, else the creator male.
-  const BODY: Record<string, LookId> = { male: 'creator_male', female: 'creator_female', legacy: 'ranger' };
-  const savedBody = (() => { try { return localStorage.getItem('tv.arena.body'); } catch { return null; } })();
-  const bodyOf = (k: string | null) => k !== null && Object.hasOwn(BODY, k) ? BODY[k] : null;
-  world.heroLook = bodyOf(params.get('body')) ?? bodyOf(savedBody) ?? 'creator_male';
-  // A Codex choice is deferred: the current hero keeps its body; the next reset (a new climb, or a reload) draws the new one.
-  hud.heroBody = { current: Object.keys(BODY).find(k => BODY[k] === world.heroLook) ?? 'male', choose: k => {
-    const look = bodyOf(k); if (!look) return;
-    world.heroLook = look; if (hud.heroBody) hud.heroBody.current = k;
-    try { localStorage.setItem('tv.arena.body', k); } catch { /* private mode */ }
-    hud.toast(`Body set to ${k}: it takes effect on the next climb or reload.`, '#9fd0ff');
-  } };
+  // Hero customization (creatorAppearance.ts), saved in this browser apart from expedition checkpoints. The earlier
+  // body-only key is read once as a fallback. ?body=male|female|legacy overrides the body for harnesses.
+  const stored = (() => { try { const raw = localStorage.getItem(CUSTOMIZATION_KEY); if (raw) return parseCustomization(JSON.parse(raw)); const old = localStorage.getItem('tv.arena.body'); return parseCustomization(old === 'female' ? { body: 'female' } : {}); } catch { return parseCustomization({}); } })();
+  const save = () => { try { localStorage.setItem(CUSTOMIZATION_KEY, JSON.stringify(world.heroCustom)); } catch { /* private mode: lasts for the session */ } };
+  world.heroCustom = stored;
+  const bodyParam = params.get('body');
+  world.heroLook = bodyParam === 'legacy' ? 'ranger' : bodyParam === 'female' || bodyParam === 'male' ? bodyLook(parseCustomization({ body: bodyParam })) : bodyLook(stored);
+  hud.heroCustom = {
+    get value() { return world.heroCustom; },
+    /** The body actually drawn now (its supported controls), which may differ from the saved choice until the next climb. */
+    get drawn() { const d = world.heroBody?.drawn; return d && isCreatorLook(d) ? d : null; },
+    set: (patch: Partial<CreatorCustomization>) => {
+      const next = parseCustomization({ ...world.heroCustom, ...patch });
+      const bodyChanged = next.body !== world.heroCustom.body;
+      world.heroCustom = next; save();
+      if (bodyChanged) { world.heroLook = bodyLook(next); hud.toast(`Body set to ${next.body}: it takes effect on the next climb or reload.`, '#9fd0ff'); }
+      else world.applyHeroAppearance();   // height, hair, jaw and re-roll show at once
+    },
+  };
   world.reset(seed);
   // A creator body that could not be drawn is said plainly; an ordinary success shows nothing.
   if (world.heroBody && world.heroBody.drawn !== world.heroBody.requested) setTimeout(() => hud.toast(`Creator body did not load, so the earlier body is shown. ${world.heroBody!.reason}`, '#ffba80'), 1500);

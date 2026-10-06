@@ -472,7 +472,7 @@ export class TowerRun {
     runes.forEach((e, i) => this.spawnPickup({ kind: 'rune', id: `hall-rune-${i}`, name: `Runestone of ${ELEMENT_INFO[e].name}`, element: e }, new Vector3(-10 + i * 4, 0, 14)));
     for (const d of w.fighters.filter(f => f.foeKind === 'dummy')) {
       d.yaw = 0; d.anim.play('sword_and_shield/sword and shield idle', { loop: true, fade: 0 });
-      w.customAI.set(d, f => { if (f.state === 'hit') f.state = 'idle'; if (f.hp < f.maxHp * .3 && f.frozenT <= 0) { f.hp = f.maxHp; w.vfx.burst('verdance', f.pos.add(new Vector3(0, 1, 0)), .6); } f.vel.scaleInPlace(.5); return true; });
+      w.customAI.set(d, f => { if (f.state === 'hit' || f.state === 'spawn') f.state = 'idle'; if (f.hp < f.maxHp * .3 && f.frozenT <= 0) { f.hp = f.maxHp; w.vfx.burst('verdance', f.pos.add(new Vector3(0, 1, 0)), .6); } f.vel.scaleInPlace(.5); return true; });
     }
     setTimeout(() => this.hud.toast('The Proving Hall: every element and form is yours here. B opens the Spellbook; runestones lie by the north wall; V drinks.', '#ffd76a'), 2600);
     this.applyPassives();

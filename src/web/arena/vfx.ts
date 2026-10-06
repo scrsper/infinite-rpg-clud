@@ -1,4 +1,4 @@
-import { Color3, Color4, DynamicTexture, GlowLayer, Mesh, MeshBuilder, ParticleSystem, PointLight, StandardMaterial, TransformNode, Vector3, type AbstractMesh, type Scene } from '@babylonjs/core';
+import { Color3, Color4, DynamicTexture, GlowLayer, Mesh, MeshBuilder, ParticleSystem, PointLight, StandardMaterial, TrailMesh, TransformNode, Vector3, type AbstractMesh, type Scene } from '@babylonjs/core';
 import type { Element } from './tower/capability';
 
 /**
@@ -9,7 +9,14 @@ import type { Element } from './tower/capability';
  */
 type Tex = 'soft' | 'spark' | 'smoke' | 'flake' | 'leaf' | 'drop';
 interface Anim { m: AbstractMesh; t: number; life: number; tick: (k: number, m: AbstractMesh, dt: number) => void }
-export interface Handle { node: TransformNode; dispose(): void; setEnabled?(on: boolean): void }
+export interface Handle { node: TransformNode; dispose(): void; setEnabled?(on: boolean): void;
+  /** End presentation gracefully (emission stops, visuals fade) and dispose itself; mechanics have already ended. */
+  expire?(seconds?: number): void }
+/**
+ * How a projectile's flight ended, observed from existing branches (presentation only):
+ * hit = a body took the damage; blocked = a body blocked or evaded it; wall = it struck a wall; expire = range ran out.
+ */
+export type ImpactOutcome = 'hit' | 'blocked' | 'wall' | 'expire';
 
 const c4 = (r: number, g: number, b: number, a = 1) => new Color4(r, g, b, a);
 /** Per element: particle colours (start, mid, end), texture, additive or not, light colour. */
@@ -119,6 +126,39 @@ export class Vfx {
     this.flash(at, L.light, 1.6 + size, .22);
   }
 
+  /**
+   * A projectile's end, by outcome. Only a confirmed hit gets the full burst and a sharp contact accent. A block is a
+   * dull deflection, a wall strike a flattened splash back along the travel direction, and running out of range a
+   * soft dissipation with no flash or ring, so none of them reads as a landed blow.
+   */
+  impactAt(e: Element, at: Vector3, outcome: ImpactOutcome, dir: Vector3, size = 1): void {
+    const L = LOOK[e];
+    if (outcome === 'hit') { this.burst(e, at, size); this.core(e, at, .32 * size, .07); return; }
+    if (outcome === 'expire') {
+      const ps = this.system(e, 40, at.clone()); ps.minSize = .1; ps.maxSize = .3 * size; ps.minLifeTime = .3; ps.maxLifeTime = .6; ps.minEmitPower = .2; ps.maxEmitPower = .8; ps.createSphereEmitter(.25 * size);
+      ps.color1 = new Color4(L.a.r, L.a.g, L.a.b, .5); ps.color2 = new Color4(L.b.r, L.b.g, L.b.b, .35); this.once(ps, 26, .9); return;
+    }
+    const back = dir.scale(-1); back.y = 0; if (back.lengthSquared() < 1e-6) back.set(0, 0, 1); back.normalize();
+    const ps = this.system(e, 80, at.clone()); ps.minSize = .08; ps.maxSize = .3 * size; ps.minLifeTime = .2; ps.maxLifeTime = .45;
+    ps.minEmitPower = 3 * size; ps.maxEmitPower = 7 * size;
+    const spread = outcome === 'wall' ? .9 : .5;
+    ps.createDirectedSphereEmitter(.15, back.add(new Vector3(-spread, .2, -spread)), back.add(new Vector3(spread, .9, spread)));
+    if (outcome === 'blocked') { ps.color1 = new Color4(.85, .9, 1, 1); ps.color2 = new Color4(L.b.r, L.b.g, L.b.b, .6); }
+    this.once(ps, outcome === 'wall' ? 60 : 34, .8);
+    if (outcome === 'wall') this.core(e, at, .3 * size, .1);
+  }
+
+  /**
+   * A ground footprint whose final edge is exactly `r` (the gameplay query radius; targets also count their own radius):
+   * a ring grows to r and holds while a faint disc fades, so the decoration never extends past the real boundary.
+   */
+  footprint(color: Color3, at: Vector3, r: number, life: number): void {
+    const t = .08, ring = MeshBuilder.CreateTorus('vfx-footprint', { diameter: 2 * (r - t / 2), thickness: t, tessellation: 64 }, this.scene);
+    ring.position.set(at.x, .06, at.z); ring.material = this.mat(color, .95); ring.isPickable = false;
+    const disc = MeshBuilder.CreateDisc('vfx-footprint-disc', { radius: r, tessellation: 64 }, this.scene); disc.parent = ring; disc.rotation.x = Math.PI / 2; disc.position.y = -.01; disc.material = this.mat(color, .22); disc.isPickable = false;
+    this.anims.push({ m: ring, t: 0, life, tick: (k, mm) => { const grow = Math.min(1, k / .35), s = .25 + .75 * (1 - (1 - grow) ** 2); mm.scaling.set(s, 1, s); mm.visibility = k < .6 ? 1 : 1 - (k - .6) / .4; } });
+  }
+
   /** A pulsing ground marker for a telegraphed blow (red-gold), lasting `life` seconds. */
   marker(at: Vector3, r: number, life: number, color = new Color3(1, .35, .15)): void {
     const m = MeshBuilder.CreateDisc('vfx-mark', { radius: r, tessellation: 40 }, this.scene); m.position.set(at.x, .05, at.z); m.rotation.x = Math.PI / 2; m.isPickable = false;
@@ -224,7 +264,10 @@ export class Vfx {
     ps.minEmitPower = .2; ps.maxEmitPower = .8; ps.createSphereEmitter(.12 * size);
     if (e === 'flame') ps.gravity = new Vector3(0, 3, 0);
     ps.start();
-    return { node, dispose: () => { ps.stop(); ps.disposeOnStop = true; core.dispose(); node.dispose(); } };
+    // A tapering ribbon of the element's core colour, so the flight path reads without relying on particles alone.
+    const trail = new TrailMesh('vfx-missile-trail', core, this.scene, { diameter: .22 * size, length: 18, autoStart: true });
+    trail.material = this.mat(LOOK[e].core.scale(e === 'gravity' ? .7 : 1.1), .55); trail.isPickable = false;
+    return { node, dispose: () => { ps.stop(); ps.disposeOnStop = true; trail.dispose(); core.dispose(); node.dispose(); } };
   }
 
   /** A lasting ground effect at a point (fields). */
@@ -245,7 +288,17 @@ export class Vfx {
     if (e === 'swift' || e === 'water') { swirl = MeshBuilder.CreateCylinder('vfx-swirl', { diameterTop: r * 1.6, diameterBottom: r * .6, height: e === 'swift' ? 3.5 : .6, tessellation: 32, cap: 0 }, this.scene); swirl.parent = node; swirl.position.y = e === 'swift' ? 1.75 : .3; swirl.material = this.mat(L.core, .55, this.tex.streak); swirl.isPickable = false; }
     const spin = { t: 0 };
     const obs = this.scene.onBeforeRenderObservable.add(() => { const dt = this.scene.getEngine().getDeltaTime() / 1000; spin.t += dt; edge.rotation.y += dt * .6; if (e === 'time') disc.rotation.z += dt * .4; if (swirl) swirl.rotation.y -= dt * (e === 'swift' ? 7 : 3); if (hole) hole.scaling.setAll(1 + Math.sin(spin.t * 6) * .06); });
-    return { node, dispose: () => { this.scene.onBeforeRenderObservable.remove(obs); ps.stop(); ps.disposeOnStop = true; node.dispose(false, false); disc.dispose(); edge.dispose(); hole?.dispose(); swirl?.dispose(); } };
+    const dispose = () => { this.scene.onBeforeRenderObservable.remove(obs); ps.stop(); ps.disposeOnStop = true; node.dispose(false, false); disc.dispose(); edge.dispose(); hole?.dispose(); swirl?.dispose(); };
+    // Expiry: emission stops at once (the field's effect has ended); the zone fades and its edge settles in `seconds`.
+    const expire = (seconds = .35) => {
+      ps.stop(); let t = 0;
+      const fade = this.scene.onBeforeRenderObservable.add(() => {
+        t += this.scene.getEngine().getDeltaTime() / 1000; const k = Math.min(1, t / seconds);
+        for (const m of [disc, edge, hole, swirl]) if (m && !m.isDisposed()) m.visibility = 1 - k;
+        if (k >= 1) { this.scene.onBeforeRenderObservable.remove(fade); dispose(); }
+      });
+    };
+    return { node, dispose, expire };
   }
 
   /** A continuous emitter on a node (weapon imbue, statuses, the god's orb). */

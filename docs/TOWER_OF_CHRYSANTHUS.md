@@ -64,6 +64,12 @@ Out of combat (no foe within about 9 m, no recent blows) the hero walks, runs an
     identity (the same seeding as the editor, on the climber id rather than an ontology entity). The female body has
     no authored variants, and that is reported.
   - **Fallback:** an unstaged body falls back to the earlier MPFB ranger with a visible notice.
+- **Customization:** the Codex panel's Character section, saved in this browser (`tv.tower.appearance.v1`), separate
+  from expedition checkpoints. Body, height (95–105%, held gear scales with it) and hair on/off work on both bodies;
+  jaw width (`TV_JawWidth`) and re-roll (seeded jaw and cloth colours) on the male body only. The female body has no
+  authored morph or palette, and the panel says so.
+- **Spell visuals:** a missile's end follows its outcome (hit, blocked, wall, out of range). The nova draws one border
+  at its 4.2 damage radius, and fields fade out when they end. Presentation only.
 - **Stances:** calm movement uses the upright unarmed clips. Near foes, the sword-and-shield ready stance keeps the
   authored weapon arms over an upright body. Guard and attacks are unchanged.
 - **Equipment size:** `src/web/items/physicalFit.ts` sizes held items against the metric item catalog's type ranges,
