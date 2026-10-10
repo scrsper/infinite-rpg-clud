@@ -50,7 +50,7 @@ local light. Weather is rendered from the simulation's own state (rain particles
 Three shared kits (female, male, child) with morph-target heads, 14 garment types, 16 hairstyles,
 footwear, hats and accessories, coloured from each person's canonical appearance tokens so the same
 person looks the same on every client. Faces have blink and mouth shapes (speech drives them).
-Procedural animation over the kit: distance-driven gait, upper/lower-body layering, posture, activity
+Procedural animation over the kit: a distance-driven gait built from human gait curves (`src/web/actors/gait.ts`: heel strike, loading knee, toe-off, a run with flight, pelvis bob/shift/drop, thorax counter-rotation, stabilised head, accel lean and turn bank), a weight-shifting idle, upper/lower-body layering, posture, activity
 poses (work, eat, drink, talk, rest, carry), injury limp, secondary motion for hair, tail and ears,
 and combat poses driven by the server action's own preparation/active/recovery timings.
 

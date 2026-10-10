@@ -3,6 +3,7 @@ import type { ActorState } from './actorManager';
 import { CharacterRig, Q } from './characterRig';
 import type { Realization } from './appearanceMap';
 import { combatPose, type CombatContext } from './combatPose';
+import { armSwing, bodySway, legPose } from './gait';
 
 /**
  * Procedural body animation for the people of the world.
@@ -88,6 +89,9 @@ export class Animator {
   private readonly S: number;
   private hitK = 0;
   private lastYaw = 0; private yawRate = 0;
+  private accelLean = 0; private bank = 0;
+  private idleSide: 1 | -1 = Math.random() < 0.5 ? 1 : -1; private idleLeg = 0; private idleSwap = 2 + Math.random() * 6;
+  private headTurn = 0; private headTilt = 0; private headPitch = 0;
   private readonly hasBone: (n: string) => boolean;
   constructor(private readonly rig: CharacterRig, readonly r: Realization) {
     this.S = r.heightScale;
@@ -121,47 +125,61 @@ export class Animator {
     this.yawRate += (wrapPi(s.yaw - this.lastYaw) / Math.max(dt, 1e-3) - this.yawRate) * k(8); this.lastYaw = s.yaw;
 
     // ── gait ─────────────────────────────────────────────────────────────────────────────────
-    const step = lerp(0.62, 1.35, sstep(1.4, 5.5, speed)) * S;                  // metres per step
+    // Humans lengthen the stride and raise cadence together; running cadence settles near 170-180 steps a minute.
+    const step = lerp(0.64, 1.5, sstep(1.2, 6.0, speed)) * S;                    // metres per step
     if (moving) this.phase = (this.phase + (speed / step) * Math.PI * dt) % TAU;
     const B = this.base; B.clear();
     const sp = sstep(0.2, 1.6, speed), sr = sstep(2.2, 5.6, speed);
-    const walkAmp = this.moveW * (1 - this.runW * 0.35);
-    const ph = this.phase, sinP = Math.sin(ph), cosP = Math.cos(ph);
-    // legs
-    const thighA = (0.30 + 0.20 * sp + 0.55 * sr) * walkAmp;
-    const bend = (0.15 + 0.85 * Math.max(0, Math.cos(ph - 0.35))) * (0.35 + 0.6 * sp + 0.55 * sr) * walkAmp;
-    const bendR = (0.15 + 0.85 * Math.max(0, Math.cos(ph + Math.PI - 0.35))) * (0.35 + 0.6 * sp + 0.55 * sr) * walkAmp;
-    const crouch = this.crouchW;
-    const cr = crouch * 1.05;
-    B.set('thigh_l', chain(R.fwd(sinP * thighA + cr * 0.75), R.out(0.02 + 0.03 * cr, 1)));
-    B.set('thigh_r', chain(R.fwd(-sinP * thighA + cr * 0.75), R.out(0.02 + 0.03 * cr, -1)));
-    B.set('calf_l', Q.x(bend * 0.9 + cr * 1.35)); B.set('calf_r', Q.x(bendR * 0.9 + cr * 1.35));
-    B.set('foot_l', Q.x(-(bend * 0.25) + cr * 0.35 - Math.max(0, -sinP) * 0.25 * walkAmp)); B.set('foot_r', Q.x(-(bendR * 0.25) + cr * 0.35 - Math.max(0, sinP) * 0.25 * walkAmp));
-    B.set('ball_l', Q.x(Math.max(0, -sinP) * 0.35 * walkAmp)); B.set('ball_r', Q.x(Math.max(0, sinP) * 0.35 * walkAmp));
-    // pelvis: bob, sway and counter-rotation
-    const bob = Math.abs(sinP) * 0.030 * S * (0.4 + sp + sr) * walkAmp - crouch * 0.30 * S;
-    B.pelvis.set(Math.sin(ph) * 0.012 * S * walkAmp, -bob * 0.0 + (Math.cos(2 * ph) * 0.012 * S * (0.3 + sp) * walkAmp) - crouch * 0.30 * S, crouch * -0.03 * S);
-    B.set('pelvis', chain(R.turn(-sinP * 0.16 * walkAmp * (0.6 + sr)), R.tilt(sinP * 0.05 * walkAmp), R.lean(0.05 * this.runW + crouch * 0.28 + sr * 0.05)));
-    // spine counter-rotation and lean into the run
-    const leanRun = 0.06 * sp + 0.16 * sr;
-    B.set('spine_01', chain(R.turn(sinP * 0.06 * walkAmp), R.lean(leanRun * 0.4 + crouch * 0.18)));
-    B.set('spine_02', chain(R.turn(sinP * 0.10 * walkAmp * (0.7 + sr)), R.lean(leanRun * 0.35 + crouch * 0.16), R.tilt(-this.yawRate * 0.02 * this.moveW)));
-    B.set('spine_03', chain(R.turn(sinP * 0.06 * walkAmp), R.lean(leanRun * 0.25 + crouch * 0.1)));
-    // breathing and idle life
-    const breath = Math.sin(this.t * 1.7) * 0.012, idleW = 1 - this.moveW;
-    const shift = Math.sin(this.t * 0.31) * idleW;
-    B.set('spine_03', chain(R.lean(breath * idleW + leanRun * 0.25 + crouch * 0.1), R.turn(sinP * 0.06 * walkAmp)));
-    B.pelvis.x += shift * 0.008 * S; B.set('pelvis', chain(R.turn(-sinP * 0.16 * walkAmp * (0.6 + sr)), R.tilt(sinP * 0.05 * walkAmp + shift * 0.02), R.lean(0.05 * this.runW + crouch * 0.28 + sr * 0.05)));
-    // arms
-    const armA = (0.14 + 0.22 * sp + 0.42 * sr) * walkAmp, armOut = 0.10 + 0.05 * (1 - this.moveW);
-    const elbowBase = 0.20 + 0.22 * sp + 0.55 * sr;
-    B.set('clavicle_l', R.out(0.03 * (1 - this.runW), 1)); B.set('clavicle_r', R.out(0.03 * (1 - this.runW), -1));
-    B.set('upperarm_l', chain(R.fwd(-sinP * armA + 0.04), R.out(-armOut + 0.0, 1)));
-    B.set('upperarm_r', chain(R.fwd(sinP * armA + 0.04), R.out(-armOut, -1)));
-    B.set('lowerarm_l', Q.x(-(elbowBase + Math.max(0, -sinP) * 0.3 * walkAmp) - breath * 2));
-    B.set('lowerarm_r', Q.x(-(elbowBase + Math.max(0, sinP) * 0.3 * walkAmp) - breath * 2));
-    B.set('hand_l', chain(R.fwd(0.0), R.out(0.05, 1))); B.set('hand_r', chain(R.fwd(0.0), R.out(0.05, -1)));
-    for (const sd of ['l', 'r'] as const) { B.set(`fingers_01_${sd}`, Q.x(-0.35 - 0.3 * this.runW)); B.set(`thumb_01_${sd}`, Q.x(-0.2)); }
+    const walkAmp = this.moveW;
+    const run = this.runW, amp = sstep(0.1, 1.3, speed) * walkAmp;
+    const ph = this.phase, uL = ph / TAU, uR = uL + 0.5;
+    const crouch = this.crouchW, cr = crouch * 1.05;
+    // Weight shifts: forward accel leans the body into the step, braking sits it back, a turn banks it inward.
+    const fa = this.accel.x * -Math.sin(s.yaw) + this.accel.z * -Math.cos(s.yaw);
+    this.accelLean += (clamp(fa * 0.03, -0.14, 0.18) * this.moveW - this.accelLean) * k(4);
+    this.bank += (clamp(-this.yawRate * speed * 0.018, -0.14, 0.14) - this.bank) * k(6);
+    // Idle: weight rests on one leg and changes over every several seconds (contrapposto), never a statue-like double stance.
+    const idleW = 1 - this.moveW;
+    this.idleSwap -= dt; if (this.idleSwap <= 0) { this.idleSide = this.idleSide === 1 ? -1 : 1; this.idleSwap = 5 + Math.random() * 7; }
+    this.idleLeg += (this.idleSide - this.idleLeg) * k(1.6);
+    const rest = this.idleLeg * idleW * (1 - crouch);                         // + = weight on the left leg
+    const pelvisLean = 0.07 * walkAmp + 0.05 * run + crouch * 0.28 + this.accelLean * 0.5;
+    // legs, from the gait curves; a joint's local delta is relative to its parent's, so the foot is pitched to meet the ground.
+    const legs = [['l', uL, 1, Math.max(0, -rest)], ['r', uR, -1, Math.max(0, rest)]] as const;
+    for (const [sd, u, side, relaxed] of legs) {
+      const g = legPose(u, run, amp);
+      const hip = g.hip * walkAmp + cr * 0.75 + relaxed * 0.10, knee = g.knee * walkAmp + cr * 1.35 + relaxed * 0.22;
+      B.set(`thigh_${sd}`, chain(R.fwd(hip), R.out(0.02 + 0.03 * cr + relaxed * 0.03, side)));
+      B.set(`calf_${sd}`, Q.x(knee));
+      const shank = pelvisLean - hip + knee;
+      B.set(`foot_${sd}`, Q.x(g.foot * walkAmp - shank));
+      B.set(`ball_${sd}`, Q.x(g.ball * walkAmp));
+    }
+    // pelvis: vertical bob, shift over the stance foot, swing-side drop, rotation with the forward leg.
+    const sw = bodySway(uL, run, amp * walkAmp);
+    B.pelvis.set(sw.x * S + rest * 0.028 * S, sw.y * S - crouch * 0.30 * S - Math.abs(rest) * 0.012 * S, crouch * -0.03 * S);
+    B.set('pelvis', chain(R.turn(sw.pelvisTurn), R.tilt(sw.pelvisList - rest * 0.06 + this.bank * 0.4), R.lean(pelvisLean)));
+    // spine: thorax counter-rotates the pelvis, leans into speed, and stays upright over a listing pelvis.
+    const leanRun = 0.05 * sp + 0.22 * sr;
+    const breath = Math.sin(this.t * 1.7) * 0.012;
+    B.set('spine_01', chain(R.turn(sw.thoraxTurn * 0.25), R.tilt(-sw.pelvisList * 0.5 + rest * 0.035), R.lean(leanRun * 0.4 + crouch * 0.18 - pelvisLean * 0.35 + this.accelLean * 0.3)));
+    B.set('spine_02', chain(R.turn(sw.thoraxTurn * 0.4), R.tilt(-sw.pelvisList * 0.35 + rest * 0.02 + this.bank * 0.3), R.lean(leanRun * 0.35 + crouch * 0.16 + this.accelLean * 0.2)));
+    B.set('spine_03', chain(R.turn(sw.thoraxTurn * 0.35), R.lean(breath * idleW + leanRun * 0.25 + crouch * 0.1)));
+    // The head is stabilised: it cancels most of the trunk's turn, list and bob so the gaze stays level.
+    this.headTurn = -(sw.pelvisTurn + sw.thoraxTurn) * 0.85;
+    this.headTilt = -(sw.pelvisList * 0.15 + rest * 0.055 + this.bank * 0.7);
+    this.headPitch = -(pelvisLean * 0.65 + leanRun + this.accelLean * 0.5) * (1 - crouch * 0.5);
+    // arms: swing opposite their leg with a slight lag; elbows bend through the forward swing and stay held in a run.
+    const armOut = 0.10 + 0.05 * idleW;
+    B.set('clavicle_l', R.out(0.03 * (1 - run), 1)); B.set('clavicle_r', R.out(0.03 * (1 - run), -1));
+    for (const [sd, u, side] of [['l', uL, 1], ['r', uR, -1]] as const) {
+      const a = armSwing(u, run, amp);
+      const idleArm = side === 1 ? Math.max(0, rest) : Math.max(0, -rest);    // the arm over the relaxed hip hangs a touch further back
+      B.set(`upperarm_${sd}`, chain(R.fwd(a.shoulder * walkAmp + 0.04 - idleArm * 0.04), R.out(-armOut - run * 0.06, side)));
+      B.set(`lowerarm_${sd}`, Q.x(-(lerp(0.24, a.elbow, walkAmp)) - breath * 2));
+      B.set(`hand_${sd}`, chain(R.fwd(0.0), R.out(0.05, side)));
+      B.set(`fingers_01_${sd}`, Q.x(-0.35 - 0.3 * run)); B.set(`thumb_01_${sd}`, Q.x(-0.2));
+    }
 
     // ── layers: posture, activity, combat ────────────────────────────────────────────────────
     const L = this.layer;
@@ -303,7 +321,7 @@ export class Animator {
       ty = clamp(rel, -1.25, 1.25) * (Math.abs(rel) > 2.6 ? 0 : 1); tp = clamp(-Math.atan2(dy, Math.hypot(dx, dz)), -0.45, 0.45);
     } else if (this.moveW < 0.3) { ty = Math.sin(this.t * 0.37) * 0.25 + Math.sin(this.t * 0.91) * 0.1; tp = Math.sin(this.t * 0.53) * 0.06; }
     this.lookYaw += (ty - this.lookYaw) * k(5); this.lookPitch += (tp - this.lookPitch) * k(6);
-    L.clear(); L.set('neck_01', chain(R.turn(this.lookYaw * 0.35), R.lean(this.lookPitch * 0.35))); L.set('head', chain(R.turn(this.lookYaw * 0.65), R.lean(this.lookPitch * 0.65 + 0.03 * Math.sin(this.t * 1.3))));
+    L.clear(); L.set('neck_01', chain(R.turn(this.lookYaw * 0.35 + this.headTurn * 0.4), R.lean(this.lookPitch * 0.35 + this.headPitch * 0.4))); L.set('head', chain(R.turn(this.lookYaw * 0.65 + this.headTurn * 0.6), R.tilt(this.headTilt), R.lean(this.lookPitch * 0.65 + this.headPitch * 0.6 + 0.03 * Math.sin(this.t * 1.3))));
     B.over(L, 1);
     // Blink.
     this.blinkAt -= dt; if (this.blinkAt <= 0 && this.blink <= 0) { this.blink = 1; this.blinkAt = 2.2 + Math.random() * 4.5; }
